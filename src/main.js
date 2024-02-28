@@ -3,8 +3,15 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import Vuetify from 'vuetify/lib'
+import Vue from 'vue'
+const vuetify = new Vuetify({})
 
-const app = createApp(App)
+Vue.use(vuetify)
+//const app = createApp(App)
+const app = new Vue({
+  render: h=>(App)
+})
 
 app.use(router)
 

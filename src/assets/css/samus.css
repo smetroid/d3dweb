@@ -1,0 +1,556 @@
+svg {
+  /*border: 1px solid #999;*/
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  /*
+  left: 0;
+  bottom: 0;
+  top: 0;
+  overflow: hidden;
+  */
+}
+div.htmlLabel {
+  color: orange;
+}
+
+.label {
+    display: block;
+    position: absolute;
+    fill: #42b983;
+}
+
+.node {
+  white-space: nowrap;
+}
+
+.node rect,
+.node circle,
+.node polygon,
+.node diamond,
+.node ellipse {
+  stroke: #999;
+  fill: #1e1e1e;
+  stroke-width: 1px;
+  box-shadow:
+  0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+  0 6.7px 5.3px rgba(0, 0, 0, 0.048),
+  0 12.5px 10px rgba(0, 0, 0, 0.06),
+  0 22.3px 17.9px rgba(0, 0, 0, 0.072),
+  0 41.8px 33.4px rgba(0, 0, 0, 0.086),
+  0 100px 80px rgba(0, 0, 0, 0.12)
+;
+  padding: 10px 10px 10px 10px;
+
+/*
+  min-height: 200px;
+  width: 50vw;
+  margin: 100px auto;
+  background: white;
+  border-radius: 5px;
+*/
+}
+
+.cluster rect {
+  stroke: #333;
+  fill: #000;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  rx: 8px;
+  padding: 10px 10px 10px 10px;
+  margin: 10px 10px 10px 10px;
+}
+
+.cluster rect.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+  rx: 8px;
+}
+
+.cluster rect.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+  rx: 8px;
+}
+
+.cluster rect.label{
+  color: red;
+}
+.clusters.cluster.label{
+  color: orange;
+}
+
+.cluster rect.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+  rx: 8px;
+}
+
+.edgePath path.path {
+  fill: #3b5a2e;
+  stroke: #3b5a2e;
+  stroke-width: 2.5px;
+}
+
+[id^='arrowhead'] {
+  stroke: #164c00;
+  fill: #999;
+  stroke-width: 2.5px;
+}
+
+.node rect.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.edgePath path.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  file: transparent;
+}
+
+.edgePath path.active_edge{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  file: transparent;
+}
+
+.node circle.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node polygon.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node diamond.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node ellipse.selected{
+  stroke: orange;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node rect.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node circle.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node polygon.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node diamond.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node ellipse.active_node{
+  stroke: cyan;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node rect.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node circle.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node polygon.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node diamond.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+.node ellipse.d_active_node{
+  stroke: magenta;
+  fill-opacity: 0.1;
+  stroke-width: 2.5px;
+  fill: transparent;
+}
+
+g.doublediv {
+  border-color: red;
+}
+
+/*
+h1, h2 {
+  color: #333;
+}
+*/
+
+textarea {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: magenta;
+  border: 0px;
+}
+
+/*
+label {
+  margin-top: 1em;
+  display: block;
+  fill: magenta;
+}
+*/
+
+.error {
+  color: red;
+}
+
+.container {
+    align-self: center;
+    #border: 2px solid green;
+    width: 98%;
+    height: 50%;
+    /*
+    height: 400px;
+    left: 50%;
+    perspective: 800px;
+    position: relative;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    */
+}
+
+.top-div{
+  #border: 2px solid magenta;
+  position: relative;
+  height: 5%;
+  width: 100%
+}
+
+.main-section-div-wrapper{
+  #border: 2px solid cyan;
+  position: relative;
+  height: 70%;
+  width:100%;
+  display: table; /*ability to fluidly center the data pane*/
+}
+
+.left-div {
+  #border: 2px solid yellow;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 1s ease 0s;
+  width: 10%;
+}
+
+.center-div {
+  /*border: 2px solid blue; it's either this or vertical-align */
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1s ease 0s;
+  top: 50%;
+  display: table-cell;/*ability to fluidly center the data pane*/
+  vertical-align: middle
+}
+
+.right-div {
+    #border: 2px solid gray;
+    height: 100%;
+    left: 90%;
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 1s ease 0s;
+    width: 10%;
+}
+
+.bottom-div {
+    position: absolute;
+    #border: 2px solid orange;
+    width: 100%;
+    height: 5%;
+}
+
+#main {
+    #border: 2px solid blue;
+    width: 0%;
+    height: 50%;
+    text-align: center;
+    opacity: 1;
+    z-index: 200;
+
+}
+
+body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 21px;
+    color: #c8c8c8;
+    /*background-color: #272b30;*/
+    /*background-image: url("./images/templatemo_body.jpg");*/
+}
+*/
+
+#cmdr_logo {
+    background: url("./images/cmdr_logo.png") no-repeat scroll center center rgba(0, 0, 0, 0);
+    height: 50%;
+    width: 50%;
+    z-index: 5;
+    /*position: absolute*/;
+    opacity: 1;
+}
+
+.zoomTargetContainer {
+    #border: 1px solid red;
+    width: 97%;
+    margin: auto;
+    height: 97%;
+    margin: 0 auto;
+    top: -50%;
+    position: relative;
+   /* float: left;
+    height: 50%;
+    margin:100 auto;
+    position: absolute;
+    */
+}
+
+#graph-div{
+    #border: 1px solid green;
+}
+
+#form-div-node{
+    #border: 1px solid green;
+    z-index: 200
+}
+
+#form-div-edge{
+    #border: 1px solid green;
+}
+
+#yaml-div{
+  margin: auto;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoomTarget{
+    #border: 1px solid grey;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    /*float: left;
+    padding: 20px;
+    left: 10%;
+    right: 10%;
+    top: 10%;
+    bottom: 10%;
+    */
+}
+
+#yamlData{
+  /*
+	position: absolute;
+	height: 70%;
+	width: 70%;
+	*/
+}
+
+#json{
+  opacity: 1;
+}
+
+/*
+#graph{
+  z-index: 2;
+  opacity: 1;
+	height: 500px;
+	width: 500px;
+}
+*/
+
+
+/*
+#navigation{
+  z-index: 100;
+	height: 15%;
+	width: 100%;
+}
+*/
+
+.d3graphs {
+    /*background-color: green;*/
+		/*
+    position: relative;
+    #border: 1px solid #999;
+    overflow: hidden;
+    width: inherit;
+    height: inherit;
+    height: 100%;
+    width: 100%;
+		*/
+}
+
+.nav {
+  position: relative;
+  #border: 1px solid red;
+  width: 100px;
+  float: left;
+}
+
+#app-div {
+  height: 100%;
+}
+
+.forms{
+  display: grid;
+  justify-content: top;
+}
+
+
+#form-div-edge {
+  margin: auto;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+#form-div-node {
+  margin: auto;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+#yaml-area {
+  margin: auto;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+input[type=button], input[type=submit], input[type=reset] {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+select {
+  width: 50%;
+  padding: 16px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+}
+*/
+
+/*
+input[type=text] {
+  background-color: white;
+  background-image: url('searchicon.png');
+  background-position: 10px 10px;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  width: 200px
+}
+*/
+
+/*
+.block label {
+  margin: 0px 0px 0px 0px;
+  display: inline-block;
+  width: 200px;
+  text-align: right;
+}
+
+.block select {
+  display: inline-block;
+  width: 200px;
+  text-align: right;
+}
+*/
+
+/*
+.form {
+  padding: 0px;
+}
+*/
+
+.ul-selection {
+  display: inline-table;
+}
+
+
+.samus__label {
+  color: #42b983;
+  font-weight: 1000;
+}
+
+/*
+textarea {
+  height: auto;
+  line-height: initial;
+  color:red;
+}
+*/
