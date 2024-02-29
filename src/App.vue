@@ -2,27 +2,30 @@
 //import { RouterLink, RouterView } from 'vue-router'
 import DagreGraphLib from './components/DagreGraphLib.vue'
 //import HelloWorld from './components/HelloWorld.vue'
-import * as Velocity from 'velocity-animate'
+//import * as Velocity from 'velocity-animate'
 import D3Util from './services/D3Util.js'
 import MenuKeys from './helpers/MenuKeys.js'
 import MenuLinks from './helpers/MenuLinks.js'
-import Settings from './components/Settings.vue'
+//import Settings from './components/Settings.vue'
 //import Helper from '@/components/Helper
-import Footer from './components/Footer.vue'
-import Login from './components/Login.vue'
-import DiagramList from './components/DiagramList.vue'
+//import Footer from './components/Footer.vue'
+//import Login from './components/Login.vue'
+//import DiagramList from './components/DiagramList.vue'
 import DagreLib from './helpers/DagreLib.vue'
 import * as dagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
-import DiagramForm from './components/DiagramForm.vue'
+//import DiagramForm from './components/DiagramForm.vue'
 </script>
-<template v-if="g">
-  <div>
-    <v-app id="v-application">
-      <div id='stars'></div>
-      <div id='stars2'></div>
-      <div id='stars3'></div>
-      <p></p>
+<template>
+    <v-layout class="rounded rounded-md">
+      <v-app-bar title="Application bar"></v-app-bar>
+      <v-navigation-drawer>
+        <v-list>
+          <v-list-item title="Navigation drawer"></v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+
+      <!--
       <v-card
         class="mx-auto"
         max-width="500"
@@ -66,6 +69,7 @@ import DiagramForm from './components/DiagramForm.vue'
           </v-alert>
         </v-card-text>
       </v-card>
+    -->
 
         <!--
       <div id="app">
@@ -88,9 +92,9 @@ import DiagramForm from './components/DiagramForm.vue'
       <v-app-bar app>
       </v-app-bar>
       -->
-      <v-main app >
-        <v-container fluid>
-          <v-row>
+      <v-main class="d-flex align-center justify-center">
+        <h1>hello</h1>
+            <!--
             <DagreGraphLib
               :active="active"
               :dagre-lib="dagreLib"
@@ -111,6 +115,7 @@ import DiagramForm from './components/DiagramForm.vue'
               v-if="active === 'Open'"
               :active="active"
             />
+            -->
             <!--
             <DiagramForm
               v-if="active === 'Save Changes' || active === 'Edit'"
@@ -118,115 +123,21 @@ import DiagramForm from './components/DiagramForm.vue'
               :diagramInfo="dagreLib"
             />
             -->
-            <v-col>
-            </v-col>
-
-            <v-col>
-            </v-col>
-          </v-row>
-        </v-container>
       </v-main>
-      <v-footer
-        app 
-        class="pa-1 mr-0">
-          <v-card
-            width="99%"
-            height="100%"
-            @keydown.stop.prevent="menu($event, $refs.menu)"
-            @keypress.stop.prevent="menu($event, $refs.menu)">
-            <focus-trap v-model="menuTrap">
-              <div id="trap" tabindex="-1">
-                <v-speed-dial
-                  ref="speedDial"
-                  absolute
-                  right
-                  bottom v-model="showMenu">
-                  <template v-slot:activator>
-                    <div>
-                      <v-card width="57" height="57" class="transparent">
-                        <v-btn
-                          color="green darken-2"
-                          dark
-                          fab
-                          outlined>
-                          <v-icon v-if="showMenu">
-                            mdi-close
-                          </v-icon>
-                          <v-icon v-else>
-                            mdi-menu
-                          </v-icon>
-                        </v-btn>
-                      </v-card>
-                    </div>
-                  </template>
-                  <div>
-                    <v-card elevation="24">
-                      <v-btn
-                        dark
-                        x-small outlined
-                        width="115"
-                        ref="menu"
-                        v-for="item in menuLinks"
-                        :class="currentMenuLink == item.title?'orange--text':'green--text'"
-                        :key="item.title" href="#" @click="d3Action(item.title)">
-                        {{ item.title }}
-                      </v-btn>
-                    </v-card>
-                  </div>
-                </v-speed-dial>
-              </div>
-            </focus-trap>
-          </v-card>
-          <!--
-        <div class="pa-0 pitch-mixin" 
-          data-augmented-ui="tl-2-clip-x tr-2-clip-x both">
-          <div class="pa-0 ml-0 mr-0 d-flex justify-space-around pitch-mixin2"
-            data-augmented-ui="" >
-          -->
-            <v-card
-              tile
-              outlined
-              class="green"
-              width="100%"
-              >
-                <v-card 
-                  tile
-                  width="100%" 
-                  class="d-flex justify-space-around ">
-                  <div class="justify-center">
-                    <span class="text-sm">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">OPEN MENU:</span><span class="green--text"> m </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
-                  </div>
-                </v-card>
-                <v-divider
-                />
-                <Footer
-                  :expand="showHelp"
-                  :diagramInfo="dagreLib"
-                />
-            </v-card>
-            <!--
-          </div>
+      <v-footer class="d-flex flex-column" >
+        <div class="px-4 py-2 bg-black text-center w-100">
+          {{ new Date().getFullYear() }} — <strong>D3D</strong>
         </div>
-        -->
       </v-footer>
-    </v-app>
-  </div>
+    </v-layout>
 </template>
 
 <script>
 export default {
   name: 'App',
   //components: {DagreGraphLib, Settings, Login, Helper, DiagramList, DiagramForm, D3NodeForm, D3EdgeForm},
-  components: {DagreGraphLib, Settings, Login, Footer, DiagramList, DiagramForm},
+  //components: {DagreGraphLib, Settings, Login, Footer, DiagramList, DiagramForm},
+  components: {DagreGraphLib},
   data () {
     return {
       active: "D3Dagre", //Default active component
@@ -264,37 +175,43 @@ export default {
         {"icon":"mdi-edit","title":"Edit Edge"},
         {"icon":"","title":"Delete Edge"},
         {"icon":"","title":"Select Edges"}],
-      dagreLib: null
+      dagreLib: {
+        name: 'test',
+        description: 'test',
+        id: '12345'
+      }
     }
   },
   mounted () {
     try{
-      console.log('App mounted')
-      var localDiagramInfo = D3Util.getLocal()
-      if (D3Util.debug) {
-        console.log(localDiagramInfo.diagram)
-      }
-      var g = new dagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
-      if(localDiagramInfo.id && D3Util.auth === false){
-        var message = 'id found, please login to save changes to <br />'
-        message = message + 'server or replace local changes from server by selecting <br />'
-        message = message + '\'Discard Changes\' from options menu'
-        this.$root.$emit('appMessage', true, message)
-      }
-      DagreLib.id = localDiagramInfo.id
-      DagreLib.name = localDiagramInfo.name
-      DagreLib.description = localDiagramInfo.description
-      //When you open one diagram with clusters, it renders properly
-      //when you open a second diagram with clusters, the second 
-      //diagram does not render the clusters properly
-      //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
-      //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
-      DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.json = localDiagramInfo.diagram
-      this.dagreLib = DagreLib
-      //this second render, fixes the cluster issues where the diagram does not render 
-      //Temporary workaround
-      this.dagreLib.redraw(this.dagreLib.diagram)
+      //console.log("app mounted")
+      this.newDiagram()
+      // console.log('App mounted')
+      // var localDiagramInfo = D3Util.getLocal()
+      // if (D3Util.debug) {
+      //   console.log(localDiagramInfo.diagram)
+      // }
+      // var g = new dagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      // if(localDiagramInfo.id && D3Util.auth === false){
+      //   var message = 'id found, please login to save changes to <br />'
+      //   message = message + 'server or replace local changes from server by selecting <br />'
+      //   message = message + '\'Discard Changes\' from options menu'
+      //   this.$root.$emit('appMessage', true, message)
+      // }
+      // DagreLib.id = localDiagramInfo.id
+      // DagreLib.name = localDiagramInfo.name
+      // DagreLib.description = localDiagramInfo.description
+      // //When you open one diagram with clusters, it renders properly
+      // //when you open a second diagram with clusters, the second 
+      // //diagram does not render the clusters properly
+      // //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
+      // //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
+      // DagreLib.diagram = DagreLib.redraw(g)
+      // DagreLib.json = localDiagramInfo.diagram
+      // this.dagreLib = DagreLib
+      // //this second render, fixes the cluster issues where the diagram does not render 
+      // //Temporary workaround
+      // this.dagreLib.redraw(this.dagreLib.diagram)
     } catch {
       console.log('mounted catch')
       this.newDiagram()
@@ -307,100 +224,100 @@ export default {
         console.log(key)
       }
 
-      if (this.$cookies.isKey(key)) {
-        this.hints = this.$cookies.get(key)
-      } else {
-        // set default keys
-        this.$cookies.set(key, defaults[key])
-      }
+      // if (this.$cookies.isKey(key)) {
+      //   this.hints = this.$cookies.get(key)
+      // } else {
+      //   // set default keys
+      //   this.$cookies.set(key, defaults[key])
+      // }
     }
     console.log('App.vue')
-    this.$root.$on('appMessage', (status, message, data) => {
-      if (D3Util.debug) {
-        console.log(status)
-        console.log(message)
-        console.log(data)
-      }
+    // this.$root.$on('appMessage', (status, message, data) => {
+    //   if (D3Util.debug) {
+    //     console.log(status)
+    //     console.log(message)
+    //     console.log(data)
+    //   }
 
-      var common = ''
-      if ((status == 'success') || (status === true)) {
-        common = '<br /> Message will be removed in 5 seconds <br />'
-        this.successMessage = true
-      } else if (status == 'error') {
-        this.errorMessage = true
-        common = '<br /> Message will be removed in 5 seconds <br />'
-      } else if (status == 'info'){
-        this.infoMessage = true
-        common = '</br> Message will be removed in 3 seconds <br /> Error:<br />'
-      }
-      this.alertMessage = message + common + data
-    })
-
-    this.$root.$on('showHelp', () => {
-      this.showHelp = !this.showHelp
-    })
-
-    this.$root.$on('showSettings', () => {
-      console.log('Show settings form received')
-      this.showSettingsModal = true
-    })
-    this.$root.$on('Alert', (data, alertType) => {
-      console.log('alert message received')
-      this.message = data
-      if (alertType === 'successful') {
-        this.successfull = true
-        Velocity(this.$refs.alert, 'fadeOut',
-          {delay: 1000,
-            duration: 500,
-            complete: function () {
-              // this.successfull = null
-              // this.message = null
-            }
-          })
-      }
-    })
-
-    this.$root.$on('changeActive', (menu) => {
-      if (D3Util.debug) {
-        console.log(menu)
-      }
-      if (menu === undefined){
-        this.active = 'D3Dagre'
-      } else {
-        this.active = menu
-        //this.showMenu = true
-        //  this.$nextTick(function(){
-        //    console.log('next tick')
-        //    this.menuTrap = true
-        //    console.log(this.menuTrap)
-        //  })
-      }
-    })
-
-    this.$root.$on('updateHelperDiagramInfo', (name, description, id) => {
-      console.log('diagramInfo')
-      DagreLib.id = id
-      DagreLib.name = name
-      DagreLib.description = description
-      //DagreLib.diagram = DagreLib.redraw(g)
-      /**JSON is provided during an open from the server, maybe I'll skip for now */
-      // DagreLib.json = localDiagramInfo.diagram
-      this.dagreLib = DagreLib
-    })
-
-    /* Child components to communicate with parents*/
-    /*Emit functions section*/
-    this.$root.$on('openDiagram', (id) => {
-      console.log('Message to open diagram received')
-      console.log(id)
-      // this.id = id
-      this.loadFromServer(id)
-    })
-    // this.$root.$on('newDiagram', () => {
-    //   console.log('Message to create a new diagram received')
-    //   // this.id = id
-    //   this.newDiagram()
+    //   var common = ''
+    //   if ((status == 'success') || (status === true)) {
+    //     common = '<br /> Message will be removed in 5 seconds <br />'
+    //     this.successMessage = true
+    //   } else if (status == 'error') {
+    //     this.errorMessage = true
+    //     common = '<br /> Message will be removed in 5 seconds <br />'
+    //   } else if (status == 'info'){
+    //     this.infoMessage = true
+    //     common = '</br> Message will be removed in 3 seconds <br /> Error:<br />'
+    //   }
+    //   this.alertMessage = message + common + data
     // })
+
+    //this.$root.$on('showHelp', () => {
+    //  this.showHelp = !this.showHelp
+    //})
+
+    //this.$root.$on('showSettings', () => {
+    //  console.log('Show settings form received')
+    //  this.showSettingsModal = true
+    //})
+    //this.$root.$on('Alert', (data, alertType) => {
+    //  console.log('alert message received')
+    //  this.message = data
+    //  if (alertType === 'successful') {
+    //    this.successfull = true
+    //    Velocity(this.$refs.alert, 'fadeOut',
+    //      {delay: 1000,
+    //        duration: 500,
+    //        complete: function () {
+    //          // this.successfull = null
+    //          // this.message = null
+    //        }
+    //      })
+    //  }
+    //})
+
+    // this.$root.$on('changeActive', (menu) => {
+    //   if (D3Util.debug) {
+    //     console.log(menu)
+    //   }
+    //   if (menu === undefined){
+    //     this.active = 'D3Dagre'
+    //   } else {
+    //     this.active = menu
+    //     //this.showMenu = true
+    //     //  this.$nextTick(function(){
+    //     //    console.log('next tick')
+    //     //    this.menuTrap = true
+    //     //    console.log(this.menuTrap)
+    //     //  })
+    //   }
+    // })
+
+    // this.$root.$on('updateHelperDiagramInfo', (name, description, id) => {
+    //   console.log('diagramInfo')
+    //   DagreLib.id = id
+    //   DagreLib.name = name
+    //   DagreLib.description = description
+    //   //DagreLib.diagram = DagreLib.redraw(g)
+    //   /**JSON is provided during an open from the server, maybe I'll skip for now */
+    //   // DagreLib.json = localDiagramInfo.diagram
+    //   this.dagreLib = DagreLib
+    // })
+
+    // /* Child components to communicate with parents*/
+    // /*Emit functions section*/
+    // this.$root.$on('openDiagram', (id) => {
+    //   console.log('Message to open diagram received')
+    //   console.log(id)
+    //   // this.id = id
+    //   this.loadFromServer(id)
+    // })
+    // // this.$root.$on('newDiagram', () => {
+    // //   console.log('Message to create a new diagram received')
+    // //   // this.id = id
+    // //   this.newDiagram()
+    // // })
   },
   updated () {
     // console.log('component updated')
@@ -453,12 +370,13 @@ export default {
       g.graph().ranksep = '50' 
       g.graph().nodesep = '10'
       g.setDefaultEdgeLabel(function () { return {} })
+      g.setNode(0, {label: 'root'})
       console.log('newDiagram')
       console.log(g)
       console.log('newDiagram')
       //DagreGraphLib.resetValues()
       DagreLib.diagram = g
-      //DagreLib.diagram = DagreLib.redraw(g)
+      DagreLib.diagram = DagreLib.redraw(g)
       DagreLib.description = null
       DagreLib.name = null
       DagreLib.created = null
@@ -588,29 +506,29 @@ export default {
 //       this.selectedUrl = menuList[newMenu]
 //     },
   },
-  watch: {
-    active: function () {
-      console.log('app.root.activewindow')
-    //  console.log(this.activeWindow)
-      this.showMenu = this.active === "Menu"?true:false
-      if (this.showMenu){
-        this.$nextTick(function(){
-          console.log('menuTrap active')
-          this.menuTrap = this.showMenu
-        })
-      }
-    },
-    successMessage: function () {
-      setTimeout( ()=> {
-        this.successMessage = false
-      },5000)
-    },
-    infoMessage: function () {
-      setTimeout( ()=> {
-        this.infoMessage = false
-      },3000 )
-    }
-  }
+  //watch: {
+  //  active: function () {
+  //    console.log('app.root.activewindow')
+  //  //  console.log(this.activeWindow)
+  //    this.showMenu = this.active === "Menu"?true:false
+  //    if (this.showMenu){
+  //      this.$nextTick(function(){
+  //        console.log('menuTrap active')
+  //        this.menuTrap = this.showMenu
+  //      })
+  //    }
+  //  },
+  //  successMessage: function () {
+  //    setTimeout( ()=> {
+  //      this.successMessage = false
+  //    },5000)
+  //  },
+  //  infoMessage: function () {
+  //    setTimeout( ()=> {
+  //      this.infoMessage = false
+  //    },3000 )
+  //  }
+  //}
 }
 </script>
 

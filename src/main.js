@@ -3,16 +3,23 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import Vuetify from 'vuetify/lib'
-import Vue from 'vue'
-const vuetify = new Vuetify({})
-
-Vue.use(vuetify)
-//const app = createApp(App)
-const app = new Vue({
-  render: h=>(App)
+// Vuetify
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+const vuetify = createVuetify({
+  components,
+  directives,
+  ssr: true
 })
 
-app.use(router)
+// Focus-trap
+import { FocusTrap } from 'focus-trap-vue'
 
+
+const app = createApp(App)
+app.use(router)
+app.use(vuetify)
+app.component('FocusTrap', FocusTrap)
 app.mount('#app')

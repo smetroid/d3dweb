@@ -2,23 +2,10 @@
   <div
     @keydown.stop.prevent="keyPress($event, $refs.menu)"
     @keypress.stop.prevent="keyPress($event, $refs.menu)">
-    <!--<focus-trap v-model="enableTrap" v-if="active == 'D3Dagre'?true:false"> -->
-    <focus-trap v-model="enableTrap" :escapeDeactivates=false>
-      <div id="trap" ref="trapDiv" tabindex="0" class="trap is-active">
-        <div v-if="diagramInfo">
-          {{ selectedNodes }}
-          {{ selectedEdges }}
-          {{ doubleSelection }}
-          {{ focusedEdgeId }}
-          {{ focusedNodeId }}
-          {{ hints }}
-          {{ focusedIndex }}
-          {{ edgeOrNode }}
-        </div>
-        <svg>
-          <g/>
-        </svg>
-      </div>
+    <focus-trap v-model:active="enableTrap" :escapeDeactivates=false>
+          <svg tabindex="-1">
+            <g/>
+          </svg>
     </focus-trap>
     <v-bottom-sheet
       hide-overlay
@@ -89,22 +76,22 @@ export default {
       escCount: 0
     }
   },
-  mounted () {
-    this.$root.$on('d3ResetValues', () => {
-      this.resetValues()
-    })
-    this.$root.$on('setSheetToFalse', () => {
-      /**
-       * on emit the page appears to be renndered, automatically getting
-       * rid of the vuetify openSheet.
-       * The setTimeout allows for the openSheet animation to close properly
-       */
-      this.openSheet = false
-      setTimeout( ()=> {
-        this.$root.$emit("changeActive")
-      }, 300)
-    })
-  },
+  // mounted () {
+  //   // this.$root.$on('d3ResetValues', () => {
+  //   //   this.resetValues()
+  //   // })
+  //   // this.$root.$on('setSheetToFalse', () => {
+  //   //   /**
+  //   //    * on emit the page appears to be renndered, automatically getting
+  //   //    * rid of the vuetify openSheet.
+  //   //    * The setTimeout allows for the openSheet animation to close properly
+  //   //    */
+  //   //   this.openSheet = false
+  //   //   setTimeout( ()=> {
+  //   //     this.$root.$emit("changeActive")
+  //   //   }, 300)
+  //   // })
+  // },
   methods: {
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
@@ -288,80 +275,80 @@ export default {
       this.$root.$emit("changeActive")
     }
   },
-  watch: {
-    dagrelib: function () {
-      console.log('dagreLib watch')
-      console.log(this.dagreLib)
-    },
-    active: function () {
-      console.log('DagreGraphLib')
-      var nodes = this.active == 'Select Node'?true:false
-      var edges = this.active == 'Select Edges'?true:false
-      console.log(nodes)
-      console.log(edges)
-      if(this.active == 'D3Dagre' || (edges) || (nodes)){
-        this.$nextTick(function(){
-          console.log('d3Dagre Trap active')
-          this.enableTrap = true
-        })
-      } else {
-        this.enableTrap = false
-      }
+  //watch: {
+  //  dagrelib: function () {
+  //    console.log('dagreLib watch')
+  //    console.log(this.dagreLib)
+  //  },
+  //  active: function () {
+  //    console.log('DagreGraphLib')
+  //    var nodes = this.active == 'Select Node'?true:false
+  //    var edges = this.active == 'Select Edges'?true:false
+  //    console.log(nodes)
+  //    console.log(edges)
+  //    if(this.active == 'D3Dagre' || (edges) || (nodes)){
+  //      this.$nextTick(function(){
+  //        console.log('d3Dagre Trap active')
+  //        this.enableTrap = true
+  //      })
+  //    } else {
+  //      this.enableTrap = false
+  //    }
 
-      if(edges){
-        this.edgeOrNode = "edges"
-      } else if(nodes){
-        this.edgeOrNode = "nodes"
-      } else {
-        console.log('no edges or nodes')
-      }
+  //    if(edges){
+  //      this.edgeOrNode = "edges"
+  //    } else if(nodes){
+  //      this.edgeOrNode = "nodes"
+  //    } else {
+  //      console.log('no edges or nodes')
+  //    }
 
-      if (this.active == 'Delete Node'){
-        DagreLib.deleteNodes(this.selectedNodes)
-      } else if (this.active == 'Delete Edge'){
-        this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
-      }
+  //    if (this.active == 'Delete Node'){
+  //      DagreLib.deleteNodes(this.selectedNodes)
+  //    } else if (this.active == 'Delete Edge'){
+  //      this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
+  //    }
 
-      if ((this.active == 'Add Node') ||
-          (this.active == 'Add Edge') ||
-          (this.active == 'New') ||
-          (this.active == 'Edit Node') ||
-          (this.active == 'Edit Edge')) {
-        this.openSheet = true
-      } else if (this.active == 'Save Changes') {
-        //this.openSheet = true
-        if (D3Util.auth() && this.id) {
-          console.log('save changes DagreGraphLib')
-          this.openSheet = true
-        }
-      } else {
-        console.log('DagreGraphLib watch end')
-      }
+  //    if ((this.active == 'Add Node') ||
+  //        (this.active == 'Add Edge') ||
+  //        (this.active == 'New') ||
+  //        (this.active == 'Edit Node') ||
+  //        (this.active == 'Edit Edge')) {
+  //      this.openSheet = true
+  //    } else if (this.active == 'Save Changes') {
+  //      //this.openSheet = true
+  //      if (D3Util.auth() && this.id) {
+  //        console.log('save changes DagreGraphLib')
+  //        this.openSheet = true
+  //      }
+  //    } else {
+  //      console.log('DagreGraphLib watch end')
+  //    }
 
-      //if ( this.escCount === 3 ) {
-      //  this.selectedNodes = []
-      //  this.selectedEdges = []
-      //  this.focusedIndex =  null
-      //  this.focusedEdgeId = null
-      //  this.focusedNodeId = null
-      //  this.escCount = 0
-      //} else {
-      //  this.escCount = this.escCount + 1
-      //}
-      //this.enableTrap = this.active== "D3Dagre"?true:false
-    },
-    // edgeOrNode: function (){
-    //   this.d3NodeEdgeSelection = this.edgeOrNode
-    // },
-    // response: function(){
-    //   console.log('response updated')
-    //   console.log(this.response)
-    //   this.diagram = this.response.diagram
-    //   this.description = this.response.data.description
-    //   this.name = this.response.data.name
-    //   console.log(this.name)
-    // }
-  }
+  //    //if ( this.escCount === 3 ) {
+  //    //  this.selectedNodes = []
+  //    //  this.selectedEdges = []
+  //    //  this.focusedIndex =  null
+  //    //  this.focusedEdgeId = null
+  //    //  this.focusedNodeId = null
+  //    //  this.escCount = 0
+  //    //} else {
+  //    //  this.escCount = this.escCount + 1
+  //    //}
+  //    //this.enableTrap = this.active== "D3Dagre"?true:false
+  //  },
+  //  // edgeOrNode: function (){
+  //  //   this.d3NodeEdgeSelection = this.edgeOrNode
+  //  // },
+  //  // response: function(){
+  //  //   console.log('response updated')
+  //  //   console.log(this.response)
+  //  //   this.diagram = this.response.diagram
+  //  //   this.description = this.response.data.description
+  //  //   this.name = this.response.data.name
+  //  //   console.log(this.name)
+  //  // }
+  //}
 }
 </script>
 

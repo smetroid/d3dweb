@@ -577,26 +577,27 @@ export default {
     // Set up zoom support
     // on click reset the viewport to show the whole diagram
     svg = d3.select('svg')
-    var svgWidth = svg.property('clientWidth')
-    var svgHeight = svg.property('clientHeight')
+    let svgWidth = svg.property('clientWidth')
+    let svgHeight = svg.property('clientHeight')
     svg.attr("viewBox", [0,0,svgWidth,svgHeight])
     svg.on("click", this.reset)
 
-    var inner = svg.select('g')
+    let inner = svg.select('g')
+    console.log(inner)
 
     /**/
     zoom = d3.zoom()
       .scaleExtent(['.1', '10'])
       // .on('zoom', this.zoomed)
-      .on('zoom', () => {
-        inner.attr('transform', d3.event.transform)
+      .on('zoom', (e) => {
+        inner.attr('transform', e.transform)
       })
     /* Activates the zoom */
     svg.call(zoom)
 
     if (Object.keys(options).length == 0){
       /* eslint-disable-next-line */
-      var render = dagreD3.render()
+      let render = dagreD3.render()
       d3.select('svg g').call(render, g)
       gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
       gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
@@ -641,7 +642,6 @@ export default {
   },
   reset () {
     console.log('reset click')
-    console.log(this.svg)
     // console.log(gWidth)
     // console.log(gHeight)
     // console.log(initialScale)
