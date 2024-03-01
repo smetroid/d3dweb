@@ -1,5 +1,5 @@
 svg {
-  /*border: 1px solid #999;*/
+  border: 1px solid #999;
   position: fixed;
   height: 100%;
   width: 100%;
@@ -331,6 +331,7 @@ label {
 
 }
 
+/*
 body {
     margin: 0;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -339,6 +340,7 @@ body {
     color: #c8c8c8;
     /*background-color: #272b30;*/
     /*background-image: url("./images/templatemo_body.jpg");*/
+    /*
 }
 */
 

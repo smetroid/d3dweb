@@ -2,105 +2,143 @@
   <div class="d-flex" >
     <v-expand-transition>
       <v-card
+        variant="default"
         v-show="expand"
-        class="transparent"
         width="100%"
         >
         <div class="d-flex" >
-          <v-card width="50%" class="pa-1 ml-1 mr-1 pitch-mixin2" data-augmented-ui="">
-            <div class="ml-1">
-              <div>
-                <span class="justify-center d-flex">SAMUS <pre> </pre>
-                  <span v-if="diagramInfo.id"
-                    class="justify-center d-flex green--text">
-                    (Authenticated)
-                  </span>
-                </span>  
-              </div>
+          <v-card 
+            width="50%" 
+            class="pa-1 ml-1 mr-1 pitch-mixin2" 
+            variant="default"
+            data-augmented-ui="">
+              <span class="justify-center d-flex text-button font-weight-bold">
+                D3D
+                <span v-if="diagramInfo.id"
+                  class="justify-center d-flex green--text">
+                  (Authenticated)
+                </span>
+              </span>  
               <v-divider></v-divider>
-              <div class="justify-space-around d-flex">
-                <v-card outlined class="transparent justify-center">
-                  <span class="justify-center d-flex">
+              <div 
+                class="d-flex">
+                <v-card 
+                  variant="default"
+                  width="100%"
+                  class="pa-3">
+                  <span class="justify-center d-flex text-button font-weight-bold">
                     Diagram Info
                   </span>
                   <v-divider></v-divider>
-                  <v-card outlined class="transparent">
-                    <span>Name :</span> <br/><span class="green--text"> {{ diagramInfo.name }} </span><br/>
-                    <span text-sm>Description:</span>
-                    <span class="green--text"> {{ diagramInfo.description }} </span><br/>
-                    <span>ID :</span><span class="green--text"> {{ diagramInfo.id }} </span><br/>
-                  </v-card>
+                    <span class="font-weight-bold">Name :</span> <br/><span class="green--text"> {{ diagramInfo.name }} </span><br/>
+                    <span class="font-weight-bold">Description:</span>
+                    <span class=""> {{ diagramInfo.description }} </span><br/>
+                    <span class="font-weight-bold">ID :</span><span class="green--text"> {{ diagramInfo.id }} </span><br/>
                 </v-card>
-                <v-card outlined class="transparent justify-center">
-                  <span class="justify-center d-flex">
+                <v-divider vertical></v-divider>
+                <v-card
+                  variant="default"
+                  width="100%"
+                  class="pa-3">
+                  <span class="justify-center d-flex text-button font-weight-bold">
                     Actions
                   </span>
                   <v-divider></v-divider>
-                  <v-card outlined class="transparent"
-                    ref="helper" v-for="helper in samus"
+                  <span 
+                    ref="actions" 
+                    v-for="helper in samus"
                     :key="helper.title">
-                    <span text-sm>{{ helper.title }}:</span><span class="green--text"> {{ helper.shortcut }} </span><br/>
-                  </v-card>
+                    <span class="font-weight-bold">
+                      {{ helper.title }}: </span> 
+                    <span>
+                      {{ helper.shortcut }} 
+                    </span><br/>
+                  </span>
                 </v-card>
-                <v-card outlined
-                  class="pa-1 ml-1 mr-1 transparent justify-center">
-                  <span class="justify-center d-flex">
+                <v-divider vertical></v-divider>
+                <v-card
+                  variant="default"
+                  width="100%"
+                  class="pa-3">
+                  <span class="justify-center d-flex text-button font-weight-bold">
                     Other
                   </span>
                   <v-divider></v-divider>
-                  <v-card outlined class="transparent"
-                    ref="helper" v-for="helper in other"
+                  <span 
+                    ref="other" v-for="helper in other"
                     :key="helper.title">
-                    <span text-sm>{{ helper.title }}:</span><span class="green--text"> {{ helper.shortcut }} </span><br/>
-                  </v-card>
+                    <span class="font-weight-bold">
+                      {{ helper.title }}:</span>
+                    <span> {{ helper.shortcut }} </span><br/>
+                  </span>
                 </v-card>
-              </div>
             </div>
           </v-card>
-          <v-divider vertical></v-divider>
+            <v-divider vertical></v-divider>
           <v-card
+            variant="default"
             width="50%"
             class="pa-1 ml-1 pitch-mixin2 mr-1"
             data-augmented-ui="">
-            <span class="text-sm justify-center d-flex">
+            <span class="justify-center d-flex text-button font-weight-bold">
               SHORTCUTS
             </span>
             <v-divider></v-divider>
-            <v-row class="ml-1 mr-1 justify-space-around d-flex">
-              <v-card outlined class="transparent justify-center">
-                <span class="text-sm justify-center d-flex">
+            <div class="ml-1 mr-1 justify-space-around d-flex">
+              <v-card
+                variant="default"
+                width="50%"
+                class="pa-3">
+                <span class="justify-center d-flex text-button font-weight-bold">
                   Actions
                 </span>
                 <v-divider></v-divider>
-                <v-card outlined class="transparent"
-                  ref="helper" v-for="helper in actions"
-                  :key="helper.title">
-                  <span text-sm>{{ helper.title }}:</span><span class="green--text"> {{ helper.shortcut }} </span><br/>
-                </v-card>
+                  <span 
+                    ref="d3actions" 
+                    v-for="helper in actions"
+                    :key="helper.title">
+                    <span class="font-weight-bold">
+                      {{ helper.title }}: </span>
+                    <span> {{ helper.shortcut }} </span><br/>
+                  </span>
               </v-card>
-              <v-card outlined class="transparent">
-                <span class="text-sm justify-center d-flex">
-                  Dagre
+              <v-divider vertical></v-divider>
+              <v-card
+                variant="default"
+                width="50%"
+                class="pa-3">
+                <span class="justify-center d-flex text-button font-weight-bold">
+                  Selection Options
                 </span>
                 <v-divider></v-divider>
-                <v-card outlined width="auto" class="transparent"
-                  ref="helper" v-for="helper in dagre"
+                <span
+                  ref="helper" 
+                  v-for="helper in selectionOptions"
                   :key="helper.title">
-                  <span text-sm>{{ helper.title }}:</span><span class="green--text"> {{ helper.shortcut }} </span><br/>
-                </v-card>
+                  <span class="font-weight-bold">
+                    {{ helper.title }}: </span>
+                  <span> {{ helper.shortcut }} </span><br/>
+                </span>
               </v-card>
-              <v-card outlined class="transparent">
-                <span class="text-sm justify-center d-flex">
+              <v-divider vertical></v-divider>
+              <v-card
+                variant="default"
+                width="50%"
+                class="pa-3">
+                <span class="justify-center d-flex text-button font-weight-bold">
                   Zoom
                 </span>
                 <v-divider></v-divider>
-                <v-card outlined class="transparent"
-                  ref="helper" v-for="helper in zoom"
+                <span 
+                  ref="zoom" 
+                  v-for="helper in zoom"
                   :key="helper.title">
-                  <span text-sm>{{ helper.title }}:</span><span class="green--text"> {{ helper.shortcut }} </span><br/>
-                </v-card>
+                  <span class="font-weight-bold">
+                    {{ helper.title }}: </span>
+                  <span> {{ helper.shortcut }} </span><br/>
+                </span>
               </v-card>
-            </v-row>
+            </div>
           </v-card>
         </div>
       </v-card>
@@ -111,7 +149,7 @@
 //import D3VimApi from '@/services/api/SamusApi'
 //import D3Util from '@/services/D3Util'
 export default {
-  name: 'Helper',
+  name: 'D3DHelper',
   props:['expand','diagramInfo'],
   data () {
     return {
@@ -136,7 +174,7 @@ export default {
         {"title": "Pan Up","shortcut": "Alt + k"},
         {"title": "Pan Down","shortcut": "Alt + j"}
       ],
-      dagre: [
+      selectionOptions: [
         {"title": "Focus Node","shortcut": "j or k"},
         {"title": "Active 1", "shortcut": "Enter"},
         {"title": "Active 2","shortcut": "Enter Enter"},
