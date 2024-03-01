@@ -2,15 +2,16 @@
   <div class="d-flex" >
     <v-expand-transition>
       <v-card
-        variant="default"
+        variant="text"
         v-show="expand"
         width="100%"
+        color="primary"
         >
         <div class="d-flex" >
           <v-card 
             width="50%" 
             class="pa-1 ml-1 mr-1 pitch-mixin2" 
-            variant="default"
+            variant="text"
             data-augmented-ui="">
               <span class="justify-center d-flex text-button font-weight-bold">
                 D3D
@@ -23,7 +24,7 @@
               <div 
                 class="d-flex">
                 <v-card 
-                  variant="default"
+                  variant="text"
                   width="100%"
                   class="pa-3">
                   <span class="justify-center d-flex text-button font-weight-bold">
@@ -37,7 +38,7 @@
                 </v-card>
                 <v-divider vertical></v-divider>
                 <v-card
-                  variant="default"
+                  variant="text"
                   width="100%"
                   class="pa-3">
                   <span class="justify-center d-flex text-button font-weight-bold">
@@ -57,7 +58,7 @@
                 </v-card>
                 <v-divider vertical></v-divider>
                 <v-card
-                  variant="default"
+                  variant="text"
                   width="100%"
                   class="pa-3">
                   <span class="justify-center d-flex text-button font-weight-bold">
@@ -76,7 +77,7 @@
           </v-card>
             <v-divider vertical></v-divider>
           <v-card
-            variant="default"
+            variant="text"
             width="50%"
             class="pa-1 ml-1 pitch-mixin2 mr-1"
             data-augmented-ui="">
@@ -86,7 +87,7 @@
             <v-divider></v-divider>
             <div class="ml-1 mr-1 justify-space-around d-flex">
               <v-card
-                variant="default"
+                variant="text"
                 width="50%"
                 class="pa-3">
                 <span class="justify-center d-flex text-button font-weight-bold">
@@ -104,7 +105,7 @@
               </v-card>
               <v-divider vertical></v-divider>
               <v-card
-                variant="default"
+                variant="text"
                 width="50%"
                 class="pa-3">
                 <span class="justify-center d-flex text-button font-weight-bold">
@@ -122,7 +123,7 @@
               </v-card>
               <v-divider vertical></v-divider>
               <v-card
-                variant="default"
+                variant="text"
                 width="50%"
                 class="pa-3">
                 <span class="justify-center d-flex text-button font-weight-bold">

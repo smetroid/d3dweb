@@ -168,31 +168,27 @@ function toggleTheme () {
             data-augmented-ui="" >
           -->
             <v-card
-              tile
               outlined
-              class="green"
               width="100%"
-              :color="secondary"
               >
                 <v-card 
-                  tile
+                  color="primary"
                   width="100%" 
                   class="d-flex justify-space-around ">
                   <div class="justify-center">
-                    <span class="text-sm">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
+                    <span class="text-button font-weight-bold">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
                   </div>
                   <div class="justify-center">
-                    <span class="text-sm">OPEN MENU:</span><span class="green--text"> m </span><br/>
+                    <span class="text-button font-weight-bold">OPEN MENU:</span><span class="green--text"> m </span><br/>
                   </div>
                   <div class="justify-center">
-                    <span class="text-sm">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
+                    <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
                   </div>
                   <div class="justify-center">
-                    <span class="text-sm">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
+                    <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
                   </div>
                 </v-card>
-                <v-divider
-                />
+                <v-divider />
                 <D3DFooter
                   :expand="showHelp"
                   :diagramInfo="dagreLib"
