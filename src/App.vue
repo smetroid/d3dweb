@@ -26,15 +26,6 @@ function toggleTheme () {
 <template>
     <v-layout class="rounded rounded-md">
       <!--
-      <v-app-bar title="Application bar"></v-app-bar>
-      <v-navigation-drawer>
-        <v-list>
-          <v-list-item title="Navigation drawer"></v-list-item>
-        </v-list>
-      </v-navigation-drawer>
-      -->
-
-      <!--
       <v-card
         class="mx-auto"
         max-width="500"
@@ -79,10 +70,6 @@ function toggleTheme () {
         </v-card-text>
       </v-card>
     -->
-      <!--
-      <v-app-bar app>
-      </v-app-bar>
-      -->
       <v-main class="align-center justify-center">
             <DagreGraphLib
               :active="active"
@@ -322,9 +309,9 @@ export default {
     //   this.alertMessage = message + common + data
     // })
 
-    //this.$root.$on('showHelp', () => {
-    //  this.showHelp = !this.showHelp
-    //})
+    this.emitter.on('showHelp', () => {
+      this.showHelp = !this.showHelp
+    })
 
     //this.$root.$on('showSettings', () => {
     //  console.log('Show settings form received')
@@ -403,20 +390,6 @@ export default {
       }
 
       var g = new dagreD3.graphlib.json.read(JSON.parse(response.diagram))
-      /** we don't need this, it's handled by the redraw */
-      //console.log('g')
-      //console.log(g)
-      //console.log('g')
-      //g.setDefaultEdgeLabel(function () { return {} })
-
-      //g.nodes().forEach(function (v) {
-      //  var node = g.node(v)
-      //  node.rx = node.ry = 5
-      //})
-
-      //if (D3Util.debug) {
-      //  console.log(g)
-      //}
       /** Setup cookie options */
 
       DagreLib.id = id
@@ -497,17 +470,6 @@ export default {
     menu(event){
       MenuKeys.menuAction(event.key, this)
     },
-    //keyPress(event, ref) {
-    //  if (D3Util.debug) {
-    //    console.log(event)
-    //    console.log(event.key)
-    //    console.log(ref)
-    //    console.log(this)
-    //    console.log(this.$refs)
-    //    console.log(this.$el)
-    //  }
-    //  Keys.activeWindow(event.key, this)
-    //},
      selectionBool (index) {
        console.log(this.menuLinks[index].title)
        this.currentMenuLink = this.menuLinks[index].title
@@ -538,66 +500,30 @@ export default {
      },
   },
   computed: {
-//    selectionBool(){
-//       console.log("selection bool")
-//       return this.selectedMenuLinks
-//     },
-    // selectedMenuLinks(){
-    //   var newVueMenuComponents = this.menuLinks
-    //   var newSelection = this.liSelectionJ(this.vueMenuComponents, this.gNavMenu)
-    //   console.log(newSelection)
-    //   // if (menuList[prevMenu] != null) {
-    //   //   console.log('am I null')
-    //   //   //this.defaultButtonColor = "green"
-    //   //   menuList[prevMenu].color = "green"
-    //   // }
-    //     //this.defaultButtonColor = "orange"
-    //   // menuList[newMenu].color = "orange"
-    //   // this.selectedUrl = menuList[newMenu]
-    //   //return this.selectedUrl
-    //         // this.gNavMenu = newSelection
-    //   //console.log(this.newVueMenuComponents['Login'].color)
-    //   //console.log(this.vueMenuComponents[newSelection].color)
-    //   // newVueMenuComponents[newSelection].color = "orange"
-
-    //   return newVueMenuComponents
-    // }
-//     selectionBool (menuList, prevMenu, newMenu) {
-//       console.log(menuList)
-//       // console.log(liList[prevLi])
-//       if (menuList[prevMenu] != null) {
-//         console.log('am I null')
-//         //this.defaultButtonColor = "green"
-//         menuList[prevMenu].color = "green"
-//       }
-//         //this.defaultButtonColor = "orange"
-//       menuList[newMenu].color = "orange"
-//       this.selectedUrl = menuList[newMenu]
-//     },
   },
-  //watch: {
-  //  active: function () {
-  //    console.log('app.root.activewindow')
-  //  //  console.log(this.activeWindow)
-  //    this.showMenu = this.active === "Menu"?true:false
-  //    if (this.showMenu){
-  //      this.$nextTick(function(){
-  //        console.log('menuTrap active')
-  //        this.menuTrap = this.showMenu
-  //      })
-  //    }
-  //  },
-  //  successMessage: function () {
-  //    setTimeout( ()=> {
-  //      this.successMessage = false
-  //    },5000)
-  //  },
-  //  infoMessage: function () {
-  //    setTimeout( ()=> {
-  //      this.infoMessage = false
-  //    },3000 )
-  //  }
-  //}
+  watch: {
+    active: function () {
+      console.log('app.root.activewindow')
+    //  console.log(this.activeWindow)
+      this.showMenu = this.active === "Menu"?true:false
+      if (this.showMenu){
+        this.$nextTick(function(){
+          console.log('menuTrap active')
+          this.menuTrap = this.showMenu
+        })
+      }
+    },
+    successMessage: function () {
+      setTimeout( ()=> {
+        this.successMessage = false
+      },5000)
+    },
+    infoMessage: function () {
+      setTimeout( ()=> {
+        this.infoMessage = false
+      },3000 )
+    }
+  }
 }
 </script>
 

@@ -36,7 +36,7 @@ export default {
         break
       case '/':
         console.log('show help')
-        this.dagreGraphLib.$root.$emit('showHelp')
+        this.dagreGraphLib.emitter.emit('showHelp')
         break
 
       default:

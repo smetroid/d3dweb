@@ -20,9 +20,12 @@ const vuetify = createVuetify({
 // Focus-trap
 import { FocusTrap } from 'focus-trap-vue'
 
+import mitt from 'mitt'
+const emitter = mitt()
 
 const app = createApp(App)
 app.use(router)
 app.use(vuetify)
 app.component('FocusTrap', FocusTrap)
+app.config.globalProperties.emitter = emitter
 app.mount('#app')
