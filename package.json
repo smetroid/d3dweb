@@ -15,6 +15,7 @@
     "d3": "^7.8.5",
     "dagre-d3": "^0.6.4",
     "focus-trap": "^7.5.4",
+    "focus-trap-vue": "^4.0.3",
     "velocity-animate": "^1.5.2",
     "vue": "^3.4.15",
     "vue-cookies": "^1.8.3",

@@ -6,24 +6,33 @@ import DagreGraphLib from './components/DagreGraphLib.vue'
 import D3Util from './services/D3Util.js'
 import MenuKeys from './helpers/MenuKeys.js'
 import MenuLinks from './helpers/MenuLinks.js'
-//import Settings from './components/Settings.vue'
-//import Helper from '@/components/Helper
-//import Footer from './components/Footer.vue'
+import Settings from './components/Settings.vue'
+import D3DFooter from './components/Helper.vue'
+//import D3DFooter from './components/Footer.vue'
 //import Login from './components/Login.vue'
 //import DiagramList from './components/DiagramList.vue'
 import DagreLib from './helpers/DagreLib.vue'
 import * as dagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
-//import DiagramForm from './components/DiagramForm.vue'
+import DiagramForm from './components/DiagramForm.vue'
+import { useTheme } from 'vuetify'
+
+const theme = useTheme()
+
+function toggleTheme () {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
 </script>
 <template>
     <v-layout class="rounded rounded-md">
+      <!--
       <v-app-bar title="Application bar"></v-app-bar>
       <v-navigation-drawer>
         <v-list>
           <v-list-item title="Navigation drawer"></v-list-item>
         </v-list>
       </v-navigation-drawer>
+      -->
 
       <!--
       <v-card
@@ -70,31 +79,11 @@ import D3VimApi from './services/api/SamusApi.js'
         </v-card-text>
       </v-card>
     -->
-
-        <!--
-      <div id="app">
-        <v-navigation-drawer
-          v-model="drawer"
-          class="blue-grey darken-4">
-          <v-container fluid>
-            <v-row dense no-gutters>
-              <v-col>
-                <div>
-                  <router-view ref="d3Vim" tabindex="-1" name="d3vim"/>
-                </div>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-navigation-drawer>
-      </div>
-        -->
       <!--
       <v-app-bar app>
       </v-app-bar>
       -->
-      <v-main class="d-flex align-center justify-center">
-        <h1>hello</h1>
-            <!--
+      <v-main class="align-center justify-center">
             <DagreGraphLib
               :active="active"
               :dagre-lib="dagreLib"
@@ -103,19 +92,10 @@ import D3VimApi from './services/api/SamusApi.js'
               :active="active"
               :diagramInfo="dagreLib"
             />
-            <Login
-              v-if="active === 'Login'"
-              :active="active"
-            />
             <Settings
               v-if="active === 'Settings'"
               :active="active"
             />
-            <DiagramList
-              v-if="active === 'Open'"
-              :active="active"
-            />
-            -->
             <!--
             <DiagramForm
               v-if="active === 'Save Changes' || active === 'Edit'"
@@ -124,10 +104,105 @@ import D3VimApi from './services/api/SamusApi.js'
             />
             -->
       </v-main>
-      <v-footer class="d-flex flex-column" >
-        <div class="px-4 py-2 bg-black text-center w-100">
-          {{ new Date().getFullYear() }} — <strong>D3D</strong>
-        </div>
+      <!--
+        NOTE: app - in the footer makes the footer to stay at the bottom 
+      -->
+      <v-footer
+        app
+        class="pa-1 mr-0">
+        <v-row class="bg-grey-lighten-1">
+        <!-- Speed Dial not working for vuetify 3
+          <v-card
+            width="99%"
+            height="100%"
+            @keydown.stop.prevent="menu($event, $refs.menu)"
+            @keypress.stop.prevent="menu($event, $refs.menu)">
+            <focus-trap v-model="menuTrap">
+              <div id="trap" tabindex="-1">
+                <v-speed-dial
+                  ref="speedDial"
+                  absolute
+                  right
+                  bottom v-model="showMenu">
+                  <template v-slot:activator>
+                    <div>
+                      <v-card width="57" height="57" class="transparent">
+                        <v-btn
+                          color="green darken-2"
+                          dark
+                          fab
+                          outlined>
+                          <v-icon v-if="showMenu">
+                            mdi-close
+                          </v-icon>
+                          <v-icon v-else>
+                            mdi-menu
+                          </v-icon>
+                        </v-btn>
+                      </v-card>
+                    </div>
+                  </template>
+                  <div>
+                    <v-card elevation="24">
+                      <v-btn
+                        dark
+                        x-small outlined
+                        width="115"
+                        ref="menu"
+                        v-for="item in menuLinks"
+                        :class="currentMenuLink == item.title?'orange--text':'green--text'"
+                        :key="item.title" href="#" @click="d3Action(item.title)">
+                        {{ item.title }}
+                      </v-btn>
+                    </v-card>
+                  </div>
+                </v-speed-dial>
+              </div>
+            </focus-trap>
+          </v-card>
+          -->
+          <!--
+        <div class="pa-0 pitch-mixin" 
+          data-augmented-ui="tl-2-clip-x tr-2-clip-x both">
+          <div class="pa-0 ml-0 mr-0 d-flex justify-space-around pitch-mixin2"
+            data-augmented-ui="" >
+          -->
+            <v-card
+              tile
+              outlined
+              class="green"
+              width="100%"
+              :color="secondary"
+              >
+                <v-card 
+                  tile
+                  width="100%" 
+                  class="d-flex justify-space-around ">
+                  <div class="justify-center">
+                    <span class="text-sm">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
+                  </div>
+                  <div class="justify-center">
+                    <span class="text-sm">OPEN MENU:</span><span class="green--text"> m </span><br/>
+                  </div>
+                  <div class="justify-center">
+                    <span class="text-sm">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
+                  </div>
+                  <div class="justify-center">
+                    <span class="text-sm">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
+                  </div>
+                </v-card>
+                <v-divider
+                />
+                <D3DFooter
+                  :expand="showHelp"
+                  :diagramInfo="dagreLib"
+                />
+            </v-card>
+            <v-col class="text-center w-100" cols="12">
+              {{ new Date().getFullYear() }} — <strong>D3D</strong>
+            </v-col>
+            <v-btn @click="toggleTheme">toggle theme</v-btn>
+          </v-row>
       </v-footer>
     </v-layout>
 </template>
@@ -135,9 +210,7 @@ import D3VimApi from './services/api/SamusApi.js'
 <script>
 export default {
   name: 'App',
-  //components: {DagreGraphLib, Settings, Login, Helper, DiagramList, DiagramForm, D3NodeForm, D3EdgeForm},
-  //components: {DagreGraphLib, Settings, Login, Footer, DiagramList, DiagramForm},
-  components: {DagreGraphLib},
+  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter},
   data () {
     return {
       active: "D3Dagre", //Default active component
@@ -533,9 +606,6 @@ export default {
 </script>
 
 <style scoped>
-#v-application {
-  background-color: transparent;
-}
 
 .primary--text {
   color: red;
