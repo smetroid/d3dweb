@@ -2,10 +2,26 @@
   <div
     @keydown.stop.prevent="keyPress($event, $refs.menu)"
     @keypress.stop.prevent="keyPress($event, $refs.menu)">
-    <focus-trap v-model:active="enableTrap" :escapeDeactivates=false>
-          <svg tabindex="-1">
-            <g/>
-          </svg>
+    <focus-trap 
+
+      v-model="enableTrap" 
+      :delayInitialFocus="true"
+      :escapeDeactivates="false">
+      <div id="trap" ref="trapDiv" tabindex="0" class="trap is-active">
+        <div v-if="diagramInfo">
+          {{ selectedNodes }}
+          {{ selectedEdges }}
+          {{ doubleSelection }}
+          {{ focusedEdgeId }}
+          {{ focusedNodeId }}
+          {{ hints }}
+          {{ focusedIndex }}
+          {{ edgeOrNode }}
+        </div>
+        <svg>
+          <g/>
+        </svg>
+      </div>
     </focus-trap>
     <v-bottom-sheet
       hide-overlay
@@ -56,7 +72,7 @@ export default {
       edgeOrNode: 'nodes',
       response: null,
       focusedIndex: null,
-      enableTrap: true,
+      enableGraphTrap: true,
       gWidth: null,
       gHeight: null,
       svg: null,
@@ -76,22 +92,23 @@ export default {
       escCount: 0
     }
   },
-  // mounted () {
-  //   // this.$root.$on('d3ResetValues', () => {
-  //   //   this.resetValues()
-  //   // })
-  //   // this.$root.$on('setSheetToFalse', () => {
-  //   //   /**
-  //   //    * on emit the page appears to be renndered, automatically getting
-  //   //    * rid of the vuetify openSheet.
-  //   //    * The setTimeout allows for the openSheet animation to close properly
-  //   //    */
-  //   //   this.openSheet = false
-  //   //   setTimeout( ()=> {
-  //   //     this.$root.$emit("changeActive")
-  //   //   }, 300)
-  //   // })
-  // },
+  mounted () {
+    this.emitter.on('d3ResetValues', () => {
+      this.resetValues()
+    })
+
+    this.emitter.on('setSheetToFalse', () => {
+      /**
+       * on emit the page appears to be renndered, automatically getting
+       * rid of the vuetify openSheet.
+       * The setTimeout allows for the openSheet animation to close properly
+       */
+      this.openSheet = false
+      setTimeout( ()=> {
+        this.emitter.emit("changeActive")
+      }, 300)
+    })
+  },
   methods: {
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
@@ -119,10 +136,10 @@ export default {
       }
     },
     keyPress(event) {
-        if (D3Util.debug) {
-          console.log('event')
-					console.log(event)
-        }
+      if (D3Util.debug) {
+        console.log('event')
+        console.log(event)
+      }
       if(Object.keys(this.hints).length > 1){
         Hints.data = this.hints
         Hints.hintKeysReplaced = this.hintKeysReplaced
@@ -289,10 +306,10 @@ export default {
   //    if(this.active == 'D3Dagre' || (edges) || (nodes)){
   //      this.$nextTick(function(){
   //        console.log('d3Dagre Trap active')
-  //        this.enableTrap = true
+  //        this.enableGraphTrap = true
   //      })
   //    } else {
-  //      this.enableTrap = false
+  //      this.enableGraphTrap = false
   //    }
 
   //    if(edges){
@@ -335,7 +352,7 @@ export default {
   //    //} else {
   //    //  this.escCount = this.escCount + 1
   //    //}
-  //    //this.enableTrap = this.active== "D3Dagre"?true:false
+  //    //this.enableGraphTrap = this.active== "D3Dagre"?true:false
   //  },
   //  // edgeOrNode: function (){
   //  //   this.d3NodeEdgeSelection = this.edgeOrNode

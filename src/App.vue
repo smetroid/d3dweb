@@ -207,8 +207,6 @@ export default {
       successMessage: false,
       errorMessage: false,
       infoMessage: false,
-      loginTrap: null,
-      appTrap: false,
       fab: false,
       gNavMenu: null,
       currentMenuLink: null,
