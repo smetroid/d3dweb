@@ -7,10 +7,10 @@
 // import * as dagreD3 from 'dagre-d3-webpack'
 import VueCookies from 'vue-cookies'
 import * as d3 from 'd3'
-import * as Velocity from 'velocity-animate'
+import Velocity from 'velocity-animate'
 import * as dagreD3 from 'dagre-d3'
 // var dagreD3 = require('dagre-d3')
-import D3Util from '@/services/D3Util'
+import D3Util from '../services/D3Util'
 // import graph from '@/services/DagreGraphLib'
 /*these vars are global needed for the click.reset() function*/
 var svg = null
