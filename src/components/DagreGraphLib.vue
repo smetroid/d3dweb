@@ -1,44 +1,47 @@
 <template>
   <div
     @keydown.stop.prevent="keyPress($event, $refs.menu)"
-    @keypress.stop.prevent="keyPress($event, $refs.menu)">
-    <focus-trap 
-
-      v-model="enableTrap" 
-      :delayInitialFocus="true"
-      :escapeDeactivates="false">
-      <div id="trap" ref="trapDiv" tabindex="0" class="trap is-active">
-        <div v-if="diagramInfo">
-          {{ selectedNodes }}
-          {{ selectedEdges }}
-          {{ doubleSelection }}
-          {{ focusedEdgeId }}
-          {{ focusedNodeId }}
-          {{ hints }}
-          {{ focusedIndex }}
-          {{ edgeOrNode }}
-        </div>
-        <svg>
-          <g/>
-        </svg>
-      </div>
-    </focus-trap>
-    <v-bottom-sheet
-      hide-overlay
-      v-model="openSheet">
-      <D3EdgeForm
-        v-if="active === 'Add Edge' || active === 'Edit Edge'"
-        :active="active"
-        :d3Data="d3Data"
-        :DagreLib ="dagreLib"
-      />
-      <D3NodeForm
-        v-if="active === 'Add Node' || active === 'Edit Node'"
-        :active="active"
-        :d3Data="d3Data"
-        :DagreLib ="dagreLib"
-      />
-    </v-bottom-sheet>
+    @keypress.stop.prevent="keyPress($event, $refs.menu)"
+    >
+      <FocusTrap
+        v-model:active="trapGraph"
+        :escapeDeactivates="false"
+        :delayInitialFocus="true"
+        :initial-focus="()=>$refs.svg"
+        ref="graphTrap"
+         >
+          <div id="trap" ref="trapDiv" class="trap is-active" style="border: 3px solid red">
+          <div v-if="diagramInfo">
+            {{ selectedNodes }}
+            {{ selectedEdges }}
+            {{ doubleSelection }}
+            {{ focusedEdgeId }}
+            {{ focusedNodeId }}
+            {{ hints }}
+            {{ focusedIndex }}
+            {{ edgeOrNode }}
+          </div>
+            <svg ref="svg" tabindex="0">
+              <g/>
+            </svg>
+          </div>
+      </FocusTrap>
+      <v-bottom-sheet
+        hide-overlay
+        v-model="openSheet">
+        <D3EdgeForm
+          v-if="active === 'Add Edge' || active === 'Edit Edge'"
+          :active="active"
+          :d3Data="d3Data"
+          :DagreLib ="dagreLib"
+        />
+        <D3NodeForm
+          v-if="active === 'Add Node' || active === 'Edit Node'"
+          :active="active"
+          :d3Data="d3Data"
+          :DagreLib ="dagreLib"
+        />
+      </v-bottom-sheet>
   </div>
 </template>
 <script>
@@ -57,11 +60,9 @@ import DagreOtherKeys from '../helpers/DagreOtherKeys.vue'
 // import Crud from '@/helpers/CRUD'
 
 export default {
-  name: 'DagreGaphLib',
+  name: 'DagreGraphLib',
   props: ['active','dagreLib'],
-  //components: { D3EdgeForm, D3NodeForm, DiagramForm},
   components: {D3NodeForm, D3EdgeForm},
-  //components: {D3EdgeForm},
   data () {
     return {
       // gNavLi: null,
@@ -72,7 +73,7 @@ export default {
       edgeOrNode: 'nodes',
       response: null,
       focusedIndex: null,
-      enableGraphTrap: true,
+      trapGraph: true,
       gWidth: null,
       gHeight: null,
       svg: null,
@@ -306,10 +307,10 @@ export default {
   //    if(this.active == 'D3Dagre' || (edges) || (nodes)){
   //      this.$nextTick(function(){
   //        console.log('d3Dagre Trap active')
-  //        this.enableGraphTrap = true
+  //        this.trapGraph = true
   //      })
   //    } else {
-  //      this.enableGraphTrap = false
+  //      this.trapGraph = false
   //    }
 
   //    if(edges){
@@ -352,7 +353,7 @@ export default {
   //    //} else {
   //    //  this.escCount = this.escCount + 1
   //    //}
-  //    //this.enableGraphTrap = this.active== "D3Dagre"?true:false
+  //    //this.trapGraph = this.active== "D3Dagre"?true:false
   //  },
   //  // edgeOrNode: function (){
   //  //   this.d3NodeEdgeSelection = this.edgeOrNode
