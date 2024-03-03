@@ -8,7 +8,7 @@ import * as d3 from 'd3'
 //import DagreLib from '@/helpers/DagreLib'
 //import D3NodeForm from '@/components/D3NodeForm'
 //import D3Edge from '@/components/D3EdgeForm'
-import * as Velocity from 'velocity-animate'
+import Velocity from 'velocity-animate'
 import VueCookies from 'vue-cookies'
 //import MenuLink from '@/helpers/MenuLinks'
 export default {
