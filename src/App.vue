@@ -410,7 +410,9 @@ export default {
       g.graph().ranksep = '50' 
       g.graph().nodesep = '10'
       g.setDefaultEdgeLabel(function () { return {} })
-      g.setNode(0, {label: 'root'})
+
+      g.setNode('first', {label: 'first node', id: 'first'})
+      g.setNode('second', {label: 'second node', id: 'second'})
       console.log('newDiagram')
       console.log(g)
       console.log('newDiagram')
