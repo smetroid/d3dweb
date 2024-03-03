@@ -9,7 +9,6 @@ import VueCookies from 'vue-cookies'
 import * as d3 from 'd3'
 import Velocity from 'velocity-animate'
 import * as dagreD3 from 'dagre-d3'
-// var dagreD3 = require('dagre-d3')
 import D3Util from '../services/D3Util'
 // import graph from '@/services/DagreGraphLib'
 /*these vars are global needed for the click.reset() function*/
@@ -155,7 +154,7 @@ export default {
       console.log(this.diagram)
     }
 
-    var randomId = D3Util.randomId()
+    let randomId = D3Util.randomId()
     this.diagram.setNode(randomId, { 
     'label': data.nodeLabel, 
     'shape': data.nodeShape, 
@@ -372,22 +371,22 @@ export default {
         console.log(index)
         //console.log(this.diagram.nodes())
       }
-      var id = this.getNodeId(index)
+      let id = this.getNodeId(index)
       /**
        * elem attribute is only found on nodes that are not of type cluster
        */
       //node = d3.select(this.diagram.node(id).elem['firstChild'])
       if(id){
         console.log('#'+id)
-        var node = d3.select('#' + id)
+        let node = d3.select('#'+id)
         console.log(node)
         node = node['_groups'][0][0].firstChild
-        console.log(node)
         return node
 
       }
-    } catch {
+    } catch (error) {
       console.log('no node found')
+      console.error(error)
     }
   },
   getNodeId (index) {
@@ -401,23 +400,23 @@ export default {
      * because it starts at 0 and not 1
      */
     //index = D3Util.mod(index, this.diagram.nodes().length)
-    var nodeId = this.diagram.nodes()[index]
+    let nodeId = this.diagram.nodes()[index]
     return nodeId
   },
   getNodeById (id) {
-    var node = d3.select(this.diagram.node(id).elem['firstChild'])
+    let node = d3.select(this.diagram.node(id).elem['firstChild'])
     return node
   },
   removeSelection (index) {
     // Deselect the previous selection
     // node = d3.select('svg g.node:nth-child('+ (deselect_node + 1) +') rect');
     try {
-      var node = this.getNode(index)
+      let node = this.getNode(index)
       console.log('remove selected')
       console.log(index)
       console.log(node)
       console.log('remove selected')
-      var selection = d3.select(node)
+      let selection = d3.select(node)
       selection.classed('selected', false)
     } catch {
       console.log('no previous selection')
@@ -425,7 +424,7 @@ export default {
   },
   removeNodeSelectionById (id) {
     try {
-      var node = this.getNodeById(id)
+      let node = this.getNodeById(id)
       node.classed('selected', false)
     } catch (error) {
       console.log(error)
@@ -435,13 +434,13 @@ export default {
     if (D3Util.debug) {
       console.log('remove edge selected')
     }
-    var edge = this.getEdge(index)
+    let edge = this.getEdge(index)
     if (edge){
       edge.classed('selected', false)
     }
   },
   removeEdgeSelectionById (id) {
-    var edge = this.getEdgeById(id)
+    let edge = this.getEdgeById(id)
     if (edge){
       edge.classed('selected', false)
     }
@@ -453,23 +452,23 @@ export default {
     if (D3Util.debug){
       console.log(this.diagram.edges())
     }
-      var edge = this.getEdge(index)
+      let edge = this.getEdge(index)
       // Velocity(edge['_groups'][0], { scale: (1.0) }, { duration: 300 })
       // Velocity(edge['_groups'][0], 'reverse', 500)
       if(edge){
         edge.classed('selected', true)
-        var focusedEdgeId = this.getEdgeId(index)
+        let focusedEdgeId = this.getEdgeId(index)
       }
 
       /*We'll grab this data from the edit form*/
-      //var edgeData = this.diagram.edge(this.focusedEdgeId)
+      //let edgeData = this.diagram.edge(this.focusedEdgeId)
     return focusedEdgeId
   },
   /**
    * get edgeId by index selection
    */
   getEdgeId (index) {
-    var edges = this.diagram.edges()
+    let edges = this.diagram.edges()
     if (D3Util.debug) {
       console.log(index)
       console.log(edges.length)
@@ -479,7 +478,7 @@ export default {
     if (edges.length == 0) {
       this.app.$root.$emit('appMessage', 'info', 'No edges found in diagram')
     } else {
-      var edgeId = this.diagram.edges()[index]
+      let edgeId = this.diagram.edges()[index]
     }
 
     return edgeId
@@ -488,12 +487,12 @@ export default {
    * get edge by selected index
    */
   getEdge (index) {
-    var id = this.getEdgeId(index)
+    let id = this.getEdgeId(index)
     if (D3Util.debug){
       console.log(id)
     }
     if(id){
-      var edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
+      let edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
     }
     return edge
   },
@@ -502,7 +501,7 @@ export default {
    */
   getEdgeById (id) {
     try {
-      var edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
+      let edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
       
     } catch (error) {
       console.log(error)
@@ -515,7 +514,7 @@ export default {
   return: d3 diagram node data
    */
   getNodeData (id) {
-    var nodeData = this.diagram.node(id)
+    let nodeData = this.diagram.node(id)
     nodeData.id = id
     // this.$root.$emit('d3NodeData', nodeData, id)
     return nodeData
@@ -526,7 +525,7 @@ export default {
   returns: d3 diagram edge data
    */
   getEdgeData (id) {
-    var edgeData = this.diagram.edge(id)
+    let edgeData = this.diagram.edge(id)
     edgeData.id = id
 
     if (D3Util.debug) {
@@ -541,10 +540,10 @@ export default {
 
     // Get the edge line type
     /*render edges based on the d3Line selected*/
-    var d3Lines = VueCookies.get('edgeLine'+this.id)
+    let d3Lines = VueCookies.get('edgeLine'+this.id)
     try{
       g.edges().forEach(function (v) {
-        var edge = g.edge(v)
+        let edge = g.edge(v)
         switch (d3Lines){
           case 'curveBasis':
             edge.curve = d3.curveBasis
@@ -570,7 +569,7 @@ export default {
     }
 
     g.nodes().forEach(function (v) {
-      var node = g.node(v)
+      let node = g.node(v)
       node.rx = node.ry = 5
     })
 
@@ -628,8 +627,8 @@ export default {
 
     /*at every redraw save changes to localStorage*/
     this.json = new dagreD3.graphlib.json.write(g)
-    var created = new Date()
-    var updatedData = {
+    let created = new Date()
+    let updatedData = {
       'updatedTime': created.toISOString(),
       'id': this.id,
       'name': this.name,
@@ -645,7 +644,7 @@ export default {
     // console.log(gWidth)
     // console.log(gHeight)
     // console.log(initialScale)
-    // var initialScale = .96
+    // let initialScale = .96
     svg.transition().duration(750).call(
       zoom.transform,
       //d3.zoomIdentity,
