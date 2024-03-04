@@ -9,15 +9,14 @@
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
         <focus-trap v-model:action="enableTrap">
-          <div tabindex="" class="trap is-active">
-            <v-card-title class="">
-              <v-row justify="center">
+            <v-card-title class="bg-blue">
+              <v-row class="pa-2" justify="center">
                 <b v-if="update">Update Node</b>
                 <b v-else>Add Node</b>
               </v-row>
             </v-card-title>
-            <v-card-text>
-              <v-container>
+            <v-card-text class="pb-0">
+              <v-container class="pb-0">
                 <v-row
                 >
                   <v-col 
@@ -111,38 +110,43 @@
                     </v-text-field>
                   </v-col>
                 </v-row>
+                <v-row
+                  class="pa-2 mt-n8"
+                >
+                  <v-col 
+                    cols="5"
+                    class="d-flex justify-space-around"
+                    >
+                    <v-btn 
+                      v-if="update" 
+                      variant="outlined"
+                      color="green"
+                      class="d-flex" 
+                      @click="updateNode()" 
+                      @keypress.stop="">
+                      Update Node
+                      </v-btn>
+                    <v-btn 
+                      v-else 
+                      variant="outlined"
+                      class="d-flex" 
+                      @click="addNode()" 
+                      type="submit"
+                      color="success"
+                      @keypress.stop="">
+                      Add Node
+                    </v-btn>
+                    <v-btn 
+                      variant="outlined"
+                      type="submit"
+                      color="error"
+                      class="" 
+                      @click="close()" 
+                      @keypress.stop="">Cancel</v-btn>
+                  </v-col>
+                </v-row>
               </v-container>
             </v-card-text>
-            <v-card-actions class="pa-1">
-              <v-btn 
-                v-if="update" 
-                variant="outlined"
-                type="submit"
-                color="primary"
-                class="d-flex ma-1" 
-                @click="updateNode()" 
-                @keypress.stop="">
-                Update Node (Alt/Meta + u)
-                </v-btn>
-              <v-btn 
-                v-else 
-                variant="outlined"
-                class="d-flex ma-1" 
-                @click="addNode()" 
-                type="submit"
-                color="success"
-                @keypress.stop="">
-                Add Node
-              </v-btn>
-              <v-btn 
-                variant="outlined"
-                type="submit"
-                color="error"
-                class="d-flex ma-1" 
-                @click="close()" 
-                @keypress.stop="">Cancel (Ctrl + c)</v-btn>
-            </v-card-actions>
-          </div>
         </focus-trap>
       </v-card>
   </div>
