@@ -98,82 +98,59 @@ function toggleTheme () {
         app
         class="pa-1 mr-0">
         <v-row>
-        <!-- Speed Dial not working for vuetify 3
           <v-card
-            width="99%"
-            height="100%"
-            @keydown.stop.prevent="menu($event, $refs.menu)"
-            @keypress.stop.prevent="menu($event, $refs.menu)">
-            <focus-trap v-model="menuTrap">
-              <div id="trap" tabindex="-1">
-                <v-speed-dial
-                  ref="speedDial"
-                  absolute
-                  right
-                  bottom v-model="showMenu">
-                  <template v-slot:activator>
-                    <div>
-                      <v-card width="57" height="57" class="transparent">
-                        <v-btn
-                          color="green darken-2"
-                          dark
-                          fab
-                          outlined>
-                          <v-icon v-if="showMenu">
-                            mdi-close
-                          </v-icon>
-                          <v-icon v-else>
-                            mdi-menu
-                          </v-icon>
-                        </v-btn>
-                      </v-card>
+            color="primary"
+            width="100%" 
+            >
+            <v-container>
+              <v-row
+                align="center"
+                justify="center"
+                class="d-flex justify-space-around"
+                >
+                <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span><br/>
+                <span class="text-button font-weight-bold">OPEN MENU:</span><span class=""> m </span><br/>
+                <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
+                <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class=""> / </span><br/>
+                <v-btn
+                  variant="outlined"
+                  density="compact"
+                  @click="toggleTheme">
+                  <v-icon icon="mdi-theme-light-dark"></v-icon>
+                </v-btn>
+                <div
+                  width="99%"
+                  height="100%"
+                  @keydown.stop.prevent="menu($event, $refs.menu)"
+                  @keypress.stop.prevent="menu($event, $refs.menu)">
+                  <focus-trap v-model="menuTrap">
+                    <div id="trap" tabindex="-1">
+                      <v-menu
+                        ref="speedDial"
+                        right
+                        bottom v-model="showMenu">
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            density="compact"
+                            v-bind="props"
+                            variant="outlined">
+                            <v-icon>
+                              mdi-menu
+                            </v-icon>
+                          </v-btn>
+                        </template>
+                          <v-list>
+                            <v-list-item
+                              ref="menu"
+                              v-for="(item, i) in menuLinks"
+                              :key="i" href="#" @click="d3Action(item.title)">
+                              <v-list-item-title>{{ item.title }}</v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                      </v-menu>
                     </div>
-                  </template>
-                  <div>
-                    <v-card elevation="24">
-                      <v-btn
-                        dark
-                        x-small outlined
-                        width="115"
-                        ref="menu"
-                        v-for="item in menuLinks"
-                        :class="currentMenuLink == item.title?'orange--text':'green--text'"
-                        :key="item.title" href="#" @click="d3Action(item.title)">
-                        {{ item.title }}
-                      </v-btn>
-                    </v-card>
-                  </div>
-                </v-speed-dial>
-              </div>
-            </focus-trap>
-          </v-card>
-          -->
-          <!--
-        <div class="pa-0 pitch-mixin" 
-          data-augmented-ui="tl-2-clip-x tr-2-clip-x both">
-          <div class="pa-0 ml-0 mr-0 d-flex justify-space-around pitch-mixin2"
-            data-augmented-ui="" >
-          -->
-                <v-card
-                  color="primary"
-                  width="100%" 
-                  >
-                  <v-container>
-                    <v-row
-                      align="center"
-                      justify="center"
-                      class="d-flex justify-space-around"
-                      >
-                      <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span><br/>
-                      <span class="text-button font-weight-bold">OPEN MENU:</span><span class=""> m </span><br/>
-                      <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
-                      <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class=""> / </span><br/>
-                      <v-btn
-                        variant="outlined"
-                        density="compact"
-                        @click="toggleTheme">
-                        <v-icon icon="mdi-theme-light-dark"></v-icon>
-                      </v-btn>
+                  </focus-trap>
+                </div>
                   </v-row>
                   <v-row>
                     <v-card
