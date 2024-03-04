@@ -12,7 +12,7 @@ import D3DFooter from './components/Helper.vue'
 //import Login from './components/Login.vue'
 //import DiagramList from './components/DiagramList.vue'
 import DagreLib from './helpers/DagreLib.vue'
-import * as dagreD3 from 'dagre-d3'
+import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
 import { useTheme } from 'vuetify'
@@ -97,7 +97,7 @@ function toggleTheme () {
       <v-footer
         app
         class="pa-1 mr-0">
-        <v-row class="bg-grey-lighten-1">
+        <v-row>
         <!-- Speed Dial not working for vuetify 3
           <v-card
             width="99%"
@@ -154,37 +154,42 @@ function toggleTheme () {
           <div class="pa-0 ml-0 mr-0 d-flex justify-space-around pitch-mixin2"
             data-augmented-ui="" >
           -->
-            <v-card
-              outlined
-              width="100%"
-              >
-                <v-card 
+                <v-card
                   color="primary"
                   width="100%" 
-                  class="d-flex justify-space-around ">
-                  <div class="justify-center">
-                    <span class="text-button font-weight-bold">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-button font-weight-bold">OPEN MENU:</span><span class="green--text"> m </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
-                  </div>
+                  >
+                  <v-container>
+                    <v-row
+                      align="center"
+                      justify="center"
+                      class="d-flex justify-space-around"
+                      >
+                      <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span><br/>
+                      <span class="text-button font-weight-bold">OPEN MENU:</span><span class=""> m </span><br/>
+                      <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
+                      <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class=""> / </span><br/>
+                      <v-btn
+                        variant="outlined"
+                        density="compact"
+                        @click="toggleTheme">
+                        <v-icon icon="mdi-theme-light-dark"></v-icon>
+                      </v-btn>
+                  </v-row>
+                  <v-row>
+                    <v-card>
+                      <D3DFooter
+                        :expand="showHelp"
+                        :diagramInfo="dagreLib"
+                      />
+                    </v-card>
+                  </v-row>
+                  <v-row>
+                    <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
+                        {{ new Date().getFullYear() }} — <strong>D3D</strong>
+                    </v-col>
+                  </v-row>
+                </v-container>
                 </v-card>
-                <v-divider />
-                <D3DFooter
-                  :expand="showHelp"
-                  :diagramInfo="dagreLib"
-                />
-            </v-card>
-            <v-col class="text-center w-100" cols="12">
-              {{ new Date().getFullYear() }} — <strong>D3D</strong>
-            </v-col>
-            <v-btn @click="toggleTheme">toggle theme</v-btn>
           </v-row>
       </v-footer>
     </v-layout>
@@ -245,7 +250,7 @@ export default {
       // if (D3Util.debug) {
       //   console.log(localDiagramInfo.diagram)
       // }
-      // var g = new dagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      // var g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
       // if(localDiagramInfo.id && D3Util.auth === false){
       //   var message = 'id found, please login to save changes to <br />'
       //   message = message + 'server or replace local changes from server by selecting <br />'
@@ -331,22 +336,22 @@ export default {
     //  }
     //})
 
-    // this.$root.$on('changeActive', (menu) => {
-    //   if (D3Util.debug) {
-    //     console.log(menu)
-    //   }
-    //   if (menu === undefined){
-    //     this.active = 'D3Dagre'
-    //   } else {
-    //     this.active = menu
-    //     //this.showMenu = true
-    //     //  this.$nextTick(function(){
-    //     //    console.log('next tick')
-    //     //    this.menuTrap = true
-    //     //    console.log(this.menuTrap)
-    //     //  })
-    //   }
-    // })
+    this.emitter.on('changeActive', (menu) => {
+      if (D3Util.debug) {
+        console.log(menu)
+      }
+      if (menu === undefined){
+        this.active = 'D3Dagre'
+      } else {
+        this.active = menu
+        //this.showMenu = true
+        //  this.$nextTick(function(){
+        //    console.log('next tick')
+        //    this.menuTrap = true
+        //    console.log(this.menuTrap)
+        //  })
+      }
+    })
 
     // this.$root.$on('updateHelperDiagramInfo', (name, description, id) => {
     //   console.log('diagramInfo')
@@ -387,7 +392,7 @@ export default {
         console.log(response)
       }
 
-      var g = new dagreD3.graphlib.json.read(JSON.parse(response.diagram))
+      var g = new DagreD3.graphlib.json.read(JSON.parse(response.diagram))
       /** Setup cookie options */
 
       DagreLib.id = id
@@ -404,7 +409,7 @@ export default {
        * maybe reference the DiagramForm, since it contains defaults
        */
       console.log('creating a new localDiagram')
-      var g = new dagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
+      var g = new DagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
       g.setGraph({})
       g.graph().rankdir = 'TB'
       g.graph().ranksep = '50' 
