@@ -1,17 +1,14 @@
 <template>
   <div id="iform">
-      <!--
-    <v-dialog v-model="nodeModal" max-width="500">
-        While refactoring d3Dagre v-if and the trap does not work
-      <v-card class="mx-auto" max-width="560" v-if="showForm">
-      -->
-      <v-card ref="formfields" class="mx-auto"
+      <v-card
+        class="text-primary"
+        ref="formfields" 
         @keyup.alt.u="updateNode()"
         @keyup.meta.u="updateNode()"
         @keyup.ctrl.c="close()"
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
-        <focus-trap v-model="enableTrap">
+        <focus-trap v-model:action="enableTrap">
           <div tabindex="" class="trap is-active">
             <v-card-title class="">
               <v-row justify="center">
@@ -19,47 +16,38 @@
                 <b v-else>Add Node</b>
               </v-row>
             </v-card-title>
-            <v-card-text class="blue-grey darken-4">
-              <v-container fluid>
+            <v-card-text>
+              <v-container>
                 <v-row
                 >
                   <v-col 
                     >
                     <v-select
                       v-model="nodeLabelType"
-                      color="green"
-                      outlined
                       :items="nodeLabelTypeOptions"
-                      item-text="value"
+                      item-title="value"
                       item-value="key"
                       label="Node Label Type"
-                      dense
                     ></v-select>
                   </v-col>
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="nodeShape"
                       :items="nodeShapes"
                       label="Node Shape"
                       item-value="value"
-                      item-text="label"
-                      dense
+                      item-title="label"
                     ></v-select>
                   </v-col>
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="clusterLabelPos"
                       :items="clusterLabelPosOptions"
                       label="Cluster Label Position"
                       item-value="value"
-                      item-text="label"
-                      dense
+                      item-title="label"
                       hint="optional"
                       clearable
                     ></v-select>
@@ -67,14 +55,11 @@
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="parentNode"
                       :items="parentOptions"
                       item-value="key"
                       item-text="value"
                       auto-select-first
-                      dense
                       label="Parent"
                       hint="optional"
                       clearable
@@ -88,12 +73,9 @@
                   <v-col 
                     cols="6"
                     >
-                    <div samus="samus" >
                     <v-textarea
-                      outlined
                       tabindex="0"
-                      color="green"
-                      class="mb-n11"
+                      class=""
                       label="Node Label"
                       v-model="nodeLabel"
                       placeholder="Add a node label ... if label contains HTML then Label Type must be Html"
@@ -101,11 +83,9 @@
                       @keyup.alt.shift.w="nodeLabel=''"
                       @keyup.meta.shift.w="nodeLabel=''"
                       ref="nodeLabelTextField"
-                      dense
                       clearable
                       rows="5"
                       />
-                    </div>
                       <!--
                         *Leaving here for reference 
                     <v-textarea v-if="update" dense outline v-model="nodeLabel"
@@ -121,14 +101,11 @@
                     cols="6"
                     >
                     <v-text-field 
-                      color="green"
-                      outlined
                       v-model="style"
                       placeholder="fill: #d3d7e8"
                       label="Node Style"
                       hint="optional"
                       @keypress.stop=""
-                      dense
                       clearable
                       >
                     </v-text-field>
@@ -139,38 +116,35 @@
             <v-card-actions class="pa-1">
               <v-btn 
                 v-if="update" 
+                variant="outlined"
+                type="submit"
+                color="primary"
                 class="d-flex ma-1" 
-                outlined 
-                color="blue"
-                x-small
                 @click="updateNode()" 
                 @keypress.stop="">
                 Update Node (Alt/Meta + u)
                 </v-btn>
               <v-btn 
                 v-else 
-                dense 
+                variant="outlined"
                 class="d-flex ma-1" 
-                outlined 
-                color="green"
-                x-small
                 @click="addNode()" 
-                @keypress.stop="">Add Node</v-btn>
+                type="submit"
+                color="success"
+                @keypress.stop="">
+                Add Node
+              </v-btn>
               <v-btn 
+                variant="outlined"
+                type="submit"
+                color="error"
                 class="d-flex ma-1" 
-                x-small
-                dense 
-                outlined 
-                color="red"
                 @click="close()" 
                 @keypress.stop="">Cancel (Ctrl + c)</v-btn>
             </v-card-actions>
           </div>
         </focus-trap>
       </v-card>
-      <!--
-    </v-dialog>
-    -->
   </div>
 </template>
 
@@ -277,7 +251,7 @@ export default {
  //      this.viewNode(nodeAction)
  //    })
 
-    this.$root.$on('d3NodeData', (data, nodeId) => {
+    this.emitter.on('d3NodeData', (data, nodeId) => {
       console.log('Message Received from D3Dagre')
       if (D3Util.debug) {
         console.log(data)
@@ -286,7 +260,7 @@ export default {
       this.nodeId = nodeId
     })
 
-    this.$root.$on('editNode', () => {
+    this.emitter.on('editNode', () => {
       this.editNode()
     })
   },
@@ -375,7 +349,7 @@ export default {
       /**
        * Close the parents sheet
        */
-      this.$root.$emit('setSheetToFalse')
+      this.emitter.emit('setSheetToFalse')
       //this.$root.$emit("changeActive")
       //this.$root.$emit('d3DagreActivate')
     }
@@ -437,6 +411,7 @@ a {
 /*
 leaving here for reference
 */
+/*
 ::v-deep .v-textarea textarea {
   color: red;
   height: auto;
@@ -444,6 +419,7 @@ leaving here for reference
   margin: 0px 10px 7px 0px;
   padding-top: 6px;
 }
+*/
 
 .hints{
   border: 1px solid magenta;
