@@ -29,18 +29,18 @@
       <v-bottom-sheet
         hide-overlay
         v-model="openSheet">
-        <D3EdgeForm
-          v-if="active === 'Add Edge' || active === 'Edit Edge'"
-          :active="active"
-          :d3Data="d3Data"
-          :DagreLib ="dagreLib"
-        />
-        <D3NodeForm
-          v-if="active === 'Add Node' || active === 'Edit Node'"
-          :active="active"
-          :d3Data="d3Data"
-          :DagreLib ="dagreLib"
-        />
+          <D3EdgeForm
+            v-if="active === 'Add Edge' || active === 'Edit Edge'"
+            :active="active"
+            :d3Data="d3Data"
+            :DagreLib ="dagreLib"
+          />
+          <D3NodeForm
+            v-if="active === 'Add Node' || active === 'Edit Node'"
+            :active="active"
+            :d3Data="d3Data"
+            :DagreLib ="dagreLib"
+          />
       </v-bottom-sheet>
   </div>
 </template>
@@ -126,14 +126,14 @@ export default {
         /* We want to control the from using the active parent varible*/
         //this.showEdgeForm = true
         this.d3Data = DagreLib.getEdgeData(data)
-        this.$root.$emit('changeActive', 'Edit Edge')
+        this.emitter.emit('changeActive', 'Edit Edge')
       } else {
         console.log('v')
         /* We want to control the from using the active parent variable*/
         //this.showNodeForm = true
         this.d3Data = DagreLib.getNodeData(data)
         console.log(this.d3Data)
-        this.$root.$emit('changeActive', 'Edit Node')
+        this.emitter.emit('changeActive', 'Edit Node')
       }
     },
     keyPress(event) {
@@ -199,7 +199,7 @@ export default {
               if (status){
                 this.focusedNodeId = null
               } else {
-                this.$root.$emit('appMessage', 'info', 'Unable to delete node')
+                this.emitter.emit('appMessage', 'info', 'Unable to delete node')
               }
             } else {
               status = this.dagreLib.deleteEdge(this.focusedEdgeId)
@@ -207,7 +207,7 @@ export default {
               if (status){
                 this.focusedEdgeId = null
               } else {
-                this.$root.$emit('appMessage', 'info', 'Unable to delete edge')
+                this.emitter.emit('appMessage', 'info', 'Unable to delete edge')
               }
             }
           } else if(event.key == 'f') {
@@ -215,6 +215,10 @@ export default {
             console.log(this.hints)
           } else if (event.key == 'Enter') {
             this.selectedNodes = result.selectedNodes
+            /**!SECTION
+             * how to fix this unexpected mutation?
+             * there is probably a better way to do this!
+             */
             this.dagreLib.selectedNodes = result.selectedNodes
             this.dagreLib.doubleSelection = result.doubleSelection
             this.doubleSelection = result.doubleSelection
@@ -288,85 +292,85 @@ export default {
       this.focusedEdgeId = null
       this.focusedNodeId = null
       this.escCount = 0
-      //this.$root.$emit()
+      //this.emitter.emit()
       this.dagreLib.redraw(this.dagreLib.diagram)
-      this.$root.$emit("changeActive")
+      this.emitter.emit("changeActive")
     }
   },
-  //watch: {
-  //  dagrelib: function () {
-  //    console.log('dagreLib watch')
-  //    console.log(this.dagreLib)
-  //  },
-  //  active: function () {
-  //    console.log('DagreGraphLib')
-  //    var nodes = this.active == 'Select Node'?true:false
-  //    var edges = this.active == 'Select Edges'?true:false
-  //    console.log(nodes)
-  //    console.log(edges)
-  //    if(this.active == 'D3Dagre' || (edges) || (nodes)){
-  //      this.$nextTick(function(){
-  //        console.log('d3Dagre Trap active')
-  //        this.trapGraph = true
-  //      })
-  //    } else {
-  //      this.trapGraph = false
-  //    }
+  watch: {
+    dagrelib: function () {
+      console.log('dagreLib watch')
+      console.log(this.dagreLib)
+    },
+    active: function () {
+      console.log('DagreGraphLib')
+      var nodes = this.active == 'Select Node'?true:false
+      var edges = this.active == 'Select Edges'?true:false
+      console.log(nodes)
+      console.log(edges)
+      if(this.active == 'D3Dagre' || (edges) || (nodes)){
+        this.$nextTick(function(){
+          console.log('d3Dagre Trap active')
+          this.trapGraph = true
+        })
+      } else {
+        this.trapGraph = false
+      }
 
-  //    if(edges){
-  //      this.edgeOrNode = "edges"
-  //    } else if(nodes){
-  //      this.edgeOrNode = "nodes"
-  //    } else {
-  //      console.log('no edges or nodes')
-  //    }
+      if(edges){
+        this.edgeOrNode = "edges"
+      } else if(nodes){
+        this.edgeOrNode = "nodes"
+      } else {
+        console.log('no edges or nodes')
+      }
 
-  //    if (this.active == 'Delete Node'){
-  //      DagreLib.deleteNodes(this.selectedNodes)
-  //    } else if (this.active == 'Delete Edge'){
-  //      this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
-  //    }
+      if (this.active == 'Delete Node'){
+        DagreLib.deleteNodes(this.selectedNodes)
+      } else if (this.active == 'Delete Edge'){
+        this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
+      }
 
-  //    if ((this.active == 'Add Node') ||
-  //        (this.active == 'Add Edge') ||
-  //        (this.active == 'New') ||
-  //        (this.active == 'Edit Node') ||
-  //        (this.active == 'Edit Edge')) {
-  //      this.openSheet = true
-  //    } else if (this.active == 'Save Changes') {
-  //      //this.openSheet = true
-  //      if (D3Util.auth() && this.id) {
-  //        console.log('save changes DagreGraphLib')
-  //        this.openSheet = true
-  //      }
-  //    } else {
-  //      console.log('DagreGraphLib watch end')
-  //    }
+      if ((this.active == 'Add Node') ||
+          (this.active == 'Add Edge') ||
+          (this.active == 'New') ||
+          (this.active == 'Edit Node') ||
+          (this.active == 'Edit Edge')) {
+        this.openSheet = true
+      } else if (this.active == 'Save Changes') {
+        //this.openSheet = true
+        if (D3Util.auth() && this.id) {
+          console.log('save changes DagreGraphLib')
+          this.openSheet = true
+        }
+      } else {
+        console.log('DagreGraphLib watch end')
+      }
 
-  //    //if ( this.escCount === 3 ) {
-  //    //  this.selectedNodes = []
-  //    //  this.selectedEdges = []
-  //    //  this.focusedIndex =  null
-  //    //  this.focusedEdgeId = null
-  //    //  this.focusedNodeId = null
-  //    //  this.escCount = 0
-  //    //} else {
-  //    //  this.escCount = this.escCount + 1
-  //    //}
-  //    //this.trapGraph = this.active== "D3Dagre"?true:false
-  //  },
-  //  // edgeOrNode: function (){
-  //  //   this.d3NodeEdgeSelection = this.edgeOrNode
-  //  // },
-  //  // response: function(){
-  //  //   console.log('response updated')
-  //  //   console.log(this.response)
-  //  //   this.diagram = this.response.diagram
-  //  //   this.description = this.response.data.description
-  //  //   this.name = this.response.data.name
-  //  //   console.log(this.name)
-  //  // }
-  //}
+      if ( this.escCount === 3 ) {
+        this.selectedNodes = []
+        this.selectedEdges = []
+        this.focusedIndex =  null
+        this.focusedEdgeId = null
+        this.focusedNodeId = null
+        this.escCount = 0
+      } else {
+        this.escCount = this.escCount + 1
+      }
+      this.trapGraph = this.active== "D3Dagre"?true:false
+    },
+    edgeOrNode: function (){
+      this.d3NodeEdgeSelection = this.edgeOrNode
+    },
+    response: function(){
+      console.log('response updated')
+      console.log(this.response)
+      this.diagram = this.response.diagram
+      this.description = this.response.data.description
+      this.name = this.response.data.name
+      console.log(this.name)
+    }
+  }
 }
 </script>
 
