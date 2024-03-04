@@ -176,7 +176,9 @@ function toggleTheme () {
                       </v-btn>
                   </v-row>
                   <v-row>
-                    <v-card>
+                    <v-card
+                      width="100%"
+                    >
                       <D3DFooter
                         :expand="showHelp"
                         :diagramInfo="dagreLib"
