@@ -32,7 +32,7 @@ export default {
     switch (eventKey){
       case 'm':
         console.log('open menu')
-        this.dagreGraphLib.$root.$emit('changeActive', "Menu")
+        this.dagreGraphLib.emitter.emit('changeActive', "Menu")
         break
       case '/':
         console.log('show help')
@@ -308,7 +308,7 @@ export default {
       this.activeEdgeId = this.getEdgeId(index)
       var edgeData = this.g.edge(this.focusedEdgeId)
       console.log(edgeData)
-      this.$root.$emit('edgesD3Data', edgeData, this.activeEdgeId)
+      this.emitter.emit('edgesD3Data', edgeData, this.activeEdgeId)
     } else {
       edge.classed('active_edge', false)
       this.selectedEdges = this.dagreLib.arrayRemove(this.selectedEdges, index)
