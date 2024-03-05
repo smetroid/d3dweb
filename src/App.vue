@@ -191,8 +191,8 @@ function toggleTheme () {
                   <div
                     width="99%"
                     height="100%"
-                    @keydown.stop.prevent="menu($event, $refs.menu)"
-                    @keypress.stop.prevent="menu($event, $refs.menu)">
+                    @keydown.stop.prevent="menu($event, $refs.actionsMenu)"
+                    @keypress.stop.prevent="menu($event, $refs.actionsMenu)">
                     <focus-trap 
                       v-model:active="showActionsMenu"
                       :initial-focus="()=>$refs.menuActionsDiv"
@@ -544,8 +544,15 @@ export default {
       }
       return selectLi
     },
-    menu(event){
-      MenuKeys.menuAction(event.key, this)
+    menu(event, from ){
+      console.log(from)
+
+      if (from === 'Menu'){
+        MenuKeys.menuAction(event.key, this.menuLinks)
+      } else {
+        MenuKeys.menuAction(event.key, this.actionLinks)
+      }
+
     },
      selectionBool (index) {
        console.log(this.menuLinks[index].title)
