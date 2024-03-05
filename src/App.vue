@@ -106,50 +106,84 @@ function toggleTheme () {
               <v-row
                 align="center"
                 justify="center"
-                class="d-flex justify-space-around"
+                class="justify-space-around"
                 >
-                <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span><br/>
-                <span class="text-button font-weight-bold">OPEN MENU:</span><span class=""> m </span><br/>
-                <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
-                <span class="text-button font-weight-bold">SHOW HELP PANE:</span><span class=""> / </span><br/>
-                <v-btn
-                  variant="outlined"
-                  density="compact"
-                  @click="toggleTheme">
-                  <v-icon icon="mdi-theme-light-dark"></v-icon>
-                </v-btn>
-                <div
-                  width="99%"
-                  height="100%"
-                  @keydown.stop.prevent="menu($event, $refs.menu)"
-                  @keypress.stop.prevent="menu($event, $refs.menu)">
-                  <focus-trap v-model="menuTrap">
-                    <div id="trap" tabindex="-1">
-                      <v-menu
-                        ref="speedDial"
-                        right
-                        bottom v-model="showMenu">
-                        <template v-slot:activator="{ props }">
-                          <v-btn
-                            density="compact"
-                            v-bind="props"
-                            variant="outlined">
-                            <v-icon>
+                <div>
+                  <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span>
+                </div>
+                <div>
+                  <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
+                </div>
+                <div class="d-flex">
+                  <span class="font-weight-bold">Help Pane:</span>
+                  <v-btn 
+                    variant="outlined"
+                    density="compact"
+                    class="">/</v-btn>
+                </div>
+                <div class="d-flex">
+                  <span class="text-decoration-underline font-weight-bold">T</span><span class="font-weight-bold">oggle:</span>
+                  <v-btn
+                    variant="outlined"
+                    density="compact"
+                    @click="toggleTheme">
+                    <v-icon icon="mdi-theme-light-dark"></v-icon>
+                  </v-btn>
+                </div>
+                <div class="d-flex">
+                  <span class="text-decoration-underline font-weight-bold" color="secondary">M</span>
+                  <span class="font-weight-bold">enu:</span>
+                  <div
+                    width="99%"
+                    height="100%"
+                    @keydown.stop.prevent="menu($event, $refs.menu)"
+                    @keypress.stop.prevent="menu($event, $refs.menu)">
+                    <focus-trap 
+                      v-model:active="showMenu"
+                      :initial-focus="()=>$refs.menuDiv"
+                      >
+                      <div id="trap" ref="menuDiv" tabindex="0">
+                        <v-menu
+                          ref="speedDial"
+                          v-model="showMenu"
+                          >
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              density="compact"
+                              v-bind="props"
+                              variant="outlined">
+                            <v-icon v-if="showMenu">
+                              mdi-close
+                            </v-icon>
+                            <v-icon v-else>
                               mdi-menu
                             </v-icon>
-                          </v-btn>
-                        </template>
-                          <v-list>
+                            </v-btn>
+                          </template>
+                          <v-list
+                            nav
+                            density="compact"
+                            class="text-primary"
+                          >
                             <v-list-item
                               ref="menu"
+                              color="secondary"
                               v-for="(item, i) in menuLinks"
-                              :key="i" href="#" @click="d3Action(item.title)">
-                              <v-list-item-title>{{ item.title }}</v-list-item-title>
+                              :active="currentMenuLink == item.title?true:false"
+                              :key="i" href="#" @click="d3Action(item.title)"
+                              >
+                              <template v-slot:prepend>
+                                <v-icon :icon="item.icon"></v-icon>
+                              </template>
+                              <v-list-item-title >
+                                {{ item.title }}
+                              </v-list-item-title>
                             </v-list-item>
                           </v-list>
-                      </v-menu>
-                    </div>
+                        </v-menu>
+                      </div>
                   </focus-trap>
+                </div>
                 </div>
                   </v-row>
                   <v-row>
@@ -162,11 +196,13 @@ function toggleTheme () {
                       />
                     </v-card>
                   </v-row>
+                  <!--
                   <v-row>
                     <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
                         {{ new Date().getFullYear() }} — <strong>D3D</strong>
                     </v-col>
                   </v-row>
+                  -->
                 </v-container>
                 </v-card>
           </v-row>
@@ -181,7 +217,6 @@ export default {
   data () {
     return {
       active: "D3Dagre", //Default active component
-      menuTrap: false,
       showMenu: false,
       showHelp: true,
       showDiagramForm: false,
@@ -198,21 +233,22 @@ export default {
       response: 'loading',
       loaded: false,
       menuLinks: [
-        {"icon":"","title":"Login"},
-        {"icon":"","title":"Settings"},
-        {"icon":"","title":"New"},
-        {"icon":"","title":"Open"},
-        {"icon":"","title":"Edit"},
-        {"icon":"","title":"Save Changes"},
-        {"icon":"","title":"Discard Changes"},
-        {"icon":"","title":"Add Node"},
-        {"icon":"","title":"Edit Node"},
-        {"icon":"","title":"Delete Node"},
-        {"icon":"","title":"Select Node"},
-        {"icon":"","title":"Add Edge"},
-        {"icon":"mdi-edit","title":"Edit Edge"},
-        {"icon":"","title":"Delete Edge"},
-        {"icon":"","title":"Select Edges"}],
+        {'icon':'mdi-login','title':'Login'},
+        {'icon':'mdi-cog-outline','title':'Settings'},
+        {'icon':'mdi-open-in-new','title':'New'},
+        {'icon':'mdi-open-in-app','title':'Open'},
+        {'icon':'mdi-pencil','title':'Edit'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes'},
+        {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
+        {'icon':'mdi-shape-square-plus','title':'Add Node'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Node'},
+        {'icon':'mdi-selection-ellipse-remove','title':'Delete Node'},
+        {'icon':'mdi-selection','title':'Select Node'},
+        {'icon':'mdi-shape-oval-plus','title':'Add Edge'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Edge'},
+        {'icon':'mdi-selection-remove','title':'Delete Edge'},
+        {'icon':'mdi-selection','title':'Select Edges'}
+      ],
       dagreLib: {
         name: 'test',
         description: 'test',

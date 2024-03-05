@@ -109,7 +109,7 @@
                 width="50%"
                 class="pa-3">
                 <span class="justify-center d-flex text-button font-weight-bold">
-                  Selection Options
+                  Selections
                 </span>
                 <v-divider></v-divider>
                 <span
