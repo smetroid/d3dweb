@@ -317,33 +317,32 @@ export default {
   mounted () {
     try{
       //console.log("app mounted")
-      this.newDiagram()
-      // console.log('App mounted')
-      // var localDiagramInfo = D3Util.getLocal()
-      // if (D3Util.debug) {
-      //   console.log(localDiagramInfo.diagram)
-      // }
-      // var g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
-      // if(localDiagramInfo.id && D3Util.auth === false){
-      //   var message = 'id found, please login to save changes to <br />'
-      //   message = message + 'server or replace local changes from server by selecting <br />'
-      //   message = message + '\'Discard Changes\' from options menu'
-      //   this.$root.$emit('appMessage', true, message)
-      // }
-      // DagreLib.id = localDiagramInfo.id
-      // DagreLib.name = localDiagramInfo.name
-      // DagreLib.description = localDiagramInfo.description
-      // //When you open one diagram with clusters, it renders properly
-      // //when you open a second diagram with clusters, the second 
-      // //diagram does not render the clusters properly
-      // //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
-      // //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
-      // DagreLib.diagram = DagreLib.redraw(g)
-      // DagreLib.json = localDiagramInfo.diagram
-      // this.dagreLib = DagreLib
-      // //this second render, fixes the cluster issues where the diagram does not render 
-      // //Temporary workaround
-      // this.dagreLib.redraw(this.dagreLib.diagram)
+      console.log('App mounted')
+      var localDiagramInfo = D3Util.getLocal()
+      if (D3Util.debug) {
+        console.log(localDiagramInfo.diagram)
+      }
+      var g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      if(localDiagramInfo.id && D3Util.auth === false){
+        var message = 'id found, please login to save changes to <br />'
+        message = message + 'server or replace local changes from server by selecting <br />'
+        message = message + '\'Discard Changes\' from options menu'
+        this.$root.$emit('appMessage', true, message)
+      }
+      DagreLib.id = localDiagramInfo.id
+      DagreLib.name = localDiagramInfo.name
+      DagreLib.description = localDiagramInfo.description
+      //When you open one diagram with clusters, it renders properly
+      //when you open a second diagram with clusters, the second 
+      //diagram does not render the clusters properly
+      //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
+      //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
+      DagreLib.diagram = DagreLib.redraw(g)
+      DagreLib.json = localDiagramInfo.diagram
+      this.dagreLib = DagreLib
+      //this second render, fixes the cluster issues where the diagram does not render 
+      //Temporary workaround
+      this.dagreLib.redraw(this.dagreLib.diagram)
     } catch {
       console.log('mounted catch')
       this.newDiagram()
