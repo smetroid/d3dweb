@@ -182,30 +182,85 @@ function toggleTheme () {
                           </v-list>
                         </v-menu>
                       </div>
-                  </focus-trap>
+                    </focus-trap>
+                  </div>
                 </div>
+                <div class="d-flex">
+                  <span class="text-decoration-underline font-weight-bold" color="secondary">A</span>
+                  <span class="font-weight-bold">ctions</span>
+                  <div
+                    width="99%"
+                    height="100%"
+                    @keydown.stop.prevent="menu($event, $refs.menu)"
+                    @keypress.stop.prevent="menu($event, $refs.menu)">
+                    <focus-trap 
+                      v-model:active="showActionsMenu"
+                      :initial-focus="()=>$refs.menuActionsDiv"
+                      >
+                      <div id="trap" ref="menuActionsDiv" tabindex="0">
+                        <v-menu
+                          ref="speedDial"
+                          v-model="showActionsMenu"
+                          >
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              density="compact"
+                              v-bind="props"
+                              variant="outlined">
+                            <v-icon v-if="showActionsMenu">
+                              mdi-close
+                            </v-icon>
+                            <v-icon v-else>
+                              mdi-menu
+                            </v-icon>
+                            </v-btn>
+                          </template>
+                          <v-list
+                            nav
+                            density="compact"
+                            class="text-primary"
+                          >
+                            <v-list-item
+                              ref="actionsMenu"
+                              color="secondary"
+                              v-for="(item, i) in actionLinks"
+                              :active="currentMenuLink == item.title?true:false"
+                              :key="i" href="#" @click="d3Action(item.title)"
+                              >
+                              <template v-slot:prepend>
+                                <v-icon :icon="item.icon"></v-icon>
+                              </template>
+                              <v-list-item-title >
+                                {{ item.title }}
+                              </v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu>
+                      </div>
+                    </focus-trap>
+                  </div>
                 </div>
-                  </v-row>
-                  <v-row>
-                    <v-card
-                      width="100%"
-                    >
-                      <D3DFooter
-                        :expand="showHelp"
-                        :diagramInfo="dagreLib"
-                      />
-                    </v-card>
-                  </v-row>
-                  <!--
-                  <v-row>
-                    <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
-                        {{ new Date().getFullYear() }} — <strong>D3D</strong>
-                    </v-col>
-                  </v-row>
-                  -->
-                </v-container>
-                </v-card>
-          </v-row>
+                </v-row>
+                <v-row>
+                  <v-card
+                    width="100%"
+                  >
+                    <D3DFooter
+                      :expand="showHelp"
+                      :diagramInfo="dagreLib"
+                    />
+                  </v-card>
+                </v-row>
+                <!--
+                <v-row>
+                  <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
+                      {{ new Date().getFullYear() }} — <strong>D3D</strong>
+                  </v-col>
+                </v-row>
+                -->
+            </v-container>
+          </v-card>
+        </v-row>
       </v-footer>
     </v-layout>
 </template>
@@ -218,6 +273,7 @@ export default {
     return {
       active: "D3Dagre", //Default active component
       showMenu: false,
+      showActionsMenu: false,
       showHelp: true,
       showDiagramForm: false,
       successfull: null,
@@ -232,14 +288,7 @@ export default {
       diagram: 'loading',
       response: 'loading',
       loaded: false,
-      menuLinks: [
-        {'icon':'mdi-login','title':'Login'},
-        {'icon':'mdi-cog-outline','title':'Settings'},
-        {'icon':'mdi-open-in-new','title':'New'},
-        {'icon':'mdi-open-in-app','title':'Open'},
-        {'icon':'mdi-pencil','title':'Edit'},
-        {'icon':'mdi-content-save-outline','title':'Save Changes'},
-        {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
+      actionLinks:[
         {'icon':'mdi-shape-square-plus','title':'Add Node'},
         {'icon':'mdi-file-edit-outline','title':'Edit Node'},
         {'icon':'mdi-selection-ellipse-remove','title':'Delete Node'},
@@ -248,6 +297,15 @@ export default {
         {'icon':'mdi-file-edit-outline','title':'Edit Edge'},
         {'icon':'mdi-selection-remove','title':'Delete Edge'},
         {'icon':'mdi-selection','title':'Select Edges'}
+      ],
+      menuLinks: [
+        {'icon':'mdi-login','title':'Login'},
+        {'icon':'mdi-cog-outline','title':'Settings'},
+        {'icon':'mdi-open-in-new','title':'New'},
+        {'icon':'mdi-open-in-app','title':'Open'},
+        {'icon':'mdi-pencil','title':'Edit'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes'},
+        {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
       ],
       dagreLib: {
         name: 'test',
@@ -449,7 +507,6 @@ export default {
     openMenu (){
         console.log(this.active)
         this.active = "Menu"
-        this.menuTrap = true
     },
     successToggle () {
       console.log('success toggle')
@@ -526,12 +583,7 @@ export default {
       console.log('app.root.activewindow')
     //  console.log(this.activeWindow)
       this.showMenu = this.active === "Menu"?true:false
-      if (this.showMenu){
-        this.$nextTick(function(){
-          console.log('menuTrap active')
-          this.menuTrap = this.showMenu
-        })
-      }
+      this.showActionsMenu = this.active === "Actions Menu"?true:false
     },
     successMessage: function () {
       setTimeout( ()=> {
