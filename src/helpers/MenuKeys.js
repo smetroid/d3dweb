@@ -31,6 +31,7 @@ export default {
   //   }
   // },
   menuAction (event, component) {
+    console.log(component)
     console.log(event)
     //var data = {}
     var newSelection = null
@@ -45,7 +46,6 @@ export default {
       case 'Escape':  //
         /*On escape setting activeWindow D3Dagre */
         component.active = 'D3Dagre'
-        component.menuTrap = false
         component.showMenu = false
         break
       case 'j':
@@ -53,6 +53,7 @@ export default {
         console.log(newSelection)
         // D3Util.selectionBool(newSelection)
         component.currentMenuLink = component.menuLinks[newSelection].title
+        console.log(component.currentMenuLink)
         component.gNavMenu = newSelection
         break
       case 'k':
