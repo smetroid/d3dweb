@@ -1,7 +1,8 @@
 <template>
   <div
-    @keydown.stop.prevent="keyPress($event, $refs.menu)"
-    @keypress.stop.prevent="keyPress($event, $refs.menu)"
+    @keydown.exact.stop.prevent="keyPress($event)"
+    @keypress.stop.prevent="keyPress($event)"
+    @keydown.ctrl.r="reload($event)"
     >
       <FocusTrap
         v-model:active="trapGraph"
@@ -111,6 +112,9 @@ export default {
     })
   },
   methods: {
+    reload(event) {
+      console.log('reload page')
+    },
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
      */
