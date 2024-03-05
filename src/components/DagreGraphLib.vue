@@ -1,8 +1,8 @@
 <template>
   <div
-    @keydown.exact.stop.prevent="keyPress($event)"
+    @keydown.exact.alt.prevent="keyPress($event)"
+    @keydown.exact.ctrl.r="reload($event)"
     @keypress.stop.prevent="keyPress($event)"
-    @keydown.ctrl.r="reload($event)"
     >
       <FocusTrap
         v-model:active="trapGraph"
