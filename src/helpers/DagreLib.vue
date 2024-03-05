@@ -457,7 +457,7 @@ export default {
       // Velocity(edge['_groups'][0], 'reverse', 500)
       if(edge){
         edge.classed('selected', true)
-        let focusedEdgeId = this.getEdgeId(index)
+        var focusedEdgeId = this.getEdgeId(index)
       }
 
       /*We'll grab this data from the edit form*/
@@ -478,7 +478,7 @@ export default {
     if (edges.length == 0) {
       this.app.$root.$emit('appMessage', 'info', 'No edges found in diagram')
     } else {
-      let edgeId = this.diagram.edges()[index]
+      var edgeId = this.diagram.edges()[index]
     }
 
     return edgeId
@@ -492,7 +492,7 @@ export default {
       console.log(id)
     }
     if(id){
-      let edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
+      var edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
     }
     return edge
   },
@@ -501,7 +501,7 @@ export default {
    */
   getEdgeById (id) {
     try {
-      let edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
+      var edge = d3.select(this.diagram.edge(id.v, id.w).elem['firstChild'])
       
     } catch (error) {
       console.log(error)

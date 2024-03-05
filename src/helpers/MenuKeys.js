@@ -33,6 +33,14 @@ export default {
   menuAction (event, component) {
     console.log(component)
     console.log(event)
+    let linksSelected = ""
+    if (component.active === 'Menu') {
+      linksSelected = component.menuLinks
+    } else {
+      linksSelected = component.actionLinks
+    }
+    let gNav = component.gNavMenu
+
     //var data = {}
     var newSelection = null
     switch(event){
@@ -49,27 +57,33 @@ export default {
         component.showMenu = false
         break
       case 'j':
-        newSelection = D3Util.liSelectionJ(component.menuLinks, component.gNavMenu)
+        newSelection = D3Util.liSelectionJ(linksSelected, gNav)
         console.log(newSelection)
         // D3Util.selectionBool(newSelection)
-        component.currentMenuLink = component.menuLinks[newSelection].title
+        component.currentMenuLink = linksSelected[newSelection].title
         console.log(component.currentMenuLink)
         component.gNavMenu = newSelection
         break
       case 'k':
-        newSelection = D3Util.liSelectionK(component.menuLinks, component.gNavMenu)
-        component.currentMenuLink = component.menuLinks[newSelection].title
+        newSelection = D3Util.liSelectionK(linksSelected, gNav)
+        component.currentMenuLink = linksSelected[newSelection].title
         // D3Util.selectionBool(newSelection)
         component.gNavMenu = newSelection
         break
       case 'Enter':
         if (D3Util.debug){
           console.log('enter')
-          console.log(component.$refs.menu[component.gNavMenu])
+          console.log(component.$refs)
           console.log(component.gNavMenu)
           //console.log(component.selectedUrl)
         }
-        component.$refs.menu[component.gNavMenu].$el.click()
+        if (component.active === 'Menu') {
+          console.log(component.$refs.menu[gNav])
+          component.$refs.menu[gNav].$el.click()
+        } else {
+          console.log(component.$refs.actionsMenu[gNav])
+          component.$refs.actionsMenu[gNav].$el.click()
+        }
         //this.addNodeFormVisible = true
         //console.log(this.addNodeFormVisible)
         // this.navAction(ref)

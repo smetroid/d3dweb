@@ -544,15 +544,8 @@ export default {
       }
       return selectLi
     },
-    menu(event, from ){
-      console.log(from)
-
-      if (from === 'Menu'){
-        MenuKeys.menuAction(event.key, this.menuLinks)
-      } else {
-        MenuKeys.menuAction(event.key, this.actionLinks)
-      }
-
+    menu(event){
+      MenuKeys.menuAction(event.key, this)
     },
      selectionBool (index) {
        console.log(this.menuLinks[index].title)
