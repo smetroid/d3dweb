@@ -8,7 +8,10 @@
         @keyup.ctrl.c="close()"
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
-        <focus-trap v-model:action="enableTrap">
+        <focus-trap 
+          v-model:action="enableTrap"
+          >
+          <div tabindex="0">
             <v-card-title class="bg-blue">
               <v-row class="pa-2" justify="center">
                 <b v-if="update">Update Node</b>
@@ -147,6 +150,7 @@
                 </v-row>
               </v-container>
             </v-card-text>
+          </div>
         </focus-trap>
       </v-card>
   </div>
