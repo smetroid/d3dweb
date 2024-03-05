@@ -38,6 +38,14 @@ export default {
         console.log('show help')
         this.dagreGraphLib.emitter.emit('showHelp')
         break
+      case 'a':
+        console.log('open actions menu')
+        this.dagreGraphLib.emitter.emit('changeActive', "Actions Menu")
+        break
+      case 't':
+        console.log('light dark toggle')
+        this.dagreGraphLib.emitter.emit('changeActive', "Light/Dark")
+        break
 
       default:
         //AnimateKeys.dagreGraphLib = dagreGraphLib
