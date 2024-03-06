@@ -6,7 +6,7 @@
       max-width="500"
       @keydown.esc="common($event)"
       >
-      <focus-trap v-model:active="enableTrap"
+      <focus-trap v-model:active="settingsModal"
         class="trap is-active">
         <div tabindex="0">
           <v-card
@@ -22,19 +22,13 @@
                 <v-switch
                   color="primary"
                   v-model="settings.debug"
-                  label="Debug"
+                  label="Enable console debugging"
                 >
                 </v-switch>
                 <v-switch
                   color="primary"
-                  v-model="settings.showHelp"
-                  label="Help Pane"
-                >
-                </v-switch>
-                <v-switch 
-                  color="primary"
-                  v-model="settings.reset"
-                  label="Reset"
+                  v-model="settings.showHelpPane"
+                  label="Show Help Pane"
                 >
                 </v-switch>
                 <v-text-field
@@ -59,19 +53,41 @@
                   label="D3 Edge Line"
                   color="primary"
                   v-model="settings.d3Line">
-                  <v-radio dense v-for="n in d3EdgeLine"
+                  <v-radio
+                    dense v-for="n in d3EdgeLine"
                     :key="n.value"
                     :label="`${n.label}`"
-                    :value="n.value"></v-radio>
+                    :value="n.value">
+                  </v-radio>
                 </v-radio-group>
+                <v-radio-group 
+                  label="Theme Options"
+                  color="primary"
+                  v-model="settings.defaultTheme">
+                  <v-radio
+                    dense v-for="n in settings.themes"
+                    :key="n.value"
+                    :label="`${n.label}`"
+                    :value="n.value">
+                  </v-radio>
+                </v-radio-group>
+                <v-btn 
+                  color="red"
+                  v-model="settings.reset"
+                  @click="resetSettings()"
+                >
+                  Reset Settings 
+                </v-btn>
               </v-card-text>
               <v-card-actions 
                 class="bg-primary">
                 <v-btn 
+                  variant="outlined"
                   class="bg-green"
                   @click="save()">Save</v-btn>
                 <v-spacer></v-spacer>
                 <v-btn 
+                  variant="outlined"
                   class="bg-red"
                   @click="close()">Close</v-btn>
               </v-card-actions>
@@ -83,7 +99,6 @@
 </template>
 <script>
 import D3Util from '@/services/D3Util'
-import VueCookies from 'vue-cookies'
 // Vue.use(VueCookies)
 // import VueCookie from '@/'
 export default {
@@ -91,15 +106,12 @@ export default {
   props: ['active'],
   data () {
     return {
-      options: [],
-      showHelp: false,
-      settingsModal: false,
-      enableTrap: false,
-      theme: null,
-      debug: null,
+      settingsModal: null,
       settings: {},
-      d3EdgeLine: [{"value":"curveBasis", "label":"Curve Basis"},
-        {"default":"Default"}, {"value":"mindMap", "label": "Mind Map"}]
+      d3EdgeLine: [
+        {"value":"curveBasis", "label":"Curve Basis"},
+        {"default":"Default"}, {"value":"mindMap", "label": "Mind Map"}
+      ]
     }
   },
   mounted () {
@@ -109,31 +121,24 @@ export default {
     console.log('active window watch')
     this.settingsModal = this.active == "Settings"?true:false
     // console.log(this.settingsModal)
-    this.$nextTick(function(){
-      console.log('settingsTrap active')
-      this.enableTrap = this.settingsModal
+    // this.$nextTick(function(){
+    //   console.log('settingsTrap active')
+    // })
+    this.emitter.on('settings', () => {
+      if (D3Util.debug) {
+        console.log('settings event received')
+      }
+      this.settings = this.getSettings()
+      this.settingsModal = true
     })
-    //this.$root.$on('settings', () => {
-    //  if (D3Util.debug) {
-    //    console.log('settings event received')
-    //  }
-    //  this.settings = this.getSettings()
-    //  this.settingsModal = true
-    //  this.enableTrap = true
-    //})
+    this.getSettings()
   },
   methods: {
     getSettings () {
-      var setSettings = {}
-      var defaults = D3Util.settings()
-      for (var key in defaults) {
-        if (key === "debug") {
-          setSettings[key] = Boolean(VueCookies.get(key) === 'true')
-        } else {
-          setSettings[key] = VueCookies.get(key)
-        }
-        if (D3Util.debug) {
-          console.log(key)
+      let setSettings = this.$cookies.get('settings')
+      for (let key in setSettings) {
+        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
+          setSettings[key] = Boolean(setSettings[key])
         }
       }
 
@@ -141,39 +146,26 @@ export default {
         console.log(setSettings)
       }
 
-      return setSettings
+      this.settings = setSettings
 
     },
     close () {
       this.common()
     },
     save () {
-      var defaults = D3Util.settings()
-      for (var key in defaults) {
-        VueCookies.set(key, this.settings[key])
-        if (D3Util.debug) {
-          console.log(key)
-          console.log(this.settings[key])
-        }
-      }
-      this.$root.$emit('appMessage', true, 'Settings saved')
+      this.$cookies.set('settings', this.settings)
+      this.emitter.emit('appMessage', true, 'Settings saved')
       this.common()
     },
     resetSettings () {
       // remove all the site cookies and reload defaults
-      var defaults = D3Util.settings()
-      for (var key in defaults) {
-        this.settings[key] = defaults[key]
-        if (D3Util.debug) {
-          console.log(key)
-          console.log(defaults[key])
-        }
-      }
+      let defaults = D3Util.appDefaults()
+      this.settings = defaults
+      this.$cookies.set('settings', this.settings)
     },
     common () {
-      this.enableTrap = false
       this.settingsModal = false
-      this.$root.$emit("changeActive")
+      this.emitter.emit("changeActive")
     }
   },
   watch: {
@@ -182,7 +174,6 @@ export default {
     //   this.settingsModal = this.active == "Settings"?true:false
     //   this.$nextTick(function(){
     //     console.log('settingsTrap active')
-    //     this.enableTrap = this.settingsModal
     //   })
     }
   }

@@ -27,9 +27,13 @@ import { FocusTrap } from 'focus-trap-vue'
 import mitt from 'mitt'
 const emitter = mitt()
 
+//setting cookies globally
+import VueCookies from 'vue-cookies'
+
 const app = createApp(App)
 app.use(router)
 app.use(vuetify)
+app.use(VueCookies)
 app.component('FocusTrap', FocusTrap)
 app.config.globalProperties.emitter = emitter
 app.mount('#app')

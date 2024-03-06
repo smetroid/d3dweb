@@ -81,14 +81,21 @@ export default {
   // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
-  settings () {
-    var defaults = {'d3Line': 'curveBasis',
+  appDefaults () {
+    var defaults = {
+      'd3Line': 'curveBasis',
       'hintBGColor': '#36004c',
       'hintLinkColor': '#fff', 
       'debug': false, 
       'hints': 'asdfjklqweruiopzxcvnmgh', 
       'reset': false,
-      'hintAction': 'Edit Object'
+      'showHelpPane': true,
+      'hintAction': 'Edit Object',
+      'defaultTheme': 'light',
+      'themes': [
+        {'value':'light', 'label':'Light Theme'},
+        {'value':'dark', 'label':'Dark Theme'},
+      ]
     }
     return defaults
   },

@@ -15,12 +15,23 @@ import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
+
+// need this in order to retrieve the settings cookie
+// this.$cookies does not exist in the setup script
+import VueCookies from 'vue-cookies'
+// Theme specific
 import { useTheme } from 'vuetify'
 
 const theme = useTheme()
 
-function toggleTheme () {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+//making sure theme selection stays with the app after reloading
+function toggleTheme(button) {
+  if (button){
+    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+  } else {
+    let settings = VueCookies.get('settings')
+    theme.global.name.value = settings.defaultTheme
+  }
 }
 </script>
 <template>
@@ -126,7 +137,7 @@ function toggleTheme () {
                   <v-btn
                     variant="outlined"
                     density="compact"
-                    @click="toggleTheme">
+                    @click="toggleTheme(true)">
                     <v-icon icon="mdi-theme-light-dark"></v-icon>
                   </v-btn>
                 </div>
@@ -246,7 +257,7 @@ function toggleTheme () {
                     width="100%"
                   >
                     <D3DFooter
-                      :expand="showHelp"
+                      :expand="settings.showHelpPane"
                       :diagramInfo="dagreLib"
                     />
                   </v-card>
@@ -274,7 +285,8 @@ export default {
       active: "D3Dagre", //Default active component
       showMenu: false,
       showActionsMenu: false,
-      showHelp: true,
+      settings: {},
+      //showHelp: true,
       showDiagramForm: false,
       successfull: null,
       alertMessage: null,
@@ -347,22 +359,22 @@ export default {
       console.log('mounted catch')
       this.newDiagram()
     }
-    // setting defaults on load
-    console.log('setting defaults')
-    var defaults = D3Util.settings()
-    for (var key in defaults) {
-      if (D3Util.debug) {
-        console.log(key)
+    // setting defaults on load or load from saved settings
+    let settings = D3Util.appDefaults()
+    if (this.$cookies.get('settings')) {
+      //duplicate code between App.vue and Settings.vue ... how to fix?
+      let setSettings = this.$cookies.get('settings')
+      for (let key in setSettings) {
+        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
+          setSettings[key] = Boolean(setSettings[key])
+        }
       }
-
-      // if (this.$cookies.isKey(key)) {
-      //   this.hints = this.$cookies.get(key)
-      // } else {
-      //   // set default keys
-      //   this.$cookies.set(key, defaults[key])
-      // }
+      this.settings = setSettings
+    } else {
+      console.log('setting defaults')
+      settings = D3Util.appDefaults()
+      this.$cookies.set('settings', settings)
     }
-    console.log('App.vue')
     // this.$root.$on('appMessage', (status, message, data) => {
     //   if (D3Util.debug) {
     //     console.log(status)
@@ -385,7 +397,7 @@ export default {
     // })
 
     this.emitter.on('showHelp', () => {
-      this.showHelp = !this.showHelp
+      this.settings.showHelpPane = !this.settings.showHelpPane
     })
 
     //this.$root.$on('showSettings', () => {
