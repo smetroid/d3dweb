@@ -540,7 +540,7 @@ export default {
 
     // Get the edge line type
     /*render edges based on the d3Line selected*/
-    let d3Lines = VueCookies.get('edgeLine'+this.id)
+    let d3Lines = VueCookies.get('settings').d3Line
     try{
       g.edges().forEach(function (v) {
         let edge = g.edge(v)
@@ -564,8 +564,9 @@ export default {
             edge.curve = d3.curveLinear
         }
       })
-    } catch {
+    } catch (error) {
       console.log('redraw edges catch error')
+      console.log(error)
     }
 
     g.nodes().forEach(function (v) {

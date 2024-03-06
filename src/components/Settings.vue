@@ -20,12 +20,14 @@
                 color="primary"
                 class="">
                 <v-switch
+                  hide-details
                   color="primary"
                   v-model="settings.debug"
                   label="Enable console debugging"
                 >
                 </v-switch>
                 <v-switch
+                  hide-details
                   color="primary"
                   v-model="settings.showHelpPane"
                   label="Show Help Pane"
@@ -50,7 +52,8 @@
                   @keypress.stop.prevent="">
                 </v-text-field>
                 <v-radio-group 
-                  label="D3 Edge Line"
+                  inline
+                  label="Edge Line"
                   color="primary"
                   v-model="settings.d3Line">
                   <v-radio
@@ -61,6 +64,7 @@
                   </v-radio>
                 </v-radio-group>
                 <v-radio-group 
+                  inline
                   label="Theme Options"
                   color="primary"
                   v-model="settings.defaultTheme">
@@ -109,8 +113,11 @@ export default {
       settingsModal: null,
       settings: {},
       d3EdgeLine: [
-        {"value":"curveBasis", "label":"Curve Basis"},
-        {"default":"Default"}, {"value":"mindMap", "label": "Mind Map"}
+        {'value':'curveBasis', 'label':'Basis'},
+        {'value':'curveLinear', 'label':'Linear'},
+        {'value':'curveStep', 'label': 'Step'},
+        {'value':'curveStepAfter', 'label':'StepAfter'},
+        {'value':'curveStepBefore', 'label':'StepBefore'},
       ]
     }
   },
@@ -119,7 +126,7 @@ export default {
     //  localStorage.getItem('token')
     //}
     console.log('active window watch')
-    this.settingsModal = this.active == "Settings"?true:false
+    this.settingsModal = this.active == "Settings" ? true : false
     // console.log(this.settingsModal)
     // this.$nextTick(function(){
     //   console.log('settingsTrap active')
