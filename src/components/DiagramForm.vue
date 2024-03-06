@@ -1,177 +1,146 @@
 <template>
-  <div>
-    <v-dialog v-model="diagramModal" max-width="800">
-    <div>
+  <v-dialog
+    scrollable
+    v-model="diagramModal"
+    max-width="600">
     <!--
     <div 
       @keydown.esc="keyPress($event)"
       @keypress.stop.prevent="keyPress($event)"
     >
     -->
-    <focus-trap v-model="enableTrap">
-      <div id="trapDiv" tabindex="-1" class="trap is-active">
-        <v-card id="loginCard" class="mx-auto">
-          <v-card-title class="headline">
-            <v-row justify="center">
-              <b v-if="update">Update Diagram</b>
-              <b v-else>Create New Diagram</b>
-            </v-row>
+    <focus-trap
+      v-model:active="diagramModal"
+      >
+      <div id="trapDiv" tabindex="0" class="trap is-active">
+        <v-card
+          class="text-primary"
+          >
+          <v-card-title
+            class="bg-primary d-flex justify-center"
+            >
+            <b v-if="update">Update Diagram</b>
+            <b v-else>Create New Diagram</b>
           </v-card-title>
-          <v-card-text class="blue-grey darken-4">
-            <v-container>
-              <v-form>
-                <v-row v-if="update" class="ma-0" align="center">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">ID:</span>
-                  </v-col>
-                  {{ id }}
-                </v-row>
-                <v-row class="ma-0">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Name:</span>
-                  </v-col>
-                  <v-text-field v-model="name" type="textarea"
-                    placeholder="" />
-                </v-row>
-                <v-row class="ma-0" align="center">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Description:</span>
-                  </v-col>
-                  <v-textarea v-model="description" hint="Enter a decription for the new diagram"
-                    rows="2" row-height="10">
-                    </v-textarea>
-                </v-row>
-                <v-row class="ma-0" align="center">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Options:</span>
-                  </v-col>
-                  <v-col class="pa-0">
-                    <v-switch
-                      dense
-                      v-model="graphOptions"
-                      color="green"
-                      label="directed"
-                      value="directed"
-                      >
-                    </v-switch>
-                    <v-switch
-                      dense
-                      v-model="graphOptions"
-                      color="green"
-                      label="multigraph"
-                      value="multigraph"
-                      >
-                    </v-switch>
-                    <v-switch
-                      dense
-                      v-model="graphOptions"
-                      color="green"
-                      label="compound"
-                      value="compound"
-                      >
-                    </v-switch>
-                  </v-col>
-                  <!--
-                  <v-col class="pa-0">
-                    <v-switch
-                      dense
-                      color="green"
-                      v-for="n in graphOptions"
-                        :key="`${n.label}-${n.value}`"
-                        :label="`${n.label} : ${n.value}`"
-                        :value="`${n.value}`"
-                      >
-                    </v-switch>
-                  </v-col>
-                  -->
-                </v-row>
-                <v-row class="ma-0">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Rankdir:</span>
-                  </v-col>
-                  <v-col class="pa-0">
-                    <v-select
-                      color="green"
-                      v-model="rankdir"
-                      :items="rankdirOptions"
-                      item-value="key"
-                      item-text="value"
-                      auto-select-first
-                    ></v-select>
-                  </v-col>
-                </v-row>
-                <v-row class="ma-0">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Ranksep:</span>
-                  </v-col>
-                  <v-text-field v-model="ranksep" type="textarea"
-                    placeholder="" />
-                </v-row>
-                <v-row class="ma-0">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Nodesep:</span>
-                  </v-col>
-                  <v-text-field v-model="nodesep" type="textarea"
-                    placeholder="" />
-                </v-row>
-                <v-row class="ma-0">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">D3Line:</span>
-                  </v-col>
-                  <v-col class="pa-0">
-                    <v-select 
-                      v-model="edgeLine" 
-                      :items="edgeLineOptions"
-                      item-value="key"
-                      item-text="value"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-                  <!--
-                  <v-col class="pa-0">
-                      <v-switch
-                        dense
-                        color="green"
-                        v-for="n in diagramOptions"
-                        :key="n.label"
-                        label="`${n.label}`"
-                        value="`${n.value}`"
-                        >
-                      </v-switch>
-                  </v-col>
-                  -->
-                <v-row v-if="update" class="ma-0" align="center">
-                  <v-col sm="3" align="right" class="pa-2">
-                    <span class="samus__label">Diagram:</span>
-                  </v-col>
-                  <v-textarea v-model="jsonDiagram" disabled hint="JSON Data of the Diagram"
-                    rows="5" row-height="50">
-                  </v-textarea>
-                </v-row>
-              </v-form>
-            </v-container>
+          <v-card-text
+            color="text-primary"
+            class=""
+            >
+            <v-form>
+              <v-text-field
+                label="ID"
+                readonly
+                v-model="id"
+                type="textfield"
+                placeholder=""
+                />
+              <v-text-field
+                label="Diagram Name"
+                v-model="name"
+                placeholder=""
+                />
+              <v-textarea
+                label="Diagram Description"
+                v-model="description"
+                hint="Enter a decription for the new diagram"
+                rows="2" row-height="10"
+                >
+              </v-textarea>
+              <div class="d-flex justify-space-around">
+                <v-switch
+                  readonly
+                  dense
+                  v-model="graphOptions"
+                  color="primary"
+                  label="Directed"
+                  value="directed"
+                  />
+                <v-switch
+                  readonly
+                  dense
+                  v-model="graphOptions"
+                  color="primary"
+                  label="Multigraph"
+                  value="multigraph"
+                  />
+                <v-switch
+                  readonly
+                  dense
+                  v-model="graphOptions"
+                  color="primary"
+                  label="Compound"
+                  value="compound"
+                  />
+              </div>
+              <v-select
+                label="Rank Direction"
+                v-model="rankdir"
+                :items="rankdirOptions"
+                item-value="key"
+                item-text="value"
+                auto-select-first
+                />
+              <v-text-field
+                label="Rank Seperation"
+                v-model="ranksep"
+                placeholder=""
+                />
+              <v-text-field 
+                label="Node Seperation"
+                v-model="nodesep" 
+                placeholder="" 
+                />
+              <v-select 
+                label="D3Line"
+                v-model="edgeLine" 
+                :items="edgeLineOptions"
+                item-value="key"
+                item-text="value"
+                />
+              <v-textarea
+                label="JSON Diagram"
+                v-model="jsonDiagram"
+                disabled
+                hint="JSON Data of the Diagram"
+                rows="5"
+                row-height="50"
+                />
+            </v-form>
           </v-card-text>
-          <v-card-actions>
-            <v-btn v-if="update" dense class="ma-2" outlined color="green"
-              @click="updateDiagram()"> Update</v-btn>
-            <v-btn v-else dense class="ma-2" outlined color="green"
-              @click="create()"> Create </v-btn>
+          <v-card-actions
+            class="bg-primary"
+            >
+            <v-btn
+              v-if="update"
+              variant="outlined"
+              class="bg-green"
+              @click="updateDiagram()">
+              Update
+            </v-btn>
+            <v-btn 
+              v-else
+              variant="outlined"
+              class="bg-green"
+              @click="create()">
+              Create
+            </v-btn>
             <v-spacer></v-spacer>
-            <v-btn dense class="ma-2" outlined color="red"
-              @click="close()">Cancel</v-btn>
+            <v-btn
+              variant="outlined"
+              class="bg-red"
+              @click="close()">
+              Cancel
+            </v-btn>
           </v-card-actions>
         </v-card>
       </div>
     </focus-trap>
-    </div>
   </v-dialog>
-  </div>
 </template>
 <script>
 import D3VimApi from '@/services/api/SamusApi'
 import D3Util from '@/services/D3Util'
 import VueCookies from 'vue-cookies'
-//import * as dagreD3 from 'dagre-d3'
 export default {
   name: 'DiagramForm',
   props: ['active', 'diagramInfo'],
@@ -180,7 +149,6 @@ export default {
       id: null,
       diagram: null,
       username: '',
-      enableTrap: null,
       name: 'New diagram default name',
       description: 'New diagram default description',
       diagramModal: null,
@@ -331,7 +299,6 @@ export default {
     close () {
       console.log('Close method')
       this.diagramModal= false
-      this.enableTrap = false
       this.graphOptions = []
       console.log(this)
       this.$root.$emit('changeActive')
@@ -341,7 +308,6 @@ export default {
     },
     // Not being used at the moment
     //common(){
-    //  //this.enableTrap= false
     //  this.diagramModal = false
     //  this.hints = D3Util.removeHints(this.hints)
     //  this.$root.$emit("changeActive")
@@ -369,13 +335,6 @@ export default {
 
       if(this.active === 'New' || this.active === 'Edit'){
         this.diagramModal = true
-        /**This may not be needed since the DOM is being rendered 
-         * and therefore should trap the modal form when viwed
-         */
-        this.$nextTick(function(){
-          console.log('enableTrap active')
-          this.enableTrap = true
-        })
       }
       if(this.update || this.diagramModal){
         this.setUpdateData(this.diagramInfo)
