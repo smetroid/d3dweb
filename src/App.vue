@@ -25,13 +25,8 @@ import { useTheme } from 'vuetify'
 const theme = useTheme()
 
 //making sure theme selection stays with the app after reloading
-function toggleTheme(button) {
-  if (button){
-    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
-  } else {
-    let settings = VueCookies.get('settings')
-    theme.global.name.value = settings.defaultTheme
-  }
+function toggleTheme() {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
 }
 </script>
 <template>
@@ -137,7 +132,7 @@ function toggleTheme(button) {
                   <v-btn
                     variant="outlined"
                     density="compact"
-                    @click="toggleTheme(true)">
+                    @click="toggleTheme()">
                     <v-icon icon="mdi-theme-light-dark"></v-icon>
                   </v-btn>
                 </div>
@@ -330,6 +325,11 @@ export default {
     try{
       //console.log("app mounted")
       console.log('App mounted')
+
+      if (this.$cookies.get('settings')) {
+        this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
+      }
+
       var localDiagramInfo = D3Util.getLocal()
       if (D3Util.debug) {
         console.log(localDiagramInfo.diagram)
