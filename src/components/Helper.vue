@@ -16,7 +16,7 @@
               <span class="justify-center d-flex text-button font-weight-bold">
                 D3D
                 <span v-if="diagramInfo.id"
-                  class="justify-center d-flex green--text">
+                  class="justify-center d-flex ">
                   (Authenticated)
                 </span>
               </span>  
@@ -31,10 +31,10 @@
                     Diagram Info
                   </span>
                   <v-divider></v-divider>
-                    <span class="font-weight-bold">Name :</span> <br/><span class="green--text"> {{ diagramInfo.name }} </span><br/>
+                    <span class="font-weight-bold">Name :</span> <br/><span class=""> {{ diagramInfo.name }} </span><br/>
                     <span class="font-weight-bold">Description:</span>
                     <span class=""> {{ diagramInfo.description }} </span><br/>
-                    <span class="font-weight-bold">ID :</span><span class="green--text"> {{ diagramInfo.id }} </span><br/>
+                    <span class="font-weight-bold">ID :</span><span class=""> {{ diagramInfo.id }} </span><br/>
                 </v-card>
                 <v-divider vertical></v-divider>
                 <v-card
@@ -160,7 +160,6 @@ export default {
       gNavLi: null,
       loginFormIsActive: null,
       username: '',
-      enableTrap: false,
       password: null,
       //authInfo: null,
       authError: null,
@@ -218,7 +217,6 @@ export default {
    //   this.visible = false
    // }
    // this.$root.$on('showLogin', () => {
-   //   this.enableTrap = true
    //   this.loginModal = true
    // })
   },
@@ -264,7 +262,6 @@ export default {
   //    this.loginModal = this.active == "Login"?true:false
   //    this.$nextTick(function(){
   //      console.log('loginTrap active')
-  //      this.enableTrap = this.loginModal
   //    })
   //  },
   }
