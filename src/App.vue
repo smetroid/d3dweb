@@ -16,9 +16,6 @@ import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
 
-// need this in order to retrieve the settings cookie
-// this.$cookies does not exist in the setup script
-import VueCookies from 'vue-cookies'
 // Theme specific
 import { useTheme } from 'vuetify'
 
@@ -307,10 +304,10 @@ export default {
       ],
       menuLinks: [
         {'icon':'mdi-login','title':'Login'},
-        {'icon':'mdi-cog-outline','title':'Settings'},
-        {'icon':'mdi-open-in-new','title':'New'},
-        {'icon':'mdi-open-in-app','title':'Open'},
-        {'icon':'mdi-pencil','title':'Edit'},
+        {'icon':'mdi-cog-outline','title':'D3D Settings'},
+        {'icon':'mdi-open-in-new','title':'New Diagram'},
+        {'icon':'mdi-open-in-app','title':'Open Diagram'},
+        {'icon':'mdi-pencil','title':'Edit Diagram'},
         {'icon':'mdi-content-save-outline','title':'Save Changes'},
         {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
       ],
@@ -330,11 +327,12 @@ export default {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
       }
 
-      var localDiagramInfo = D3Util.getLocal()
+      let localDiagramInfo = D3Util.getLocal()
       if (D3Util.debug) {
         console.log(localDiagramInfo.diagram)
       }
-      var g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+
       if(localDiagramInfo.id && D3Util.auth === false){
         var message = 'id found, please login to save changes to <br />'
         message = message + 'server or replace local changes from server by selecting <br />'
@@ -355,8 +353,9 @@ export default {
       //this second render, fixes the cluster issues where the diagram does not render 
       //Temporary workaround
       this.dagreLib.redraw(this.dagreLib.diagram)
-    } catch {
+    } catch (error) {
       console.log('mounted catch')
+      console.log(error)
       this.newDiagram()
     }
     // setting defaults on load or load from saved settings
@@ -493,26 +492,19 @@ export default {
        * maybe reference the DiagramForm, since it contains defaults
        */
       console.log('creating a new localDiagram')
-      var g = new DagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
+      let g = new DagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
       g.setGraph({})
       g.graph().rankdir = 'TB'
       g.graph().ranksep = '50' 
       g.graph().nodesep = '10'
       g.setDefaultEdgeLabel(function () { return {} })
-
       g.setNode('first', {label: 'first node', id: 'first'})
-      g.setNode('second', {label: 'second node', id: 'second'})
-      console.log('newDiagram')
-      console.log(g)
-      console.log('newDiagram')
-      //DagreGraphLib.resetValues()
-      DagreLib.diagram = g
+      if (D3Util.debug) {
+        console.log('newDiagram')
+        console.log(g)
+        console.log('newDiagram')
+      }
       DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.description = null
-      DagreLib.name = null
-      DagreLib.created = null
-      DagreLib.id = null
-      DagreLib.json = null
       this.dagreLib = DagreLib
     },
     openMenu (){
@@ -562,30 +554,34 @@ export default {
        console.log(this.menuLinks[index].title)
        this.currentMenuLink = this.menuLinks[index].title
      },
-     saveChanges: async function(app){
-       //var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
-       //var localData = D3Util.getLocal()
-       //var id = localData.id // means data has been saved to server
-       var id = app.dagreLib.id
-       var auth = D3Util.auth()
-       if (id && auth) {
-         var result = await D3VimApi.updateDiagram(app.dagreLib, app)
-         return result
-       } else if (auth){
-         console.log('id is empty')
-         app.active = "New"
-       } else {
-          /**
-           * broken was causing a lot of confusion
-           * need to rethink the approach to saving locally if 
-           * not logged in or authenticated
-           */
-         // var common = D3Util.commonMsg
-         app.$root.$emit('appMessage', true, 'Changes are being saved to localStorage, please consider creating an account or login to save remotely to the server', '')
-         // this is not needed
-         //D3Util.saveLocal(data)
-       }
-     },
+     //saveChanges: async function(){
+     // /*
+     //   1. Open Diagram form
+     //   2. Use the last samus.lastUpdated localStorage as data to save
+     // */
+     // this.emitter.emit('SaveDiagram')
+     //  //let localData = D3Util.getLocal()
+     //  //let id = localData.id // means data has been saved to server
+     //  //let id = this.dagreLib.id
+     //  //var auth = D3Util.auth()
+     //  //if (id && auth) {
+     //  //  var result = await D3VimApi.updateDiagram(app.dagreLib, app)
+     //  //  return result
+     //  //} else if (auth){
+     //  //console.log('id is empty')
+     //  //this.active = "New"
+     //  //} else {
+     //     /**
+     //      * broken was causing a lot of confusion
+     //      * need to rethink the approach to saving locally if 
+     //      * not logged in or authenticated
+     //      */
+     //    // var common = D3Util.commonMsg
+     //    this.emitter.emit('appMessage', true, 'Changes are being saved to localStorage, please consider creating an account or login to save remotely to the server', '')
+     //    // this is not needed
+     //    //D3Util.saveLocal(data)
+     //  //}
+     //},
   },
   computed: {
   },
