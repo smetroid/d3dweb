@@ -20,12 +20,12 @@ export default {
     and prevents certain focus functionality from working properly, because a focus is set to a different field
     */
     app.active = event
-    if (event == 'Save Changes') {
-      //app.active = 'New'
-      app.saveChanges(app)
-    }
 
     switch (event) {
+      case 'Save Changes':
+        console.log(this)
+        app.emitter.emit('SaveDiagram', app)
+        break
       case 'Edit':
         console.log('edit event')
         //app.$root.$emit('diagramEditForm') 
