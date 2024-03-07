@@ -327,26 +327,43 @@ export default {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
       }
 
-      let localDiagramInfo = D3Util.getLocal()
+      /*!SECTION - Logic to load a previously working diagram, or 
+      * continue to work on a previously temporary item
+      * 1. Load the last working item if it exists
+      */
+      let localDiagramInfo = ""
+      if (this.$cookies.get('LastLocallySavedItemId')) {
+        let id = this.$cookies.get('LastLocallySavedItemId')
+        localDiagramInfo = D3Util.getLocalItem(id)
+      } else {
+        // get the last temporary saved working item
+        localDiagramInfo = D3Util.getTempDiagram()
+      }
+
       if (D3Util.debug) {
         console.log(localDiagramInfo.diagram)
       }
       let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
 
-      if(localDiagramInfo.id && D3Util.auth === false){
-        var message = 'id found, please login to save changes to <br />'
-        message = message + 'server or replace local changes from server by selecting <br />'
-        message = message + '\'Discard Changes\' from options menu'
-        this.$root.$emit('appMessage', true, message)
-      }
+      /*NOTE - this is only needed for when a backend server is available
+      */
+      //if(localDiagramInfo.id && D3Util.auth === false){
+      //  var message = 'id found, please login to save changes to <br />'
+      //  message = message + 'server or replace local changes from server by selecting <br />'
+      //  message = message + '\'Discard Changes\' from options menu'
+      //  this.$root.$emit('appMessage', true, message)
+      //}
+
       DagreLib.id = localDiagramInfo.id
       DagreLib.name = localDiagramInfo.name
       DagreLib.description = localDiagramInfo.description
-      //When you open one diagram with clusters, it renders properly
-      //when you open a second diagram with clusters, the second 
-      //diagram does not render the clusters properly
-      //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
-      //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
+      /*NOTE - this is particular dagre-d3 problem, which has been difficult to fix and troubleshoot
+      * When you open one diagram with clusters, it renders properly
+      * when you open a second diagram with clusters, the second 
+      * diagram does not render the clusters properly
+      * The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
+      * the old diagram (first diagram ) clusters which are no longer part of the second diagram 
+      */
       DagreLib.diagram = DagreLib.redraw(g)
       DagreLib.json = localDiagramInfo.diagram
       this.dagreLib = DagreLib
@@ -374,27 +391,37 @@ export default {
       settings = D3Util.appDefaults()
       this.$cookies.set('settings', settings)
     }
-    // this.$root.$on('appMessage', (status, message, data) => {
-    //   if (D3Util.debug) {
-    //     console.log(status)
-    //     console.log(message)
-    //     console.log(data)
-    //   }
 
-    //   var common = ''
-    //   if ((status == 'success') || (status === true)) {
-    //     common = '<br /> Message will be removed in 5 seconds <br />'
-    //     this.successMessage = true
-    //   } else if (status == 'error') {
-    //     this.errorMessage = true
-    //     common = '<br /> Message will be removed in 5 seconds <br />'
-    //   } else if (status == 'info'){
-    //     this.infoMessage = true
-    //     common = '</br> Message will be removed in 3 seconds <br /> Error:<br />'
-    //   }
-    //   this.alertMessage = message + common + data
-    // })
+    /*!SECTION Emitter section, is a way for child components to 
+    * communicate with their parent
+    */
+    /*NOTE - Alert messages
+    /*TODO - Move this to it's own Component, and keep the App.vue cleaner
+    */
+    this.emitter.on('appMessage', (status, message, data) => {
+      if (D3Util.debug) {
+        console.log(status)
+        console.log(message)
+        console.log(data)
+      }
 
+      var common = ''
+      if ((status == 'success') || (status === true)) {
+        common = '<br /> Message will be removed in 5 seconds <br />'
+        this.successMessage = true
+      } else if (status == 'error') {
+        this.errorMessage = true
+        common = '<br /> Message will be removed in 5 seconds <br />'
+      } else if (status == 'info'){
+        this.infoMessage = true
+        common = '</br> Message will be removed in 3 seconds <br /> Error:<br />'
+      }
+      this.alertMessage = message + common + data
+    })
+
+
+    /*NOTE - Help Pane toggle
+    */
     this.emitter.on('showHelp', () => {
       this.settings.showHelpPane = !this.settings.showHelpPane
     })
@@ -419,6 +446,8 @@ export default {
     //  }
     //})
 
+    /*NOTE - Handle the default active section/component
+    */
     this.emitter.on('changeActive', (menu) => {
       if (D3Util.debug) {
         console.log(menu)
@@ -436,30 +465,29 @@ export default {
       }
     })
 
-    // this.$root.$on('updateHelperDiagramInfo', (name, description, id) => {
-    //   console.log('diagramInfo')
-    //   DagreLib.id = id
-    //   DagreLib.name = name
-    //   DagreLib.description = description
-    //   //DagreLib.diagram = DagreLib.redraw(g)
-    //   /**JSON is provided during an open from the server, maybe I'll skip for now */
-    //   // DagreLib.json = localDiagramInfo.diagram
-    //   this.dagreLib = DagreLib
-    // })
+    this.emitter.on('updateDiagramInfo', (diagramInfo) => {
+       console.log('diagramInfo')
+       //DagreLib.id = id
+       //DagreLib.name = name
+       //DagreLib.description = description
+       //DagreLib.diagram = DagreLib.redraw(g)
+       /**JSON is provided during an open from the server, maybe I'll skip for now */
+       // DagreLib.json = localDiagramInfo.diagram
+       this.dagreLib = diagramInfo
+     })
 
-    // /* Child components to communicate with parents*/
-    // /*Emit functions section*/
-    // this.$root.$on('openDiagram', (id) => {
-    //   console.log('Message to open diagram received')
-    //   console.log(id)
-    //   // this.id = id
-    //   this.loadFromServer(id)
-    // })
-    // // this.$root.$on('newDiagram', () => {
-    // //   console.log('Message to create a new diagram received')
-    // //   // this.id = id
-    // //   this.newDiagram()
-    // // })
+     /*Emit functions section*/
+     this.emitter.on('openDiagram', (id) => {
+       console.log('Message to open diagram received')
+       console.log(id)
+       // this.id = id
+       this.loadFromServer(id)
+     })
+     // this.$root.$on('newDiagram', () => {
+     //   console.log('Message to create a new diagram received')
+     //   // this.id = id
+     //   this.newDiagram()
+     // })
   },
   updated () {
     // console.log('component updated')
