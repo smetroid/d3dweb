@@ -642,7 +642,7 @@ export default {
         d3.select('svg g').call(render, g)
       } 
 
-      D3Util.saveLocal(updatedData)
+      D3Util.saveTempDiagram(updatedData)
       return g
     } catch (error) {
       console.log('redraw edges catch error')

@@ -316,12 +316,27 @@ export default {
   remove(item){
     return item - 1
   },
-  saveLocal(data){
+  createLocalEntry(data){
+    try{
+      let randomId ='D3D'+this.randomId()
+      localStorage.setItem(randomId, JSON.stringify(data))
+      VueCookies.set('LastLocallySavedItemId', randomId)
+      return randomId
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  saveTempDiagram(data){
     localStorage.setItem('samus.lastUpdated', JSON.stringify(data))
   },
-  getLocal(){
+  getTempDiagram(){
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
     return localData
+  },
+  getLocalItem(id){
+    var localItem = JSON.parse(localStorage.getItem(id))
+    return localItem
+
   },
   auth(){
     if (localStorage.getItem('token')){
@@ -335,7 +350,7 @@ export default {
     console.log(localData)
     localData.id = id
 
-    this.saveLocal(localData)
+    this.saveTempDiagram(localData)
   },
   defaultNodeValues() {
     var data = {
