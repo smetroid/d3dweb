@@ -22,9 +22,11 @@ export default {
     app.active = event
 
     switch (event) {
+      case 'Edit Diagram':
+        app.emitter.emit('EditDiagram')
+        break
       case 'Save Changes':
-        console.log(this)
-        app.emitter.emit('SaveDiagram', app)
+        app.emitter.emit('SaveDiagram')
         break
       case 'Edit':
         console.log('edit event')
@@ -33,7 +35,7 @@ export default {
       case 'Discard Changes':
         app.$root.$emit('discardChanges')
         break
-      case 'New':
+      case 'New Diagram':
         app.active = "D3Dagre"
         //app.$root.$emit('newDiagram', '')
         app.newDiagram()
