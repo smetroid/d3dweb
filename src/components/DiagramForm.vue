@@ -179,14 +179,18 @@ export default {
   },
   mounted () {
     this.emitter.on('SaveDiagram', () => {
-      this.diagramModal = true
+      if (this.diagramInfo.id){
+        console.log('found diagram info id ... saving changes')
+      } else {
+        this.diagramModal = true
+      }
       this.setUpdateData()
     })
-    //this.$root.$on('diagramEditForm', (data) => {
-    //    console.log('data.diagramInfo')
-    //    this.getDiagramData(data)
-    //  }
-    //)
+    this.emitter.on('EditDiagram', () => {
+      this.diagramModal = true
+      this.update = this.diagramModal
+      this.setUpdateData()
+    })
   },
   methods: {
     setUpdateData(){
@@ -210,21 +214,24 @@ export default {
     create: async function () {
       console.log('creating a new diagramForm')
       this.setOptionsAndLabels()
-      var created = new Date()
+      let created = new Date()
       /**
        * Need to move this into the API
+       * this should be the current diagram object
        */
-      var payload = { 
+      let payload = { 
         'name': this.name,
         'description': this.description,
-        'diagram': JSON.stringify(this.diagramDefaults),
+        'diagram': this.diagram,
         'createTime': created.toISOString(),
         'updatedTime': created.toISOString(),
       }
+
       if (D3Util.debug()){
         console.log(this.diagramInfo)
         console.log(this.diagram)
       }
+
       if (D3Util.auth()) {
         var result = await D3VimApi.postDiagram(payload)
         if(D3Util.debug()){
@@ -234,7 +241,7 @@ export default {
 
         if (Object.prototype.hasOwnProperty.call(result, 'data')) {
           payload.id = result.data
-          D3Util.saveLocal(payload)
+          D3Util.saveTempDiagram(payload)
           this.$root.$emit('appMessage', true, 'New diagram successfully created', statusText)
           this.$root.$emit('updateHelperDiagramInfo', this.name, this.description, result.data)
 
@@ -248,9 +255,10 @@ export default {
         */
         VueCookies.set('edgeLine'+this.id, this.edgeLine)
       } else {
-        //localStorage.setItem('samus.lastUpdated', JSON.stringify(this.$data))
-        D3Util.saveLocal(payload)
-        this.$root.$emit('appMessage', true, 'Changes are being saved to local storage')
+        console.log(this)
+        let id = D3Util.createLocalEntry(payload)
+        this.emitter.emit('appMessage', true, 'Changes are being saved to local storage')
+        this.emitter.emit('updateDiagramInfo', (id))
       }
 
       this.close()
@@ -291,7 +299,7 @@ export default {
       this.diagramModal= false
       this.graphOptions = []
       console.log(this)
-      this.$root.$emit('changeActive')
+      this.emitter.emit('changeActive')
 
       // this.$root.$emit('d3DagreActivate')
       // this.$root.$emit('showForm', 'node')

@@ -76,11 +76,11 @@ function toggleTheme() {
       <v-main class="align-center justify-center">
             <DagreGraphLib
               :active="active"
-              :dagre-lib="dagreLib"
+              :dagre-lib="D3DDiagram"
             />
             <DiagramForm
               :active="active"
-              :diagramInfo="dagreLib"
+              :diagramInfo="D3DDiagram"
             />
             <Settings
               v-if="active === 'Settings'"
@@ -90,7 +90,7 @@ function toggleTheme() {
             <DiagramForm
               v-if="active === 'Save Changes' || active === 'Edit'"
               :active="active"
-              :diagramInfo="dagreLib"
+              :diagramInfo="D3DDiagram"
             />
             -->
       </v-main>
@@ -250,7 +250,7 @@ function toggleTheme() {
                   >
                     <D3DFooter
                       :expand="settings.showHelpPane"
-                      :diagramInfo="dagreLib"
+                      :diagramInfo="D3DDiagram"
                     />
                   </v-card>
                 </v-row>
@@ -311,10 +311,13 @@ export default {
         {'icon':'mdi-content-save-outline','title':'Save Changes'},
         {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
       ],
-      dagreLib: {
+      D3DDiagram: {
+        id: '12345',
         name: 'test',
         description: 'test',
-        id: '12345'
+        diagram:'',
+        created:'',
+        updated:''
       }
     }
   },
@@ -366,10 +369,10 @@ export default {
       */
       DagreLib.diagram = DagreLib.redraw(g)
       DagreLib.json = localDiagramInfo.diagram
-      this.dagreLib = DagreLib
+      this.D3DDiagram = DagreLib
       //this second render, fixes the cluster issues where the diagram does not render 
       //Temporary workaround
-      this.dagreLib.redraw(this.dagreLib.diagram)
+      this.D3DDiagram.redraw(this.D3DDiagram.diagram)
     } catch (error) {
       console.log('mounted catch')
       console.log(error)
@@ -426,26 +429,6 @@ export default {
       this.settings.showHelpPane = !this.settings.showHelpPane
     })
 
-    //this.$root.$on('showSettings', () => {
-    //  console.log('Show settings form received')
-    //  this.showSettingsModal = true
-    //})
-    //this.$root.$on('Alert', (data, alertType) => {
-    //  console.log('alert message received')
-    //  this.message = data
-    //  if (alertType === 'successful') {
-    //    this.successfull = true
-    //    Velocity(this.$refs.alert, 'fadeOut',
-    //      {delay: 1000,
-    //        duration: 500,
-    //        complete: function () {
-    //          // this.successfull = null
-    //          // this.message = null
-    //        }
-    //      })
-    //  }
-    //})
-
     /*NOTE - Handle the default active section/component
     */
     this.emitter.on('changeActive', (menu) => {
@@ -465,24 +448,26 @@ export default {
       }
     })
 
-    this.emitter.on('updateDiagramInfo', (diagramInfo) => {
+    this.emitter.on('updateDiagramInfo', (id) => {
        console.log('diagramInfo')
+       /*!SECTION
+       * retrieve updated diagram from saved location
+       */
        //DagreLib.id = id
        //DagreLib.name = name
        //DagreLib.description = description
        //DagreLib.diagram = DagreLib.redraw(g)
        /**JSON is provided during an open from the server, maybe I'll skip for now */
        // DagreLib.json = localDiagramInfo.diagram
-       this.dagreLib = diagramInfo
+       this.D3DDiagram.id = id
      })
 
-     /*Emit functions section*/
-     this.emitter.on('openDiagram', (id) => {
-       console.log('Message to open diagram received')
-       console.log(id)
-       // this.id = id
-       this.loadFromServer(id)
-     })
+    this.emitter.on('openDiagram', (id) => {
+      console.log('Message to open diagram received')
+      console.log(id)
+      // this.id = id
+      this.loadFromServer(id)
+    })
      // this.$root.$on('newDiagram', () => {
      //   console.log('Message to create a new diagram received')
      //   // this.id = id
@@ -491,7 +476,7 @@ export default {
   },
   updated () {
     // console.log('component updated')
-    // console.log(this.dagreLib)
+    // console.log(this.D3DDiagram)
   },
   methods: {
     loadFromServer: async function (id) {
@@ -512,7 +497,7 @@ export default {
       DagreLib.name = response.name
       DagreLib.created = response.created
       DagreLib.json = response.diagram
-      this.dagreLib = DagreLib
+      this.D3DDiagram = DagreLib
     },
     newDiagram(){
       /**duplicate code 
@@ -533,7 +518,7 @@ export default {
         console.log('newDiagram')
       }
       DagreLib.diagram = DagreLib.redraw(g)
-      this.dagreLib = DagreLib
+      this.D3DDiagram = DagreLib
     },
     openMenu (){
         console.log(this.active)
@@ -590,10 +575,10 @@ export default {
      // this.emitter.emit('SaveDiagram')
      //  //let localData = D3Util.getLocal()
      //  //let id = localData.id // means data has been saved to server
-     //  //let id = this.dagreLib.id
+     //  //let id = this.D3DDiagram.id
      //  //var auth = D3Util.auth()
      //  //if (id && auth) {
-     //  //  var result = await D3VimApi.updateDiagram(app.dagreLib, app)
+     //  //  var result = await D3VimApi.updateDiagram(app.D3DDiagram, app)
      //  //  return result
      //  //} else if (auth){
      //  //console.log('id is empty')
