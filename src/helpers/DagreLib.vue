@@ -3,12 +3,10 @@
   </div>
 </template>
 <script>
-//import D3VimApi from '@/services/api/SamusApi'
-// import * as dagreD3 from 'dagre-d3-webpack'
 import VueCookies from 'vue-cookies'
 import * as d3 from 'd3'
 import Velocity from 'velocity-animate'
-import * as dagreD3 from 'dagre-d3'
+import * as DagreD3 from 'dagre-d3'
 import D3Util from '../services/D3Util'
 // import graph from '@/services/DagreGraphLib'
 /*these vars are global needed for the click.reset() function*/
@@ -537,11 +535,11 @@ export default {
     // this.$root.$emit('edgesD3Data', edgeData, id)
   },
   redraw (g, options={}) {
-
-    // Get the edge line type
-    /*render edges based on the d3Line selected*/
-    let d3Lines = VueCookies.get('settings').d3Line
+    console.log(g)
     try{
+      // Get the edge line type
+      /*render edges based on the d3Line selected*/
+      let d3Lines = VueCookies.get('settings').d3Line
       g.edges().forEach(function (v) {
         let edge = g.edge(v)
         switch (d3Lines){
@@ -564,81 +562,92 @@ export default {
             edge.curve = d3.curveLinear
         }
       })
+
+      g.nodes().forEach(function (v) {
+        let node = g.node(v)
+        node.rx = node.ry = 5
+      })
+      
+      /**
+       * Check to make sure we did not delete the last node, it causes
+       * a tone of errors in the chrome console
+       */
+
+      let updatedData = ""
+      let svgWidth = ""
+      let svgHeight = ""
+      let render = DagreD3.render()
+      if (g.nodes().length > 0) {
+        // on click reset the viewport to show the whole diagram
+        svg = d3.select('svg')
+        svgWidth = svg.property('clientWidth')
+        svgHeight = svg.property('clientHeight')
+        svg.attr("viewBox", [0,0,svgWidth,svgHeight])
+        svg.on("click", this.reset)
+
+        let inner = svg.select('g')
+        console.log(inner)
+
+        /**/
+      // Set up zoom support
+        zoom = d3.zoom()
+          .scaleExtent(['.1', '10'])
+          // .on('zoom', this.zoomed)
+          .on('zoom', (e) => {
+            inner.attr('transform', e.transform)
+          })
+        /* Activates the zoom */
+        svg.call(zoom)
+
+        if (Object.keys(options).length == 0){
+          d3.select('svg g').call(render, g)
+          gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
+          gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
+        }
+
+        if(options.zoom == "In"){
+          initialScale = initialScale + .3
+          gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
+          gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
+        } else if(options.zoom == "Out"){
+          initialScale = initialScale - .3
+          gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
+          gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
+        } else if(options.pan == "Up"){
+          gHeight = gHeight - 100
+        } else if(options.pan == "Down"){
+          gHeight = gHeight + 100
+        } else if (options.pan == "Left"){
+          gWidth = gWidth - 100
+        } else if (options.pan == "Right"){
+          gWidth = gWidth + 100
+        }
+
+        svg.transition().duration(150).call(
+          zoom.transform,
+          d3.zoomIdentity.translate(gWidth, gHeight).scale(initialScale)
+        )
+
+        /*at every redraw save changes to localStorage*/
+        this.json = new DagreD3.graphlib.json.write(g)
+        let created = new Date()
+        updatedData = {
+          'updatedTime': created.toISOString(),
+          'id': this.id,
+          'name': this.name,
+          'description': this.description,
+          'diagram': JSON.stringify(this.json),
+        }
+      } else {
+        d3.select('svg g').call(render, g)
+      } 
+
+      D3Util.saveLocal(updatedData)
+      return g
     } catch (error) {
       console.log('redraw edges catch error')
       console.log(error)
     }
-
-    g.nodes().forEach(function (v) {
-      let node = g.node(v)
-      node.rx = node.ry = 5
-    })
-
-    // Set up zoom support
-    // on click reset the viewport to show the whole diagram
-    svg = d3.select('svg')
-    let svgWidth = svg.property('clientWidth')
-    let svgHeight = svg.property('clientHeight')
-    svg.attr("viewBox", [0,0,svgWidth,svgHeight])
-    svg.on("click", this.reset)
-
-    let inner = svg.select('g')
-    console.log(inner)
-
-    /**/
-    zoom = d3.zoom()
-      .scaleExtent(['.1', '10'])
-      // .on('zoom', this.zoomed)
-      .on('zoom', (e) => {
-        inner.attr('transform', e.transform)
-      })
-    /* Activates the zoom */
-    svg.call(zoom)
-
-    if (Object.keys(options).length == 0){
-      /* eslint-disable-next-line */
-      let render = dagreD3.render()
-      d3.select('svg g').call(render, g)
-      gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
-      gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
-    }
-
-    if(options.zoom == "In"){
-      initialScale = initialScale + .3
-      gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
-      gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
-    } else if(options.zoom == "Out"){
-      initialScale = initialScale - .3
-      gWidth = ((svgWidth - (g.graph().width * initialScale)) / 2)
-      gHeight = ((svgHeight - (g.graph().height * initialScale)) / 2)
-    } else if(options.pan == "Up"){
-      gHeight = gHeight - 100
-    } else if(options.pan == "Down"){
-      gHeight = gHeight + 100
-    } else if (options.pan == "Left"){
-      gWidth = gWidth - 100
-    } else if (options.pan == "Right"){
-      gWidth = gWidth + 100
-    }
-
-    svg.transition().duration(150).call(
-      zoom.transform,
-      d3.zoomIdentity.translate(gWidth, gHeight).scale(initialScale)
-    )
-
-    /*at every redraw save changes to localStorage*/
-    this.json = new dagreD3.graphlib.json.write(g)
-    let created = new Date()
-    let updatedData = {
-      'updatedTime': created.toISOString(),
-      'id': this.id,
-      'name': this.name,
-      'description': this.description,
-      'diagram': JSON.stringify(this.json),
-    }
-
-    D3Util.saveLocal(updatedData)
-    return g
   },
   reset () {
     console.log('reset click')
