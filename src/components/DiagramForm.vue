@@ -47,30 +47,15 @@
                 >
               </v-textarea>
               <div class="d-flex justify-space-around">
+                Options
                 <v-switch
-                  readonly
-                  dense
-                  v-model="graphOptions"
                   color="primary"
-                  label="Directed"
-                  value="directed"
-                  />
-                <v-switch
-                  readonly
-                  dense
-                  v-model="graphOptions"
-                  color="primary"
-                  label="Multigraph"
-                  value="multigraph"
-                  />
-                <v-switch
-                  readonly
-                  dense
-                  v-model="graphOptions"
-                  color="primary"
-                  label="Compound"
-                  value="compound"
-                  />
+                  v-for="(v, k) in diagramDefaults.options"
+                    :key="k"
+                    :label="`${k}`"
+                    :model-value="v"
+                  >
+                </v-switch>
               </div>
               <v-select
                 label="Rank Direction"
@@ -100,7 +85,6 @@
               <v-textarea
                 label="JSON Diagram"
                 v-model="jsonDiagram"
-                disabled
                 hint="JSON Data of the Diagram"
                 rows="5"
                 row-height="50"
@@ -153,7 +137,7 @@ export default {
       description: 'New diagram default description',
       diagramModal: null,
       update: null,
-      graphDefaults: {
+      diagramDefaults: {
         "options": {
           "directed":true,
           "multigraph":true,
@@ -194,6 +178,10 @@ export default {
     }
   },
   mounted () {
+    this.emitter.on('SaveDiagram', () => {
+      this.diagramModal = true
+      this.setUpdateData()
+    })
     //this.$root.$on('diagramEditForm', (data) => {
     //    console.log('data.diagramInfo')
     //    this.getDiagramData(data)
@@ -201,13 +189,15 @@ export default {
     //)
   },
   methods: {
-    setUpdateData(diagramInfo){
-      this.id = diagramInfo.id
-      this.name = diagramInfo.name
-      this.description = diagramInfo.description
-      this.diagram = diagramInfo.diagram
-      this.jsonDiagram = diagramInfo.json
-      this.setGraphOptions(diagramInfo.diagram)
+    setUpdateData(){
+      console.log(this.diagramInfo.diagram)
+      let info = this.diagramInfo
+      this.id = info.id
+      this.name = info.name ? info.name : this.name
+      this.description = info.description ? info.description : this.description
+      this.diagram = info.diagram
+      this.jsonDiagram = JSON.stringify(this.diagramInfo.diagram)
+      this.setGraphOptions(info.diagram)
       this.rankdir = this.diagram._label.rankdir
       this.ranksep = this.diagram._label.ranksep
       this.nodesep = this.diagram._label.nodesep
@@ -227,7 +217,7 @@ export default {
       var payload = { 
         'name': this.name,
         'description': this.description,
-        'diagram': JSON.stringify(this.graphDefaults),
+        'diagram': JSON.stringify(this.diagramDefaults),
         'createTime': created.toISOString(),
         'updatedTime': created.toISOString(),
       }
@@ -329,19 +319,19 @@ export default {
     }
   },
   watch: {
-    active: function(){
-      console.log('active window diagramForm')
-      this.update = this.active == 'Edit'?true:false
+  //  active: function(){
+  //    console.log('active window diagramForm')
+  //    this.update = this.active == 'Edit'?true:false
 
-      if(this.active === 'New' || this.active === 'Edit'){
-        this.diagramModal = true
-      }
-      if(this.update || this.diagramModal){
-        this.setUpdateData(this.diagramInfo)
-      } else {
-        console.log('nothing to do')
-      }
-    }
+  //    if(this.active === 'New' || this.active === 'Edit'){
+  //      this.diagramModal = true
+  //    }
+  //    if(this.update || this.diagramModal){
+  //      this.setUpdateData(this.diagramInfo)
+  //    } else {
+  //      console.log('nothing to do')
+  //    }
+  //  }
   }
 }
 </script>
