@@ -122,6 +122,7 @@
   </v-dialog>
 </template>
 <script>
+import * as DagreD3 from 'dagre-d3'
 import D3VimApi from '@/services/api/SamusApi'
 import D3Util from '@/services/D3Util'
 import VueCookies from 'vue-cookies'
@@ -175,7 +176,9 @@ export default {
         'curveStep',
         'curveStepAfter',
         'curveStepBefore'
-        ]
+        ],
+      width: '',
+      height: ''
     }
   },
   mounted () {
@@ -209,6 +212,8 @@ export default {
       this.rankdir = this.diagram._label.rankdir
       this.ranksep = this.diagram._label.ranksep
       this.nodesep = this.diagram._label.nodesep
+      this.width = this.diagram._label.width
+      this.height = this.diagram._label.height
       //this.edgeLine = VueCookies.get(this.id)['edgeLine']
       if (D3Util.debug) {
         console.log(this.diagram)
@@ -218,18 +223,22 @@ export default {
     create: async function () {
       console.log('creating a new diagramForm')
       this.setOptionsAndLabels()
-      let created = new Date()
       /**
        * Need to move this into the API
        * this should be the current diagram object
        */
-      let payload = { 
-        'name': this.name,
-        'description': this.description,
-        'diagram': JSON.stringify(this.diagram),
-        'createdTime': created.toISOString(),
-        'updatedTime': null,
-      }
+      /*NOTE - There is a spacial way graphlib write to json, 
+      if we don't do it this way the application 
+      errors out when reloading the page
+      */
+      //let json = new DagreD3.graphlib.json.write(this.diagram)
+      //let payload = { 
+      //  'name': this.name,
+      //  'description': this.description,
+      //  'diagram': JSON.stringify(json),
+      //  'createdTime': created.toISOString(),
+      //  'updatedTime': null,
+      //}
 
       if (D3Util.debug()){
         console.log(this.diagramInfo)
@@ -237,33 +246,34 @@ export default {
       }
 
       if (D3Util.auth()) {
-        var result = await D3VimApi.postDiagram(payload)
-        if(D3Util.debug()){
-          console.log(result)
-        }
-        var statusText = result.statusText + " ID: " + result.data
+        /*NOTE - Commenting this out for now
+      //  var result = await D3VimApi.postDiagram(payload)
+      //  if(D3Util.debug()){
+      //    console.log(result)
+      //  }
+      //  var statusText = result.statusText + " ID: " + result.data
 
-        if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-          payload.id = result.data
-          D3Util.saveTempDiagram(payload)
-          this.$root.$emit('appMessage', true, 'New diagram successfully created', statusText)
-          this.$root.$emit('updateHelperDiagramInfo', payload.name, payload.description, result.data)
+      //  if (Object.prototype.hasOwnProperty.call(result, 'data')) {
+      //    payload.id = result.data
+      //    D3Util.saveTempDiagram(payload)
+      //    this.$root.$emit('appMessage', true, 'New diagram successfully created', statusText)
+      //    this.$root.$emit('updateHelperDiagramInfo', payload.name, payload.description, result.data)
 
-        } else {
-          this.$root.$emit('appMessage', false, 'Failed to create or save diagram', statusText)
-        }
-        /**
-         * TODO: Move this to the backend api 
-         * a temporary workaround to set save
-         * and retrieve the edgeLine setting
-        */
-        VueCookies.set('edgeLine'+this.id, this.edgeLine)
+      //  } else {
+      //    this.$root.$emit('appMessage', false, 'Failed to create or save diagram', statusText)
+      //  }
+      //  /**
+      //   * TODO: Move this to the backend api 
+      //   * a temporary workaround to set save
+      //   * and retrieve the edgeLine setting
+      //  */
+      //  VueCookies.set('edgeLine'+this.id, this.edgeLine)
       } else {
         console.log(this)
-        let id = D3Util.createLocalEntry(payload)
-        payload.id = id
+        let id = D3Util.createLocalEntry(this)
+        this.id = id
         this.emitter.emit('appMessage', true, 'Changes are being saved to local storage')
-        this.emitter.emit('updateDiagramInfo', payload)
+        this.emitter.emit('updateDiagramInfo', this)
       }
 
       this.close()
@@ -275,6 +285,8 @@ export default {
       this.diagram._label.nodesep = this.nodesep
       this.diagram._label.rankdir = this.rankdir
       this.diagram._label.ranksep = this.ranksep
+      this.diagram._label.width = this.width
+      this.diagram._label.height = this.height
       if (D3Util.debug) {
         console.log(this.diagram)
       }

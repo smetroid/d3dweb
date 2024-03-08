@@ -350,19 +350,6 @@ export default {
       }
 
       let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
-      //let g = new DagreD3.graphlib.Graph().setGraph(JSON.parse(localDiagramInfo.diagram))
-      // Create the renderer
-      var render = new DagreD3.render();
-
-      // Set up an SVG group so that we can translate the final graph.
-      var svg = d3.select("svg"),
-          inner = svg.append("g");
-
-      // Run the renderer. This is what draws the final graph.
-      render(inner, g);
-
-      //g = localDiagramInfo.diagram
-
 
       /*NOTE - this is only needed for when a backend server is available
       */

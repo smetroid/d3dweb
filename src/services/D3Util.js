@@ -1,5 +1,6 @@
 import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
+import * as DagreD3 from 'dagre-d3'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -319,7 +320,17 @@ export default {
   createLocalEntry(data){
     try{
       let randomId ='D3D'+this.randomId()
-      localStorage.setItem(randomId, JSON.stringify(data))
+      let created = new Date()
+      let json = new DagreD3.graphlib.json.write(this.diagram)
+      let payload = { 
+        'name': data.name,
+        'description': data.description,
+        'diagram': JSON.stringify(json),
+        'createdTime': created.toISOString(),
+        'updatedTime': null,
+      }
+
+      localStorage.setItem(randomId, JSON.stringify(payload))
       VueCookies.set('LastLocallySavedItemId', randomId)
       return randomId
     } catch (error) {
@@ -329,8 +340,17 @@ export default {
   updateLocalEntry(id, data){
     localStorage.setItem(id, JSON.stringify(data))
   },
-  saveTempDiagram(data){
-    localStorage.setItem('samus.lastUpdated', JSON.stringify(data))
+  saveTempDiagram(diagram, g){
+    this.json = new DagreD3.graphlib.json.write(g)
+    let created = new Date()
+    let updatedData = {
+      'updatedTime': created.toISOString(),
+      'id': diagram.id,
+      'name': diagram.name,
+      'description': diagram.description,
+      'diagram': JSON.stringify(this.json),
+    }
+    localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
   },
   getTempDiagram(){
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
@@ -372,5 +392,5 @@ export default {
       //d3.curveBasis: 'text'
     }
     return data
-  }
+  },
 }

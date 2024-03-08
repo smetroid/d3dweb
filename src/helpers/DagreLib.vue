@@ -573,7 +573,7 @@ export default {
        * a tone of errors in the chrome console
        */
 
-      let updatedData = ""
+      //let updatedData = ""
       let svgWidth = ""
       let svgHeight = ""
       let render = DagreD3.render()
@@ -589,7 +589,7 @@ export default {
         console.log(inner)
 
         /**/
-      // Set up zoom support
+        // Set up zoom support
         zoom = d3.zoom()
           .scaleExtent(['.1', '10'])
           // .on('zoom', this.zoomed)
@@ -629,20 +629,20 @@ export default {
         )
 
         /*at every redraw save changes to localStorage*/
-        this.json = new DagreD3.graphlib.json.write(g)
-        let created = new Date()
-        updatedData = {
-          'updatedTime': created.toISOString(),
-          'id': this.id,
-          'name': this.name,
-          'description': this.description,
-          'diagram': JSON.stringify(this.json),
-        }
+        //this.json = new DagreD3.graphlib.json.write(g)
+        //let created = new Date()
+        //updatedData = {
+        //  'updatedTime': created.toISOString(),
+        //  'id': this.id,
+        //  'name': this.name,
+        //  'description': this.description,
+        //  'diagram': JSON.stringify(this.json),
+        //}
       } else {
         d3.select('svg g').call(render, g)
       } 
 
-      D3Util.saveTempDiagram(updatedData)
+      D3Util.saveTempDiagram(this.diagram, g)
       return g
     } catch (error) {
       console.log('redraw edges catch error')
