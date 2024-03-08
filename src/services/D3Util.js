@@ -326,6 +326,9 @@ export default {
       console.log(error)
     }
   },
+  updateLocalEntry(id, data){
+    localStorage.setItem(id, JSON.stringify(data))
+  },
   saveTempDiagram(data){
     localStorage.setItem('samus.lastUpdated', JSON.stringify(data))
   },

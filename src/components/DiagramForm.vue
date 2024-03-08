@@ -98,7 +98,7 @@
               v-if="update"
               variant="outlined"
               class="bg-green"
-              @click="updateDiagram()">
+              @click="updateLocalDiagram()">
               Update
             </v-btn>
             <v-btn 
@@ -136,6 +136,7 @@ export default {
       name: 'New diagram default name',
       description: 'New diagram default description',
       diagramModal: null,
+      created: Date().toISOString,
       update: null,
       diagramDefaults: {
         "options": {
@@ -181,25 +182,28 @@ export default {
     this.emitter.on('SaveDiagram', () => {
       if (this.diagramInfo.id){
         console.log('found diagram info id ... saving changes')
+        this.updateLocalDiagram();
       } else {
         this.diagramModal = true
       }
-      this.setUpdateData()
+      this.setDiagramInfo()
     })
+
     this.emitter.on('EditDiagram', () => {
       this.diagramModal = true
       this.update = this.diagramModal
-      this.setUpdateData()
+      this.setDiagramInfo()
     })
   },
   methods: {
-    setUpdateData(){
+    setDiagramInfo(){
       console.log(this.diagramInfo.diagram)
       let info = this.diagramInfo
       this.id = info.id
       this.name = info.name ? info.name : this.name
       this.description = info.description ? info.description : this.description
       this.diagram = info.diagram
+      this.created = info.created
       this.jsonDiagram = JSON.stringify(this.diagramInfo.diagram)
       this.setGraphOptions(info.diagram)
       this.rankdir = this.diagram._label.rankdir
@@ -222,9 +226,9 @@ export default {
       let payload = { 
         'name': this.name,
         'description': this.description,
-        'diagram': this.diagram,
-        'createTime': created.toISOString(),
-        'updatedTime': created.toISOString(),
+        'diagram': JSON.stringify(this.diagram),
+        'createdTime': created.toISOString(),
+        'updatedTime': null,
       }
 
       if (D3Util.debug()){
@@ -243,7 +247,7 @@ export default {
           payload.id = result.data
           D3Util.saveTempDiagram(payload)
           this.$root.$emit('appMessage', true, 'New diagram successfully created', statusText)
-          this.$root.$emit('updateHelperDiagramInfo', this.name, this.description, result.data)
+          this.$root.$emit('updateHelperDiagramInfo', payload.name, payload.description, result.data)
 
         } else {
           this.$root.$emit('appMessage', false, 'Failed to create or save diagram', statusText)
@@ -257,8 +261,9 @@ export default {
       } else {
         console.log(this)
         let id = D3Util.createLocalEntry(payload)
+        payload.id = id
         this.emitter.emit('appMessage', true, 'Changes are being saved to local storage')
-        this.emitter.emit('updateDiagramInfo', (id))
+        this.emitter.emit('updateDiagramInfo', payload)
       }
 
       this.close()
@@ -274,22 +279,33 @@ export default {
         console.log(this.diagram)
       }
     },
-    updateDiagram: async function () {
-      this.setOptionsAndLabels()
-      this.diagramInfo.redraw(this.diagram) 
-      var result = await D3VimApi.updateDiagram(this.$data, this)
-
-      if(D3Util.debug){
-        console.log('updateDiagram')
-        console.log(result)
+    updateLocalDiagram (){
+      let updated = new Date()
+      let payload = { 
+        'name': this.name,
+        'description': this.description,
+        'diagram': JSON.stringify(this.diagram),
+        'createdTime': this.createTime,
+        'updatedTime': updated.toISOString(),
       }
-
-      console.log('this.edgeLine')
-      console.log(this.edgeLine)
-      console.log(this.$data)
-      VueCookies.set('edgeLine'+this.id, this.edgeLine)
-      this.close()
+      D3Util.updateLocalEntry(this.id, payload)
     },
+    //updateDiagram: async function () {
+    //  this.setOptionsAndLabels()
+    //  this.diagramInfo.redraw(this.diagram) 
+    //  var result = await D3VimApi.updateDiagram(this.$data, this)
+
+    //  if(D3Util.debug){
+    //    console.log('updateDiagram')
+    //    console.log(result)
+    //  }
+
+    //  console.log('this.edgeLine')
+    //  console.log(this.edgeLine)
+    //  console.log(this.$data)
+    //  VueCookies.set('edgeLine'+this.id, this.edgeLine)
+    //  this.close()
+    //},
     // Not being used at the moment
     // keyPress(event) {
     //   this.hints = D3Util.formHints(event, this)

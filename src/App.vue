@@ -15,6 +15,7 @@ import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
+import * as d3 from 'd3'
 
 // Theme specific
 import { useTheme } from 'vuetify'
@@ -337,6 +338,7 @@ export default {
       let localDiagramInfo = ""
       if (this.$cookies.get('LastLocallySavedItemId')) {
         let id = this.$cookies.get('LastLocallySavedItemId')
+        console.log(id)
         localDiagramInfo = D3Util.getLocalItem(id)
       } else {
         // get the last temporary saved working item
@@ -346,7 +348,21 @@ export default {
       if (D3Util.debug) {
         console.log(localDiagramInfo.diagram)
       }
+
       let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      //let g = new DagreD3.graphlib.Graph().setGraph(JSON.parse(localDiagramInfo.diagram))
+      // Create the renderer
+      var render = new DagreD3.render();
+
+      // Set up an SVG group so that we can translate the final graph.
+      var svg = d3.select("svg"),
+          inner = svg.append("g");
+
+      // Run the renderer. This is what draws the final graph.
+      render(inner, g);
+
+      //g = localDiagramInfo.diagram
+
 
       /*NOTE - this is only needed for when a backend server is available
       */
@@ -448,18 +464,19 @@ export default {
       }
     })
 
-    this.emitter.on('updateDiagramInfo', (id) => {
+    this.emitter.on('updateDiagramInfo', (payload) => {
        console.log('diagramInfo')
+       console.log(payload.id)
+       console.log(payload.name)
+       console.log(payload.description)
        /*!SECTION
-       * retrieve updated diagram from saved location
        */
-       //DagreLib.id = id
-       //DagreLib.name = name
-       //DagreLib.description = description
+       this.D3DDiagram.id = payload.id
+       this.D3DDiagram.name = payload.name
+       this.D3DDiagram.description = payload.description
        //DagreLib.diagram = DagreLib.redraw(g)
        /**JSON is provided during an open from the server, maybe I'll skip for now */
        // DagreLib.json = localDiagramInfo.diagram
-       this.D3DDiagram.id = id
      })
 
     this.emitter.on('openDiagram', (id) => {
