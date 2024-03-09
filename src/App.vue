@@ -15,7 +15,9 @@ import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
-import * as d3 from 'd3'
+import DiagramModifier from './helpers/DiagramModifier.vue'
+//import DagreOtherKeys from './helpers/DagreOtherKeys.vue'
+
 
 // Theme specific
 import { useTheme } from 'vuetify'
@@ -75,25 +77,33 @@ function toggleTheme() {
       </v-card>
     -->
       <v-main class="align-center justify-center">
-            <DagreGraphLib
-              :active="active"
-              :dagre-lib="D3DDiagram"
-            />
-            <DiagramForm
-              :active="active"
-              :diagramInfo="D3DDiagram"
-            />
-            <Settings
-              v-if="active === 'Settings'"
-              :active="active"
-            />
-            <!--
-            <DiagramForm
-              v-if="active === 'Save Changes' || active === 'Edit'"
-              :active="active"
-              :diagramInfo="D3DDiagram"
-            />
-            -->
+        <DiagramModifier
+          :d3dInfo="d3dInfo"
+        />
+        <!--
+        <DagreOtherKeys
+          :d3dInfo="d3dInfo"
+        />
+        -->
+        <DagreGraphLib
+          :active="active"
+          :d3dInfo="d3dInfo"
+        />
+        <DiagramForm
+          :active="active"
+          :d3dInfo="d3dInfo"
+        />
+        <Settings
+          v-if="active === 'Settings'"
+          :active="active"
+        />
+        <!--
+        <DiagramForm
+          v-if="active === 'Save Changes' || active === 'Edit'"
+          :active="active"
+          :diagramInfo="d3dInfo"
+        />
+        -->
       </v-main>
       <!--
         NOTE: app - in the footer makes the footer to stay at the bottom 
@@ -251,7 +261,7 @@ function toggleTheme() {
                   >
                     <D3DFooter
                       :expand="settings.showHelpPane"
-                      :diagramInfo="D3DDiagram"
+                      :diagramInfo="d3dInfo"
                     />
                   </v-card>
                 </v-row>
@@ -272,7 +282,8 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter},
+  //components: {DagreGraphLib, Settings, DiagramForm, D3DFooter, DiagramModifier, DagreOtherKeys},
+  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter, DiagramModifier},
   data () {
     return {
       active: "D3Dagre", //Default active component
@@ -290,7 +301,6 @@ export default {
       fab: false,
       gNavMenu: null,
       currentMenuLink: null,
-      diagram: 'loading',
       response: 'loading',
       loaded: false,
       actionLinks:[
@@ -312,19 +322,11 @@ export default {
         {'icon':'mdi-content-save-outline','title':'Save Changes'},
         {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
       ],
-      D3DDiagram: {
-        id: '12345',
-        name: 'test',
-        description: 'test',
-        diagram:'',
-        created:'',
-        updated:''
-      }
+      d3dInfo: {},
     }
   },
   mounted () {
     try{
-      //console.log("app mounted")
       console.log('App mounted')
 
       if (this.$cookies.get('settings')) {
@@ -335,18 +337,18 @@ export default {
       * continue to work on a previously temporary item
       * 1. Load the last working item if it exists
       */
-      let localDiagramInfo = ""
-      if (this.$cookies.get('LastLocallySavedItemId')) {
-        let id = this.$cookies.get('LastLocallySavedItemId')
-        console.log(id)
-        localDiagramInfo = D3Util.getLocalItem(id)
+      let localDiagramInfo = null
+      let diagramId = this.$cookies.get('LastLocallySavedItemId')
+      if (diagramId) {
+        console.log(diagramId)
+        localDiagramInfo = D3Util.getLocalItem(diagramId)
       } else {
         // get the last temporary saved working item
         localDiagramInfo = D3Util.getTempDiagram()
       }
 
       if (D3Util.debug) {
-        console.log(localDiagramInfo.diagram)
+        console.log(localDiagramInfo)
       }
 
       let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
@@ -359,10 +361,12 @@ export default {
       //  message = message + '\'Discard Changes\' from options menu'
       //  this.$root.$emit('appMessage', true, message)
       //}
-
-      DagreLib.id = localDiagramInfo.id
-      DagreLib.name = localDiagramInfo.name
-      DagreLib.description = localDiagramInfo.description
+      this.d3dInfo = localDiagramInfo
+      console.log(this.d3dInfo)
+      let renderDiagram = DiagramModifier.redraw(g)
+      this.d3dInfo.diagram = renderDiagram
+      this.d3dInfo.id = diagramId ? diagramId : null
+      console.log(this.d3dInfo)
       /*NOTE - this is particular dagre-d3 problem, which has been difficult to fix and troubleshoot
       * When you open one diagram with clusters, it renders properly
       * when you open a second diagram with clusters, the second 
@@ -370,12 +374,14 @@ export default {
       * The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
       * the old diagram (first diagram ) clusters which are no longer part of the second diagram 
       */
-      DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.json = localDiagramInfo.diagram
-      this.D3DDiagram = DagreLib
+
+      //DagreLib.diagram = DagreLib.redraw(g)
+
+      //DagreLib.json = localDiagramInfo.diagram
+      //this.d3dInfo = DagreLib
       //this second render, fixes the cluster issues where the diagram does not render 
       //Temporary workaround
-      this.D3DDiagram.redraw(this.D3DDiagram.diagram)
+//    this.DiagramModifier.redraw(this.d3dInfo.diagram)
     } catch (error) {
       console.log('mounted catch')
       console.log(error)
@@ -458,9 +464,9 @@ export default {
        console.log(payload.description)
        /*!SECTION
        */
-       this.D3DDiagram.id = payload.id
-       this.D3DDiagram.name = payload.name
-       this.D3DDiagram.description = payload.description
+       this.d3dInfo.id = payload.id
+       this.d3dInfo.name = payload.name
+       this.d3dInfo.description = payload.description
        //DagreLib.diagram = DagreLib.redraw(g)
        /**JSON is provided during an open from the server, maybe I'll skip for now */
        // DagreLib.json = localDiagramInfo.diagram
@@ -480,7 +486,7 @@ export default {
   },
   updated () {
     // console.log('component updated')
-    // console.log(this.D3DDiagram)
+    // console.log(this.d3dInfo)
   },
   methods: {
     loadFromServer: async function (id) {
@@ -501,9 +507,12 @@ export default {
       DagreLib.name = response.name
       DagreLib.created = response.created
       DagreLib.json = response.diagram
-      this.D3DDiagram = DagreLib
+      this.d3dInfo = DagreLib
     },
     newDiagram(){
+      // clear the cookie of the last saved diagram
+      this.$cookies.remove('LastLocallySavedItemId')
+
       /**duplicate code 
        * need to move to Utilils or common file
        * maybe reference the DiagramForm, since it contains defaults
@@ -521,8 +530,8 @@ export default {
         console.log(g)
         console.log('newDiagram')
       }
-      DagreLib.diagram = DagreLib.redraw(g)
-      this.D3DDiagram = DagreLib
+      let renderDiagram = DiagramModifier.redraw(g)
+      this.d3dInfo.diagram = renderDiagram
     },
     openMenu (){
         console.log(this.active)
@@ -579,10 +588,10 @@ export default {
      // this.emitter.emit('SaveDiagram')
      //  //let localData = D3Util.getLocal()
      //  //let id = localData.id // means data has been saved to server
-     //  //let id = this.D3DDiagram.id
+     //  //let id = this.d3dInfo.id
      //  //var auth = D3Util.auth()
      //  //if (id && auth) {
-     //  //  var result = await D3VimApi.updateDiagram(app.D3DDiagram, app)
+     //  //  var result = await D3VimApi.updateDiagram(app.d3dInfo, app)
      //  //  return result
      //  //} else if (auth){
      //  //console.log('id is empty')

@@ -34,13 +34,13 @@
             v-if="active === 'Add Edge' || active === 'Edit Edge'"
             :active="active"
             :d3Data="d3Data"
-            :DagreLib ="dagreLib"
+            :DagreLib="d3dInfo"
           />
           <D3NodeForm
             v-if="active === 'Add Node' || active === 'Edit Node'"
             :active="active"
             :d3Data="d3Data"
-            :DagreLib ="dagreLib"
+            :DagreLib="d3dInfo"
           />
       </v-bottom-sheet>
   </div>
@@ -56,13 +56,14 @@ import DagreLib from '../helpers/DagreLib.vue'
 //import login from '@/components/Login'
 //import * as dagreD3 from 'dagre-d3'
 //import DagreOtherKeys from '@/helpers/DagreOtherKeys'
-import DagreAltKeys from '../helpers/DagreAltKeys.vue'
-import DagreOtherKeys from '../helpers/DagreOtherKeys.vue'
+import D3DAltKeys from '../helpers/DagreAltKeys.js'
+import D3DOtherKeys from '../helpers/DagreOtherKeys.js'
+import DiagramModifier from '../helpers/DiagramModifier.js'
 // import Crud from '@/helpers/CRUD'
 
 export default {
   name: 'DagreGraphLib',
-  props: ['active','dagreLib'],
+  props: ['active','d3dInfo'],
   components: {D3NodeForm, D3EdgeForm},
   data () {
     return {
@@ -91,13 +92,16 @@ export default {
       doubleSelection: [],
       openSheet: false,
       transform: {},
-      escCount: 0
+      escCount: 0,
+      modifier: null
     }
   },
   mounted () {
     this.emitter.on('d3ResetValues', () => {
       this.resetValues()
     })
+
+    this.modifier = new DiagramModifier(this.d3dInfo)
 
     this.emitter.on('setSheetToFalse', () => {
       /**
@@ -122,7 +126,7 @@ export default {
       if (D3Util.debug) {
         console.log('forwardLinkClicked')
         console.log(data)
-        //console.log(this.dagreLib)
+        //console.log(this.modifier)
       }
 
       if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
@@ -166,22 +170,24 @@ export default {
         //DagreAltKeys.diagram = this.graphLib.diagram
         //DagreAltKeys.focusedNodeId = this.focusedNodeId
         //DagreAltKeys.focusedEdgeId = this.focusedEdgeId
-        DagreAltKeys.diagram = this.dagreLib.diagram
-        var resetValues = DagreAltKeys.key(event.key, this)
+        //DagreAltKeys.diagram = this.modifier.diagram
+        let altKeys = new D3DAltKeys(this.d3dInfo, this.emitter)
+        var resetValues = altKeys.key(event.key, this)
         if(resetValues){
           this.resetValues()
         }
       } else {
         /*IF searching eg: "/" don't search for anything */
         console.log(DagreKeys)
-        console.log(this.dagreLib)
-        if (this.dagreLib.id !== null){
-          this.id = this.dagreLib.id 
-        }
-        DagreOtherKeys.dagreGraphLib = this
-        DagreOtherKeys.dagreLib = this.dagreLib
-        DagreOtherKeys.diagram = this.dagreLib.diagram
-        DagreOtherKeys.focusedIndex = this.focusedIndex
+        console.log(this.modifier)
+        //if (this.modifier.id !== null){
+        //  this.id = this.modifier.id 
+        //}
+
+        //DagreOtherKeys.dagreGraphLib = this
+        //DagreOtherKeys.dagreLib = this.modifier
+        //DagreOtherKeys.diagram = this.modifier.diagram
+        //DagreOtherKeys.focusedIndex = this.focusedIndex
         //DagreKeys.diagram = this.d3Diagram
         // DagreKeys.focusedIndex = this.focusedIndex
         //DagreKeys.nodeOrEdge = this.edgeOrNode
@@ -189,7 +195,8 @@ export default {
           selectedNodes and doubleSelection vars
           need to know why?
           */
-        var result = DagreOtherKeys.defaultActions(event.key, this.edgeOrNode)
+         let otherKeys = new D3DOtherKeys(this.d3dInfo, this.emitter, this.focusedIndex )
+        var result = otherKeys.defaultActions(event.key, this.edgeOrNode)
         if (D3Util.debug){
           console.log(result)
           console.log(this.focusedNodeId)
@@ -199,14 +206,14 @@ export default {
           var status = false
           if(event.key == 'x') {
             if(this.edgeOrNode == 'nodes') {
-              status = this.dagreLib.deleteNode(this.focusedNodeId)
+              status = this.modifier.deleteNode(this.focusedNodeId)
               if (status){
                 this.focusedNodeId = null
               } else {
                 this.emitter.emit('appMessage', 'info', 'Unable to delete node')
               }
             } else {
-              status = this.dagreLib.deleteEdge(this.focusedEdgeId)
+              status = this.modifier.deleteEdge(this.focusedEdgeId)
               console.log(status)
               if (status){
                 this.focusedEdgeId = null
@@ -223,8 +230,8 @@ export default {
              * how to fix this unexpected mutation?
              * there is probably a better way to do this!
              */
-            this.dagreLib.selectedNodes = result.selectedNodes
-            this.dagreLib.doubleSelection = result.doubleSelection
+            this.modifier.selectedNodes = result.selectedNodes
+            this.modifier.doubleSelection = result.doubleSelection
             this.doubleSelection = result.doubleSelection
           } else if (event.key == 'Escape') {
             if (this.escCount == 2){
@@ -235,7 +242,7 @@ export default {
             }
           } else if (event.key == 'y') {
             console.log('trying to copy what is selected')
-            this.dagreLib.createCopyV2(this.focusedNodeId)
+            this.modifier.createCopyV2(this.focusedNodeId)
           } else {
             if (this.edgeOrNode == 'nodes') {
               this.focusedNodeId = result.nodesId
@@ -284,10 +291,10 @@ export default {
     },
     resetValues () {
       if (this.focusedNodeId) {
-        this.dagreLib.removeNodeSelectionById(this.focusedNodeId)
+        this.modifier.removeNodeSelectionById(this.focusedNodeId)
       }
       if (this.focusedEdgeId) {
-        this.dagreLib.removeEdgeSelectionById(this.focusedEdgeId)
+        this.modifier.removeEdgeSelectionById(this.focusedEdgeId)
       }
       this.selectedNodes = []
       this.selectedEdges = []
@@ -297,14 +304,14 @@ export default {
       this.focusedNodeId = null
       this.escCount = 0
       //this.emitter.emit()
-      this.dagreLib.redraw(this.dagreLib.diagram)
+      this.modifier.redraw(this.modifier.diagram)
       this.emitter.emit("changeActive")
     }
   },
   watch: {
     dagrelib: function () {
       console.log('dagreLib watch')
-      console.log(this.dagreLib)
+      console.log(this.modifier)
     },
     active: function () {
       console.log('DagreGraphLib')

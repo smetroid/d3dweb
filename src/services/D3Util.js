@@ -321,7 +321,7 @@ export default {
     try{
       let randomId ='D3D'+this.randomId()
       let created = new Date()
-      let json = new DagreD3.graphlib.json.write(this.diagram)
+      let json = new DagreD3.graphlib.json.write(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -340,14 +340,13 @@ export default {
   updateLocalEntry(id, data){
     localStorage.setItem(id, JSON.stringify(data))
   },
-  saveTempDiagram(diagram, g){
+  saveTempDiagram(g){
     this.json = new DagreD3.graphlib.json.write(g)
     let created = new Date()
     let updatedData = {
       'updatedTime': created.toISOString(),
-      'id': diagram.id,
-      'name': diagram.name,
-      'description': diagram.description,
+      'name': 'D3d Temp Name',
+      'description': 'My awesome diagram',
       'diagram': JSON.stringify(this.json),
     }
     localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
