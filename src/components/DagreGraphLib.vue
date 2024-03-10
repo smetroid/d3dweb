@@ -3,6 +3,7 @@
     @keydown.exact.alt.prevent="keyPress($event)"
     @keydown.exact.ctrl.r="reload($event)"
     @keypress.stop.prevent="keyPress($event)"
+    @keydown.esc.prevent="keyPress($event)"
     >
       <FocusTrap
         v-model:active="trapGraph"

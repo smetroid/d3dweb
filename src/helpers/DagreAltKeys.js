@@ -47,12 +47,12 @@ export default class DagreAltKeys {
       case 'n':
         var node = D3Util.defaultNodeValues()
         this.modifier.addNode(node)
-        //resetValues = true
+        resetValues = true
         break
       case 'd':
         var edge = D3Util.defaultEdgeValues()
         this.modifier.addEdge(edge)
-        //resetValues = true
+        resetValues = true
         break
       case 'e':
         //Need to remove the id of node or edge when changing the selection option
