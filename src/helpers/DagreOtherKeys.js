@@ -5,16 +5,15 @@ import * as d3 from 'd3'
 //import D3Edge from '@/components/D3EdgeForm'
 import Velocity from 'velocity-animate'
 import VueCookies from 'vue-cookies'
-import DiagramModifier from './DiagramModifier.js'
 //import MenuLink from '@/helpers/MenuLinks'
 export default class DagreOtherKeys {
-  constructor(d3dInfo, emitter, focusedIndex) {
-    this.d3dInfo = d3dInfo
-    this.modifier = new DiagramModifier(d3dInfo)
+  constructor(emitter, modifier) {
     this.emitter = emitter
-    this.diagram = d3dInfo.diagram
-    this.focusedIndex = focusedIndex
-    this.selectedNodes = []
+    this.modifier = modifier
+    this.diagram = modifier.d3dInfo.diagram
+    this.focusedIndex = modifier.focusedIndex
+    this.selectedNodes = modifier.selectedNodes
+    this.doubleSelection = modifier.doubleSelection
   }
 
   defaultActions (eventKey, edgeOrNode) {
@@ -52,8 +51,11 @@ export default class DagreOtherKeys {
     var selectedId = null
     //this.modifier = this.dagreGraphLib.dagreLib
     //this.graph = this.dagreGraphLib.d3Diagram
+
+    /*NOTE - Can probably delete
     this.selectedNodes = this.graphSelectedNodes
     this.doubleSelection = this.graphDoubleSelection
+    */
 
     //this.[eventKey](nodeOrEdge)
     if (eventKey == "j"){
@@ -265,6 +267,7 @@ export default class DagreOtherKeys {
     let node = this.modifier.getNode(index)
     console.log('node')
     console.log(node)
+    console.log(this.selectedNodes)
     //var selectedNodes = []
     //console.log(selectedNodes)
     let selectionExists = this.selectedNodes.indexOf(index)

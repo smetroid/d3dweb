@@ -1,12 +1,10 @@
-import DiagramModifier from './DiagramModifier.js'
 import D3Util from '../services/D3Util.js'
 
 export default class DagreAltKeys {
-  constructor(d3dInfo, emitter) {
-    this.d3dInfo = d3dInfo
-    this.modifier = new DiagramModifier(d3dInfo)
-    this.diagram = d3dInfo.diagram
+  constructor(emitter, modifier) {
     this.emitter = emitter
+    this.modifier = modifier
+    this.diagram = modifier.d3dInfo.diagram
   }
 
   key(eventKey, comp) {
@@ -54,7 +52,7 @@ export default class DagreAltKeys {
       case 'd':
         var edge = D3Util.defaultEdgeValues()
         this.modifier.addEdge(edge)
-        resetValues = true
+        //resetValues = true
         break
       case 'e':
         //Need to remove the id of node or edge when changing the selection option

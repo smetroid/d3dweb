@@ -58,34 +58,26 @@ import DagreLib from '../helpers/DagreLib.vue'
 //import DagreOtherKeys from '@/helpers/DagreOtherKeys'
 import D3DAltKeys from '../helpers/DagreAltKeys.js'
 import D3DOtherKeys from '../helpers/DagreOtherKeys.js'
-import DiagramModifier from '../helpers/DiagramModifier.js'
 // import Crud from '@/helpers/CRUD'
 
 export default {
   name: 'DagreGraphLib',
-  props: ['active','d3dInfo'],
+  //props: ['active', 'd3dInfo'],
+  props: ['active'],
+  inject: ['modifier'],
   components: {D3NodeForm, D3EdgeForm},
   data () {
     return {
-      // gNavLi: null,
-      g: null,
-      id: null,
-      //graph: null,
-      //graphDefaults: {"options": {"directed":true,"multigraph":true,"compound":true}, "nodes": [], "edges": []},
       edgeOrNode: 'nodes',
       response: null,
       focusedIndex: null,
       trapGraph: true,
-      gWidth: null,
-      gHeight: null,
-      svg: null,
       focusedEdgeId: null,
       focusedNodeId: null,
       initialScale: .96,
       hintKeysReplaced: '',
       hints: {},
       d3Data: {},
-      //dagreLib: null,
       diagramInfo: true,
       selectedNodes: [],
       selectedEdges: [],
@@ -93,7 +85,6 @@ export default {
       openSheet: false,
       transform: {},
       escCount: 0,
-      modifier: null
     }
   },
   mounted () {
@@ -101,7 +92,8 @@ export default {
       this.resetValues()
     })
 
-    this.modifier = new DiagramModifier(this.d3dInfo)
+    //this.modifier = new DiagramModifier(this.d3dInfo, this.selectedNodes, this.doubleSelection, this.selectedEdges)
+    //this.modifier = new DiagramModifier(this.test)
 
     this.emitter.on('setSheetToFalse', () => {
       /**
@@ -145,6 +137,15 @@ export default {
       }
     },
     keyPress(event) {
+      /*NOTE - let's add additional properties to the modifier object
+      focusedIndex, selectedNodes, and doubleSelection are used by both
+      DagreOtherKeys and the modifier ... keeping things DRY
+      */
+      this.modifier.focusedIndex = this.focusedIndex
+      this.modifier.selectedNodes = this.selectedNodes
+      this.modifier.doubleSelection = this.doubleSelection
+      this.modifier.selectedEdges = this.selectedEdges
+
       if (D3Util.debug) {
         console.log('event')
         console.log(event)
@@ -171,7 +172,8 @@ export default {
         //DagreAltKeys.focusedNodeId = this.focusedNodeId
         //DagreAltKeys.focusedEdgeId = this.focusedEdgeId
         //DagreAltKeys.diagram = this.modifier.diagram
-        let altKeys = new D3DAltKeys(this.d3dInfo, this.emitter)
+        let altKeys = new D3DAltKeys(this.emitter, this.modifier)
+        console.log(this.modifier)
         var resetValues = altKeys.key(event.key, this)
         if(resetValues){
           this.resetValues()
@@ -191,11 +193,15 @@ export default {
         //DagreKeys.diagram = this.d3Diagram
         // DagreKeys.focusedIndex = this.focusedIndex
         //DagreKeys.nodeOrEdge = this.edgeOrNode
+
         /*just returning this updates the
           selectedNodes and doubleSelection vars
           need to know why?
-          */
-         let otherKeys = new D3DOtherKeys(this.d3dInfo, this.emitter, this.focusedIndex )
+         */
+
+        console.log(this.modifier)
+        console.log(this.test)
+        let otherKeys = new D3DOtherKeys(this.emitter, this.modifier )
         var result = otherKeys.defaultActions(event.key, this.edgeOrNode)
         if (D3Util.debug){
           console.log(result)
@@ -225,14 +231,15 @@ export default {
             this.hints = result.hints
             console.log(this.hints)
           } else if (event.key == 'Enter') {
+            /*NOTE can we avoid this ... seems redundant*/
             this.selectedNodes = result.selectedNodes
+            this.doubleSelection = result.doubleSelection
             /**!SECTION
              * how to fix this unexpected mutation?
              * there is probably a better way to do this!
              */
             this.modifier.selectedNodes = result.selectedNodes
             this.modifier.doubleSelection = result.doubleSelection
-            this.doubleSelection = result.doubleSelection
           } else if (event.key == 'Escape') {
             if (this.escCount == 2){
               this.resetValues()
@@ -309,10 +316,10 @@ export default {
     }
   },
   watch: {
-    dagrelib: function () {
-      console.log('dagreLib watch')
-      console.log(this.modifier)
-    },
+    //dagrelib: function () {
+    //  console.log('dagreLib watch')
+    //  console.log(this.modifier)
+    //},
     active: function () {
       console.log('DagreGraphLib')
       var nodes = this.active == 'Select Node'?true:false

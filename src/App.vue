@@ -15,9 +15,9 @@ import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
-import DiagramModifier from './helpers/DiagramModifier.vue'
+import DiagramModifier from './helpers/DiagramModifier.js'
+import { computed } from 'vue'
 //import DagreOtherKeys from './helpers/DagreOtherKeys.vue'
-
 
 // Theme specific
 import { useTheme } from 'vuetify'
@@ -77,9 +77,6 @@ function toggleTheme() {
       </v-card>
     -->
       <v-main class="align-center justify-center">
-        <DiagramModifier
-          :d3dInfo="d3dInfo"
-        />
         <!--
         <DagreOtherKeys
           :d3dInfo="d3dInfo"
@@ -87,7 +84,6 @@ function toggleTheme() {
         -->
         <DagreGraphLib
           :active="active"
-          :d3dInfo="d3dInfo"
         />
         <DiagramForm
           :active="active"
@@ -96,6 +92,7 @@ function toggleTheme() {
         <Settings
           v-if="active === 'Settings'"
           :active="active"
+          :d3dInfo="d3dInfo"
         />
         <!--
         <DiagramForm
@@ -283,7 +280,7 @@ function toggleTheme() {
 export default {
   name: 'App',
   //components: {DagreGraphLib, Settings, DiagramForm, D3DFooter, DiagramModifier, DagreOtherKeys},
-  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter, DiagramModifier},
+  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter},
   data () {
     return {
       active: "D3Dagre", //Default active component
@@ -323,6 +320,12 @@ export default {
         {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
       ],
       d3dInfo: {},
+      modifier: {},
+    }
+  },
+  provide() {
+    return {
+      modifier: computed(() => this.modifier)
     }
   },
   mounted () {
@@ -362,11 +365,13 @@ export default {
       //  this.$root.$emit('appMessage', true, message)
       //}
       this.d3dInfo = localDiagramInfo
-      console.log(this.d3dInfo)
-      let renderDiagram = DiagramModifier.redraw(g)
-      this.d3dInfo.diagram = renderDiagram
+      this.d3dInfo.diagram = g
       this.d3dInfo.id = diagramId ? diagramId : null
-      console.log(this.d3dInfo)
+
+      /**NOTE - this.modifier is the main object used by all other components files */
+      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier.redraw(g)
+
       /*NOTE - this is particular dagre-d3 problem, which has been difficult to fix and troubleshoot
       * When you open one diagram with clusters, it renders properly
       * when you open a second diagram with clusters, the second 
@@ -530,8 +535,9 @@ export default {
         console.log(g)
         console.log('newDiagram')
       }
-      let renderDiagram = DiagramModifier.redraw(g)
+      let renderDiagram = this.modifier.redraw(g)
       this.d3dInfo.diagram = renderDiagram
+      this.modifier.d3dInfo = this.d3dInfo
     },
     openMenu (){
         console.log(this.active)

@@ -5,9 +5,12 @@ import * as DagreD3 from 'dagre-d3'
 import D3Util from '../services/D3Util'
 /*these vars are global needed for the click.reset() function*/
 export default class DiagramModifier {
-  constructor(d3dInfo, emitter) {
+  constructor(d3dInfo, emitter, selectedNodes, doubleSelection, selectedEdges) {
     this.d3dInfo = d3dInfo
     this.diagram = d3dInfo.diagram
+    this.selectedNodes = selectedNodes
+    this.doubleSelection = doubleSelection
+    this.selectedEdges = selectedEdges
     this.svg = null
     this.zoom = null
     this.gWidth = null
