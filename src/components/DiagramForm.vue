@@ -50,7 +50,7 @@
                 Options
                 <v-switch
                   color="primary"
-                  v-for="(v, k) in diagramDefaults.options"
+                  v-for="(v, k) in graphOptions"
                     :key="k"
                     :label="`${k}`"
                     :model-value="v"
@@ -123,10 +123,12 @@
 </template>
 <script>
 import D3Util from '@/services/D3Util'
+import * as DagreD3 from 'dagre-d3'
+import DiagramModifier from '../helpers/DiagramModifier.js'
 export default {
   name: 'DiagramForm',
   props: ['active'],
-  inject: ['modifier'],
+  //inject: ['modifier'],
   data () {
     return {
       id: null,
@@ -137,19 +139,13 @@ export default {
       diagramModal: false,
       created: Date().toISOString,
       update: null,
-      diagramDefaults: {
-        "options": {
-          "directed":true,
-          "multigraph":true,
-          "compound":true
-        }, 
-        "nodes": [], 
-        "edges": [], 
-        "value": {
-          "rankdir":'50','ranksep':'TB','nodesep':'10'
+      graphOptions: {
+        'options': {
+          'directed': true,
+          'multigraph': true,
+          'compound': true
         }
       },
-      graphOptions: [],
       rankdir: 'TB',
       rankdirOptions: [
         'TB',
@@ -176,10 +172,14 @@ export default {
         'curveStepBefore'
         ],
       width: '',
-      height: ''
+      height: '',
+      modifier: null
     }
   },
   mounted () {
+    console.log('Diagram Mounted')
+
+    /*!SECTION Emitter section */
     this.emitter.on('SaveDiagram', () => {
       if (this.modifier.d3dInfo.id){
         console.log('found diagram info id ... saving changes')
@@ -195,8 +195,44 @@ export default {
       this.update = this.diagramModal
       this.setDiagramInfo()
     })
+
+    this.emitter.on('NewDiagram', () => {
+      this.newDiagram()
+    })
   },
   methods: {
+    newDiagram(){
+      // clear the cookie of the last saved diagram
+      this.$cookies.remove('LastLocallySavedItemId')
+
+      console.log('creating a new localDiagram')
+      let g = new DagreD3.graphlib.Graph(this.graphOptions)
+      g.setGraph({})
+      g.graph().rankdir = this.rankdir
+      g.graph().ranksep = this.ranksep
+      g.graph().nodesep = this.nodesep 
+      g.setDefaultEdgeLabel(function () { return {} })
+      g.setNode('first', {label: 'first node', id: 'first'})
+      if (D3Util.debug) {
+        console.log('newDiagram')
+        console.log(g)
+        console.log('newDiagram')
+      }
+
+      let d3dInfo = {}
+      d3dInfo.diagram = g
+      d3dInfo.id = this.id
+      d3dInfo.name = this.name
+      d3dInfo.description = this.description
+      /**NOTE - this.modifier is the main object used by all other components files */
+      this.modifier = new DiagramModifier(d3dInfo)
+      console.log(this.modifier)
+      this.modifier.redraw(g)
+      /*SECTION - send this info back to the application to be consumed by the other 
+      components
+      */
+      this.emitter.emit('updateModifier', this.modifier)
+    },
     setDiagramInfo(){
       console.log(this.modifier)
       let info = this.modifier.d3dInfo

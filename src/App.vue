@@ -4,7 +4,7 @@ import D3Util from './services/D3Util.js'
 import MenuKeys from './helpers/MenuKeys.js'
 import MenuLinks from './helpers/MenuLinks.js'
 import Settings from './components/Settings.vue'
-import D3DFooter from './components/Helper.vue'
+import HelperPane from './components/Helper.vue'
 import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
@@ -240,7 +240,7 @@ function toggleTheme() {
                   <v-card
                     width="100%"
                   >
-                    <D3DFooter
+                    <HelperPane
                       :expand="showHelpPane"
                       :diagramInfo="d3dInfo"
                     />
@@ -263,14 +263,13 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DagreGraphLib, Settings, DiagramForm, D3DFooter},
+  components: {DagreGraphLib, Settings, DiagramForm, HelperPane},
   data () {
     return {
       active: "D3Dagre", //Default active component
       showMenu: false,
       showActionsMenu: false,
-      //settings: {},
-      showHelpPane: this.$cookies.get('settings')['showHelpPane'],
+      showHelpPane: true,
       showDiagramForm: false,
       successfull: null,
       alertMessage: null,
@@ -315,8 +314,10 @@ export default {
     try{
       console.log('App mounted')
 
+      /*!SECTION - Setting application defaults based on cookie settings */
       if (this.$cookies.get('settings')) {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
+        this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
 
       /*!SECTION - Logic to load a previously working diagram, or 
@@ -358,7 +359,7 @@ export default {
     } catch (error) {
       console.log('mounted catch')
       console.log(error)
-      this.newDiagram()
+      this.emitter.emit('newDiagram')
     }
 
     /*!SECTION Emitter section, is a way for child components to 
@@ -388,6 +389,11 @@ export default {
       this.alertMessage = message + common + data
     })
 
+    /*NOTE - modifer object from when creating a new diagram */
+    this.emitter.on('updateModifier', newModifier => {
+      console.log('modifier update')
+      this.modifier = newModifier
+    })
 
     /*NOTE - Help Pane toggle
     */
@@ -460,35 +466,6 @@ export default {
       DagreLib.created = response.created
       DagreLib.json = response.diagram
       this.d3dInfo = DagreLib
-    },
-    newDiagram(){
-      // clear the cookie of the last saved diagram
-      this.$cookies.remove('LastLocallySavedItemId')
-
-      /**duplicate code 
-       * need to move to Utilils or common file
-       * maybe reference the DiagramForm, since it contains defaults
-       */
-      console.log('creating a new localDiagram')
-      let g = new DagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
-      g.setGraph({})
-      g.graph().rankdir = 'TB'
-      g.graph().ranksep = '50' 
-      g.graph().nodesep = '10'
-      g.setDefaultEdgeLabel(function () { return {} })
-      g.setNode('first', {label: 'first node', id: 'first'})
-      if (D3Util.debug) {
-        console.log('newDiagram')
-        console.log(g)
-        console.log('newDiagram')
-      }
-
-      let renderDiagram = this.modifier.redraw(g)
-      this.d3dInfo.diagram = renderDiagram
-      this.d3dInfo.id = null
-      this.d3dInfo.name = null
-      this.d3dInfo.description = null
-      this.modifier.d3dInfo = this.d3dInfo
     },
     openMenu (){
         console.log(this.active)

@@ -27,7 +27,7 @@ export default {
       case 'New Diagram':
         app.active = "D3Dagre"
         //app.$root.$emit('newDiagram', '')
-        app.newDiagram()
+        app.emitter.emit('NewDiagram')
         break
       // case 'Open':
       //   app.$root.$emit('showDiagramList', 'Open')

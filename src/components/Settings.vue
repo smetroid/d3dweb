@@ -17,6 +17,12 @@
                 class="bg-primary d-flex justify-center">
                   <b>Settings</b>
               </v-card-title>
+              <v-alert 
+                variant="tonal"
+                type="info"
+                icon="$info"
+                text="You need to reload the page for these settings to take effect"
+              />
               <v-card-text
                 color="primary"
                 class="">
