@@ -122,13 +122,11 @@
   </v-dialog>
 </template>
 <script>
-import * as DagreD3 from 'dagre-d3'
-import D3VimApi from '@/services/api/SamusApi'
 import D3Util from '@/services/D3Util'
-import VueCookies from 'vue-cookies'
 export default {
   name: 'DiagramForm',
-  props: ['active', 'diagramInfo'],
+  props: ['active'],
+  inject: ['modifier'],
   data () {
     return {
       id: null,
@@ -136,7 +134,7 @@ export default {
       username: '',
       name: 'New diagram default name',
       description: 'New diagram default description',
-      diagramModal: null,
+      diagramModal: false,
       created: Date().toISOString,
       update: null,
       diagramDefaults: {
@@ -183,7 +181,7 @@ export default {
   },
   mounted () {
     this.emitter.on('SaveDiagram', () => {
-      if (this.diagramInfo.id){
+      if (this.modifier.d3dInfo.id){
         console.log('found diagram info id ... saving changes')
         this.updateLocalDiagram();
       } else {
@@ -200,15 +198,15 @@ export default {
   },
   methods: {
     setDiagramInfo(){
-      console.log(this.diagramInfo.diagram)
-      let info = this.diagramInfo
+      console.log(this.modifier)
+      let info = this.modifier.d3dInfo
       this.id = info.id
       this.name = info.name ? info.name : this.name
       this.description = info.description ? info.description : this.description
       this.diagram = info.diagram
       this.created = info.created
-      this.jsonDiagram = JSON.stringify(this.diagramInfo.diagram)
-      this.setGraphOptions(info.diagram)
+      this.jsonDiagram = JSON.stringify(this.diagram)
+      this.setGraphOptions(this.diagram)
       this.rankdir = this.diagram._label.rankdir
       this.ranksep = this.diagram._label.ranksep
       this.nodesep = this.diagram._label.nodesep

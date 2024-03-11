@@ -1,23 +1,16 @@
 <script setup>
-//import { RouterLink, RouterView } from 'vue-router'
 import DagreGraphLib from './components/DagreGraphLib.vue'
-//import HelloWorld from './components/HelloWorld.vue'
-//import * as Velocity from 'velocity-animate'
 import D3Util from './services/D3Util.js'
 import MenuKeys from './helpers/MenuKeys.js'
 import MenuLinks from './helpers/MenuLinks.js'
 import Settings from './components/Settings.vue'
 import D3DFooter from './components/Helper.vue'
-//import D3DFooter from './components/Footer.vue'
-//import Login from './components/Login.vue'
-//import DiagramList from './components/DiagramList.vue'
 import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
 import DiagramModifier from './helpers/DiagramModifier.js'
 import { computed } from 'vue'
-//import DagreOtherKeys from './helpers/DagreOtherKeys.vue'
 
 // Theme specific
 import { useTheme } from 'vuetify'
@@ -87,20 +80,11 @@ function toggleTheme() {
         />
         <DiagramForm
           :active="active"
-          :d3dInfo="d3dInfo"
         />
         <Settings
-          v-if="active === 'Settings'"
           :active="active"
           :d3dInfo="d3dInfo"
         />
-        <!--
-        <DiagramForm
-          v-if="active === 'Save Changes' || active === 'Edit'"
-          :active="active"
-          :diagramInfo="d3dInfo"
-        />
-        -->
       </v-main>
       <!--
         NOTE: app - in the footer makes the footer to stay at the bottom 
@@ -257,7 +241,7 @@ function toggleTheme() {
                     width="100%"
                   >
                     <D3DFooter
-                      :expand="settings.showHelpPane"
+                      :expand="showHelpPane"
                       :diagramInfo="d3dInfo"
                     />
                   </v-card>
@@ -279,15 +263,14 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  //components: {DagreGraphLib, Settings, DiagramForm, D3DFooter, DiagramModifier, DagreOtherKeys},
   components: {DagreGraphLib, Settings, DiagramForm, D3DFooter},
   data () {
     return {
       active: "D3Dagre", //Default active component
       showMenu: false,
       showActionsMenu: false,
-      settings: {},
-      //showHelp: true,
+      //settings: {},
+      showHelpPane: this.$cookies.get('settings')['showHelpPane'],
       showDiagramForm: false,
       successfull: null,
       alertMessage: null,
@@ -372,41 +355,10 @@ export default {
       this.modifier = new DiagramModifier(this.d3dInfo)
       this.modifier.redraw(g)
 
-      /*NOTE - this is particular dagre-d3 problem, which has been difficult to fix and troubleshoot
-      * When you open one diagram with clusters, it renders properly
-      * when you open a second diagram with clusters, the second 
-      * diagram does not render the clusters properly
-      * The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
-      * the old diagram (first diagram ) clusters which are no longer part of the second diagram 
-      */
-
-      //DagreLib.diagram = DagreLib.redraw(g)
-
-      //DagreLib.json = localDiagramInfo.diagram
-      //this.d3dInfo = DagreLib
-      //this second render, fixes the cluster issues where the diagram does not render 
-      //Temporary workaround
-//    this.DiagramModifier.redraw(this.d3dInfo.diagram)
     } catch (error) {
       console.log('mounted catch')
       console.log(error)
       this.newDiagram()
-    }
-    // setting defaults on load or load from saved settings
-    let settings = D3Util.appDefaults()
-    if (this.$cookies.get('settings')) {
-      //duplicate code between App.vue and Settings.vue ... how to fix?
-      let setSettings = this.$cookies.get('settings')
-      for (let key in setSettings) {
-        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
-          setSettings[key] = Boolean(setSettings[key])
-        }
-      }
-      this.settings = setSettings
-    } else {
-      console.log('setting defaults')
-      settings = D3Util.appDefaults()
-      this.$cookies.set('settings', settings)
     }
 
     /*!SECTION Emitter section, is a way for child components to 
@@ -440,7 +392,7 @@ export default {
     /*NOTE - Help Pane toggle
     */
     this.emitter.on('showHelp', () => {
-      this.settings.showHelpPane = !this.settings.showHelpPane
+      this.showHelpPane = !this.showHelpPane
     })
 
     /*NOTE - Handle the default active section/component
@@ -467,14 +419,9 @@ export default {
        console.log(payload.id)
        console.log(payload.name)
        console.log(payload.description)
-       /*!SECTION
-       */
        this.d3dInfo.id = payload.id
        this.d3dInfo.name = payload.name
        this.d3dInfo.description = payload.description
-       //DagreLib.diagram = DagreLib.redraw(g)
-       /**JSON is provided during an open from the server, maybe I'll skip for now */
-       // DagreLib.json = localDiagramInfo.diagram
      })
 
     this.emitter.on('openDiagram', (id) => {
@@ -535,8 +482,12 @@ export default {
         console.log(g)
         console.log('newDiagram')
       }
+
       let renderDiagram = this.modifier.redraw(g)
       this.d3dInfo.diagram = renderDiagram
+      this.d3dInfo.id = null
+      this.d3dInfo.name = null
+      this.d3dInfo.description = null
       this.modifier.d3dInfo = this.d3dInfo
     },
     openMenu (){

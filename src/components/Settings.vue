@@ -3,10 +3,11 @@
     <v-dialog
       ref="settings"
       v-model="settingsModal"
-      max-width="500"
+      max-width="600"
       @keydown.esc="common($event)"
       >
-      <focus-trap v-model:active="settingsModal"
+      <focus-trap
+        v-model:active="settingsModal"
         class="trap is-active">
         <div tabindex="0">
           <v-card
@@ -122,40 +123,39 @@ export default {
     }
   },
   mounted () {
-    //if (D3Util.debug) {
-    //  localStorage.getItem('token')
-    //}
-    console.log('active window watch')
-    this.settingsModal = this.active == "Settings" ? true : false
-    // console.log(this.settingsModal)
-    // this.$nextTick(function(){
-    //   console.log('settingsTrap active')
-    // })
+    console.log('settings')
+    // setting defaults on load or load from saved settings
+    let getSettings = this.$cookies.get('settings')
+    if (getSettings) {
+      for (let key in getSettings) {
+        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
+          getSettings[key] = Boolean(getSettings[key])
+        }
+      }
+      this.settings = getSettings
+    } else {
+      console.log('setting defaults')
+      getSettings = D3Util.appDefaults()
+      this.$cookies.set('settings', getSettings)
+    }
+
+    if (D3Util.debug) {
+      console.log(getSettings)
+    }
+    this.settings = getSettings
+    
+    /*NOTE - Help Pane toggle
+    */
+    this.emitter.emit('showHelp')
+
     this.emitter.on('settings', () => {
       if (D3Util.debug) {
         console.log('settings event received')
       }
-      this.settings = this.getSettings()
       this.settingsModal = true
     })
-    this.getSettings()
   },
   methods: {
-    getSettings () {
-      let setSettings = this.$cookies.get('settings')
-      for (let key in setSettings) {
-        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
-          setSettings[key] = Boolean(setSettings[key])
-        }
-      }
-
-      if (D3Util.debug) {
-        console.log(setSettings)
-      }
-
-      this.settings = setSettings
-
-    },
     close () {
       this.common()
     },
