@@ -292,6 +292,7 @@ export default {
         {'icon':'mdi-selection-remove','title':'Delete Edge'},
         {'icon':'mdi-selection','title':'Select Edges'}
       ],
+      /*
       menuLinks: [
         {'icon':'mdi-login','title':'Login'},
         {'icon':'mdi-cog-outline','title':'D3D Settings'},
@@ -300,6 +301,14 @@ export default {
         {'icon':'mdi-pencil','title':'Edit Diagram'},
         {'icon':'mdi-content-save-outline','title':'Save Changes'},
         {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
+      ],
+      */
+      menuLinks: [
+        {'icon':'mdi-cog-outline','title':'D3D Settings'},
+        {'icon':'mdi-open-in-new','title':'New Diagram'},
+        {'icon':'mdi-open-in-app','title':'Open Diagram'},
+        {'icon':'mdi-pencil','title':'Edit Diagram'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes'},
       ],
       d3dInfo: {},
       modifier: {},
