@@ -355,6 +355,7 @@ export default {
       /**NOTE - this.modifier is the main object used by all other components files */
       this.modifier = new DiagramModifier(this.d3dInfo)
       this.modifier.redraw(g)
+      console.log(this.modifier)
 
     } catch (error) {
       console.log('mounted catch')
@@ -390,9 +391,10 @@ export default {
     })
 
     /*NOTE - modifer object from when creating a new diagram */
-    this.emitter.on('updateModifier', newModifier => {
+    this.emitter.on('updateModifier', (newModifier) => {
       console.log('modifier update')
       this.modifier = newModifier
+      this.d3dInfo = newModifier.d3dInfo
     })
 
     /*NOTE - Help Pane toggle

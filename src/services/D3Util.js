@@ -5,6 +5,13 @@ import * as DagreD3 from 'dagre-d3'
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
 export default {
+  tempInfo () {
+    let temp = {
+      name: 'D3D Temp Name',
+      description: 'My Awesome Diagram'
+    }
+    return temp
+  },
   //getDiagram(diagramId) {
   //},
   getLiElements () {
@@ -338,15 +345,32 @@ export default {
     }
   },
   updateLocalEntry(id, data){
-    localStorage.setItem(id, JSON.stringify(data))
+    try{
+      let created = new Date()
+      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let payload = { 
+        'name': data.name,
+        'description': data.description,
+        'diagram': JSON.stringify(json),
+        'createdTime': created.toISOString(),
+        'updatedTime': null,
+      }
+
+      localStorage.setItem(id, JSON.stringify(payload))
+      VueCookies.set('LastLocallySavedItemId', id)
+      console.log('updating item succeeded')
+    } catch (error) {
+      console.log('updating item failed')
+      console.log(error)
+    }
   },
   saveTempDiagram(g){
     this.json = new DagreD3.graphlib.json.write(g)
     let created = new Date()
     let updatedData = {
       'updatedTime': created.toISOString(),
-      'name': 'D3d Temp Name',
-      'description': 'My awesome diagram',
+      'name': this.tempInfo().name,
+      'description': this.tempInfo().description,
       'diagram': JSON.stringify(this.json),
     }
     localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
