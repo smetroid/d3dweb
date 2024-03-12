@@ -35,13 +35,11 @@
             v-if="active === 'Add Edge' || active === 'Edit Edge'"
             :active="active"
             :d3Data="d3Data"
-            :DagreLib="d3dInfo"
           />
           <D3NodeForm
             v-if="active === 'Add Node' || active === 'Edit Node'"
             :active="active"
             :d3Data="d3Data"
-            :DagreLib="d3dInfo"
           />
       </v-bottom-sheet>
   </div>
@@ -53,7 +51,6 @@ import D3EdgeForm from './D3EdgeForm.vue'
 import D3NodeForm from './D3NodeForm.vue'
 import DagreKeys from '../helpers/DagreKeys.vue'
 import Hints from '../helpers/Hints.vue'
-import DagreLib from '../helpers/DagreLib.vue'
 //import login from '@/components/Login'
 //import * as dagreD3 from 'dagre-d3'
 //import DagreOtherKeys from '@/helpers/DagreOtherKeys'
@@ -109,9 +106,6 @@ export default {
     })
   },
   methods: {
-    reload(event) {
-      console.log('reload page')
-    },
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
      */
@@ -126,13 +120,13 @@ export default {
         console.log('v and w')
         /* We want to control the from using the active parent varible*/
         //this.showEdgeForm = true
-        this.d3Data = DagreLib.getEdgeData(data)
+        this.d3Data = this.modifier.getEdgeData(data)
         this.emitter.emit('changeActive', 'Edit Edge')
       } else {
         console.log('v')
         /* We want to control the from using the active parent variable*/
         //this.showNodeForm = true
-        this.d3Data = DagreLib.getNodeData(data)
+        this.d3Data = this.modifier.getNodeData(data)
         console.log(this.d3Data)
         this.emitter.emit('changeActive', 'Edit Node')
       }
@@ -345,9 +339,9 @@ export default {
       }
 
       if (this.active == 'Delete Node'){
-        DagreLib.deleteNodes(this.selectedNodes)
+        this.modifier.deleteNodes(this.selectedNodes)
       } else if (this.active == 'Delete Edge'){
-        this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
+        this.selectedNodes = this.modifier.deleteEdges(this.selectedEdges)
       }
 
       if ((this.active == 'Add Node') ||

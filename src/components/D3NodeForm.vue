@@ -158,12 +158,12 @@
 
 <script>
 // import * as Velocity from 'velocity-animate'
-//import DagreLib from '@/helpers/DagreLib'
 import D3Util from '@/services/D3Util'
 // import VueCookies from 'vue-cookies'
 export default {
   name: 'D3Node',
-  props: ['active', 'd3Data', 'DagreLib'],
+  props: ['active', 'd3Data'],
+  inject: ['modifier'],
   data () {
     return {
       nodeModal: false,
@@ -207,11 +207,11 @@ export default {
   mounted () {
     console.log('active window watch d3nodeform')
     console.log(this.d3Data)
-    console.log(this.DagreLib.diagram)
+    console.log(this.modifier.diagram)
     console.log(this.d3Data.id)
-    console.log(this.DagreLib.diagram.parent(this.d3Data.id))
-    this.update = this.active == 'Edit Node'?true:false
-    this.nodeModal = this.active == 'Add Node'?true:false
+    console.log(this.modifier.diagram.parent(this.modifier.d3dInfo.id))
+    this.update = this.active == 'Edit Node'? true : false
+    this.nodeModal = this.active == 'Add Node'? true : false
     if(this.update || this.nodeModal){
       //Setting up nodeModal to true if update is true
       this.nodeModal = true
@@ -219,7 +219,7 @@ export default {
       this.nodeLabel = this.d3Data.label
       this.nodeShape = this.d3Data.shape
       this.nodeId = this.d3Data.id
-      this.parentNode = this.DagreLib.diagram.parent(this.d3Data.id)
+      this.parentNode = this.modifier.diagram.parent(this.d3Data.id)
       // console.log("troubleshooting cluster label")
 
       // for( var key in this.clusterLabelPosOptions){
@@ -274,9 +274,9 @@ export default {
   },
   computed: {
     parentOptions() {
-      var nodes = this.DagreLib.diagram.nodes()
+      var nodes = this.modifier.diagram.nodes()
       console.log('computed'+nodes)
-      var data = Object.values(nodes).map((key) => ({"key":key, "value":this.DagreLib.getNodeData(key).label}))
+      var data = Object.values(nodes).map((key) => ({"key":key, "value":this.modifier.getNodeData(key).label}))
       console.log(data)
       return data
     },
@@ -294,7 +294,7 @@ export default {
         console.log(this.nodeId)
       }
 
-      this.DagreLib.updateNode(this.$data, this.nodeId)
+      this.modifier.updateNode(this.$data, this.nodeId)
       this.close()
       //this.$root.$emit('updateNode', this.$data, this.d3NodeId)
     },
@@ -334,7 +334,7 @@ export default {
         console.log(this.$data)
       }
       //this.$root.$emit('addDagreNode', this.$data, false)
-      this.DagreLib.addNode(this.$data)
+      this.modifier.addNode(this.$data)
       // this.hints['l'].focus()
       this.common()
     },

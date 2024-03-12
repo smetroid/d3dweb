@@ -74,6 +74,7 @@
                 v-model="nodesep" 
                 placeholder="" 
                 />
+                <!--
               <v-select 
                 label="D3Line"
                 v-model="edgeLine" 
@@ -81,6 +82,7 @@
                 item-value="key"
                 item-text="value"
                 />
+                -->
               <v-textarea
                 label="JSON Diagram"
                 v-model="jsonDiagram"
@@ -124,7 +126,7 @@
 import D3Util from '@/services/D3Util'
 import * as DagreD3 from 'dagre-d3'
 import DiagramModifier from '../helpers/DiagramModifier.js'
-import VueCookies from 'vue-cookies'
+//import VueCookies from 'vue-cookies'
 export default {
   name: 'DiagramForm',
   props: ['active'],
@@ -268,12 +270,14 @@ export default {
       this.setDiagramInfo()
 
       this.setOptionsAndLabels()
+
       /**
-       * TODO: Move this to the backend api 
-       * a temporary workaround to set save
-       * and retrieve the edgeLine setting for all lines
+       * TODO: each line/edge can be different a global edge option is found
+       * in the settings page
       */
-      VueCookies.set('edgeLine'+this.id, this.edgeLine)
+      //VueCookies.set('edgeLine'+this.id, this.edgeLine)
+
+
       /**
        * Need to move this into the API
        * this should be the current diagram object
