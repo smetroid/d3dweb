@@ -351,6 +351,11 @@ export default {
       //// this.$root.$emit('nodeModal', 'node')
     },
     common() {
+      /*FIXME - I think we need to copy the object before we make any changes
+      in case we make changes and we 'Cancel' any changes made should be reverted
+      else the changes will stay even though we don't save them? ... need to test
+      this out
+      */
       console.log(this.hints)
       this.hints = D3Util.removeHints(this.hints)
       /**

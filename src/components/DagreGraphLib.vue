@@ -52,8 +52,6 @@ import D3NodeForm from './D3NodeForm.vue'
 import DagreKeys from '../helpers/DagreKeys.vue'
 import Hints from '../helpers/Hints.vue'
 //import login from '@/components/Login'
-//import * as dagreD3 from 'dagre-d3'
-//import DagreOtherKeys from '@/helpers/DagreOtherKeys'
 import D3DAltKeys from '../helpers/DagreAltKeys.js'
 import D3DOtherKeys from '../helpers/DagreOtherKeys.js'
 // import Crud from '@/helpers/CRUD'
@@ -95,7 +93,7 @@ export default {
 
     this.emitter.on('setSheetToFalse', () => {
       /**
-       * on emit the page appears to be renndered, automatically getting
+       * on emit the page appears to be rendered, automatically getting
        * rid of the vuetify openSheet.
        * The setTimeout allows for the openSheet animation to close properly
        */
@@ -108,28 +106,39 @@ export default {
   methods: {
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
-     */
+    */
     forwardLinkClicked (data) {
+      /*
+      NOTE - when using forward links to edit a node use the same logic for 
+      editing a node via a selection ... for consistency.
+      */
       if (D3Util.debug) {
         console.log('forwardLinkClicked')
         console.log(data)
         //console.log(this.modifier)
       }
 
-      if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
-        console.log('v and w')
-        /* We want to control the from using the active parent varible*/
-        //this.showEdgeForm = true
-        this.d3Data = this.modifier.getEdgeData(data)
-        this.emitter.emit('changeActive', 'Edit Edge')
-      } else {
-        console.log('v')
-        /* We want to control the from using the active parent variable*/
-        //this.showNodeForm = true
-        this.d3Data = this.modifier.getNodeData(data)
-        console.log(this.d3Data)
-        this.emitter.emit('changeActive', 'Edit Node')
-      }
+      /*NOTE - need to test forwardLinkClicked methods to make sure this event key is the only thing we need
+      */
+      let event = {altKey: true, key: 'e', keyCode: 69}
+      this.keyPress(event)
+
+      // if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
+      //   console.log('v and w')
+      //   // /* We want to control the from using the active parent varible*/
+      //   // //this.showEdgeForm = true
+      //   // this.d3Data = this.modifier.getEdgeData(data)
+      //   // this.emitter.emit('changeActive', 'Edit Edge')
+      // } else {
+      //   console.log('v')
+      //   let event = {altKey: true, key: 'e', keyCode: 69}
+      //   this.keyPress(event)
+      //   // /* We want to control the from using the active parent variable*/
+      //   // //this.showNodeForm = true
+      //   // this.d3Data = this.modifier.getNodeData(data)
+      //   // console.log(this.d3Data)
+      //   // this.emitter.emit('changeActive', 'Edit Node')
+      // }
     },
     keyPress(event) {
       /*NOTE - let's add additional properties to the modifier object
@@ -344,21 +353,21 @@ export default {
         this.selectedNodes = this.modifier.deleteEdges(this.selectedEdges)
       }
 
-      if ((this.active == 'Add Node') ||
-          (this.active == 'Add Edge') ||
-          (this.active == 'New') ||
-          (this.active == 'Edit Node') ||
-          (this.active == 'Edit Edge')) {
-        this.openSheet = true
-      } else if (this.active == 'Save Changes') {
-        //this.openSheet = true
-        if (D3Util.auth() && this.id) {
-          console.log('save changes DagreGraphLib')
-          this.openSheet = true
-        }
-      } else {
-        console.log('DagreGraphLib watch end')
-      }
+      //if ((this.active == 'Add Node') ||
+      //    (this.active == 'Add Edge') ||
+      //    (this.active == 'New') ||
+      //    (this.active == 'Edit Node') ||
+      //    (this.active == 'Edit Edge')) {
+      //  this.openSheet = true
+      //} else if (this.active == 'Save Changes') {
+      //  //this.openSheet = true
+      //  if (D3Util.auth() && this.id) {
+      //    console.log('save changes DagreGraphLib')
+      //    this.openSheet = true
+      //  }
+      //} else {
+      //  console.log('DagreGraphLib watch end')
+      //}
 
       if ( this.escCount === 3 ) {
         this.selectedNodes = []
