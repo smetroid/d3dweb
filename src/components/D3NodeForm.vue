@@ -166,7 +166,6 @@ export default {
   inject: ['modifier'],
   data () {
     return {
-      nodeModal: false,
       enableTrap: false,
       errorClass: true,
       nodeLabel: null,
@@ -205,16 +204,18 @@ export default {
     }
   },
   mounted () {
-    console.log('active window watch d3nodeform')
-    console.log(this.d3Data)
-    console.log(this.modifier.diagram)
-    console.log(this.d3Data.id)
-    console.log(this.modifier.diagram.parent(this.modifier.d3dInfo.id))
+    if (D3Util.debug) {
+      console.log('active window watch d3nodeform')
+      console.log(this.d3Data)
+      console.log(this.modifier.diagram)
+      console.log(this.d3Data.id)
+      console.log(this.modifier.diagram.parent(this.modifier.d3dInfo.id))
+    }
+
     this.update = this.active == 'Edit Node'? true : false
-    this.nodeModal = this.active == 'Add Node'? true : false
+
     if(this.update || this.nodeModal){
       //Setting up nodeModal to true if update is true
-      this.nodeModal = true
       this.nodeLabelType = (this.d3Data.labelType) || this.nodeLabelType
       this.nodeLabel = this.d3Data.label
       this.nodeShape = this.d3Data.shape
@@ -238,9 +239,8 @@ export default {
 
       this.style = this.d3Data.style
       //this.parentOptions = this.diagram.nodes()
-    } else {
-      this.nodeModal = false
-    }
+    } 
+    /*
     if(this.nodeModal){
       this.$nextTick(function(){
         console.log('Trap active')
@@ -252,6 +252,7 @@ export default {
         })
       })
     }
+    */
  //    this.$root.$on('showNodeForm', (nodeAction) => {
  //      console.log('Message Received From D3Vim')
  //      console.log(this.$el)
@@ -351,8 +352,6 @@ export default {
     },
     common() {
       console.log(this.hints)
-      // this.enableTrap= false
-      this.nodeModal = false
       this.hints = D3Util.removeHints(this.hints)
       /**
        * Close the parents sheet
@@ -385,7 +384,6 @@ export default {
     //  if(this.nodeModal){
     //    this.$nextTick(function(){
     //      console.log('Trap active')
-    //      this.enableTrap = this.nodeModal
     //    })
     //  }
     },
