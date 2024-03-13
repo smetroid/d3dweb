@@ -60,7 +60,17 @@ export default class DagreAltKeys {
         if (comp.edgeOrNode == "edges"){
           comp.forwardLinkClicked(comp.focusedEdgeId)
         } else if (comp.edgeOrNode == "nodes") {
-          comp.forwardLinkClicked(comp.focusedNodeId)
+          console.log('editing a node object')
+          /*FIXME - removing this call back to the parent, seems like we can take the
+          logic from forwardLinkClicked and add it here ... then use the emitters to pass the data to the node form
+          */
+          //comp.forwardLinkClicked(comp.focusedNodeId)
+          let d3Data = this.modifier.getNodeData(comp.focusedNodeId)
+          comp.active = 'Edit Node'
+          comp.d3Data = d3Data
+          comp.openSheet = true
+          console.log(d3Data)
+          this.emitter.emit('changeActive', 'Edit Node')
         } else {
           console.log('nothing to edit')
         }
