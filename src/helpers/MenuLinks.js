@@ -4,7 +4,17 @@ export default {
     console.log(app)
     console.log(event)
     this.hints = D3Util.removeHints(this.hints)
-    app.active = event
+
+    /*NOTE - When changing the type of selection the active pane should always 
+    * be D3Dagre
+    */
+    if (( event === 'Select Node' ) || ( event === 'Select Edges' )) {
+      app.emitter.emit('edgeOrNode', event)
+      app.active = 'D3Dagre'
+    } else {
+      app.active = event
+    }
+
 
     switch (event) {
       case 'D3D Settings':

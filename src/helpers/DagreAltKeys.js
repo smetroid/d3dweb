@@ -60,7 +60,7 @@ export default class DagreAltKeys {
         comp.openSheet = true
         if (comp.edgeOrNode == "edges"){
           //comp.forwardLinkClicked(comp.focusedEdgeId)
-          comp.d3Data = this.modifier.getNodeData(comp.focusedEdgeId)
+          comp.d3Data = this.modifier.getEdgeData(comp.focusedEdgeId)
           this.emitter.emit('changeActive', 'Edit Edge')
         } else if (comp.edgeOrNode == "nodes") {
           console.log('editing a node object')
