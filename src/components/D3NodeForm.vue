@@ -12,8 +12,8 @@
           v-model:action="enableTrap"
           >
           <div tabindex="0">
-            <v-card-title class="bg-blue">
-              <v-row class="pa-2" justify="center">
+            <v-card-title class="bg-primary">
+              <v-row class="pa-3" justify="center">
                 <b v-if="update">Update Node</b>
                 <b v-else>Add Node</b>
               </v-row>
@@ -113,43 +113,38 @@
                     </v-text-field>
                   </v-col>
                 </v-row>
-                <v-row
-                  class="pa-2 mt-n8"
-                >
-                  <v-col 
-                    cols="5"
-                    class="d-flex justify-space-around"
-                    >
-                    <v-btn 
-                      v-if="update" 
-                      variant="outlined"
-                      color="green"
-                      class="d-flex" 
-                      @click="updateNode()" 
-                      @keypress.stop="">
-                      Update Node
-                      </v-btn>
-                    <v-btn 
-                      v-else 
-                      variant="outlined"
-                      class="d-flex" 
-                      @click="addNode()" 
-                      type="submit"
-                      color="success"
-                      @keypress.stop="">
-                      Add Node
-                    </v-btn>
-                    <v-btn 
-                      variant="outlined"
-                      type="submit"
-                      color="error"
-                      class="" 
-                      @click="close()" 
-                      @keypress.stop="">Cancel</v-btn>
-                  </v-col>
-                </v-row>
               </v-container>
             </v-card-text>
+            <v-card-actions
+              class="text-primary bg-primary d-flex justify-center justify-space-around"
+            >
+                <v-btn 
+                  v-if="update" 
+                  variant="outlined"
+                  color=""
+                  class="bg-green" 
+                  @click="updateNode()" 
+                  @keypress.stop="">
+                  Update Node
+                  </v-btn>
+                <v-btn 
+                  v-else 
+                  variant="outlined"
+                  class="bg-green" 
+                  @click="addNode()" 
+                  type="submit"
+                  color=""
+                  @keypress.stop="">
+                  Add Node
+                </v-btn>
+                <v-btn 
+                  variant="outlined"
+                  type="submit"
+                  color=""
+                  class="bg-red" 
+                  @click="close()" 
+                  @keypress.stop="">Cancel</v-btn>
+            </v-card-actions>
           </div>
         </focus-trap>
       </v-card>
@@ -362,40 +357,40 @@ export default {
        * Close the parents sheet
        */
       this.emitter.emit('setSheetToFalse')
-      //this.$root.$emit("changeActive")
-      //this.$root.$emit('d3DagreActivate')
+      //this.emitter.emit("changeActive")
+      //this.emitter.emit('d3DagreActivate')
     }
   },
-  watch: {
-    active: function() {
-    // NOTE: Since we moved from a v-modal to a v-if from the 
-    // this code no longer works because the v-if does not render
-    // the component until v-if is valid.
-    // Moved the logic to the mount method instead.
+  //watch: {
+  //  active: function() {
+  //  // NOTE: Since we moved from a v-modal to a v-if from the 
+  //  // this code no longer works because the v-if does not render
+  //  // the component until v-if is valid.
+  //  // Moved the logic to the mount method instead.
 
-    //  console.log('active window watch d3nodeform')
-    //  this.update = this.active == 'Edit Node'?true:false
-    //  this.nodeModal = this.active == 'Add Node'?true:false
-    //  if(this.update || this.nodeModal){
-    //    //Setting up nodeModal to true if update is true
-    //    this.nodeModal = true
-    //    this.nodeLabelType = this.d3Data.labelType
-    //    this.nodeLabel = this.d3Data.label
-    //    this.nodeShape = this.d3Data.shape
-    //    this.nodeId = this.d3Data.id
-    //  } else {
-    //    this.nodeModal = false
-    //  }
-    //  if(this.nodeModal){
-    //    this.$nextTick(function(){
-    //      console.log('Trap active')
-    //    })
-    //  }
-    },
-    d3Data: function(){
-      //console.log(this.d3Data)
-    }
-  }
+  //  //  console.log('active window watch d3nodeform')
+  //  //  this.update = this.active == 'Edit Node'?true:false
+  //  //  this.nodeModal = this.active == 'Add Node'?true:false
+  //  //  if(this.update || this.nodeModal){
+  //  //    //Setting up nodeModal to true if update is true
+  //  //    this.nodeModal = true
+  //  //    this.nodeLabelType = this.d3Data.labelType
+  //  //    this.nodeLabel = this.d3Data.label
+  //  //    this.nodeShape = this.d3Data.shape
+  //  //    this.nodeId = this.d3Data.id
+  //  //  } else {
+  //  //    this.nodeModal = false
+  //  //  }
+  //  //  if(this.nodeModal){
+  //  //    this.$nextTick(function(){
+  //  //      console.log('Trap active')
+  //  //    })
+  //  //  }
+  //  },
+  //  d3Data: function(){
+  //    //console.log(this.d3Data)
+  //  }
+  //}
 }
 </script>
 
