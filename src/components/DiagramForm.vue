@@ -93,7 +93,7 @@
             </v-form>
           </v-card-text>
           <v-card-actions
-            class="bg-primary"
+            class="text-primary bg-primary d-flex justify-center justify-space-around"
             >
             <v-btn
               v-if="update"
