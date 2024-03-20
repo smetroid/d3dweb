@@ -23,7 +23,7 @@ function toggleTheme() {
 }
 </script>
 <template>
-    <v-layout class="rounded rounded-md">
+  <v-app app dark>
       <!--
       <v-card
         class="mx-auto"
@@ -69,22 +69,28 @@ function toggleTheme() {
         </v-card-text>
       </v-card>
     -->
-      <v-main class="align-center justify-center">
-        <!--
-        <DagreOtherKeys
-          :d3dInfo="d3dInfo"
-        />
-        -->
-        <DagreGraphLib
-          :active="active"
-        />
-        <DiagramForm
-          :active="active"
-        />
-        <Settings
-          :active="active"
-          :d3dInfo="d3dInfo"
-        />
+      <v-main>
+        <v-container fluid class="fill-height" >
+          <v-row>
+            <v-col class="">
+                <!--
+                <DagreOtherKeys
+                  :d3dInfo="d3dInfo"
+                />
+                -->
+                <DagreGraphLib class=""
+                  :active="active"
+                />
+                <DiagramForm
+                  :active="active"
+                />
+                <Settings
+                  :active="active"
+                  :d3dInfo="d3dInfo"
+                />
+            </v-col>
+          </v-row>
+        </v-container>
       </v-main>
       <!--
         NOTE: app - in the footer makes the footer to stay at the bottom 
@@ -257,7 +263,7 @@ function toggleTheme() {
           </v-card>
         </v-row>
       </v-footer>
-    </v-layout>
+  </v-app>
 </template>
 
 <script>
