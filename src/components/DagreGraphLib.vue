@@ -53,7 +53,6 @@ import * as d3 from 'd3'
 import D3Util from '../services/D3Util.js'
 import D3EdgeForm from './D3EdgeForm.vue'
 import D3NodeForm from './D3NodeForm.vue'
-import DagreKeys from '../helpers/DagreKeys.vue'
 import Hints from '../helpers/Hints.vue'
 //import login from '@/components/Login'
 import D3DAltKeys from '../helpers/DagreAltKeys.js'
@@ -202,7 +201,6 @@ export default {
         }
       } else {
         /*IF searching eg: "/" don't search for anything */
-        console.log(DagreKeys)
         console.log(this.modifier)
         let otherKeys = new D3DOtherKeys(this.emitter, this.modifier )
         var result = otherKeys.defaultActions(event.key, this.edgeOrNode)
