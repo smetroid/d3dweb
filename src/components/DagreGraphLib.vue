@@ -23,7 +23,11 @@
               {{ focusedIndex }}
               {{ edgeOrNode }}
             </div>
-              <svg ref="svg" tabindex="0" width="100%" height="100%" class="">
+              <svg
+                ref="svg"
+                tabindex="0"
+                style="position: absolute; bottom: 30px; right: 1px"
+                class="">
                 <g/>
               </svg>
             </div>

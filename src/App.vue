@@ -23,7 +23,7 @@ function toggleTheme() {
 }
 </script>
 <template>
-  <v-app app dark>
+  <v-app app>
       <!--
       <v-card
         class="mx-auto"
@@ -69,28 +69,22 @@ function toggleTheme() {
         </v-card-text>
       </v-card>
     -->
-      <v-main>
-        <v-container fluid class="fill-height" >
-          <v-row>
-            <v-col class="">
-                <!--
-                <DagreOtherKeys
-                  :d3dInfo="d3dInfo"
-                />
-                -->
-                <DagreGraphLib class=""
-                  :active="active"
-                />
-                <DiagramForm
-                  :active="active"
-                />
-                <Settings
-                  :active="active"
-                  :d3dInfo="d3dInfo"
-                />
-            </v-col>
-          </v-row>
-        </v-container>
+      <v-main app>
+        <!--
+        <DagreOtherKeys
+          :d3dInfo="d3dInfo"
+        />
+        -->
+        <DagreGraphLib class=""
+          :active="active"
+        />
+        <DiagramForm
+          :active="active"
+        />
+        <Settings
+          :active="active"
+          :d3dInfo="d3dInfo"
+        />
       </v-main>
       <!--
         NOTE: app - in the footer makes the footer to stay at the bottom 
@@ -653,8 +647,7 @@ export default {
 <link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
 <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
 <style src='./assets/css/samus.css'></style>
-<style src='./assets/css/parallax.css'></style>
 <!--
-<style src='../node_modules/augmented-ui/augmented-ui.min.css'></style>
-
+<style src='./assets/css/parallax.css'></style>
+<style src='../node_modules/augmented-ui/augmented-ui.min.css'>
 -->
