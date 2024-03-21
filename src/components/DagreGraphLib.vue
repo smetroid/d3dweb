@@ -12,17 +12,18 @@
           :initial-focus="()=>$refs.svg"
           ref="graphTrap"
           >
-            <div id="trap" ref="trapDiv" class="trap is-active" style="border: 3px solid red">
-            <div v-if="diagramInfo">
-              {{ selectedNodes }}
-              {{ selectedEdges }}
-              {{ doubleSelection }}
-              {{ focusedEdgeId }}
-              {{ focusedNodeId }}
-              {{ hints }}
-              {{ focusedIndex }}
-              {{ edgeOrNode }}
-            </div>
+            <div id="trap" ref="trapDiv" class="trap is-active" style="">
+              <div v-if="diagramInfo">
+                <h1>D3DInfo:</h1>
+                SelectedNodes: {{ selectedNodes }} <br>
+                SelectedEdges: {{ selectedEdges }} <br>
+                DoubleSelection: {{ doubleSelection }} <br>
+                FocusedEdgeID: {{ focusedEdgeId }} <br>
+                FocusedNodeID: {{ focusedNodeId }} <br>
+                Hints: {{ hints }} <br>
+                FocusedIndex: {{ focusedIndex }} <br>
+                EdgesOrNodes: {{ edgeOrNode }} <br>
+              </div>
               <svg
                 ref="svg"
                 tabindex="0"
@@ -87,6 +88,13 @@ export default {
     }
   },
   mounted () {
+
+    if (this.$cookies.get('settings')['d3dInfo']) {
+      this.diagramInfo = true
+    } else {
+      this.diagramInfo = false
+    }
+
     this.emitter.on('d3ResetValues', () => {
       this.resetValues()
     })

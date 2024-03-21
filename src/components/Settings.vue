@@ -29,6 +29,13 @@
                 <v-switch
                   hide-details
                   color="primary"
+                  v-model="settings.d3dInfo"
+                  label="Enable d3Info ... useful for debugging"
+                >
+                </v-switch>
+                <v-switch
+                  hide-details
+                  color="primary"
                   v-model="settings.debug"
                   label="Enable console debugging"
                 >
@@ -134,7 +141,11 @@ export default {
     let getSettings = this.$cookies.get('settings')
     if (getSettings) {
       for (let key in getSettings) {
-        if ((key === 'debug') || (key === 'helpPane') || (key === 'reset')) {
+        if (
+          (key === 'debug') ||
+          (key === 'helpPane') ||
+          (key === 'd3dInfo') ||
+          (key === 'reset')) {
           getSettings[key] = Boolean(getSettings[key])
         }
       }

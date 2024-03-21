@@ -98,6 +98,7 @@ export default {
       'hints': 'asdfjklqweruiopzxcvnmgh', 
       'reset': false,
       'showHelpPane': true,
+      'd3dInfo': false,
       'hintAction': 'Edit Object',
       'defaultTheme': 'light',
       'themes': [
