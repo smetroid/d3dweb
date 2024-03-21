@@ -5,7 +5,6 @@ import MenuKeys from './helpers/MenuKeys.js'
 import MenuLinks from './helpers/MenuLinks.js'
 import Settings from './components/Settings.vue'
 import HelperPane from './components/Helper.vue'
-import DagreLib from './helpers/DagreLib.vue'
 import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
@@ -367,7 +366,6 @@ export default {
       console.log(this.modifier)
 
     } catch (error) {
-      console.log('mounted catch')
       console.log(error)
       this.emitter.emit('newDiagram')
     }
@@ -467,9 +465,10 @@ export default {
         console.log(response)
       }
 
-      var g = new DagreD3.graphlib.json.read(JSON.parse(response.diagram))
+      //var g = new DagreD3.graphlib.json.read(JSON.parse(response.diagram))
       /** Setup cookie options */
 
+      /*FIXME -  should be fixed when db server is running
       DagreLib.id = id
       DagreLib.diagram = DagreLib.redraw(g)
       DagreLib.description = response.description
@@ -477,6 +476,7 @@ export default {
       DagreLib.created = response.created
       DagreLib.json = response.diagram
       this.d3dInfo = DagreLib
+      */
     },
     openMenu (){
         console.log(this.active)
@@ -646,7 +646,7 @@ export default {
 </style>
 <link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
 <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
-<style src='./assets/css/samus.css'></style>
+<style src='./assets/css/d3d.css'></style>
 <!--
 <style src='./assets/css/parallax.css'></style>
 <style src='../node_modules/augmented-ui/augmented-ui.min.css'>

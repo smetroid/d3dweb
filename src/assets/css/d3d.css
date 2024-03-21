@@ -1,3 +1,4 @@
+/*TODO - remove this specific CSS and have the colors be managed by vuetify if possible */
 svg {
   height: 100%;
   width: 100%;
@@ -16,7 +17,7 @@ div.htmlLabel {
 .label {
     display: block;
     position: absolute;
-    fill: rgb(252, 252, 252)
+    fill: rgb(24,103,192)
 }
 
 .node {
