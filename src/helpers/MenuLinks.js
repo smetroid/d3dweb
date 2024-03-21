@@ -13,6 +13,7 @@ export default {
       app.active = 'D3Dagre'
     } else {
       app.active = event
+      app.showMenu = false
     }
 
 
