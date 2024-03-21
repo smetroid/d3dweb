@@ -22,10 +22,10 @@ export default {
         app.emitter.emit('settings')
         break
       case 'Edit Diagram':
-        app.emitter.emit('EditDiagram')
+        app.emitter.emit('editDiagram')
         break
       case 'Save Changes':
-        app.emitter.emit('SaveDiagram')
+        app.emitter.emit('saveDiagram')
         break
       case 'Edit':
         console.log('edit event')
@@ -37,7 +37,7 @@ export default {
       case 'New Diagram':
         app.active = "D3Dagre"
         //app.$root.$emit('newDiagram', '')
-        app.emitter.emit('NewDiagram')
+        app.emitter.emit('newDiagram')
         break
       // case 'Open':
       //   app.$root.$emit('showDiagramList', 'Open')

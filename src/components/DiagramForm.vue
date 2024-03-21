@@ -180,7 +180,7 @@ export default {
     console.log('Diagram Mounted')
 
     /*!SECTION Emitter section */
-    this.emitter.on('SaveDiagram', () => {
+    this.emitter.on('saveDiagram', () => {
       console.log('saving diagram')
       console.log(this.modifier)
       this.setDiagramInfo()
@@ -192,13 +192,13 @@ export default {
       }
     })
 
-    this.emitter.on('EditDiagram', () => {
+    this.emitter.on('editDiagram', () => {
       this.diagramModal = true
       this.update = this.diagramModal
       this.setDiagramInfo()
     })
 
-    this.emitter.on('NewDiagram', () => {
+    this.emitter.on('newDiagram', () => {
       this.newDiagram()
     })
   },
@@ -232,8 +232,8 @@ export default {
 
       /**NOTE - this.modifier is the main object used by all other components files */
       let newModifier = new DiagramModifier(d3dInfo)
-      console.log(this.modifier)
-      this.modifier.redraw(g)
+      console.log(this.newModifier)
+      newModifier.redraw(g)
       this.emitter.emit('updateModifier', newModifier)
     },
     setDiagramInfo(){
