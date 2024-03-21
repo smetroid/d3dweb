@@ -198,7 +198,7 @@ export default {
       this.setDiagramInfo()
     })
 
-    this.emitter.on('NewDiagram', () => {
+    this.emitter.on('newDiagram', () => {
       this.newDiagram()
     })
   },
