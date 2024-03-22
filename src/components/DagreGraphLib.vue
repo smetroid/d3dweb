@@ -89,7 +89,7 @@ export default {
   },
   mounted () {
 
-    if (this.$cookies.get('settings')['d3dInfo']) {
+    if (this.$cookies.get('settings')) {
       this.diagramInfo = true
     } else {
       this.diagramInfo = false

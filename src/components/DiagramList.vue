@@ -1,11 +1,13 @@
 <template>
   <div>
-    <v-dialog v-model="diagramListModal" 
+    <v-dialog
+      v-model="diagramListModal" 
       scrollable
       @keydown.esc="close($event, $refs)"
       @keydown.stop="keyPress($event, $refs)"
       >
-      <focus-trap v-model="diagramListModal">
+      <focus-trap
+        v-model:active="listTrap">
         <div
           class="pa-1 ml-1 mr-1 pitch-mixin2"
           data-augmented-ui="tl-2-clip-x tr-2-clip-x both"
@@ -13,36 +15,25 @@
           tabindex="0"
           >
           <v-data-table
+            color="primary"
             ref="list"
             :headers="headers"
             :items="diagrams"
+            item-value="name"
             item-key="key"
             :search="search"
             :items-per-page="itemsPerPage"
             class="elevation-1"
+            :page.sync="page"
             >
-            <v-pagination
-              v-model="page"
-              :length="totalPages">
-            </v-pagination>
             <template v-slot:top>
               <v-text-field
                 @keypress.stop=""
                 v-model="search" label="Search String" class="x-4" />
             </template>
 
-      <template v-slot:item="{ item }">
-            <!--
-            <template slot="{ item }" slot-scope="props">
-            -->
-            <tr item=item :class="selectedRowId == item.id?'orange':''" >
-                <!--
-                  displays items sent directly by the query, not in the order expected
-                <td v-for="key in Object.keys(item)" :key="key">{{ item[key] }}</td>
-                -->
-                <!--
-                  <td v-for="key in Object.keys(props.item)" :key="key">{{props.item[key]}}</td>
-                -->
+            <template v-slot:item="{ item }">
+              <tr item=item :class="selectedRowId == item.key ? 'orange' : ''" >
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
@@ -114,11 +105,10 @@ import D3VimApi from '@/services/api/SamusApi'
 import D3Util from '@/services/D3Util'
 export default {
   name: 'DiagramList',
-  // NOTE: props need an array[] prop is a single string -EC-
-  props: ['active', 'test'],
+  props: ['active'],
   data () {
     return {
-      //listTrap: null,
+      listTrap: null,
       diagramListModal: true,
       focusedIndex: null,
       selectedRow: null,
@@ -132,12 +122,12 @@ export default {
         diagram: '',
       },
       headers: [
-        {text: 'Id', value: 'id', sortable: false},
-        {text: 'Name', value: 'name', sortable: true},
-        {text: 'Description', value: 'description'},
-        {text: 'Created', value: 'created'},
-        {text: 'Updated', value: 'updated'},
-        {text: 'Actions', value: 'actions', sortable: false},
+        {title: 'Id', key: 'id', sortable: false},
+        {title: 'Name', key: 'name', sortable: true},
+        {title: 'Description', key: 'description'},
+        {title: 'Created', key: 'created'},
+        {title: 'Updated', key: 'updated'},
+        {title: 'Actions', key: 'actions', sortable: false},
       ],
       diagrams: [],
       page: 1,
@@ -173,11 +163,11 @@ export default {
     //this.diagramListModal = this.active == "Open"?true:false
 
     /* this may no longer be needed
+    */
     this.$nextTick(function(){
       console.log('menuTrap active')
       this.listTrap = this.diagramListModal
     })
-    */
 
     //this.getDiagrams()
     //this.diagramListModal = true
@@ -274,8 +264,8 @@ export default {
       if (event.key == "Enter"){
         console.log("openDiagram")
         this.diagramListModal = false
-        this.$root.$emit("openDiagram", this.selectedRowId)
-        this.$root.$emit("changeActive")
+        this.emitter.emit("openDiagram", this.selectedRowId)
+        this.emitter.emit("changeActive")
       }
 
       if (event.key == "x"){
@@ -314,8 +304,9 @@ export default {
           let key = localStorage.key(i);
           /*NOTE - only get the localitems that start with D3D_*/
           if (key.startsWith('D3D_')) {
-            let value = localStorage.getItem(key);
-            items.push({ key, value });
+            let item = JSON.parse(localStorage.getItem(key))
+            item.id = key
+            items.push(item);
           }
       }
       console.log(items)
