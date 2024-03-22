@@ -9,6 +9,7 @@ import * as DagreD3 from 'dagre-d3'
 import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
 import DiagramModifier from './helpers/DiagramModifier.js'
+import DiagramList from './components/DiagramList.vue'
 import { computed } from 'vue'
 
 // Theme specific
@@ -83,6 +84,9 @@ function toggleTheme() {
         <Settings
           :active="active"
           :d3dInfo="d3dInfo"
+        />
+        <DiagramList
+          :active="active"
         />
       </v-main>
       <!--

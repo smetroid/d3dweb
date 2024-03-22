@@ -5,14 +5,21 @@
       @keydown.esc="close($event, $refs)"
       @keydown.stop="keyPress($event, $refs)"
       >
-      <focus-trap v-model="listTrap">
+      <focus-trap v-model="diagramListModal">
         <div
-          class="pa-1 ml-1 mr-1 pitch-mixin2" data-augmented-ui=
-          "tl-2-clip-x tr-2-clip-x both"
-          id="trapDiv" tabindex="-1">
-          <v-data-table dense ref="list" :headers="headers"
-            :items="diagrams" item-key="id" :search="search"
-            :items-per-page="itemsPerPage" class="elevation-1" :page.sync="page"
+          class="pa-1 ml-1 mr-1 pitch-mixin2"
+          data-augmented-ui="tl-2-clip-x tr-2-clip-x both"
+          id="trapDiv"
+          tabindex="0"
+          >
+          <v-data-table
+            ref="list"
+            :headers="headers"
+            :items="diagrams"
+            item-key="key"
+            :search="search"
+            :items-per-page="itemsPerPage"
+            class="elevation-1"
             >
             <v-pagination
               v-model="page"
@@ -111,7 +118,7 @@ export default {
   props: ['active', 'test'],
   data () {
     return {
-      listTrap: null,
+      //listTrap: null,
       diagramListModal: true,
       focusedIndex: null,
       selectedRow: null,
@@ -157,18 +164,25 @@ export default {
     // } else {
     //   this.visible = false
     // }
+    /* for when we have a database backend ready
     this.getDiagrams()
+    */
+    this.getLocalDiagrams()
     console.log('diagram list')
     console.log(this.active)
-    this.diagramListModal = this.active == "Open"?true:false
+    //this.diagramListModal = this.active == "Open"?true:false
+
+    /* this may no longer be needed
     this.$nextTick(function(){
       console.log('menuTrap active')
       this.listTrap = this.diagramListModal
     })
+    */
+
     //this.getDiagrams()
     //this.diagramListModal = true
-    this.$root.$on('showDiagramList', (data) => {
-      this.listTrap = true
+    this.emitter.on('showDiagramList', (data) => {
+      //this.listTrap = true
       this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
@@ -294,46 +308,31 @@ export default {
         typeof value === 'string' &&
         value.toString().indexOf(search) !== -1
     },
+    getLocalDiagrams: function() {
+      let items = [];
+      for (let i = 0; i < localStorage.length; i++) {
+          let key = localStorage.key(i);
+          /*NOTE - only get the localitems that start with D3D_*/
+          if (key.startsWith('D3D_')) {
+            let value = localStorage.getItem(key);
+            items.push({ key, value });
+          }
+      }
+      console.log(items)
+      this.diagrams = items;
+    },
+    /*NOTE - for when a database backend is ready
     getDiagrams: async function() {
       var result = await D3VimApi.getDiagrams()
       console.log(result)
       this.diagrams = result.data.dags
     },
-    // create: async function () {
-    //   var created = new Date()
-    //   var data = {'name': this.name, 'description': this.description, 'createTime': created.toISOString(), 'diagram': ''}
-    //   var result = await D3VimApi.postDiagram(data)
-    //   console.log(result)
-    //   if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-    //     this.listTrap = false
-    //     this.diagramListModal = true
-    //     this.$root.$emit('appMessage', true, 'New diagram successfully created', result.response)
-    //   } else {
-    //     this.listTrap = true
-    //     this.diagramListModal = true
-    //     this.$root.$emit('appMessage', false, 'Failed to create or save diagram', result.response)
-    //   }
-    //   this.listTrap = false
-    //   this.diagramListModal = false
-    // },
-    // updateDiagram: async function (){
-    //   var data = JSON.parse(localStorage.getItem('samus.lastUpdated'))
-    //   var result = await D3VimApi.updateDiagram(data)
-    //   if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-    //     // this.listTrap = false
-    //     //this.loginModal = false
-    //     this.$root.$emit('appMessage', true, 'Diagram saved', JSON.stringify(result.response))
-    //   } else {
-    //     //this.listTrap = true
-    //     //this.loginModal = true
-    //     this.$root.$emit('appMessage', false, 'Failed to save diagram', JSON.stringify(result.response))
-    //   }
-    // },
+    */
     close () {
       console.log('Close method')
       this.diagramListModal= false
       this.loginTrapActive = false
-      this.$root.$emit('changeActive')
+      this.emitter.emit('changeActive')
       // this.$root.$emit('d3DagreActivate')
       // this.$root.$emit('showForm', 'node')
     }
