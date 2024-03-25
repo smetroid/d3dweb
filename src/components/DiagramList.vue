@@ -6,17 +6,18 @@
       @keydown.esc="close($event, $refs)"
       @keydown.stop="keyPress($event, $refs)"
       >
-      <div
-        ref="wrapper"
-        id="trapDiv"
-        tabindex="0"
+      <focus-trap
+        v-model:active="listTrap"
+        :delayInitialFocus="true"
+        :initial-focus="()=>$refs.wrapper"
       >
-        <focus-trap
-          v-model:active="listTrap"
-          :delayInitialFocus="true"
-          :initial-focus="()=>$refs.wrapper"
+        <div
+          ref="wrapper"
+          id="trapDiv"
+          tabindex="0"
         >
           <v-data-table
+            tabindex="1"
             ref="list"
             :headers="headers"
             :items="diagrams"
@@ -63,8 +64,8 @@
               -->
             </template>
           </v-data-table>
-        </focus-trap>
-      </div>
+        </div>
+      </focus-trap>
     </v-dialog>
     <v-dialog v-model="smallDialog" max-width="500px">
       <v-card>
