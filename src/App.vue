@@ -184,7 +184,8 @@ function toggleTheme() {
                   </div>
                 </div>
                 <div class="d-flex">
-                  <span class="text-decoration-underline font-weight-bold" color="secondary">A</span>
+                  <span
+                  class="text-decoration-underline font-weight-bold" color="secondary">A</span>
                   <span class="font-weight-bold">ctions:</span>
                   <div
                     width="99%"
