@@ -19,11 +19,14 @@
           <v-data-table
             tabindex="1"
             ref="list"
+            v-model="selected"
             :headers="headers"
             :items="diagrams"
             item-key="id"
             :search="search"
             :items-per-page="itemsPerPage"
+            :page="page"
+            @update:currentItems="updatedItems()"
           >
             <template v-slot:top>
               <v-text-field
@@ -32,7 +35,8 @@
                 label="Search String"
                 class="" />
             </template>
-            <template v-slot:item="{ item }">
+            <template 
+            v-slot:item="{ item }">
               <tr item=item hover=true :style="selectedRowId == item.id ? 'background: orange;' : ''" >
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
@@ -108,6 +112,7 @@ export default {
   props: ['active'],
   data () {
     return {
+      selected: [],
       listTrap: null,
       diagramListModal: true,
       focusedIndex: null,
@@ -141,7 +146,14 @@ export default {
     totalPages () {
       var pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
       return pages
-    }
+    },
+    // itemsInList () {
+    //   /* we need the start item and the last item */
+    //   let startIndex = this.page * this.itemsPerPage
+    //   let endIndex = startIndex + this.itemsPerPage
+    //   let currentPageItems = this.diagrams.slice(startIndex, endIndex)
+    //   return currentPageItems
+    // }
   },
   mounted () {
     /* for when we have a database backend ready
@@ -173,6 +185,11 @@ export default {
     })
   },
   methods: {
+    updatedItems(list) {
+      console.log(list)
+      console.log(this)
+      console.log('running this')
+    },
     keyPress(event){
       console.log(this)
       //console.log(event)
@@ -223,8 +240,20 @@ export default {
       }
 
       if (event.key == "j" || event.key == "k"){
+        console.log(this.itemsInList)
+        console.log(this.focusedIndex)
         this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.itemsPerPage)
+        console.log(this.focusedIndex)
+        /** workaround to determine what id is being displayed */
+        let table = document.getElementById("trapDiv");
+        let rows = table.getElementsByTagName("tr");
+        console.log(rows)
+
+
+
+        console.log(this)
         console.log(this.$refs)
+        console.log(this.$refs.list)
         console.log(this.$refs.list.items[this.focusedIndex])
         this.selectedRow = this.$refs.list.items[this.focusedIndex]
         console.log(this.selectedRow)
@@ -233,7 +262,9 @@ export default {
       }
 
       if (event.key == "l" || event.key == "h"){
+        console.log('l or h')
         this.page = D3Util.getPage(this.page, event.key, this.totalPages)
+        console.log(this.page)
       }
 
       if (event.key == "Enter"){
