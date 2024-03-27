@@ -19,10 +19,9 @@
           <v-data-table
             tabindex="1"
             ref="list"
-            v-model="selected"
             :headers="headers"
             :items="diagrams"
-            item-key="id"
+            item-value="id"
             :search="search"
             :items-per-page="itemsPerPage"
             :page="page"
@@ -36,8 +35,8 @@
                 class="" />
             </template>
             <template 
-            v-slot:item="{ item }">
-              <tr item=item hover=true :style="selectedRowId == item.id ? 'background: orange;' : ''" >
+              v-slot:item="{ item }">
+              <tr :id=item.id :style="selectedRowId == item.id ? 'background: orange;' : ''" >
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
@@ -112,7 +111,6 @@ export default {
   props: ['active'],
   data () {
     return {
-      selected: [],
       listTrap: null,
       diagramListModal: true,
       focusedIndex: null,
@@ -136,7 +134,8 @@ export default {
       ],
       diagrams: [],
       page: 1,
-      itemsPerPage: 5
+      itemsPerPage: 5,
+      displayedItems: []
     }
   },
   computed: {
@@ -144,16 +143,9 @@ export default {
       return this.editedIndex === -1 ? 'New Item' : 'Edited Item'
     },
     totalPages () {
-      var pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
+      let pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
       return pages
     },
-    // itemsInList () {
-    //   /* we need the start item and the last item */
-    //   let startIndex = this.page * this.itemsPerPage
-    //   let endIndex = startIndex + this.itemsPerPage
-    //   let currentPageItems = this.diagrams.slice(startIndex, endIndex)
-    //   return currentPageItems
-    // }
   },
   mounted () {
     /* for when we have a database backend ready
@@ -185,10 +177,12 @@ export default {
     })
   },
   methods: {
-    updatedItems(list) {
-      console.log(list)
-      console.log(this)
-      console.log('running this')
+    updatedItems() {
+        if (this.search !== '') {
+          this.itemsPerPage = '-1'
+        } else {
+          this.itemsPerPage = '5'
+        }
     },
     keyPress(event){
       console.log(this)
@@ -240,25 +234,24 @@ export default {
       }
 
       if (event.key == "j" || event.key == "k"){
-        console.log(this.itemsInList)
-        console.log(this.focusedIndex)
-        this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.itemsPerPage)
-        console.log(this.focusedIndex)
-        /** workaround to determine what id is being displayed */
-        let table = document.getElementById("trapDiv");
-        let rows = table.getElementsByTagName("tr");
-        console.log(rows)
+        /** NOTE - the v-data-table is no longer sending back
+         * what items are currently being displayed .. this is
+         * a workaround to determine what id is being displayed
+         * */
+        this.displayedItems = []
 
+        let table = document.getElementById("trapDiv")
+        let rows = table.getElementsByTagName("tr")
 
-
-        console.log(this)
-        console.log(this.$refs)
-        console.log(this.$refs.list)
-        console.log(this.$refs.list.items[this.focusedIndex])
-        this.selectedRow = this.$refs.list.items[this.focusedIndex]
-        console.log(this.selectedRow)
-        this.selectedRowId = this.$refs.list.items[this.focusedIndex].id
-        console.log(this.selectedRowId)
+        // Loop through the rows to find those with an id property
+        for (let i = 0; i < rows.length; i++) {
+          let rowId = rows[i].getAttribute("id")
+          if (rowId !== null) {
+            this.displayedItems.push(rowId)
+          }
+        }
+        this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.displayedItems.length)
+        this.selectedRowId = this.displayedItems[this.focusedIndex]
       }
 
       if (event.key == "l" || event.key == "h"){
