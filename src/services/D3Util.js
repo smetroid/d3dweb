@@ -339,8 +339,8 @@ export default {
         'name': data.name,
         'description': data.description,
         'diagram': JSON.stringify(json),
-        'createdTime': created.toISOString(),
-        'updatedTime': created.toISOString()
+        'created': created.toISOString(),
+        'updated': created.toISOString()
       }
 
       localStorage.setItem(randomId, JSON.stringify(payload))
@@ -367,14 +367,14 @@ export default {
   },
   updateLocalEntry(id, data){
     try{
-      let created = new Date()
+      let updated = new Date()
       let json = new DagreD3.graphlib.json.write(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
         'diagram': JSON.stringify(json),
-        'createdTime': data.created,
-        'updatedTime': created.toISOString(),
+        'created': data.created,
+        'updated': updated.toISOString(),
       }
 
       localStorage.setItem(id, JSON.stringify(payload))

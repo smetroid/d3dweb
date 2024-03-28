@@ -30,19 +30,17 @@ export default {
         break
       case 'Edit':
         console.log('edit event')
-        //app.$root.$emit('diagramEditForm') 
         break
       case 'Discard Changes':
         app.$root.$emit('discardChanges')
         break
       case 'New Diagram':
         app.active = "D3Dagre"
-        //app.$root.$emit('newDiagram', '')
         app.emitter.emit('newDiagram')
         break
-      // case 'Open':
-      //   app.$root.$emit('showDiagramList', 'Open')
-      //   break
+      case 'Open Diagram':
+        app.emitter.emit('showDiagramList', '')
+        break
       default:
         console.log('D3 Vim d3Action default event')
         console.log(event)

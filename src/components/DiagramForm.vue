@@ -139,7 +139,6 @@ export default {
       name: 'New diagram default name',
       description: 'New diagram default description',
       diagramModal: false,
-      created: Date().toISOString,
       update: null,
       diagramOptions: [],
       diagramDefaults: {
@@ -230,11 +229,7 @@ export default {
       d3dInfo.description = D3Util.tempInfo().description
       console.log(d3dInfo)
 
-      /**NOTE - this.modifier is the main object used by all other components files */
-      let newModifier = new DiagramModifier(d3dInfo)
-      console.log(this.newModifier)
-      newModifier.redraw(g)
-      this.emitter.emit('updateModifier', newModifier)
+      this.newModifier(d3dInfo)
     },
     setDiagramInfo(newDiagram){
       /*NOTE - tried to add this to the `mount` method, however because DiagramForm.vue 
@@ -243,14 +238,14 @@ export default {
       not get rendered as part of starting up the application
       */
       console.log(this.modifier)
-      let created = new Date()
       let info = this.modifier.d3dInfo
       this.id = info.id
       this.name = newDiagram ? this.name : info.name
       this.description = newDiagram ? this.description : info.description
       this.diagram = newDiagram ? this.diagram : info.diagram
-      this.created = newDiagram ? created.toISOString() : info.created
-      this.jsonDiagram = JSON.stringify(this.diagram)
+      this.created = newDiagram ? this.created : info.created
+      let json = new DagreD3.graphlib.json.write(this.diagram)
+      this.jsonDiagram = JSON.stringify(json)
       this.setGraphOptions(this.diagram)
       this.rankdir = this.diagram._label.rankdir
       this.ranksep = this.diagram._label.ranksep
@@ -363,11 +358,32 @@ export default {
       */
       //VueCookies.set('edgeLine'+this.id, this.edgeLine)
 
-      this.modifier.redraw(this.diagram)
+
+      /**NOTE - this info appers to be very similar to the newDiagram() method!!!
+      In case the jsonDiagram has been updated/modified to 
+      overwrite/create a new diagram
+       */
+
+      let d3dInfo = {}
+      d3dInfo.id = this.id
+      d3dInfo.name = this.name
+      d3dInfo.description = this.description
+      console.log(d3dInfo)
+      let g = new DagreD3.graphlib.json.read(JSON.parse(this.jsonDiagram))
+      d3dInfo.diagram = g
+
+      this.newModifier(d3dInfo)
       /** we should only need to pass the data and not the whole object? */
       D3Util.updateLocalEntry(this.id, this)
       this.close()
       
+    },
+    newModifier (d3dInfo) {
+      /**NOTE - this.modifier is the main object used by all other components files */
+      let newModifier = new DiagramModifier(d3dInfo)
+      console.log(this.newModifier)
+      newModifier.redraw(d3dInfo.diagram)
+      this.emitter.emit('updateModifier', newModifier)
     },
     //updateDiagram: async function () {
     //  this.setOptionsAndLabels()

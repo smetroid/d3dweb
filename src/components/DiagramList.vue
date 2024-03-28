@@ -111,7 +111,7 @@ export default {
   data () {
     return {
       listTrap: null,
-      diagramListModal: true,
+      diagramListModal: null,
       focusedIndex: null,
       selectedRow: null,
       selectedRowId: null,
@@ -163,7 +163,7 @@ export default {
     })
 
     //this.getDiagrams()
-    this.diagramListModal = true
+    //this.diagramListModal = true
     //this.listTrap = this.diagramListModal
     this.emitter.on('showDiagramList', (data) => {
       //this.listTrap = true
@@ -172,7 +172,7 @@ export default {
       this.name = data.name
       this.description = data.description
       this.diagram = data.diagram
-      this.getDiagrams()
+      this.getLocalDiagrams()
     })
   },
   methods: {
