@@ -89,7 +89,8 @@ export default {
   },
   mounted () {
 
-    if (this.$cookies.get('settings')) {
+    if (this.$cookies.get('settings')['d3dInfo']) {
+      console.log()
       this.diagramInfo = true
     } else {
       this.diagramInfo = false
@@ -98,9 +99,6 @@ export default {
     this.emitter.on('d3ResetValues', () => {
       this.resetValues()
     })
-
-    //this.modifier = new DiagramModifier(this.d3dInfo, this.selectedNodes, this.doubleSelection, this.selectedEdges)
-    //this.modifier = new DiagramModifier(this.test)
 
     this.emitter.on('setSheetToFalse', () => {
       /**

@@ -437,7 +437,6 @@ export default {
         } else {
           // get the last temporary saved working item
           localDiagramInfo = D3Util.getTempDiagram()
-          id = null
         }
       }
 
