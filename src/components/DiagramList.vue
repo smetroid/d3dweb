@@ -186,16 +186,22 @@ export default {
     },
     keyPress(event){
       console.log(this)
-      //console.log(event)
-      /*
-      1. get list of tr's
+      /** NOTE - the v-data-table is no longer sending back
+       * what items are currently being displayed .. this is
+       * a workaround to determine what id is being displayed
+       * */
+      this.displayedItems = []
 
-        */
-      //var tableRows = this.$refs.list.$el.querySelectorAll('tbody > tr')
-      // var items = this.$refs.list.items.length
-      //var items = this.$refs.list.items
+      let table = document.getElementById("trapDiv")
+      let rows = table.getElementsByTagName("tr")
 
-      //console.log(items)
+      // Loop through the rows to find those with an id property
+      for (let i = 0; i < rows.length; i++) {
+        let rowId = rows[i].getAttribute("id")
+        if (rowId !== null) {
+          this.displayedItems.push(rowId)
+        }
+      }
       switch(event.key){
         case '/':
           // data = {aciveWindow: "Menu", trap: 'd3ActionsTrap'}
@@ -234,22 +240,6 @@ export default {
       }
 
       if (event.key == "j" || event.key == "k"){
-        /** NOTE - the v-data-table is no longer sending back
-         * what items are currently being displayed .. this is
-         * a workaround to determine what id is being displayed
-         * */
-        this.displayedItems = []
-
-        let table = document.getElementById("trapDiv")
-        let rows = table.getElementsByTagName("tr")
-
-        // Loop through the rows to find those with an id property
-        for (let i = 0; i < rows.length; i++) {
-          let rowId = rows[i].getAttribute("id")
-          if (rowId !== null) {
-            this.displayedItems.push(rowId)
-          }
-        }
         this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.displayedItems.length)
         this.selectedRowId = this.displayedItems[this.focusedIndex]
       }
@@ -268,8 +258,7 @@ export default {
       }
 
       if (event.key == "x"){
-        console.log(this.$refs)
-        this.deleteItem(this.selectedRow)
+        this.deleteItem(this.selectedRowId)
       }
     },
     save (){
@@ -286,10 +275,9 @@ export default {
       if (D3Util.debug) {
         console.log(item)
       }
-      const index= this.diagrams.indexOf(item)
-      console.log(index)
-      this.diagrams.splice(index, 1)
-      D3VimApi.deleteDiagram(this.selectedRowId)
+      this.diagrams.pop(this)
+      D3Util.deleteLocalEntry(this.selectedRowId)
+      this.getLocalDiagrams()
     },
     filter (value, search) {
       return value != null &&

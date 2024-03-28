@@ -332,44 +332,7 @@ export default {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
-
-      /*!SECTION - Logic to load a previously working diagram, or 
-      * continue to work on a previously temporary item
-      * 1. Load the last working item if it exists
-      */
-      let localDiagramInfo = null
-      let diagramId = this.$cookies.get('LastLocallySavedItemId')
-      if (diagramId) {
-        console.log(diagramId)
-        localDiagramInfo = D3Util.getLocalItem(diagramId)
-      } else {
-        // get the last temporary saved working item
-        localDiagramInfo = D3Util.getTempDiagram()
-      }
-
-      if (D3Util.debug) {
-        console.log(localDiagramInfo)
-      }
-
-      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
-
-      /*NOTE - this is only needed for when a backend server is available
-      */
-      //if(localDiagramInfo.id && D3Util.auth === false){
-      //  var message = 'id found, please login to save changes to <br />'
-      //  message = message + 'server or replace local changes from server by selecting <br />'
-      //  message = message + '\'Discard Changes\' from options menu'
-      //  this.$root.$emit('appMessage', true, message)
-      //}
-      this.d3dInfo = localDiagramInfo
-      this.d3dInfo.diagram = g
-      this.d3dInfo.id = diagramId ? diagramId : null
-
-      /**NOTE - this.modifier is the main object used by all other components files */
-      this.modifier = new DiagramModifier(this.d3dInfo)
-      this.modifier.redraw(g)
-      console.log(this.modifier)
-
+      this.loadDiagram()
     } catch (error) {
       console.log(error)
       this.emitter.emit('newDiagram')
@@ -448,7 +411,8 @@ export default {
       console.log('Message to open diagram received')
       console.log(id)
       // this.id = id
-      this.loadFromServer(id)
+      //this.loadFromServer(id)
+      this.loadDiagram(id)
     })
      // this.$root.$on('newDiagram', () => {
      //   console.log('Message to create a new diagram received')
@@ -461,27 +425,41 @@ export default {
     // console.log(this.d3dInfo)
   },
   methods: {
-    loadFromServer: async function (id) {
-      console.log('loading from server')
-      //var response = await this.getDiagram(id)
-      var response = await D3VimApi.getDiagram(id)
-
-      if (D3Util.debug) {
-        console.log(response)
+    loadDiagram (id) {
+      /*!SECTION - Logic to load a previously working diagram, or 
+      * continue to work on a previously temporary item
+      * 1. Load the last working item if it exists
+      */
+      let localDiagramInfo = null
+      if (id) {
+        localDiagramInfo = D3Util.getLocalItem(id)
+        this.d3dInfo.id = id 
+      } else {
+        let diagramId = this.$cookies.get('LastLocallySavedItemId')
+        if (diagramId) {
+          localDiagramInfo = D3Util.getLocalItem(diagramId)
+          this.d3dInfo = diagramId
+        } else {
+          // get the last temporary saved working item
+          localDiagramInfo = D3Util.getTempDiagram()
+          this.d3dInfo = null
+        }
       }
 
-      //var g = new DagreD3.graphlib.json.read(JSON.parse(response.diagram))
-      /** Setup cookie options */
+      if (D3Util.debug) {
+        console.log(localDiagramInfo)
+      }
 
-      /*FIXME -  should be fixed when db server is running
-      DagreLib.id = id
-      DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.description = response.description
-      DagreLib.name = response.name
-      DagreLib.created = response.created
-      DagreLib.json = response.diagram
-      this.d3dInfo = DagreLib
-      */
+      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+
+      this.d3dInfo = localDiagramInfo
+      this.d3dInfo.diagram = g
+
+      /**NOTE - this.modifier is the main object used by all other components files */
+      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier.redraw(g)
+      console.log(this.modifier)
+
     },
     openMenu (){
         console.log(this.active)

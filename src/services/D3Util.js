@@ -1,6 +1,7 @@
 import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
 import * as DagreD3 from 'dagre-d3'
+import { local } from 'd3'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -287,6 +288,10 @@ export default {
    * @return {integer} a number
    **/
   getIndex(index, key, items){
+
+    console.log(index)
+    console.log(key)
+    console.log(items)
     var id = null
     if (index === null || isNaN(index)) {
       id = 0
@@ -341,6 +346,21 @@ export default {
       localStorage.setItem(randomId, JSON.stringify(payload))
       VueCookies.set('LastLocallySavedItemId', randomId)
       return randomId
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  deleteLocalEntry(id) {
+    try {
+      // Check if the item with the given ID exists in localStorage
+      if (localStorage.getItem(id) !== null) {
+          // Remove the item from localStorage
+          localStorage.removeItem(id);
+          console.log("Item with ID " + id + " has been removed from localStorage.");
+      } else {
+          console.log("Item with ID " + id + " does not exist in localStorage.");
+      }
+
     } catch (error) {
       console.log(error)
     }
