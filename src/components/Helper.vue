@@ -31,10 +31,10 @@
                     Diagram Info
                   </span>
                   <v-divider></v-divider>
+                    <span class="font-weight-bold">ID :</span><span class=""> {{ diagramInfo.id }} </span><br/>
                     <span class="font-weight-bold">Name :</span> <br/><span class=""> {{ diagramInfo.name }} </span><br/>
                     <span class="font-weight-bold">Description:</span>
                     <span class=""> {{ diagramInfo.description }} </span><br/>
-                    <span class="font-weight-bold">ID :</span><span class=""> {{ diagramInfo.id }} </span><br/>
                 </v-card>
                 <v-divider vertical></v-divider>
                 <v-card

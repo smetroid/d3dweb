@@ -340,7 +340,7 @@ export default {
         'description': data.description,
         'diagram': JSON.stringify(json),
         'createdTime': created.toISOString(),
-        'updatedTime': null,
+        'updatedTime': created.toISOString()
       }
 
       localStorage.setItem(randomId, JSON.stringify(payload))
@@ -373,8 +373,8 @@ export default {
         'name': data.name,
         'description': data.description,
         'diagram': JSON.stringify(json),
-        'createdTime': created.toISOString(),
-        'updatedTime': null,
+        'createdTime': data.created,
+        'updatedTime': created.toISOString(),
       }
 
       localStorage.setItem(id, JSON.stringify(payload))

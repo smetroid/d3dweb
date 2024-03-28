@@ -41,7 +41,7 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.createTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.createdTime).toLocaleString() }}</span>
                 </td>
                 <td>
                     <span>{{ new Date(item.updatedTime).toLocaleString() }}</span>
@@ -104,7 +104,6 @@
   </div>
 </template>
 <script>
-import D3VimApi from '@/services/api/SamusApi'
 import D3Util from '@/services/D3Util'
 export default {
   name: 'DiagramList',

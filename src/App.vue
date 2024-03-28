@@ -6,7 +6,6 @@ import MenuLinks from './helpers/MenuLinks.js'
 import Settings from './components/Settings.vue'
 import HelperPane from './components/Helper.vue'
 import * as DagreD3 from 'dagre-d3'
-import D3VimApi from './services/api/SamusApi.js'
 import DiagramForm from './components/DiagramForm.vue'
 import DiagramModifier from './helpers/DiagramModifier.js'
 import DiagramList from './components/DiagramList.vue'
@@ -399,9 +398,6 @@ export default {
 
     this.emitter.on('updateDiagramInfo', (payload) => {
        console.log('diagramInfo')
-       console.log(payload.id)
-       console.log(payload.name)
-       console.log(payload.description)
        this.d3dInfo.id = payload.id
        this.d3dInfo.name = payload.name
        this.d3dInfo.description = payload.description
@@ -433,26 +429,27 @@ export default {
       let localDiagramInfo = null
       if (id) {
         localDiagramInfo = D3Util.getLocalItem(id)
-        this.d3dInfo.id = id 
       } else {
         let diagramId = this.$cookies.get('LastLocallySavedItemId')
         if (diagramId) {
           localDiagramInfo = D3Util.getLocalItem(diagramId)
-          this.d3dInfo = diagramId
+          id = diagramId
         } else {
           // get the last temporary saved working item
           localDiagramInfo = D3Util.getTempDiagram()
-          this.d3dInfo = null
+          id = null
         }
       }
 
       if (D3Util.debug) {
         console.log(localDiagramInfo)
+        console.log(id)
       }
 
       let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
 
       this.d3dInfo = localDiagramInfo
+      this.d3dInfo.id = id
       this.d3dInfo.diagram = g
 
       /**NOTE - this.modifier is the main object used by all other components files */

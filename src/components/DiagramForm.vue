@@ -236,19 +236,20 @@ export default {
       newModifier.redraw(g)
       this.emitter.emit('updateModifier', newModifier)
     },
-    setDiagramInfo(){
+    setDiagramInfo(newDiagram){
       /*NOTE - tried to add this to the `mount` method, however because DiagramForm.vue 
       gets loaded before the App.vue `this.modifier.d3Info` is undefined causing the app
       to error out.  A workaround for this is to use `v-if` so that the Diagramform.vue does
       not get rendered as part of starting up the application
       */
       console.log(this.modifier)
+      let created = new Date()
       let info = this.modifier.d3dInfo
       this.id = info.id
-      this.name = info.name ? info.name : this.name
-      this.description = info.description ? info.description : this.description
-      this.diagram = info.diagram
-      this.created = info.created
+      this.name = newDiagram ? this.name : info.name
+      this.description = newDiagram ? this.description : info.description
+      this.diagram = newDiagram ? this.diagram : info.diagram
+      this.created = newDiagram ? created.toISOString() : info.created
       this.jsonDiagram = JSON.stringify(this.diagram)
       this.setGraphOptions(this.diagram)
       this.rankdir = this.diagram._label.rankdir
@@ -267,7 +268,7 @@ export default {
     create: async function () {
       console.log('creating a new diagramForm')
       /*NOTE - gets latest/updated modified objects, and sets it as it's value */
-      this.setDiagramInfo()
+      this.setDiagramInfo(true)
 
       this.setOptionsAndLabels()
 
