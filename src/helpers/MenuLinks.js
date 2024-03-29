@@ -1,4 +1,4 @@
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 export default {
   Click: async function(event, app) {
     console.log(app)

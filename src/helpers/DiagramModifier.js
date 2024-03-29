@@ -2,7 +2,7 @@ import VueCookies from 'vue-cookies'
 import * as d3 from 'd3'
 import Velocity from 'velocity-animate'
 import * as DagreD3 from 'dagre-d3'
-import D3Util from '../services/D3Util'
+import D3Util from '@/helpers/D3Util'
 /*these vars are global needed for the click.reset() function*/
 export default class DiagramModifier {
   constructor(d3dInfo, emitter, selectedNodes, doubleSelection, selectedEdges) {

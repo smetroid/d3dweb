@@ -51,13 +51,13 @@
 </template>
 <script>
 import * as d3 from 'd3'
-import D3Util from '../services/D3Util.js'
-import D3EdgeForm from './D3EdgeForm.vue'
-import D3NodeForm from './D3NodeForm.vue'
-import Hints from '../helpers/Hints.vue'
+import D3Util from '@/helpers/D3Util'
+import D3EdgeForm from '@/components/D3EdgeForm.vue'
+import D3NodeForm from '@/components/D3NodeForm.vue'
+import Hints from '@/helpers/Hints.vue'
 //import login from '@/components/Login'
-import D3DAltKeys from '../helpers/DagreAltKeys.js'
-import D3DOtherKeys from '../helpers/DagreOtherKeys.js'
+import D3DAltKeys from '@/helpers/DagreAltKeys.js'
+import D3DOtherKeys from '@/helpers/DagreOtherKeys.js'
 // import Crud from '@/helpers/CRUD'
 
 export default {

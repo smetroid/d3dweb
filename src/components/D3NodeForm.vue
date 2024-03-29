@@ -153,7 +153,7 @@
 
 <script>
 // import * as Velocity from 'velocity-animate'
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 // import VueCookies from 'vue-cookies'
 export default {
   name: 'D3Node',

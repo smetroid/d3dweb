@@ -1,6 +1,6 @@
 // import Settings from '@/components/Settings.vue'
 // import VueCookies from 'vue-cookies'
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 export default {
   // activeWindow (event) {
   //   console.log("event")

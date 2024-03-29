@@ -1,4 +1,4 @@
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 import * as d3 from 'd3'
 //import DagreLib from '@/helpers/DagreLib'
 //import D3NodeForm from '@/components/D3NodeForm'

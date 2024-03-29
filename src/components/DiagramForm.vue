@@ -123,9 +123,9 @@
   </v-dialog>
 </template>
 <script>
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util.js'
 import * as DagreD3 from 'dagre-d3'
-import DiagramModifier from '../helpers/DiagramModifier.js'
+import DiagramModifier from '@/helpers/DiagramModifier.js'
 //import VueCookies from 'vue-cookies'
 export default {
   name: 'DiagramForm',

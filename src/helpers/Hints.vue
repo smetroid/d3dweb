@@ -10,7 +10,7 @@
 </template>
 
 <script>
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 import * as Velocity from 'velocity-animate'
 export default {
   name: 'Hints',

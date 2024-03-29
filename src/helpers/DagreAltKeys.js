@@ -1,4 +1,4 @@
-import D3Util from '../services/D3Util.js'
+import D3Util from '@/helpers/D3Util.js'
 
 export default class DagreAltKeys {
   constructor(emitter, modifier) {

@@ -116,7 +116,7 @@
   </div>
 </template>
 <script>
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 // Vue.use(VueCookies)
 // import VueCookie from '@/'
 export default {

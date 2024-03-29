@@ -1,14 +1,14 @@
 <script setup>
-import DagreGraphLib from './components/DagreGraphLib.vue'
-import D3Util from './services/D3Util.js'
-import MenuKeys from './helpers/MenuKeys.js'
-import MenuLinks from './helpers/MenuLinks.js'
-import Settings from './components/Settings.vue'
-import HelperPane from './components/Helper.vue'
+import DagreGraphLib from '@/components/DagreGraphLib.vue'
+import D3Util from '@/helpers/D3Util.js'
+import MenuKeys from '@/helpers/MenuKeys.js'
+import MenuLinks from '@/helpers/MenuLinks.js'
+import Settings from '@/components/Settings.vue'
+import HelperPane from '@/components/Helper.vue'
 import * as DagreD3 from 'dagre-d3'
-import DiagramForm from './components/DiagramForm.vue'
-import DiagramModifier from './helpers/DiagramModifier.js'
-import DiagramList from './components/DiagramList.vue'
+import DiagramForm from '@/components/DiagramForm.vue'
+import DiagramModifier from '@/helpers/DiagramModifier.js'
+import DiagramList from '@/components/DiagramList.vue'
 import { computed } from 'vue'
 
 // Theme specific

@@ -104,7 +104,7 @@
   </div>
 </template>
 <script>
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util.js'
 export default {
   name: 'DiagramList',
   props: ['active'],
