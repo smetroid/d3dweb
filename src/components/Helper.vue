@@ -185,8 +185,8 @@ export default {
         {"title": "Delete", "shortcut": "x"},
         {"title": "Read Only", "shortcut": "r"},
         {"title": "Edit","shortcut": "e"},
-        {"title": "Create Node","shortcut": "Alt + n"},
-        {"title": "Create Edge","shortcut": "Alt + d"},
+        {"title": "Create Node","shortcut": "n"},
+        {"title": "Create Edge","shortcut": "d"},
       ],
       main: [
         'Diagram', 'Zoom','Dagre'

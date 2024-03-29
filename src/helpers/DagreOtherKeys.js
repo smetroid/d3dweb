@@ -16,8 +16,10 @@ export default class DagreOtherKeys {
     this.doubleSelection = modifier.doubleSelection
   }
 
-  defaultActions (eventKey, edgeOrNode) {
+  defaultActions (eventKey, edgeOrNode, focusedNodeId, focusedEdgeId) {
     console.log(this)
+    let resetValues = false
+    let d3Data = null
     switch (eventKey){
       case 'm':
         console.log('open menu')
@@ -36,6 +38,29 @@ export default class DagreOtherKeys {
         console.log('light dark toggle')
         this.emitter.emit('toggleTheme')
         break
+      case 'n':
+        var node = D3Util.defaultNodeValues()
+        this.modifier.addNode(node)
+        //resetValues = true
+        break
+      case 'd':
+        var edge = D3Util.defaultEdgeValues()
+        this.modifier.addEdge(edge)
+        //resetValues = true
+        break
+      case 'e':
+        if ( edgeOrNode === 'edges' ){
+          d3Data = this.modifier.getEdgeData(focusedEdgeId)
+          this.emitter.emit('changeActive', 'Edit Edge')
+        } else if ( edgeOrNode === 'nodes' ) {
+          console.log('editing a node object')
+          d3Data = this.modifier.getNodeData(focusedNodeId)
+          console.log(d3Data)
+          this.emitter.emit('changeActive', 'Edit Node')
+        } else {
+          console.log('nothing to edit')
+        }
+        break
 
       default:
         //AnimateKeys.dagreGraphLib = dagreGraphLib
@@ -44,6 +69,9 @@ export default class DagreOtherKeys {
         console.log(edgeOrNode)
         return this.Animate(eventKey, edgeOrNode)
     }
+    /*NOTE - it seems resetValues was only needed for alt keys */
+    //let result = [resetValues, d3Data]
+    return d3Data
   }
 
   Animate(eventKey, nodeOrEdge) {
