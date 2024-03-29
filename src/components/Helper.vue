@@ -17,7 +17,7 @@
                 D3D
                 <span v-if="diagramInfo.id"
                   class="justify-center d-flex ">
-                  (Authenticated)
+                  (Diagram Saved)
                 </span>
               </span>  
               <v-divider></v-divider>
@@ -167,19 +167,19 @@ export default {
       showAlert: null,
       loginModal: false,
       zoom: [
-        {"title": "Zoom In","shortcut": "Alt + ="},
-        {"title": "Zoom Out", "shortcut": "Alt + -"},
-        {"title": "Pan Right", "shortcut": "Alt + l"},
-        {"title": "Pan Left","shortcut": "Alt + h"},
-        {"title": "Pan Up","shortcut": "Alt + k"},
-        {"title": "Pan Down","shortcut": "Alt + j"}
+        {"title": "Zoom In","shortcut": "alt + ="},
+        {"title": "Zoom Out", "shortcut": "alt + -"},
+        {"title": "Pan Right", "shortcut": "alt + l"},
+        {"title": "Pan Left","shortcut": "alt + h"},
+        {"title": "Pan Up","shortcut": "alt + k"},
+        {"title": "Pan Down","shortcut": "alt + j"}
       ],
       selectionOptions: [
         {"title": "Focus Node","shortcut": "j or k"},
-        {"title": "Active 1", "shortcut": "Enter"},
-        {"title": "Active 2","shortcut": "Enter Enter"},
+        {"title": "Active 1", "shortcut": "enter"},
+        {"title": "Active 2","shortcut": "enter enter"},
         {"title": "Hints","shortcut": "f"},
-        {"title": "Change Focus","shortcut": "Esc"},
+        {"title": "Change Focus","shortcut": "esc"},
       ],
       actions: [
         {"title": "Delete", "shortcut": "x"},
@@ -192,13 +192,13 @@ export default {
         'Diagram', 'Zoom','Dagre'
       ],
       samus: [
-        {"title": "New Diagram", "shortcut": "Ctrl + n"},
-        {"title": "Open Diagram", "shortcut": "Ctrl + o"},
-        {"title": "Edit Diagram", "shortcut": "Ctrl + e"},
-        {"title": "Save Diagram", "shortcut": "Ctrl + s"},
+        {"title": "New Diagram", "shortcut": "alt + n"},
+        {"title": "Open Diagram", "shortcut": "alt + o"},
+        {"title": "Edit Diagram", "shortcut": "alt + e"},
+        {"title": "Save Diagram", "shortcut": "alt + s"},
       ],
       other: [
-        {"title": "Login", "shortcut": "Ctrl + l"},
+        /*{"title": "Login", "shortcut": "Ctrl + l"}, */
         {"title": "Settings", "shortcut": "Ctrl + t"},
         {"title": "Hints", "shortcut": "f"},
       ],

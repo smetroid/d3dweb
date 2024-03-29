@@ -34,14 +34,24 @@ export default class DagreAltKeys {
         this.modifier.redraw(this.diagram, options)
         break
       case '-':
-    //    scaleUpdate = (scaleUpdate - 0.1)
         options = {"zoom": "Out"}
         this.modifier.redraw(this.diagram, options)
         break
       case '=':
         options = {"zoom": "In"}
         this.modifier.redraw(this.diagram, options)
-     //   scaleUpdate = (scaleUpdate + 0.1)
+        break
+      case 'n':
+        this.emitter.emit('newDiagram')
+        break
+      case 'o':
+        this.emitter.emit('showDiagramList', '')
+        break
+      case 's':
+        this.emitter.emit('saveDiagram')
+        break
+      case 'e':
+        this.emitter.emit('editDiagram')
         break
       default:
         console.log('zoomPan Default')
