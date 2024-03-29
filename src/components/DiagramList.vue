@@ -41,10 +41,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.createdTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.created).toLocaleString() }}</span>
                 </td>
                 <td>
-                    <span>{{ new Date(item.updatedTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.updated).toLocaleString() }}</span>
                 </td>
                 <v-icon
                   small
