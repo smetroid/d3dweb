@@ -367,6 +367,7 @@ export default {
   },
   updateLocalEntry(id, data){
     try{
+      console.log(data)
       let updated = new Date()
       let json = new DagreD3.graphlib.json.write(data.diagram)
       let payload = { 
@@ -389,7 +390,8 @@ export default {
     this.json = new DagreD3.graphlib.json.write(g)
     let created = new Date()
     let updatedData = {
-      'updatedTime': created.toISOString(),
+      'created': created.toISOString(),
+      'updated': created.toISOString(),
       'name': this.tempInfo().name,
       'description': this.tempInfo().description,
       'diagram': JSON.stringify(this.json),
@@ -401,7 +403,7 @@ export default {
     return localData
   },
   getLocalItem(id){
-    var localItem = JSON.parse(localStorage.getItem(id))
+    let localItem = JSON.parse(localStorage.getItem(id))
     return localItem
 
   },

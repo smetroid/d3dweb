@@ -439,6 +439,11 @@ export default {
       let localDiagramInfo = null
       if (id) {
         localDiagramInfo = D3Util.getLocalItem(id)
+        /**NOTE - setting the LastLocallySavedItemId will
+         * allow the application to open the last opened
+         * item when re-rendering
+         */
+        this.$cookies.set('LastLocallySavedItemId', id)
       } else {
         let diagramId = this.$cookies.get('LastLocallySavedItemId')
         if (diagramId) {
