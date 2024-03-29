@@ -88,12 +88,9 @@ export default {
     }
   },
   mounted () {
-
-    if (this.$cookies.get('settings')['d3dInfo']) {
-      console.log()
-      this.diagramInfo = true
-    } else {
-      this.diagramInfo = false
+    let settings = this.$cookies.get('settings')
+    if (settings) {
+      this.diagramInfo = settings['d3Info']
     }
 
     this.emitter.on('d3ResetValues', () => {
@@ -173,11 +170,12 @@ export default {
       this.modifier.doubleSelection = this.doubleSelection
       this.modifier.selectedEdges = this.selectedEdges
 
-      if (D3Util.debug) {
+      if ( D3Util.debug ) {
         console.log('event')
         console.log(event)
       }
-      if(Object.keys(this.hints).length > 1){
+
+      if ( Object.keys(this.hints).length > 1 ) {
         Hints.data = this.hints
         Hints.hintKeysReplaced = this.hintKeysReplaced
         var data = Hints.followLinks(event)
@@ -191,7 +189,8 @@ export default {
           this.hints = {}
           this.hintKeysReplaced = ''
         }
-      } else if ((event.altKey === true) || (event.metaKey === true)) {
+      } else if ((event.altKey === true) || 
+                (event.metaKey === true)) {
         if (D3Util.debug) {
           console.log('alt key')
         }
@@ -209,13 +208,21 @@ export default {
         /*IF searching eg: "/" don't search for anything */
         console.log(this.modifier)
         let otherKeys = new D3DOtherKeys(this.emitter, this.modifier )
-        var result = otherKeys.defaultActions(event.key, this.edgeOrNode)
-        if (D3Util.debug){
+        let result = otherKeys.defaultActions(event.key, this.edgeOrNode, this.focusedNodeId, this.focusedEdgeId)
+
+        if ( D3Util.debug ) {
           console.log(result)
           console.log(this.focusedNodeId)
           console.log(this.focusedEdgeId)
         }
-        if (result){
+
+        /*NOTE - open up the drawer if editing a node or an edge*/
+        if ( event.key === 'e' ) {
+          this.d3Data = result
+          this.openSheet = true
+        }
+        
+        if ( result ){
           var status = false
           if(event.key == 'x') {
             if(this.edgeOrNode == 'nodes') {
@@ -241,12 +248,10 @@ export default {
             /*NOTE can we avoid this ... seems redundant*/
             this.selectedNodes = result.selectedNodes
             this.doubleSelection = result.doubleSelection
-            /**!SECTION
-             * how to fix this unexpected mutation?
-             * there is probably a better way to do this!
-             */
+
             this.modifier.selectedNodes = result.selectedNodes
             this.modifier.doubleSelection = result.doubleSelection
+
           } else if (event.key == 'Escape') {
             if (this.escCount == 2){
               this.resetValues()

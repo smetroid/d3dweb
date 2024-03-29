@@ -41,10 +41,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.createdTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.created).toLocaleString() }}</span>
                 </td>
                 <td>
-                    <span>{{ new Date(item.updatedTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.updated).toLocaleString() }}</span>
                 </td>
                 <v-icon
                   small
@@ -156,6 +156,9 @@ export default {
     //this.diagramListModal = this.active == "Open"?true:false
 
     /* this may no longer be needed
+      We need this for the trap else the trap does not work
+      NOTE: we can probably just remove this and use the showDiagramList
+      emitter
     */
     this.$nextTick(function(){
       console.log('DiagramList Trap Active')
@@ -173,6 +176,11 @@ export default {
       this.description = data.description
       this.diagram = data.diagram
       this.getLocalDiagrams()
+
+      this.$nextTick(function(){
+        console.log('DiagramList Trap Active')
+        this.listTrap = this.diagramListModal
+      })
     })
   },
   methods: {
