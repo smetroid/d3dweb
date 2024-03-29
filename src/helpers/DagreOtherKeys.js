@@ -1,42 +1,40 @@
-<template>
-  <div>
-  </div>
-</template>
-<script>
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 import * as d3 from 'd3'
 //import DagreLib from '@/helpers/DagreLib'
 //import D3NodeForm from '@/components/D3NodeForm'
 //import D3Edge from '@/components/D3EdgeForm'
-import * as Velocity from 'velocity-animate'
+import Velocity from 'velocity-animate'
 import VueCookies from 'vue-cookies'
 //import MenuLink from '@/helpers/MenuLinks'
-export default {
-  name: 'DagreOtherKeys',
-  //props: ['selectedNodes', 'doubleSelection', 'graph'],
-  data () {
-    return {
-      focusedIndex: null,
-      returnData: null,
-      prevFocusedIndex: null,
-      selectedNodes: [],
-      doubleSelection: [],
-      dagreLib: null,
-      dagreGraphLib: null
-     }
-  },
-  mounted () {
-    console.log('focused keys loaded')
-  },
+export default class DagreOtherKeys {
+  constructor(emitter, modifier) {
+    this.emitter = emitter
+    this.modifier = modifier
+    this.diagram = modifier.d3dInfo.diagram
+    this.focusedIndex = modifier.focusedIndex
+    this.selectedNodes = modifier.selectedNodes
+    this.doubleSelection = modifier.doubleSelection
+  }
+
   defaultActions (eventKey, edgeOrNode) {
+    console.log(this)
     switch (eventKey){
       case 'm':
         console.log('open menu')
-        this.dagreGraphLib.$root.$emit('changeActive', "Menu")
+        console.log(this)
+        this.emitter.emit('changeActive', "Menu")
         break
       case '/':
         console.log('show help')
-        this.dagreGraphLib.$root.$emit('showHelp')
+        this.emitter.emit('showHelp')
+        break
+      case 'a':
+        console.log('open actions menu')
+        this.emitter.emit('changeActive', "Actions Menu")
+        break
+      case 't':
+        console.log('light dark toggle')
+        this.emitter.emit('changeActive', "Light/Dark")
         break
 
       default:
@@ -46,15 +44,18 @@ export default {
         console.log(edgeOrNode)
         return this.Animate(eventKey, edgeOrNode)
     }
-  },
+  }
+
   Animate(eventKey, nodeOrEdge) {
-    console.log(this.dagreGraphLib)
-    console.log(this.dagreLib)
+    console.log(this.modifier)
     var selectedId = null
-    //this.dagreLib = this.dagreGraphLib.dagreLib
+    //this.modifier = this.dagreGraphLib.dagreLib
     //this.graph = this.dagreGraphLib.d3Diagram
-    this.selectedNodes = this.dagreGraphLib.selectedNodes
-    this.doubleSelection = this.dagreGraphLib.doubleSelection
+
+    /*NOTE - Can probably delete
+    this.selectedNodes = this.graphSelectedNodes
+    this.doubleSelection = this.graphDoubleSelection
+    */
 
     //this.[eventKey](nodeOrEdge)
     if (eventKey == "j"){
@@ -79,7 +80,8 @@ export default {
     }
 
     return this.returnData
-  },
+  }
+
   J (nodeOrEdge) {
     console.log('focus-index::'+this.focusedIndex)
     if (nodeOrEdge == "nodes") {
@@ -93,9 +95,10 @@ export default {
         this.prevFocusedIndex = this.focusedIndex
         this.focusedIndex = this.focusedIndex + 1
         this.focusedIndex = D3Util.mod(this.focusedIndex, this.diagram.nodeCount())
-        this.dagreLib.removeSelection(this.prevFocusedIndex)
+        this.modifier.removeSelection(this.prevFocusedIndex)
       }
-      return this.dagreLib.selectNode(this.focusedIndex)
+      console.log(this.modifier)
+      return this.modifier.selectNode(this.focusedIndex)
 
     } else {
       if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
@@ -106,11 +109,12 @@ export default {
         this.focusedIndex = this.focusedIndex + 1
         this.focusedIndex = D3Util.mod(this.focusedIndex, this.diagram.edgeCount())
         console.log(this.prevFocusedIndex)
-        this.dagreLib.removeEdgeSelection(this.prevFocusedIndex)
+        this.modifier.removeEdgeSelection(this.prevFocusedIndex)
       }
-      return this.dagreLib.selectEdge(this.focusedIndex)
+      return this.modifier.selectEdge(this.focusedIndex)
     }
-  },
+  }
+
   K (nodeOrEdge) {
     if (nodeOrEdge == "nodes") {
       if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
@@ -119,9 +123,9 @@ export default {
         this.prevFocusedIndex = this.focusedIndex
         this.focusedIndex = this.focusedIndex - 1
         this.focusedIndex = D3Util.mod(this.focusedIndex, this.diagram.nodeCount())
-        this.dagreLib.removeSelection(this.prevFocusedIndex)
+        this.modifier.removeSelection(this.prevFocusedIndex)
       }
-      return this.dagreLib.selectNode(this.focusedIndex)
+      return this.modifier.selectNode(this.focusedIndex)
     } else {
       if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
         this.focusedIndex = (this.diagram.edgeCount() - 1)
@@ -129,11 +133,12 @@ export default {
         this.prevFocusedIndex = this.focusedIndex
         this.focusedIndex = this.focusedIndex - 1
         this.focusedIndex = D3Util.mod(this.focusedIndex, this.diagram.edgeCount())
-        this.dagreLib.removeEdgeSelection(this.prevFocusedIndex)
+        this.modifier.removeEdgeSelection(this.prevFocusedIndex)
       }
-      return  this.dagreLib.selectEdge(this.focusedIndex)
+      return  this.modifier.selectEdge(this.focusedIndex)
     }
-  },
+  }
+
   F (){
     /*create d3 shortcut hints*/
       var labels = d3.selectAll('svg g.label')
@@ -211,7 +216,8 @@ export default {
     labels = d3.selectAll('svg g.label')
     console.log(labels)
     return hints
-  },
+  }
+
   buildHints (elements) {
     var maxIterator = null
     var hints = []
@@ -238,7 +244,8 @@ export default {
     }
 
     return hints
-  },
+  }
+
   enter (nodeOrEdge) {
     var result = ""
     if (nodeOrEdge == 'nodes') {
@@ -249,19 +256,21 @@ export default {
     }
 
     return result
-  },
+  }
+
   /**
    * TODO: need to move away from index to node id, now that the diagram
    * can be build with the random ids being passed when created
    * @param {*} index 
    */
   activeDeactiveNode (index) {
-    var node = this.dagreLib.getNode(index)
+    let node = this.modifier.getNode(index)
     console.log('node')
     console.log(node)
+    console.log(this.selectedNodes)
     //var selectedNodes = []
     //console.log(selectedNodes)
-    var selectionExists = this.selectedNodes.indexOf(index)
+    let selectionExists = this.selectedNodes.indexOf(index)
     console.log('selectionExists')
     console.log(selectionExists)
     var selection = d3.select(node)
@@ -277,16 +286,16 @@ export default {
       if (this.doubleSelection.length === 0 ) {
         console.log('doubleActive')
         selection.classed('d_active_node', true)
-        this.selectedNodes = this.dagreLib.arrayRemove(this.selectedNodes, index)
+        this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
         this.doubleSelection.push(index)
       } else {
         console.log("insideDoubleSelection")
-        this.selectedNodes = this.dagreLib.arrayRemove(this.selectedNodes, index)
+        this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
         selection.classed('d_active_node', false)
         //this.doubleSelection = []
       }
     }
-    //var nodeId = this.dagreLib.getNodeId(index)
+    //var nodeId = this.modifier.getNodeId(index)
     //var nodeData = this.g.node(nodeId)
     //this.$root.$emit('d3NodeData', nodeData, nodeId)
     var data = {"selectedNodes": this.selectedNodes, "doubleSelection": this.doubleSelection}
@@ -295,9 +304,10 @@ export default {
     //this.dagreGraphLib.doubleSelection = this.doubleSelection
     // this.$emit('activeDeactiveNodes', data)
     return data
-  },
+  }
+
   activeDeactiveEdge (index) {
-    var edge = this.dagreLib.getEdge(index)
+    var edge = this.modifier.getEdge(index)
     console.log('edge')
     console.log(edge)
     if (this.selectedEdges.indexOf(index) === -1) {
@@ -308,13 +318,12 @@ export default {
       this.activeEdgeId = this.getEdgeId(index)
       var edgeData = this.g.edge(this.focusedEdgeId)
       console.log(edgeData)
-      this.$root.$emit('edgesD3Data', edgeData, this.activeEdgeId)
+      this.emitter.emit('edgesD3Data', edgeData, this.activeEdgeId)
     } else {
       edge.classed('active_edge', false)
-      this.selectedEdges = this.dagreLib.arrayRemove(this.selectedEdges, index)
+      this.selectedEdges = this.modifier.arrayRemove(this.selectedEdges, index)
     }
     var data = {"selectedNodes": this.selectedNodes, "doubleSelection": this.doubleSelection}
     return data
-  },
+  }
 }
-</script>

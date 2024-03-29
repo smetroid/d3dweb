@@ -1,9 +1,9 @@
+/*TODO - remove this specific CSS and have the colors be managed by vuetify if possible */
 svg {
-  /*border: 1px solid #999;*/
-  position: fixed;
   height: 100%;
   width: 100%;
   /*
+  border: 1px solid #999;
   left: 0;
   bottom: 0;
   top: 0;
@@ -17,7 +17,7 @@ div.htmlLabel {
 .label {
     display: block;
     position: absolute;
-    fill: #42b983;
+    fill: rgb(24,103,192)
 }
 
 .node {
@@ -30,8 +30,8 @@ div.htmlLabel {
 .node diamond,
 .node ellipse {
   stroke: #999;
-  fill: #1e1e1e;
-  stroke-width: 1px;
+  fill: hwb(160deg 0% 26% / 95%);
+  stroke-width: 2px;
   box-shadow:
   0 2.8px 2.2px rgba(0, 0, 0, 0.034),
   0 6.7px 5.3px rgba(0, 0, 0, 0.048),
@@ -63,17 +63,9 @@ div.htmlLabel {
 
 .cluster rect.selected{
   stroke: orange;
-  fill-opacity: 0.1;
+  fill: #000;
+  fill-opacity: 0.9;
   stroke-width: 2.5px;
-  fill: transparent;
-  rx: 8px;
-}
-
-.cluster rect.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
   rx: 8px;
 }
 
@@ -104,123 +96,37 @@ div.htmlLabel {
   stroke-width: 2.5px;
 }
 
+.node ellipse.selected,
+.node diamond.selected,
+.node polygon.selected,
+.node circle.selected,
+.edgePath path.selected,
 .node rect.selected{
   stroke: orange;
-  fill-opacity: 0.1;
+  fill-opacity: 0.9;
   stroke-width: 2.5px;
-  fill: transparent;
 }
 
-.edgePath path.selected{
-  stroke: orange;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  file: transparent;
-}
-
-.edgePath path.active_edge{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  file: transparent;
-}
-
-.node circle.selected{
-  stroke: orange;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node polygon.selected{
-  stroke: orange;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node diamond.selected{
-  stroke: orange;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node ellipse.selected{
-  stroke: orange;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
+.cluster rect.active_node,
+.edgePath path.active_edge,
+.node ellipse.active_node,
+.node diamond.active_node,
+.node polygon.active_node,
+.node circle.active_node,
 .node rect.active_node{
   stroke: cyan;
   fill-opacity: 0.1;
   stroke-width: 2.5px;
-  fill: transparent;
 }
 
-.node circle.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node polygon.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node diamond.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node ellipse.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
+.node ellipse.d_active_node,
+.node diamond.d_active_node,
+.node polygon.d_active_node,
+.node circle.d_active_node,
 .node rect.d_active_node{
   stroke: magenta;
   fill-opacity: 0.1;
   stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node circle.d_active_node{
-  stroke: magenta;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node polygon.d_active_node{
-  stroke: magenta;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node diamond.d_active_node{
-  stroke: magenta;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
-}
-
-.node ellipse.d_active_node{
-  stroke: magenta;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
-  fill: transparent;
 }
 
 g.doublediv {
@@ -255,7 +161,7 @@ label {
 
 .container {
     align-self: center;
-    #border: 2px solid green;
+    border: 2px solid green;
     width: 98%;
     height: 50%;
     /*
@@ -285,7 +191,7 @@ label {
 }
 
 .left-div {
-  #border: 2px solid yellow;
+  border: 2px solid yellow;
   height: 100%;
   position: absolute;
   transform-style: preserve-3d;
@@ -305,7 +211,7 @@ label {
 }
 
 .right-div {
-    #border: 2px solid gray;
+    border: 2px solid gray;
     height: 100%;
     left: 90%;
     position: absolute;
@@ -316,13 +222,13 @@ label {
 
 .bottom-div {
     position: absolute;
-    #border: 2px solid orange;
+    border: 2px solid orange;
     width: 100%;
     height: 5%;
 }
 
 #main {
-    #border: 2px solid blue;
+    border: 2px solid blue;
     width: 0%;
     height: 50%;
     text-align: center;
@@ -331,6 +237,7 @@ label {
 
 }
 
+/*
 body {
     margin: 0;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -339,6 +246,7 @@ body {
     color: #c8c8c8;
     /*background-color: #272b30;*/
     /*background-image: url("./images/templatemo_body.jpg");*/
+    /*
 }
 */
 

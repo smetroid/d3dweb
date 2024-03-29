@@ -1,141 +1,182 @@
 <template>
-  <div
-    @keydown.stop.prevent="keyPress($event, $refs.menu)"
-    @keypress.stop.prevent="keyPress($event, $refs.menu)">
-    <!--<focus-trap v-model="enableTrap" v-if="active == 'D3Dagre'?true:false"> -->
-    <focus-trap v-model="enableTrap" :escapeDeactivates=false>
-      <div id="trap" ref="trapDiv" tabindex="0" class="trap is-active">
-        <div v-if="diagramInfo">
-          {{ selectedNodes }}
-          {{ selectedEdges }}
-          {{ doubleSelection }}
-          {{ focusedEdgeId }}
-          {{ focusedNodeId }}
-          {{ hints }}
-          {{ focusedIndex }}
-          {{ edgeOrNode }}
-        </div>
-        <svg>
-          <g/>
-        </svg>
-      </div>
-    </focus-trap>
-    <v-bottom-sheet
-      hide-overlay
-      v-model="openSheet">
-      <D3EdgeForm
-        v-if="active === 'Add Edge' || active === 'Edit Edge'"
-        :active="active"
-        :d3Data="d3Data"
-        :DagreLib ="dagreLib"
-      />
-      <D3NodeForm
-        v-if="active === 'Add Node' || active === 'Edit Node'"
-        :active="active"
-        :d3Data="d3Data"
-        :DagreLib ="dagreLib"
-      />
-    </v-bottom-sheet>
-  </div>
+    <div
+      @keydown.exact.alt.prevent="keyPress($event)"
+      @keydown.exact.ctrl.r="reload($event)"
+      @keypress.stop.prevent="keyPress($event)"
+      @keydown.esc.prevent="keyPress($event)"
+      >
+        <FocusTrap
+          v-model:active="trapGraph"
+          :escapeDeactivates="false"
+          :delayInitialFocus="true"
+          :initial-focus="()=>$refs.svg"
+          ref="graphTrap"
+          >
+            <div id="trap" ref="trapDiv" class="trap is-active" style="">
+              <div v-if="diagramInfo">
+                <h1>D3DInfo:</h1>
+                SelectedNodes: {{ selectedNodes }} <br>
+                SelectedEdges: {{ selectedEdges }} <br>
+                DoubleSelection: {{ doubleSelection }} <br>
+                FocusedEdgeID: {{ focusedEdgeId }} <br>
+                FocusedNodeID: {{ focusedNodeId }} <br>
+                Hints: {{ hints }} <br>
+                FocusedIndex: {{ focusedIndex }} <br>
+                EdgesOrNodes: {{ edgeOrNode }} <br>
+              </div>
+              <svg
+                ref="svg"
+                tabindex="0"
+                style="position: absolute; bottom: 30px; right: 1px"
+                class="">
+                <g/>
+              </svg>
+            </div>
+        </FocusTrap>
+        <v-bottom-sheet
+          hide-overlay
+          v-model="openSheet">
+            <D3EdgeForm
+              v-if="active === 'Add Edge' || active === 'Edit Edge'"
+              :active="active"
+              :d3Data="d3Data"
+            />
+            <D3NodeForm
+              v-if="active === 'Add Node' || active === 'Edit Node'"
+              :active="active"
+              :d3Data="d3Data"
+            />
+        </v-bottom-sheet>
+    </div>
 </template>
 <script>
 import * as d3 from 'd3'
-import D3Util from '../services/D3Util.js'
-import D3EdgeForm from './D3EdgeForm.vue'
-import D3NodeForm from './D3NodeForm.vue'
-import DagreKeys from '../helpers/DagreKeys.vue'
-import Hints from '../helpers/Hints.vue'
-import DagreLib from '../helpers/DagreLib.vue'
+import D3Util from '@/helpers/D3Util'
+import D3EdgeForm from '@/components/D3EdgeForm.vue'
+import D3NodeForm from '@/components/D3NodeForm.vue'
+import Hints from '@/helpers/Hints.vue'
 //import login from '@/components/Login'
-//import * as dagreD3 from 'dagre-d3'
-//import DagreOtherKeys from '@/helpers/DagreOtherKeys'
-import DagreAltKeys from '../helpers/DagreAltKeys.vue'
-import DagreOtherKeys from '../helpers/DagreOtherKeys.vue'
+import D3DAltKeys from '@/helpers/DagreAltKeys.js'
+import D3DOtherKeys from '@/helpers/DagreOtherKeys.js'
 // import Crud from '@/helpers/CRUD'
 
 export default {
-  name: 'DagreGaphLib',
-  props: ['active','dagreLib'],
-  //components: { D3EdgeForm, D3NodeForm, DiagramForm},
+  name: 'DagreGraphLib',
+  //props: ['active', 'd3dInfo'],
+  props: ['active'],
+  inject: ['modifier'],
   components: {D3NodeForm, D3EdgeForm},
-  //components: {D3EdgeForm},
   data () {
     return {
-      // gNavLi: null,
-      g: null,
-      id: null,
-      //graph: null,
-      //graphDefaults: {"options": {"directed":true,"multigraph":true,"compound":true}, "nodes": [], "edges": []},
       edgeOrNode: 'nodes',
       response: null,
       focusedIndex: null,
-      enableTrap: true,
-      gWidth: null,
-      gHeight: null,
-      svg: null,
+      trapGraph: true,
       focusedEdgeId: null,
       focusedNodeId: null,
       initialScale: .96,
       hintKeysReplaced: '',
       hints: {},
       d3Data: {},
-      //dagreLib: null,
       diagramInfo: true,
       selectedNodes: [],
       selectedEdges: [],
       doubleSelection: [],
       openSheet: false,
       transform: {},
-      escCount: 0
+      escCount: 0,
     }
   },
   mounted () {
-    this.$root.$on('d3ResetValues', () => {
+
+    if (this.$cookies.get('settings')['d3dInfo']) {
+      console.log()
+      this.diagramInfo = true
+    } else {
+      this.diagramInfo = false
+    }
+
+    this.emitter.on('d3ResetValues', () => {
       this.resetValues()
     })
-    this.$root.$on('setSheetToFalse', () => {
+
+    this.emitter.on('setSheetToFalse', () => {
       /**
-       * on emit the page appears to be renndered, automatically getting
+       * on emit the page appears to be rendered, automatically getting
        * rid of the vuetify openSheet.
        * The setTimeout allows for the openSheet animation to close properly
        */
       this.openSheet = false
       setTimeout( ()=> {
-        this.$root.$emit("changeActive")
+        this.emitter.emit("changeActive")
       }, 300)
+    })
+
+    /* NOTE - Change the edges or node selection when using the active menu links
+    */
+    this.emitter.on('edgeOrNode', (selection) => {
+      var nodes = selection == 'Select Node' ? true : false
+      var edges = selection == 'Select Edges' ? true : false
+      if (edges) {
+        this.edgeOrNode = "edges"
+      } else if(nodes){
+        this.edgeOrNode = "nodes"
+      } else {
+        console.log('no edges or nodes')
+      }
     })
   },
   methods: {
     /**
      * used by DagreOtherKeys when creating the hyperlink hints
-     */
+    */
     forwardLinkClicked (data) {
+      /*
+      NOTE - when using forward links to edit a node use the same logic for 
+      editing a node via a selection ... for consistency.
+      */
       if (D3Util.debug) {
         console.log('forwardLinkClicked')
         console.log(data)
-        //console.log(this.dagreLib)
+        //console.log(this.modifier)
       }
 
-      if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
-        console.log('v and w')
-        /* We want to control the from using the active parent varible*/
-        //this.showEdgeForm = true
-        this.d3Data = DagreLib.getEdgeData(data)
-        this.$root.$emit('changeActive', 'Edit Edge')
-      } else {
-        console.log('v')
-        /* We want to control the from using the active parent variable*/
-        //this.showNodeForm = true
-        this.d3Data = DagreLib.getNodeData(data)
-        console.log(this.d3Data)
-        this.$root.$emit('changeActive', 'Edit Node')
-      }
+      /*NOTE - need to test forwardLinkClicked methods to make sure this event key is the only thing we need
+      */
+      let event = {altKey: true, key: 'e', keyCode: 69}
+      this.keyPress(event)
+
+      // if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
+      //   console.log('v and w')
+      //   // /* We want to control the from using the active parent varible*/
+      //   // //this.showEdgeForm = true
+      //   // this.d3Data = this.modifier.getEdgeData(data)
+      //   // this.emitter.emit('changeActive', 'Edit Edge')
+      // } else {
+      //   console.log('v')
+      //   let event = {altKey: true, key: 'e', keyCode: 69}
+      //   this.keyPress(event)
+      //   // /* We want to control the from using the active parent variable*/
+      //   // //this.showNodeForm = true
+      //   // this.d3Data = this.modifier.getNodeData(data)
+      //   // console.log(this.d3Data)
+      //   // this.emitter.emit('changeActive', 'Edit Node')
+      // }
     },
     keyPress(event) {
-        if (D3Util.debug) {
-          console.log('event')
-					console.log(event)
-        }
+      /*NOTE - let's add additional properties to the modifier object
+      focusedIndex, selectedNodes, and doubleSelection are used by both
+      DagreOtherKeys and the modifier ... keeping things DRY
+      */
+      this.modifier.focusedIndex = this.focusedIndex
+      this.modifier.selectedNodes = this.selectedNodes
+      this.modifier.doubleSelection = this.doubleSelection
+      this.modifier.selectedEdges = this.selectedEdges
+
+      if (D3Util.debug) {
+        console.log('event')
+        console.log(event)
+      }
       if(Object.keys(this.hints).length > 1){
         Hints.data = this.hints
         Hints.hintKeysReplaced = this.hintKeysReplaced
@@ -157,30 +198,18 @@ export default {
         //DagreAltKeys.diagram = this.graphLib.diagram
         //DagreAltKeys.focusedNodeId = this.focusedNodeId
         //DagreAltKeys.focusedEdgeId = this.focusedEdgeId
-        DagreAltKeys.diagram = this.dagreLib.diagram
-        var resetValues = DagreAltKeys.key(event.key, this)
+        //DagreAltKeys.diagram = this.modifier.diagram
+        let altKeys = new D3DAltKeys(this.emitter, this.modifier)
+        console.log(this.modifier)
+        var resetValues = altKeys.key(event.key, this)
         if(resetValues){
           this.resetValues()
         }
       } else {
         /*IF searching eg: "/" don't search for anything */
-        console.log(DagreKeys)
-        console.log(this.dagreLib)
-        if (this.dagreLib.id !== null){
-          this.id = this.dagreLib.id 
-        }
-        DagreOtherKeys.dagreGraphLib = this
-        DagreOtherKeys.dagreLib = this.dagreLib
-        DagreOtherKeys.diagram = this.dagreLib.diagram
-        DagreOtherKeys.focusedIndex = this.focusedIndex
-        //DagreKeys.diagram = this.d3Diagram
-        // DagreKeys.focusedIndex = this.focusedIndex
-        //DagreKeys.nodeOrEdge = this.edgeOrNode
-        /*just returning this updates the
-          selectedNodes and doubleSelection vars
-          need to know why?
-          */
-        var result = DagreOtherKeys.defaultActions(event.key, this.edgeOrNode)
+        console.log(this.modifier)
+        let otherKeys = new D3DOtherKeys(this.emitter, this.modifier )
+        var result = otherKeys.defaultActions(event.key, this.edgeOrNode)
         if (D3Util.debug){
           console.log(result)
           console.log(this.focusedNodeId)
@@ -190,29 +219,34 @@ export default {
           var status = false
           if(event.key == 'x') {
             if(this.edgeOrNode == 'nodes') {
-              status = this.dagreLib.deleteNode(this.focusedNodeId)
+              status = this.modifier.deleteNode(this.focusedNodeId)
               if (status){
                 this.focusedNodeId = null
               } else {
-                this.$root.$emit('appMessage', 'info', 'Unable to delete node')
+                this.emitter.emit('appMessage', 'info', 'Unable to delete node')
               }
             } else {
-              status = this.dagreLib.deleteEdge(this.focusedEdgeId)
+              status = this.modifier.deleteEdge(this.focusedEdgeId)
               console.log(status)
               if (status){
                 this.focusedEdgeId = null
               } else {
-                this.$root.$emit('appMessage', 'info', 'Unable to delete edge')
+                this.emitter.emit('appMessage', 'info', 'Unable to delete edge')
               }
             }
           } else if(event.key == 'f') {
             this.hints = result.hints
             console.log(this.hints)
           } else if (event.key == 'Enter') {
+            /*NOTE can we avoid this ... seems redundant*/
             this.selectedNodes = result.selectedNodes
-            this.dagreLib.selectedNodes = result.selectedNodes
-            this.dagreLib.doubleSelection = result.doubleSelection
             this.doubleSelection = result.doubleSelection
+            /**!SECTION
+             * how to fix this unexpected mutation?
+             * there is probably a better way to do this!
+             */
+            this.modifier.selectedNodes = result.selectedNodes
+            this.modifier.doubleSelection = result.doubleSelection
           } else if (event.key == 'Escape') {
             if (this.escCount == 2){
               this.resetValues()
@@ -222,7 +256,7 @@ export default {
             }
           } else if (event.key == 'y') {
             console.log('trying to copy what is selected')
-            this.dagreLib.createCopyV2(this.focusedNodeId)
+            this.modifier.createCopyV2(this.focusedNodeId)
           } else {
             if (this.edgeOrNode == 'nodes') {
               this.focusedNodeId = result.nodesId
@@ -271,10 +305,10 @@ export default {
     },
     resetValues () {
       if (this.focusedNodeId) {
-        this.dagreLib.removeNodeSelectionById(this.focusedNodeId)
+        this.modifier.removeNodeSelectionById(this.focusedNodeId)
       }
       if (this.focusedEdgeId) {
-        this.dagreLib.removeEdgeSelectionById(this.focusedEdgeId)
+        this.modifier.removeEdgeSelectionById(this.focusedEdgeId)
       }
       this.selectedNodes = []
       this.selectedEdges = []
@@ -283,84 +317,58 @@ export default {
       this.focusedEdgeId = null
       this.focusedNodeId = null
       this.escCount = 0
-      //this.$root.$emit()
-      this.dagreLib.redraw(this.dagreLib.diagram)
-      this.$root.$emit("changeActive")
+      //this.emitter.emit()
+      this.modifier.redraw(this.modifier.diagram)
+      this.emitter.emit("changeActive")
     }
   },
   watch: {
-    dagrelib: function () {
-      console.log('dagreLib watch')
-      console.log(this.dagreLib)
-    },
+    //dagrelib: function () {
+    //  console.log('dagreLib watch')
+    //  console.log(this.modifier)
+    //},
     active: function () {
-      console.log('DagreGraphLib')
-      var nodes = this.active == 'Select Node'?true:false
-      var edges = this.active == 'Select Edges'?true:false
-      console.log(nodes)
-      console.log(edges)
-      if(this.active == 'D3Dagre' || (edges) || (nodes)){
-        this.$nextTick(function(){
-          console.log('d3Dagre Trap active')
-          this.enableTrap = true
-        })
-      } else {
-        this.enableTrap = false
-      }
-
-      if(edges){
-        this.edgeOrNode = "edges"
-      } else if(nodes){
-        this.edgeOrNode = "nodes"
-      } else {
-        console.log('no edges or nodes')
-      }
-
-      if (this.active == 'Delete Node'){
-        DagreLib.deleteNodes(this.selectedNodes)
-      } else if (this.active == 'Delete Edge'){
-        this.selectedNodes = DagreLib.deleteEdges(this.selectedEdges)
-      }
-
-      if ((this.active == 'Add Node') ||
-          (this.active == 'Add Edge') ||
-          (this.active == 'New') ||
-          (this.active == 'Edit Node') ||
-          (this.active == 'Edit Edge')) {
-        this.openSheet = true
-      } else if (this.active == 'Save Changes') {
-        //this.openSheet = true
-        if (D3Util.auth() && this.id) {
-          console.log('save changes DagreGraphLib')
-          this.openSheet = true
-        }
-      } else {
-        console.log('DagreGraphLib watch end')
-      }
-
-      //if ( this.escCount === 3 ) {
-      //  this.selectedNodes = []
-      //  this.selectedEdges = []
-      //  this.focusedIndex =  null
-      //  this.focusedEdgeId = null
-      //  this.focusedNodeId = null
-      //  this.escCount = 0
+      //console.log('DagreGraphLib')
+      //var nodes = this.active == 'Select Node'?true:false
+      //var edges = this.active == 'Select Edges'?true:false
+      //console.log(nodes)
+      //console.log(edges)
+      //if(this.active == 'D3Dagre' || (edges) || (nodes)){
+      //  this.$nextTick(function(){
+      //    console.log('d3Dagre Trap active')
+      //    this.trapGraph = true
+      //  })
       //} else {
-      //  this.escCount = this.escCount + 1
+      //  this.trapGraph = false
       //}
-      //this.enableTrap = this.active== "D3Dagre"?true:false
+
+      //if (this.active == 'Delete Node'){
+      //  this.modifier.deleteNodes(this.selectedNodes)
+      //} else if (this.active == 'Delete Edge'){
+      //  this.selectedNodes = this.modifier.deleteEdges(this.selectedEdges)
+      //}
+
+
+      if ( this.escCount === 3 ) {
+        this.selectedNodes = []
+        this.selectedEdges = []
+        this.focusedIndex =  null
+        this.focusedEdgeId = null
+        this.focusedNodeId = null
+        this.escCount = 0
+      } else {
+        this.escCount = this.escCount + 1
+      }
+      this.trapGraph = this.active == "D3Dagre" ? true : false
     },
-    // edgeOrNode: function (){
-    //   this.d3NodeEdgeSelection = this.edgeOrNode
-    // },
-    // response: function(){
-    //   console.log('response updated')
-    //   console.log(this.response)
-    //   this.diagram = this.response.diagram
-    //   this.description = this.response.data.description
-    //   this.name = this.response.data.name
-    //   console.log(this.name)
-    // }
+    response: function(){
+      console.log('response updated')
+      console.log(this.response)
+      this.diagram = this.response.diagram
+      this.description = this.response.data.description
+      this.name = this.response.data.name
+      console.log(this.name)
+    }
   }
 }
 </script>

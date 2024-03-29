@@ -44,7 +44,7 @@
 </template>
 <script>
 import D3VimApi from '@/services/api/SamusApi'
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 export default {
   name: 'Login',
   props: ['active'],

@@ -1,46 +1,47 @@
 <template>
   <div>
-    <v-dialog v-model="diagramListModal" 
+    <v-dialog
+      v-model="diagramListModal" 
       scrollable
       @keydown.esc="close($event, $refs)"
       @keydown.stop="keyPress($event, $refs)"
       >
-      <focus-trap v-model="listTrap">
+      <focus-trap
+        v-model:active="listTrap"
+        :delayInitialFocus="true"
+        :initial-focus="()=>$refs.wrapper"
+      >
         <div
-          class="pa-1 ml-1 mr-1 pitch-mixin2" data-augmented-ui=
-          "tl-2-clip-x tr-2-clip-x both"
-          id="trapDiv" tabindex="-1">
-          <v-data-table dense ref="list" :headers="headers"
-            :items="diagrams" item-key="id" :search="search"
-            :items-per-page="itemsPerPage" class="elevation-1" :page.sync="page"
-            >
-            <v-pagination
-              v-model="page"
-              :length="totalPages">
-            </v-pagination>
+          ref="wrapper"
+          id="trapDiv"
+          tabindex="0"
+        >
+          <v-data-table
+            tabindex="1"
+            ref="list"
+            :headers="headers"
+            :items="diagrams"
+            item-value="id"
+            :search="search"
+            :items-per-page="itemsPerPage"
+            :page="page"
+            @update:currentItems="updatedItems()"
+          >
             <template v-slot:top>
               <v-text-field
                 @keypress.stop=""
-                v-model="search" label="Search String" class="x-4" />
+                v-model="search"
+                label="Search String"
+                class="" />
             </template>
-
-      <template v-slot:item="{ item }">
-            <!--
-            <template slot="{ item }" slot-scope="props">
-            -->
-            <tr item=item :class="selectedRowId == item.id?'orange':''" >
-                <!--
-                  displays items sent directly by the query, not in the order expected
-                <td v-for="key in Object.keys(item)" :key="key">{{ item[key] }}</td>
-                -->
-                <!--
-                  <td v-for="key in Object.keys(props.item)" :key="key">{{props.item[key]}}</td>
-                -->
+            <template 
+              v-slot:item="{ item }">
+              <tr :id=item.id :style="selectedRowId == item.id ? 'background: orange;' : ''" >
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.createTime).toLocaleString() }}</span>
+                    <span>{{ new Date(item.createdTime).toLocaleString() }}</span>
                 </td>
                 <td>
                     <span>{{ new Date(item.updatedTime).toLocaleString() }}</span>
@@ -103,16 +104,14 @@
   </div>
 </template>
 <script>
-import D3VimApi from '@/services/api/SamusApi'
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util.js'
 export default {
   name: 'DiagramList',
-  // NOTE: props need an array[] prop is a single string -EC-
-  props: ['active', 'test'],
+  props: ['active'],
   data () {
     return {
       listTrap: null,
-      diagramListModal: true,
+      diagramListModal: null,
       focusedIndex: null,
       selectedRow: null,
       selectedRowId: null,
@@ -125,16 +124,17 @@ export default {
         diagram: '',
       },
       headers: [
-        {text: 'Id', value: 'id', sortable: false},
-        {text: 'Name', value: 'name', sortable: true},
-        {text: 'Description', value: 'description'},
-        {text: 'Created', value: 'created'},
-        {text: 'Updated', value: 'updated'},
-        {text: 'Actions', value: 'actions', sortable: false},
+        {title: 'Id', key: 'id', sortable: false},
+        {title: 'Name', key: 'name', sortable: true},
+        {title: 'Description', key: 'description'},
+        {title: 'Created', key: 'created'},
+        {title: 'Updated', key: 'updated'},
+        {title: 'Actions', key: 'actions', sortable: false},
       ],
       diagrams: [],
       page: 1,
-      itemsPerPage: 5
+      itemsPerPage: 5,
+      displayedItems: []
     }
   },
   computed: {
@@ -142,53 +142,65 @@ export default {
       return this.editedIndex === -1 ? 'New Item' : 'Edited Item'
     },
     totalPages () {
-      var pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
+      let pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
       return pages
-    }
+    },
   },
   mounted () {
-    // if (D3Util.debug) {
-    //   localStorage.getItem('token')
-    // }
-
-    // if (localStorage.getItem('token') == null) {
-    //   D3VimApi.auth()
-    //   this.visible = true
-    // } else {
-    //   this.visible = false
-    // }
+    /* for when we have a database backend ready
     this.getDiagrams()
+    */
+    this.getLocalDiagrams()
     console.log('diagram list')
     console.log(this.active)
-    this.diagramListModal = this.active == "Open"?true:false
+    //this.diagramListModal = this.active == "Open"?true:false
+
+    /* this may no longer be needed
+    */
     this.$nextTick(function(){
-      console.log('menuTrap active')
+      console.log('DiagramList Trap Active')
       this.listTrap = this.diagramListModal
     })
+
     //this.getDiagrams()
     //this.diagramListModal = true
-    this.$root.$on('showDiagramList', (data) => {
-      this.listTrap = true
+    //this.listTrap = this.diagramListModal
+    this.emitter.on('showDiagramList', (data) => {
+      //this.listTrap = true
       this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
       this.diagram = data.diagram
-      this.getDiagrams()
+      this.getLocalDiagrams()
     })
   },
   methods: {
+    updatedItems() {
+        if (this.search !== '') {
+          this.itemsPerPage = '-1'
+        } else {
+          this.itemsPerPage = '5'
+        }
+    },
     keyPress(event){
-      //console.log(event)
-      /*
-      1. get list of tr's
+      console.log(this)
+      /** NOTE - the v-data-table is no longer sending back
+       * what items are currently being displayed .. this is
+       * a workaround to determine what id is being displayed
+       * */
+      this.displayedItems = []
 
-        */
-      //var tableRows = this.$refs.list.$el.querySelectorAll('tbody > tr')
-      // var items = this.$refs.list.selectableItems.length
-      //var items = this.$refs.list.items
+      let table = document.getElementById("trapDiv")
+      let rows = table.getElementsByTagName("tr")
 
-      //console.log(items)
+      // Loop through the rows to find those with an id property
+      for (let i = 0; i < rows.length; i++) {
+        let rowId = rows[i].getAttribute("id")
+        if (rowId !== null) {
+          this.displayedItems.push(rowId)
+        }
+      }
       switch(event.key){
         case '/':
           // data = {aciveWindow: "Menu", trap: 'd3ActionsTrap'}
@@ -203,20 +215,6 @@ export default {
           // component.menuTrap = false
           // component.showMenu = false
           break
-        // case 'j':
-        //   this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.itemsPerPage)
-        //   break
-        // case 'k':
-        //   this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.itemsPerPage)
-        //   break
-        // case 'l':
-        //   this.page = D3Util.getPage(this.page, event.key, this.totalPages)
-        //   //this.focusedIndex = 0
-        //   break
-        // case 'h':
-        //   this.page = D3Util.getPage(this.page, event.key, this.totalPages)
-        //   //this.focusedIndex = 0
-        //   break
         case 'Enter':
           if (D3Util.debug){
             // console.log('enter')
@@ -224,12 +222,6 @@ export default {
             // console.log(component.gNavMenu)
             // console.log(component.selectedUrl)
           }
-          // component.$refs.menu[component.gNavMenu].$el.click()
-          // //this.addNodeFormVisible = true
-          // //console.log(this.addNodeFormVisible)
-          // // this.navAction(ref)
-          // component.d3ActionsTrap = false
-          // component.fab = false
           break
         case 'f':
           // var text = document.createTextNode('f')
@@ -247,26 +239,25 @@ export default {
       }
 
       if (event.key == "j" || event.key == "k"){
-        this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.itemsPerPage)
-        console.log(this.$refs.list.selectableItems[this.focusedIndex])
-        this.selectedRow = this.$refs.list.selectableItems[this.focusedIndex]
-        this.selectedRowId = this.$refs.list.selectableItems[this.focusedIndex].id
+        this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.displayedItems.length)
+        this.selectedRowId = this.displayedItems[this.focusedIndex]
       }
 
       if (event.key == "l" || event.key == "h"){
+        console.log('l or h')
         this.page = D3Util.getPage(this.page, event.key, this.totalPages)
+        console.log(this.page)
       }
 
       if (event.key == "Enter"){
         console.log("openDiagram")
         this.diagramListModal = false
-        this.$root.$emit("openDiagram", this.selectedRowId)
-        this.$root.$emit("changeActive")
+        this.emitter.emit("openDiagram", this.selectedRowId)
+        this.emitter.emit("changeActive")
       }
 
       if (event.key == "x"){
-        console.log(this.$refs)
-        this.deleteItem(this.selectedRow)
+        this.deleteItem(this.selectedRowId)
       }
     },
     save (){
@@ -283,10 +274,9 @@ export default {
       if (D3Util.debug) {
         console.log(item)
       }
-      const index= this.diagrams.indexOf(item)
-      console.log(index)
-      this.diagrams.splice(index, 1)
-      D3VimApi.deleteDiagram(this.selectedRowId)
+      this.diagrams.pop(this)
+      D3Util.deleteLocalEntry(this.selectedRowId)
+      this.getLocalDiagrams()
     },
     filter (value, search) {
       return value != null &&
@@ -294,59 +284,36 @@ export default {
         typeof value === 'string' &&
         value.toString().indexOf(search) !== -1
     },
+    getLocalDiagrams: function() {
+      let items = [];
+      for (let i = 0; i < localStorage.length; i++) {
+          let key = localStorage.key(i);
+          /*NOTE - only get the localitems that start with D3D_*/
+          if (key.startsWith('D3D_')) {
+            let item = JSON.parse(localStorage.getItem(key))
+            item.id = key
+            items.push(item);
+          }
+      }
+      console.log(items)
+      this.diagrams = items;
+    },
+    /*NOTE - for when a database backend is ready
     getDiagrams: async function() {
       var result = await D3VimApi.getDiagrams()
       console.log(result)
       this.diagrams = result.data.dags
     },
-    // create: async function () {
-    //   var created = new Date()
-    //   var data = {'name': this.name, 'description': this.description, 'createTime': created.toISOString(), 'diagram': ''}
-    //   var result = await D3VimApi.postDiagram(data)
-    //   console.log(result)
-    //   if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-    //     this.listTrap = false
-    //     this.diagramListModal = true
-    //     this.$root.$emit('appMessage', true, 'New diagram successfully created', result.response)
-    //   } else {
-    //     this.listTrap = true
-    //     this.diagramListModal = true
-    //     this.$root.$emit('appMessage', false, 'Failed to create or save diagram', result.response)
-    //   }
-    //   this.listTrap = false
-    //   this.diagramListModal = false
-    // },
-    // updateDiagram: async function (){
-    //   var data = JSON.parse(localStorage.getItem('samus.lastUpdated'))
-    //   var result = await D3VimApi.updateDiagram(data)
-    //   if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-    //     // this.listTrap = false
-    //     //this.loginModal = false
-    //     this.$root.$emit('appMessage', true, 'Diagram saved', JSON.stringify(result.response))
-    //   } else {
-    //     //this.listTrap = true
-    //     //this.loginModal = true
-    //     this.$root.$emit('appMessage', false, 'Failed to save diagram', JSON.stringify(result.response))
-    //   }
-    // },
+    */
     close () {
       console.log('Close method')
       this.diagramListModal= false
       this.loginTrapActive = false
-      this.$root.$emit('changeActive')
-      // this.$root.$emit('d3DagreActivate')
-      // this.$root.$emit('showForm', 'node')
+      this.emitter.emit('changeActive')
     }
   },
   watch: {
     active: function () {
-    //   console.log('diagram list')
-    //   console.log(this.activeWindow)
-    //   this.diagramListModal = this.active == "Open"?true:false
-    //   this.$nextTick(function(){
-    //     console.log('menuTrap active')
-    //     this.listTrap = this.diagramListModal
-    //   })
     }
   }
 }
@@ -354,16 +321,4 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.pitch-mixin2 {
-  width: 100%;
-  --aug-tr: 25px;
-  --aug-b-extend1: 10%;
-
-  --aug-border-all: 1px;
-
-  --aug-inlay-all: 1px;
-  --aug-border-bg: green;
-  /*--aug-inlay-bg: radial-gradient(green, black);*/
-  --aug-inlay-opacity: 0.1;
-}
 </style>

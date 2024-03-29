@@ -1,18 +1,39 @@
-import './assets/main.css'
+import '@/assets/main.css'
 
 import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import Vuetify from 'vuetify/lib'
-import Vue from 'vue'
-const vuetify = new Vuetify({})
-
-Vue.use(vuetify)
-//const app = createApp(App)
-const app = new Vue({
-  render: h=>(App)
+import App from '@/App.vue'
+import router from '@/router'
+// Vuetify
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
+const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi'
+  },
+  components,
+  directives,
+  ssr: true,
+  theme: {
+    defaultTheme: 'light'
+  }
 })
 
-app.use(router)
+// Focus-trap
+import { FocusTrap } from 'focus-trap-vue'
 
+import mitt from 'mitt'
+const emitter = mitt()
+
+//setting cookies globally
+import VueCookies from 'vue-cookies'
+
+const app = createApp(App)
+app.use(router)
+app.use(vuetify)
+app.use(VueCookies)
+app.component('FocusTrap', FocusTrap)
+app.config.globalProperties.emitter = emitter
 app.mount('#app')

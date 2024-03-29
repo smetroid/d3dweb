@@ -1,169 +1,140 @@
 <template>
   <div id="iform">
-    <!--
-    <v-dialog v-model="edgeModal" max-width="500">
-      -->
-      <v-card ref="formfields" class="mx-auto"
-        @keydown.esc="keyPress($event)"
-        @keypress.stop.prevent="keyPress($event)">
-        <focus-trap v-model="enableTrap">
-          <div tabindex="-1" class="trap is-active">
-            <v-card-title class="">
-                <v-row justify="center">
-                  <b v-if="update">Update Edge</b>
-                  <b v-else>Add Edge</b>
-                </v-row>
-            </v-card-title>
-            <v-card-text class="blue-grey darken-4">
-              <v-container fluid>
-                <v-row class="ma-0" align="top">
-                  <v-col 
-                    cols="3"
-                    class="d-flex pa-1">
-                    <v-select
-                      color="green"
-                      outlined
-                      v-model="edgeLabelType"
-                      :items="edgeLabelTypeOptions"
-                      label="Edge Label"
-                      item-value="value"
-                      item-text="label"
-                      auto-select-first
-                      dense
-                      label-color="green"
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    cols="3"
-                    class="d-flex pa-1">
-                    <v-select
-                      color="green"
-                      outlined
-                      v-model="edgeArrowHeadStyle"
-                      :items="edgeArrowHeadStyleOptions"
-                      label="Edge Arrow Head Style"
-                      item-value="value"
-                      item-text="label"
-                      auto-select-first
-                      dense
-                      label-color="green"
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    cols="3"
-                    class="d-flex pa-1">
-                    <v-select
-                      color="green"
-                      outlined
-                      v-model="edgeArrowHead"
-                      :items="edgeArrowHeadOptions"
-                      label="Edge Arrow Head"
-                      item-value="value"
-                      item-text="label"
-                      auto-select-first
-                      dense
-                      label-color="green"
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    cols="3"
-                    class="d-flex pa-1">
-                    <v-text-field 
-                      color="green"
-                      outlined
-                      dense
-                      v-model="fromNode"
-                      label="From Node"
-                      @keypress.stop="">
-                    </v-text-field>
-                  </v-col>
-                  <v-col 
-                    cols="3"
-                    class="d-flex pa-1 mt-n3">
-                    <v-text-field 
-                      color="green"
-                      outlined
-                      dense
-                      v-model="toNode"
-                      label="To Node"
-                      @keypress.stop="">
-                    </v-text-field>
-                  </v-col>
-                  <v-col 
-                    cols="6"
-                    class="d-flex pa-1 mt-n3">
-                    <v-textarea v-if="update" 
-                      class="mb-n13"
-                      dense 
-                      color="green"
-                      outlined
-                      v-model="edgeLabel"
-                      rows="3"
-                      row-height="50"
-                      placeholder="Add edge label... can be html"
-                      ref="textField" 
-                      persistent-hint=""
-                      label="Edge Label"
-                      @keypress.stop="">
-                    </v-textarea>
-                    <v-textarea v-else 
-                      dense 
-                      color="green"
-                      outlined
-                      v-model="edgeLabel"
-                      rows="3"
-                      row-height="50"
-                      placeholder="Add edge label... can be html"
-                      ref="textField" 
-                      persistent-hint=""
-                      label="Edge Label"
-                      @keypress.stop="">
-                    </v-textarea>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions class="pa-1">
-              <v-btn v-if="update" 
-                x-small
-                dense 
-                @keyup.enter="updateEdge()"
-                class="ma-1" 
-                outlined 
-                color="blue"
-                @click="updateEdge()" 
-                @keypress.stop="">Update Edge</v-btn>
-              <v-btn v-else 
-                x-small
-                dense
-                class="ma-1" 
-                outlined 
-                color="green"
-                @click="addEdge()" 
-                @keypress.stop="">Add Edge</v-btn>
-              <v-btn 
-                x-small
-                dense 
-                class="ma-1" 
-                outlined 
-                color="red"
-                @click="close()" 
-                @keypress.stop="">Cancel</v-btn>
-            </v-card-actions>
-          </div>
-        </focus-trap>
-      </v-card>
-      <!--
-    </v-dialog>
-    -->
+    <v-card
+      ref="formfields"
+      class="text-primary"
+      @keydown.esc="keyPress($event)"
+      @keypress.stop.prevent="keyPress($event)">
+      <focus-trap
+        v-model:action="enableTrap">
+        <div tabindex="0">
+          <v-card-title class="bg-primary">
+            <v-row class="pa-3" justify="center">
+              <b v-if="update">Update Edge</b>
+              <b v-else>Add Edge</b>
+            </v-row>
+          </v-card-title>
+          <v-card-text class="pb-0">
+            <v-container class="pb-0 fluid">
+              <v-row
+              >
+                <v-col 
+                  >
+                  <v-select
+                    v-model="edgeLabelType"
+                    :items="edgeLabelTypeOptions"
+                    label="Edge Label"
+                    item-value="value"
+                    item-title="label"
+                    auto-select-first
+                    label-color="green"
+                  ></v-select>
+                </v-col>
+                <v-col
+                  >
+                  <v-select
+                    v-model="edgeArrowHeadStyle"
+                    :items="edgeArrowHeadStyleOptions"
+                    label="Edge Arrow Head Style"
+                    item-value="value"
+                    item-title="label"
+                    auto-select-first
+                    label-color="green"
+                  ></v-select>
+                </v-col>
+                <v-col
+                  >
+                  <v-select
+                    v-model="edgeArrowHead"
+                    :items="edgeArrowHeadOptions"
+                    label="Edge Arrow Head"
+                    item-value="value"
+                    item-title="label"
+                    auto-select-first
+                  ></v-select>
+                </v-col>
+              </v-row>
+              <v-row
+                class="mt-n8"
+              >
+                <v-col
+                >
+                  <v-text-field 
+                    v-model="fromNode"
+                    label="From Node"
+                    @keypress.stop="">
+                  </v-text-field>
+                </v-col>
+                <v-col
+                  >
+                  <v-text-field 
+                    v-model="toNode"
+                    label="To Node"
+                    @keypress.stop="">
+                  </v-text-field>
+                </v-col>
+                <v-col
+                >
+                  <v-textarea v-if="update" 
+                    class="mb-n3"
+                    v-model="edgeLabel"
+                    rows="3"
+                    row-height="50"
+                    placeholder="Add edge label... can be html"
+                    ref="textField" 
+                    persistent-hint=""
+                    label="Edge Label"
+                    @keypress.stop="">
+                  </v-textarea>
+                  <v-textarea v-else 
+                    v-model="edgeLabel"
+                    rows="3"
+                    row-height="50"
+                    placeholder="Add edge label... can be html"
+                    ref="textField" 
+                    persistent-hint=""
+                    label="Edge Label"
+                    @keypress.stop="">
+                  </v-textarea>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-card-text>
+          <v-card-actions
+            class="text-primary bg-primary d-flex justify-center justify-space-around"
+            >
+            <v-btn v-if="update" 
+              @keyup.enter="updateEdge()"
+              class="bg-green" 
+              variant="outlined"
+              color=""
+              @click="updateEdge()" 
+              @keypress.stop="">Update Edge</v-btn>
+            <v-btn v-else 
+              class="bg-green" 
+              variant="outlined"
+              color="green"
+              @click="addEdge()" 
+              @keypress.stop="">Add Edge</v-btn>
+            <v-btn 
+              class="bg-red" 
+              type="submit"
+              variant="outlined"
+              color=""
+              @click="close()" 
+              @keypress.stop="">Cancel</v-btn>
+          </v-card-actions>
+        </div>
+      </focus-trap>
+    </v-card>
   </div>
 </template>
 <script>
-import D3Util from '@/services/D3Util'
-//import DagreLib from '@/helpers/DagreLib'
+import D3Util from '@/helpers/D3Util'
 export default {
   name: 'D3Edge',
-  props: ['active', 'd3Data','DagreLib'],
+  props: ['active', 'd3Data'],
+  inject: ['modifier'],
   data () {
     return {
       edgeModal: false,
@@ -195,7 +166,7 @@ export default {
   },
   mounted () {
     console.log('active window d3EdgeForm')
-    this.update = this.active == 'Edit Edge'?true:false
+    this.update = this.active == 'Edit Edge' ? true : false
     if (this.active == "Edit Edge" || this.active == "Add Edge") {
       this.edgeModal = true
     } else {
@@ -213,8 +184,8 @@ export default {
       this.edgeLabel = this.d3Data.label
       this.edgeArrowHeadStyle = this.d3Data.arrowheadStyle
       this.edgeArrowHead = this.d3Data.arrowhead
-      this.fromNode = this.DagreLib.getNodeData(this.d3Data.id.v).label
-      this.toNode = this.DagreLib.getNodeData(this.d3Data.id.w).label
+      this.fromNode = this.modifier.getNodeData(this.d3Data.id.v).label
+      this.toNode = this.modifier.getNodeData(this.d3Data.id.w).label
     } else {
       this.edgeModal = false
     }
@@ -226,12 +197,12 @@ export default {
       })
     }
 
-    this.$root.$on('showEdgeForm', () => {
+    this.emitter.on('showEdgeForm', () => {
       console.log('Message Received From D3Vim')
       this.showForm()
     })
 
-    this.$root.$on('edgesD3Data', (data, id) => {
+    this.emitter.on('edgesD3Data', (data, id) => {
       console.log('edgesD3Data message received')
       if (D3Util.debug) {
         console.log(data.labeltype)
@@ -246,7 +217,7 @@ export default {
       this.edgeArrowHead = data.arrowhead
     })
 
-    this.$root.$on('editEdge', () => {
+    this.emitter.on('editEdge', () => {
       console.log('editEdge message received')
       this.editEdge()
     })
@@ -255,23 +226,17 @@ export default {
     updateEdge () {
       if (D3Util.debug) {
         console.log(this.$el)
-        console.log('addNode Function')
+        console.log('updateEdge Function')
         console.log(this.edgeLabel)
         console.log(this.edgeArrowHeadStyle)
         console.log(this.edgeId)
         console.log(this.$data)
       }
 
-      this.DagreLib.updateEdge(this.$data, this.edgeId)
-      // this.$root.$emit('updateEdge', this.$data, this.edgeId)
+      this.modifier.updateEdge(this.$data, this.edgeId)
       this.close()
     },
-    // showForm () {
-    //   this.enableTrap= true
-    //   this.buttonUpdate = false
-    // },
     editEdge () {
-      // this.d3DagreId = this.d3DagreData.id
       console.log(this.d3EdgesData)
       this.buttonUpdate = true
       this.enableTrap = true
@@ -289,9 +254,9 @@ export default {
         console.log(this.edgeArrowHeadStyle)
         console.log(this.edgeId)
         console.log(this.$data)
-        console.log(this.DagreLib)
+        console.log(this.modifier)
       }
-      this.DagreLib.addEdge(this.$data)
+      this.modifier.addEdge(this.$data)
       this.common()
       //this.$root.$emit('addDagreEdge', this.$data, false)
     },
@@ -300,49 +265,23 @@ export default {
       this.common()
     },
     common(){
+      /*REVIEW - this code is the same for both forms */
       //this.enableTrap= false
       this.edgeModal = false
       this.hints = D3Util.removeHints(this.hints)
-      this.$root.$emit("changeActive")
-      this.$root.$emit("d3ResetValues")
+      this.emitter.emit('setSheetToFalse')
+      //this.emitter.emit("changeActive")
+      //this.emitter.emit("d3ResetValues")
     }
   },
-  watch: {
-    active: function() {
-    //   console.log('active window d3EdgeForm')
-    //   this.update = this.active == 'Edit Edge'?true:false
-    //   if (this.active == "Edit Edge" || this.active == "Add Edge") {
-    //     this.edgeModal = true
-    //   } else {
-    //     this.edgeModal = false
-    //   }
-
-    //   // this.edgeModal = this.active == "Edit Edge"?true:false
-    //   //this.edgeModal = this.active == "Add Edge"?true:false
-
-    //   if(this.update || this.edgeModal){
-    //     this.edgeModal = true
-    //     this.edgeId = this.d3Data.id
-    //     this.edgeLabelType = this.d3Data.labeltype
-    //     this.edgeLabel = this.d3Data.label
-    //     this.edgeArrowHeadStyle = this.d3Data.arrowheadStyle
-    //     this.edgeArrowHead = this.d3Data.arrowhead
-    //   } else {
-    //     this.edgeModal = false
-    //   }
-
-    //   if(this.edgeModal){
-    //     this.$nextTick(function(){
-    //       console.log('loginTrap active')
-    //       this.enableTrap = this.edgeModal
-    //     })
-    //   }
-    },
-    d3Data: function(){
-      //this.d3EdgesData = data
-      console.log(this.d3Data)
-    }
-  }
+  // watch: {
+  //   active: function() {
+  //   },
+  //   d3Data: function(){
+  //     //this.d3EdgesData = data
+  //     console.log(this.d3Data)
+  //   }
+  // }
 }
 </script>
 

@@ -1,9 +1,18 @@
 import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
+import * as DagreD3 from 'dagre-d3'
+import { local } from 'd3'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
 export default {
+  tempInfo () {
+    let temp = {
+      name: 'D3D Temp Name',
+      description: 'My Awesome Diagram'
+    }
+    return temp
+  },
   //getDiagram(diagramId) {
   //},
   getLiElements () {
@@ -81,14 +90,22 @@ export default {
   // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
-  settings () {
-    var defaults = {'d3Line': 'curveBasis',
+  appDefaults () {
+    var defaults = {
+      'd3Line': 'curveBasis',
       'hintBGColor': '#36004c',
       'hintLinkColor': '#fff', 
       'debug': false, 
       'hints': 'asdfjklqweruiopzxcvnmgh', 
       'reset': false,
-      'hintAction': 'Edit Object'
+      'showHelpPane': true,
+      'd3dInfo': false,
+      'hintAction': 'Edit Object',
+      'defaultTheme': 'light',
+      'themes': [
+        {'value':'light', 'label':'Light Theme'},
+        {'value':'dark', 'label':'Dark Theme'},
+      ]
     }
     return defaults
   },
@@ -271,6 +288,10 @@ export default {
    * @return {integer} a number
    **/
   getIndex(index, key, items){
+
+    console.log(index)
+    console.log(key)
+    console.log(items)
     var id = null
     if (index === null || isNaN(index)) {
       id = 0
@@ -309,12 +330,80 @@ export default {
   remove(item){
     return item - 1
   },
-  saveLocal(data){
-    localStorage.setItem('samus.lastUpdated', JSON.stringify(data))
+  createLocalEntry(data){
+    try{
+      let randomId ='D3D'+this.randomId()
+      let created = new Date()
+      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let payload = { 
+        'name': data.name,
+        'description': data.description,
+        'diagram': JSON.stringify(json),
+        'created': created.toISOString(),
+        'updated': created.toISOString()
+      }
+
+      localStorage.setItem(randomId, JSON.stringify(payload))
+      VueCookies.set('LastLocallySavedItemId', randomId)
+      return randomId
+    } catch (error) {
+      console.log(error)
+    }
   },
-  getLocal(){
+  deleteLocalEntry(id) {
+    try {
+      // Check if the item with the given ID exists in localStorage
+      if (localStorage.getItem(id) !== null) {
+          // Remove the item from localStorage
+          localStorage.removeItem(id);
+          console.log("Item with ID " + id + " has been removed from localStorage.");
+      } else {
+          console.log("Item with ID " + id + " does not exist in localStorage.");
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  updateLocalEntry(id, data){
+    try{
+      let updated = new Date()
+      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let payload = { 
+        'name': data.name,
+        'description': data.description,
+        'diagram': JSON.stringify(json),
+        'created': data.created,
+        'updated': updated.toISOString(),
+      }
+
+      localStorage.setItem(id, JSON.stringify(payload))
+      VueCookies.set('LastLocallySavedItemId', id)
+      console.log('updating item succeeded')
+    } catch (error) {
+      console.log('updating item failed')
+      console.log(error)
+    }
+  },
+  saveTempDiagram(g){
+    this.json = new DagreD3.graphlib.json.write(g)
+    let created = new Date()
+    let updatedData = {
+      'updatedTime': created.toISOString(),
+      'name': this.tempInfo().name,
+      'description': this.tempInfo().description,
+      'diagram': JSON.stringify(this.json),
+    }
+    localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
+  },
+  getTempDiagram(){
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
     return localData
+  },
+  getLocalItem(id){
+    var localItem = JSON.parse(localStorage.getItem(id))
+    return localItem
+
   },
   auth(){
     if (localStorage.getItem('token')){
@@ -328,7 +417,7 @@ export default {
     console.log(localData)
     localData.id = id
 
-    this.saveLocal(localData)
+    this.saveTempDiagram(localData)
   },
   defaultNodeValues() {
     var data = {
@@ -347,5 +436,5 @@ export default {
       //d3.curveBasis: 'text'
     }
     return data
-  }
+  },
 }

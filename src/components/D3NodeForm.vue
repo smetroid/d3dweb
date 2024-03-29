@@ -1,65 +1,55 @@
 <template>
   <div id="iform">
-      <!--
-    <v-dialog v-model="nodeModal" max-width="500">
-        While refactoring d3Dagre v-if and the trap does not work
-      <v-card class="mx-auto" max-width="560" v-if="showForm">
-      -->
-      <v-card ref="formfields" class="mx-auto"
+      <v-card
+        class="text-primary"
+        ref="formfields" 
         @keyup.alt.u="updateNode()"
         @keyup.meta.u="updateNode()"
         @keyup.ctrl.c="close()"
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
-        <focus-trap v-model="enableTrap">
-          <div tabindex="" class="trap is-active">
-            <v-card-title class="">
-              <v-row justify="center">
+        <focus-trap 
+          v-model:action="enableTrap"
+          >
+          <div tabindex="0">
+            <v-card-title class="bg-primary">
+              <v-row class="pa-3" justify="center">
                 <b v-if="update">Update Node</b>
                 <b v-else>Add Node</b>
               </v-row>
             </v-card-title>
-            <v-card-text class="blue-grey darken-4">
-              <v-container fluid>
+            <v-card-text class="pb-0">
+              <v-container class="pb-0">
                 <v-row
                 >
                   <v-col 
                     >
                     <v-select
                       v-model="nodeLabelType"
-                      color="green"
-                      outlined
                       :items="nodeLabelTypeOptions"
-                      item-text="value"
+                      item-title="value"
                       item-value="key"
                       label="Node Label Type"
-                      dense
                     ></v-select>
                   </v-col>
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="nodeShape"
                       :items="nodeShapes"
                       label="Node Shape"
                       item-value="value"
-                      item-text="label"
-                      dense
+                      item-title="label"
                     ></v-select>
                   </v-col>
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="clusterLabelPos"
                       :items="clusterLabelPosOptions"
                       label="Cluster Label Position"
                       item-value="value"
-                      item-text="label"
-                      dense
+                      item-title="label"
                       hint="optional"
                       clearable
                     ></v-select>
@@ -67,14 +57,11 @@
                   <v-col 
                     >
                     <v-select
-                      color="green"
-                      outlined
                       v-model="parentNode"
                       :items="parentOptions"
                       item-value="key"
                       item-text="value"
                       auto-select-first
-                      dense
                       label="Parent"
                       hint="optional"
                       clearable
@@ -88,12 +75,9 @@
                   <v-col 
                     cols="6"
                     >
-                    <div samus="samus" >
                     <v-textarea
-                      outlined
                       tabindex="0"
-                      color="green"
-                      class="mb-n11"
+                      class=""
                       label="Node Label"
                       v-model="nodeLabel"
                       placeholder="Add a node label ... if label contains HTML then Label Type must be Html"
@@ -101,11 +85,9 @@
                       @keyup.alt.shift.w="nodeLabel=''"
                       @keyup.meta.shift.w="nodeLabel=''"
                       ref="nodeLabelTextField"
-                      dense
                       clearable
                       rows="5"
                       />
-                    </div>
                       <!--
                         *Leaving here for reference 
                     <v-textarea v-if="update" dense outline v-model="nodeLabel"
@@ -121,14 +103,11 @@
                     cols="6"
                     >
                     <v-text-field 
-                      color="green"
-                      outlined
                       v-model="style"
                       placeholder="fill: #d3d7e8"
                       label="Node Style"
                       hint="optional"
                       @keypress.stop=""
-                      dense
                       clearable
                       >
                     </v-text-field>
@@ -136,55 +115,52 @@
                 </v-row>
               </v-container>
             </v-card-text>
-            <v-card-actions class="pa-1">
-              <v-btn 
-                v-if="update" 
-                class="d-flex ma-1" 
-                outlined 
-                color="blue"
-                x-small
-                @click="updateNode()" 
-                @keypress.stop="">
-                Update Node (Alt/Meta + u)
+            <v-card-actions
+              class="text-primary bg-primary d-flex justify-center justify-space-around"
+            >
+                <v-btn 
+                  v-if="update" 
+                  variant="outlined"
+                  color=""
+                  class="bg-green" 
+                  @click="updateNode()" 
+                  @keypress.stop="">
+                  Update Node
+                  </v-btn>
+                <v-btn 
+                  v-else 
+                  variant="outlined"
+                  class="bg-green" 
+                  @click="addNode()" 
+                  type="submit"
+                  color=""
+                  @keypress.stop="">
+                  Add Node
                 </v-btn>
-              <v-btn 
-                v-else 
-                dense 
-                class="d-flex ma-1" 
-                outlined 
-                color="green"
-                x-small
-                @click="addNode()" 
-                @keypress.stop="">Add Node</v-btn>
-              <v-btn 
-                class="d-flex ma-1" 
-                x-small
-                dense 
-                outlined 
-                color="red"
-                @click="close()" 
-                @keypress.stop="">Cancel (Ctrl + c)</v-btn>
+                <v-btn 
+                  variant="outlined"
+                  type="submit"
+                  color=""
+                  class="bg-red" 
+                  @click="close()" 
+                  @keypress.stop="">Cancel</v-btn>
             </v-card-actions>
           </div>
         </focus-trap>
       </v-card>
-      <!--
-    </v-dialog>
-    -->
   </div>
 </template>
 
 <script>
 // import * as Velocity from 'velocity-animate'
-//import DagreLib from '@/helpers/DagreLib'
-import D3Util from '@/services/D3Util'
+import D3Util from '@/helpers/D3Util'
 // import VueCookies from 'vue-cookies'
 export default {
   name: 'D3Node',
-  props: ['active', 'd3Data', 'DagreLib'],
+  props: ['active', 'd3Data'],
+  inject: ['modifier'],
   data () {
     return {
-      nodeModal: false,
       enableTrap: false,
       errorClass: true,
       nodeLabel: null,
@@ -223,21 +199,23 @@ export default {
     }
   },
   mounted () {
-    console.log('active window watch d3nodeform')
-    console.log(this.d3Data)
-    console.log(this.DagreLib.diagram)
-    console.log(this.d3Data.id)
-    console.log(this.DagreLib.diagram.parent(this.d3Data.id))
-    this.update = this.active == 'Edit Node'?true:false
-    this.nodeModal = this.active == 'Add Node'?true:false
+    if (D3Util.debug) {
+      console.log('active window watch d3nodeform')
+      console.log(this.d3Data)
+      console.log(this.modifier.diagram)
+      console.log(this.d3Data.id)
+      console.log(this.modifier.diagram.parent(this.modifier.d3dInfo.id))
+    }
+
+    this.update = this.active == 'Edit Node'? true : false
+
     if(this.update || this.nodeModal){
       //Setting up nodeModal to true if update is true
-      this.nodeModal = true
       this.nodeLabelType = (this.d3Data.labelType) || this.nodeLabelType
       this.nodeLabel = this.d3Data.label
       this.nodeShape = this.d3Data.shape
       this.nodeId = this.d3Data.id
-      this.parentNode = this.DagreLib.diagram.parent(this.d3Data.id)
+      this.parentNode = this.modifier.diagram.parent(this.d3Data.id)
       // console.log("troubleshooting cluster label")
 
       // for( var key in this.clusterLabelPosOptions){
@@ -256,9 +234,8 @@ export default {
 
       this.style = this.d3Data.style
       //this.parentOptions = this.diagram.nodes()
-    } else {
-      this.nodeModal = false
-    }
+    } 
+    /*
     if(this.nodeModal){
       this.$nextTick(function(){
         console.log('Trap active')
@@ -270,6 +247,7 @@ export default {
         })
       })
     }
+    */
  //    this.$root.$on('showNodeForm', (nodeAction) => {
  //      console.log('Message Received From D3Vim')
  //      console.log(this.$el)
@@ -277,7 +255,7 @@ export default {
  //      this.viewNode(nodeAction)
  //    })
 
-    this.$root.$on('d3NodeData', (data, nodeId) => {
+    this.emitter.on('d3NodeData', (data, nodeId) => {
       console.log('Message Received from D3Dagre')
       if (D3Util.debug) {
         console.log(data)
@@ -286,15 +264,15 @@ export default {
       this.nodeId = nodeId
     })
 
-    this.$root.$on('editNode', () => {
+    this.emitter.on('editNode', () => {
       this.editNode()
     })
   },
   computed: {
     parentOptions() {
-      var nodes = this.DagreLib.diagram.nodes()
+      var nodes = this.modifier.diagram.nodes()
       console.log('computed'+nodes)
-      var data = Object.values(nodes).map((key) => ({"key":key, "value":this.DagreLib.getNodeData(key).label}))
+      var data = Object.values(nodes).map((key) => ({"key":key, "value":this.modifier.getNodeData(key).label}))
       console.log(data)
       return data
     },
@@ -312,7 +290,7 @@ export default {
         console.log(this.nodeId)
       }
 
-      this.DagreLib.updateNode(this.$data, this.nodeId)
+      this.modifier.updateNode(this.$data, this.nodeId)
       this.close()
       //this.$root.$emit('updateNode', this.$data, this.d3NodeId)
     },
@@ -352,7 +330,7 @@ export default {
         console.log(this.$data)
       }
       //this.$root.$emit('addDagreNode', this.$data, false)
-      this.DagreLib.addNode(this.$data)
+      this.modifier.addNode(this.$data)
       // this.hints['l'].focus()
       this.common()
     },
@@ -368,49 +346,51 @@ export default {
       //// this.$root.$emit('nodeModal', 'node')
     },
     common() {
+      /*FIXME - I think we need to copy the object before we make any changes
+      in case we make changes and we 'Cancel' any changes made should be reverted
+      else the changes will stay even though we don't save them? ... need to test
+      this out
+      */
       console.log(this.hints)
-      // this.enableTrap= false
-      this.nodeModal = false
       this.hints = D3Util.removeHints(this.hints)
       /**
        * Close the parents sheet
        */
-      this.$root.$emit('setSheetToFalse')
-      //this.$root.$emit("changeActive")
-      //this.$root.$emit('d3DagreActivate')
+      this.emitter.emit('setSheetToFalse')
+      //this.emitter.emit("changeActive")
+      //this.emitter.emit('d3DagreActivate')
     }
   },
-  watch: {
-    active: function() {
-    // NOTE: Since we moved from a v-modal to a v-if from the 
-    // this code no longer works because the v-if does not render
-    // the component until v-if is valid.
-    // Moved the logic to the mount method instead.
+  //watch: {
+  //  active: function() {
+  //  // NOTE: Since we moved from a v-modal to a v-if from the 
+  //  // this code no longer works because the v-if does not render
+  //  // the component until v-if is valid.
+  //  // Moved the logic to the mount method instead.
 
-    //  console.log('active window watch d3nodeform')
-    //  this.update = this.active == 'Edit Node'?true:false
-    //  this.nodeModal = this.active == 'Add Node'?true:false
-    //  if(this.update || this.nodeModal){
-    //    //Setting up nodeModal to true if update is true
-    //    this.nodeModal = true
-    //    this.nodeLabelType = this.d3Data.labelType
-    //    this.nodeLabel = this.d3Data.label
-    //    this.nodeShape = this.d3Data.shape
-    //    this.nodeId = this.d3Data.id
-    //  } else {
-    //    this.nodeModal = false
-    //  }
-    //  if(this.nodeModal){
-    //    this.$nextTick(function(){
-    //      console.log('Trap active')
-    //      this.enableTrap = this.nodeModal
-    //    })
-    //  }
-    },
-    d3Data: function(){
-      //console.log(this.d3Data)
-    }
-  }
+  //  //  console.log('active window watch d3nodeform')
+  //  //  this.update = this.active == 'Edit Node'?true:false
+  //  //  this.nodeModal = this.active == 'Add Node'?true:false
+  //  //  if(this.update || this.nodeModal){
+  //  //    //Setting up nodeModal to true if update is true
+  //  //    this.nodeModal = true
+  //  //    this.nodeLabelType = this.d3Data.labelType
+  //  //    this.nodeLabel = this.d3Data.label
+  //  //    this.nodeShape = this.d3Data.shape
+  //  //    this.nodeId = this.d3Data.id
+  //  //  } else {
+  //  //    this.nodeModal = false
+  //  //  }
+  //  //  if(this.nodeModal){
+  //  //    this.$nextTick(function(){
+  //  //      console.log('Trap active')
+  //  //    })
+  //  //  }
+  //  },
+  //  d3Data: function(){
+  //    //console.log(this.d3Data)
+  //  }
+  //}
 }
 </script>
 
@@ -437,6 +417,7 @@ a {
 /*
 leaving here for reference
 */
+/*
 ::v-deep .v-textarea textarea {
   color: red;
   height: auto;
@@ -444,6 +425,7 @@ leaving here for reference
   margin: 0px 10px 7px 0px;
   padding-top: 6px;
 }
+*/
 
 .hints{
   border: 1px solid magenta;

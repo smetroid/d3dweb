@@ -1,28 +1,29 @@
 <script setup>
-//import { RouterLink, RouterView } from 'vue-router'
-import DagreGraphLib from './components/DagreGraphLib.vue'
-//import HelloWorld from './components/HelloWorld.vue'
-import * as Velocity from 'velocity-animate'
-import D3Util from './services/D3Util.js'
-import MenuKeys from './helpers/MenuKeys.js'
-import MenuLinks from './helpers/MenuLinks.js'
-import Settings from './components/Settings.vue'
-//import Helper from '@/components/Helper
-import Footer from './components/Footer.vue'
-import Login from './components/Login.vue'
-import DiagramList from './components/DiagramList.vue'
-import DagreLib from './helpers/DagreLib.vue'
-import * as dagreD3 from 'dagre-d3'
-import D3VimApi from './services/api/SamusApi.js'
-import DiagramForm from './components/DiagramForm.vue'
+import DagreGraphLib from '@/components/DagreGraphLib.vue'
+import D3Util from '@/helpers/D3Util.js'
+import MenuKeys from '@/helpers/MenuKeys.js'
+import MenuLinks from '@/helpers/MenuLinks.js'
+import Settings from '@/components/Settings.vue'
+import HelperPane from '@/components/Helper.vue'
+import * as DagreD3 from 'dagre-d3'
+import DiagramForm from '@/components/DiagramForm.vue'
+import DiagramModifier from '@/helpers/DiagramModifier.js'
+import DiagramList from '@/components/DiagramList.vue'
+import { computed } from 'vue'
+
+// Theme specific
+import { useTheme } from 'vuetify'
+
+const theme = useTheme()
+
+//making sure theme selection stays with the app after reloading
+function toggleTheme() {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
 </script>
-<template v-if="g">
-  <div>
-    <v-app id="v-application">
-      <div id='stars'></div>
-      <div id='stars2'></div>
-      <div id='stars3'></div>
-      <p></p>
+<template>
+  <v-app app>
+      <!--
       <v-card
         class="mx-auto"
         max-width="500"
@@ -66,173 +67,212 @@ import DiagramForm from './components/DiagramForm.vue'
           </v-alert>
         </v-card-text>
       </v-card>
-
+    -->
+      <v-main app>
         <!--
-      <div id="app">
-        <v-navigation-drawer
-          v-model="drawer"
-          class="blue-grey darken-4">
-          <v-container fluid>
-            <v-row dense no-gutters>
-              <v-col>
-                <div>
-                  <router-view ref="d3Vim" tabindex="-1" name="d3vim"/>
-                </div>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-navigation-drawer>
-      </div>
+        <DagreOtherKeys
+          :d3dInfo="d3dInfo"
+        />
         -->
-      <!--
-      <v-app-bar app>
-      </v-app-bar>
-      -->
-      <v-main app >
-        <v-container fluid>
-          <v-row>
-            <DagreGraphLib
-              :active="active"
-              :dagre-lib="dagreLib"
-            />
-            <DiagramForm
-              :active="active"
-              :diagramInfo="dagreLib"
-            />
-            <Login
-              v-if="active === 'Login'"
-              :active="active"
-            />
-            <Settings
-              v-if="active === 'Settings'"
-              :active="active"
-            />
-            <DiagramList
-              v-if="active === 'Open'"
-              :active="active"
-            />
-            <!--
-            <DiagramForm
-              v-if="active === 'Save Changes' || active === 'Edit'"
-              :active="active"
-              :diagramInfo="dagreLib"
-            />
-            -->
-            <v-col>
-            </v-col>
-
-            <v-col>
-            </v-col>
-          </v-row>
-        </v-container>
+        <DagreGraphLib class=""
+          :active="active"
+        />
+        <DiagramForm
+          :active="active"
+        />
+        <Settings
+          :active="active"
+          :d3dInfo="d3dInfo"
+        />
+        <DiagramList
+          :active="active"
+        />
       </v-main>
+      <!--
+        NOTE: app - in the footer makes the footer to stay at the bottom 
+      -->
       <v-footer
-        app 
+        app
         class="pa-1 mr-0">
+        <v-row>
           <v-card
-            width="99%"
-            height="100%"
-            @keydown.stop.prevent="menu($event, $refs.menu)"
-            @keypress.stop.prevent="menu($event, $refs.menu)">
-            <focus-trap v-model="menuTrap">
-              <div id="trap" tabindex="-1">
-                <v-speed-dial
-                  ref="speedDial"
-                  absolute
-                  right
-                  bottom v-model="showMenu">
-                  <template v-slot:activator>
-                    <div>
-                      <v-card width="57" height="57" class="transparent">
-                        <v-btn
-                          color="green darken-2"
-                          dark
-                          fab
-                          outlined>
-                          <v-icon v-if="showMenu">
-                            mdi-close
-                          </v-icon>
-                          <v-icon v-else>
-                            mdi-menu
-                          </v-icon>
-                        </v-btn>
-                      </v-card>
-                    </div>
-                  </template>
-                  <div>
-                    <v-card elevation="24">
-                      <v-btn
-                        dark
-                        x-small outlined
-                        width="115"
-                        ref="menu"
-                        v-for="item in menuLinks"
-                        :class="currentMenuLink == item.title?'orange--text':'green--text'"
-                        :key="item.title" href="#" @click="d3Action(item.title)">
-                        {{ item.title }}
-                      </v-btn>
-                    </v-card>
+            color="primary"
+            width="100%" 
+            >
+            <v-container>
+              <v-row
+                align="center"
+                justify="center"
+                class="justify-space-around"
+                >
+                <div>
+                  <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span>
+                </div>
+                <div>
+                  <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
+                </div>
+                <div class="d-flex">
+                  <span class="font-weight-bold">Help Pane:</span>
+                  <v-btn 
+                    variant="outlined"
+                    density="compact"
+                    class="">/</v-btn>
+                </div>
+                <div class="d-flex">
+                  <span class="text-decoration-underline font-weight-bold">T</span><span class="font-weight-bold">oggle:</span>
+                  <v-btn
+                    variant="outlined"
+                    density="compact"
+                    @click="toggleTheme()">
+                    <v-icon icon="mdi-theme-light-dark"></v-icon>
+                  </v-btn>
+                </div>
+                <div class="d-flex">
+                  <span class="text-decoration-underline font-weight-bold" color="secondary">M</span>
+                  <span class="font-weight-bold">enu:</span>
+                  <div
+                    width="99%"
+                    height="100%"
+                    @keydown.stop.prevent="menu($event, $refs.menu)"
+                    @keypress.stop.prevent="menu($event, $refs.menu)">
+                    <focus-trap 
+                      v-model:active="showMenu"
+                      :initial-focus="()=>$refs.menuDiv"
+                      >
+                      <div id="trap" ref="menuDiv" tabindex="0">
+                        <v-menu
+                          ref="speedDial"
+                          v-model="showMenu"
+                          >
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              density="compact"
+                              v-bind="props"
+                              variant="outlined">
+                            <v-icon v-if="showMenu">
+                              mdi-close
+                            </v-icon>
+                            <v-icon v-else>
+                              mdi-menu
+                            </v-icon>
+                            </v-btn>
+                          </template>
+                          <v-list
+                            nav
+                            density="compact"
+                            class="text-primary"
+                          >
+                            <v-list-item
+                              ref="menu"
+                              color="secondary"
+                              v-for="(item, i) in menuLinks"
+                              :active="currentMenuLink == item.title?true:false"
+                              :key="i" href="#" @click="d3Action(item.title)"
+                              >
+                              <template v-slot:prepend>
+                                <v-icon :icon="item.icon"></v-icon>
+                              </template>
+                              <v-list-item-title >
+                                {{ item.title }}
+                              </v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu>
+                      </div>
+                    </focus-trap>
                   </div>
-                </v-speed-dial>
-              </div>
-            </focus-trap>
+                </div>
+                <div class="d-flex">
+                  <span
+                  class="text-decoration-underline font-weight-bold" color="secondary">A</span>
+                  <span class="font-weight-bold">ctions:</span>
+                  <div
+                    width="99%"
+                    height="100%"
+                    @keydown.stop.prevent="menu($event, $refs.actionsMenu)"
+                    @keypress.stop.prevent="menu($event, $refs.actionsMenu)">
+                    <focus-trap 
+                      v-model:active="showActionsMenu"
+                      :initial-focus="()=>$refs.menuActionsDiv"
+                      >
+                      <div id="trap" ref="menuActionsDiv" tabindex="0">
+                        <v-menu
+                          ref="speedDial"
+                          v-model="showActionsMenu"
+                          >
+                          <template v-slot:activator="{ props }">
+                            <v-btn
+                              density="compact"
+                              v-bind="props"
+                              variant="outlined">
+                            <v-icon v-if="showActionsMenu">
+                              mdi-close
+                            </v-icon>
+                            <v-icon v-else>
+                              mdi-menu
+                            </v-icon>
+                            </v-btn>
+                          </template>
+                          <v-list
+                            nav
+                            density="compact"
+                            class="text-primary"
+                          >
+                            <v-list-item
+                              ref="actionsMenu"
+                              color="secondary"
+                              v-for="(item, i) in actionLinks"
+                              :active="currentMenuLink == item.title?true:false"
+                              :key="i" href="#" @click="d3Action(item.title)"
+                              >
+                              <template v-slot:prepend>
+                                <v-icon :icon="item.icon"></v-icon>
+                              </template>
+                              <v-list-item-title >
+                                {{ item.title }}
+                              </v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu>
+                      </div>
+                    </focus-trap>
+                  </div>
+                </div>
+                </v-row>
+                <v-row>
+                  <v-card
+                    width="100%"
+                  >
+                    <HelperPane
+                      :expand="showHelpPane"
+                      :diagramInfo="d3dInfo"
+                    />
+                  </v-card>
+                </v-row>
+                <!--
+                <v-row>
+                  <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
+                      {{ new Date().getFullYear() }} — <strong>D3D</strong>
+                  </v-col>
+                </v-row>
+                -->
+            </v-container>
           </v-card>
-          <!--
-        <div class="pa-0 pitch-mixin" 
-          data-augmented-ui="tl-2-clip-x tr-2-clip-x both">
-          <div class="pa-0 ml-0 mr-0 d-flex justify-space-around pitch-mixin2"
-            data-augmented-ui="" >
-          -->
-            <v-card
-              tile
-              outlined
-              class="green"
-              width="100%"
-              >
-                <v-card 
-                  tile
-                  width="100%" 
-                  class="d-flex justify-space-around ">
-                  <div class="justify-center">
-                    <span class="text-sm">ACTIVE:</span><span class="green--text"> {{ active }} </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">OPEN MENU:</span><span class="green--text"> m </span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">DEFAULT HINT:</span><span class="green--text"> Open Read Only</span><br/>
-                  </div>
-                  <div class="justify-center">
-                    <span class="text-sm">SHOW HELP PANE:</span><span class="green--text"> / </span><br/>
-                  </div>
-                </v-card>
-                <v-divider
-                />
-                <Footer
-                  :expand="showHelp"
-                  :diagramInfo="dagreLib"
-                />
-            </v-card>
-            <!--
-          </div>
-        </div>
-        -->
+        </v-row>
       </v-footer>
-    </v-app>
-  </div>
+  </v-app>
 </template>
 
 <script>
 export default {
   name: 'App',
-  //components: {DagreGraphLib, Settings, Login, Helper, DiagramList, DiagramForm, D3NodeForm, D3EdgeForm},
-  components: {DagreGraphLib, Settings, Login, Footer, DiagramList, DiagramForm},
+  components: {DagreGraphLib, Settings, DiagramForm, HelperPane},
   data () {
     return {
       active: "D3Dagre", //Default active component
-      menuTrap: false,
       showMenu: false,
-      showHelp: true,
+      showActionsMenu: false,
+      showHelpPane: true,
       showDiagramForm: false,
       successfull: null,
       alertMessage: null,
@@ -240,82 +280,70 @@ export default {
       successMessage: false,
       errorMessage: false,
       infoMessage: false,
-      loginTrap: null,
-      appTrap: false,
       fab: false,
       gNavMenu: null,
       currentMenuLink: null,
-      diagram: 'loading',
       response: 'loading',
       loaded: false,
+      actionLinks:[
+        {'icon':'mdi-shape-square-plus','title':'Add Node'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Node'},
+        {'icon':'mdi-selection-ellipse-remove','title':'Delete Node'},
+        {'icon':'mdi-selection','title':'Select Node'},
+        {'icon':'mdi-shape-oval-plus','title':'Add Edge'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Edge'},
+        {'icon':'mdi-selection-remove','title':'Delete Edge'},
+        {'icon':'mdi-selection','title':'Select Edges'}
+      ],
+      /*
       menuLinks: [
-        {"icon":"","title":"Login"},
-        {"icon":"","title":"Settings"},
-        {"icon":"","title":"New"},
-        {"icon":"","title":"Open"},
-        {"icon":"","title":"Edit"},
-        {"icon":"","title":"Save Changes"},
-        {"icon":"","title":"Discard Changes"},
-        {"icon":"","title":"Add Node"},
-        {"icon":"","title":"Edit Node"},
-        {"icon":"","title":"Delete Node"},
-        {"icon":"","title":"Select Node"},
-        {"icon":"","title":"Add Edge"},
-        {"icon":"mdi-edit","title":"Edit Edge"},
-        {"icon":"","title":"Delete Edge"},
-        {"icon":"","title":"Select Edges"}],
-      dagreLib: null
+        {'icon':'mdi-login','title':'Login'},
+        {'icon':'mdi-cog-outline','title':'D3D Settings'},
+        {'icon':'mdi-open-in-new','title':'New Diagram'},
+        {'icon':'mdi-open-in-app','title':'Open Diagram'},
+        {'icon':'mdi-pencil','title':'Edit Diagram'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes'},
+        {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
+      ],
+      */
+      menuLinks: [
+        {'icon':'mdi-cog-outline','title':'D3D Settings'},
+        {'icon':'mdi-open-in-new','title':'New Diagram'},
+        {'icon':'mdi-open-in-app','title':'Open Diagram'},
+        {'icon':'mdi-pencil','title':'Edit Diagram'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes'},
+      ],
+      d3dInfo: {},
+      modifier: {},
+    }
+  },
+  provide() {
+    return {
+      modifier: computed(() => this.modifier)
     }
   },
   mounted () {
     try{
       console.log('App mounted')
-      var localDiagramInfo = D3Util.getLocal()
-      if (D3Util.debug) {
-        console.log(localDiagramInfo.diagram)
-      }
-      var g = new dagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
-      if(localDiagramInfo.id && D3Util.auth === false){
-        var message = 'id found, please login to save changes to <br />'
-        message = message + 'server or replace local changes from server by selecting <br />'
-        message = message + '\'Discard Changes\' from options menu'
-        this.$root.$emit('appMessage', true, message)
-      }
-      DagreLib.id = localDiagramInfo.id
-      DagreLib.name = localDiagramInfo.name
-      DagreLib.description = localDiagramInfo.description
-      //When you open one diagram with clusters, it renders properly
-      //when you open a second diagram with clusters, the second 
-      //diagram does not render the clusters properly
-      //The dagre-d3 create-clusters.js file looks for all the clusters (d3.js clusters,) and if finds 
-      //the old diagram (first diagram ) clusters which are no longer part of the second diagram 
-      DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.json = localDiagramInfo.diagram
-      this.dagreLib = DagreLib
-      //this second render, fixes the cluster issues where the diagram does not render 
-      //Temporary workaround
-      this.dagreLib.redraw(this.dagreLib.diagram)
-    } catch {
-      console.log('mounted catch')
-      this.newDiagram()
-    }
-    // setting defaults on load
-    console.log('setting defaults')
-    var defaults = D3Util.settings()
-    for (var key in defaults) {
-      if (D3Util.debug) {
-        console.log(key)
-      }
 
-      if (this.$cookies.isKey(key)) {
-        this.hints = this.$cookies.get(key)
-      } else {
-        // set default keys
-        this.$cookies.set(key, defaults[key])
+      /*!SECTION - Setting application defaults based on cookie settings */
+      if (this.$cookies.get('settings')) {
+        this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
+        this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
+      this.loadDiagram()
+    } catch (error) {
+      console.log(error)
+      this.emitter.emit('newDiagram')
     }
-    console.log('App.vue')
-    this.$root.$on('appMessage', (status, message, data) => {
+
+    /*!SECTION Emitter section, is a way for child components to 
+    * communicate with their parent
+    */
+    /*NOTE - Alert messages
+    /*TODO - Move this to it's own Component, and keep the App.vue cleaner
+    */
+    this.emitter.on('appMessage', (status, message, data) => {
       if (D3Util.debug) {
         console.log(status)
         console.log(message)
@@ -336,31 +364,22 @@ export default {
       this.alertMessage = message + common + data
     })
 
-    this.$root.$on('showHelp', () => {
-      this.showHelp = !this.showHelp
+    /*NOTE - modifer object from when creating a new diagram */
+    this.emitter.on('updateModifier', (newModifier) => {
+      console.log('modifier update')
+      this.modifier = newModifier
+      this.d3dInfo = newModifier.d3dInfo
     })
 
-    this.$root.$on('showSettings', () => {
-      console.log('Show settings form received')
-      this.showSettingsModal = true
-    })
-    this.$root.$on('Alert', (data, alertType) => {
-      console.log('alert message received')
-      this.message = data
-      if (alertType === 'successful') {
-        this.successfull = true
-        Velocity(this.$refs.alert, 'fadeOut',
-          {delay: 1000,
-            duration: 500,
-            complete: function () {
-              // this.successfull = null
-              // this.message = null
-            }
-          })
-      }
+    /*NOTE - Help Pane toggle
+    */
+    this.emitter.on('showHelp', () => {
+      this.showHelpPane = !this.showHelpPane
     })
 
-    this.$root.$on('changeActive', (menu) => {
+    /*NOTE - Handle the default active section/component
+    */
+    this.emitter.on('changeActive', (menu) => {
       if (D3Util.debug) {
         console.log(menu)
       }
@@ -377,99 +396,70 @@ export default {
       }
     })
 
-    this.$root.$on('updateHelperDiagramInfo', (name, description, id) => {
-      console.log('diagramInfo')
-      DagreLib.id = id
-      DagreLib.name = name
-      DagreLib.description = description
-      //DagreLib.diagram = DagreLib.redraw(g)
-      /**JSON is provided during an open from the server, maybe I'll skip for now */
-      // DagreLib.json = localDiagramInfo.diagram
-      this.dagreLib = DagreLib
-    })
+    this.emitter.on('updateDiagramInfo', (payload) => {
+       console.log('diagramInfo')
+       this.d3dInfo.id = payload.id
+       this.d3dInfo.name = payload.name
+       this.d3dInfo.description = payload.description
+     })
 
-    /* Child components to communicate with parents*/
-    /*Emit functions section*/
-    this.$root.$on('openDiagram', (id) => {
+    this.emitter.on('openDiagram', (id) => {
       console.log('Message to open diagram received')
       console.log(id)
       // this.id = id
-      this.loadFromServer(id)
+      //this.loadFromServer(id)
+      this.loadDiagram(id)
     })
-    // this.$root.$on('newDiagram', () => {
-    //   console.log('Message to create a new diagram received')
-    //   // this.id = id
-    //   this.newDiagram()
-    // })
+     // this.$root.$on('newDiagram', () => {
+     //   console.log('Message to create a new diagram received')
+     //   // this.id = id
+     //   this.newDiagram()
+     // })
   },
   updated () {
     // console.log('component updated')
-    // console.log(this.dagreLib)
+    // console.log(this.d3dInfo)
   },
   methods: {
-    loadFromServer: async function (id) {
-      console.log('loading from server')
-      //var response = await this.getDiagram(id)
-      var response = await D3VimApi.getDiagram(id)
-
-      if (D3Util.debug) {
-        console.log(response)
+    loadDiagram (id) {
+      /*!SECTION - Logic to load a previously working diagram, or 
+      * continue to work on a previously temporary item
+      * 1. Load the last working item if it exists
+      */
+      let localDiagramInfo = null
+      if (id) {
+        localDiagramInfo = D3Util.getLocalItem(id)
+      } else {
+        let diagramId = this.$cookies.get('LastLocallySavedItemId')
+        if (diagramId) {
+          localDiagramInfo = D3Util.getLocalItem(diagramId)
+          id = diagramId
+        } else {
+          // get the last temporary saved working item
+          localDiagramInfo = D3Util.getTempDiagram()
+        }
       }
 
-      var g = new dagreD3.graphlib.json.read(JSON.parse(response.diagram))
-      /** we don't need this, it's handled by the redraw */
-      //console.log('g')
-      //console.log(g)
-      //console.log('g')
-      //g.setDefaultEdgeLabel(function () { return {} })
+      if (D3Util.debug) {
+        console.log(localDiagramInfo)
+        console.log(id)
+      }
 
-      //g.nodes().forEach(function (v) {
-      //  var node = g.node(v)
-      //  node.rx = node.ry = 5
-      //})
+      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
 
-      //if (D3Util.debug) {
-      //  console.log(g)
-      //}
-      /** Setup cookie options */
+      this.d3dInfo = localDiagramInfo
+      this.d3dInfo.id = id
+      this.d3dInfo.diagram = g
 
-      DagreLib.id = id
-      DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.description = response.description
-      DagreLib.name = response.name
-      DagreLib.created = response.created
-      DagreLib.json = response.diagram
-      this.dagreLib = DagreLib
-    },
-    newDiagram(){
-      /**duplicate code 
-       * need to move to Utilils or common file
-       * maybe reference the DiagramForm, since it contains defaults
-       */
-      console.log('creating a new localDiagram')
-      var g = new dagreD3.graphlib.Graph({"directed":true,"multigraph":true,"compound":true})
-      g.setGraph({})
-      g.graph().rankdir = 'TB'
-      g.graph().ranksep = '50' 
-      g.graph().nodesep = '10'
-      g.setDefaultEdgeLabel(function () { return {} })
-      console.log('newDiagram')
-      console.log(g)
-      console.log('newDiagram')
-      //DagreGraphLib.resetValues()
-      DagreLib.diagram = g
-      //DagreLib.diagram = DagreLib.redraw(g)
-      DagreLib.description = null
-      DagreLib.name = null
-      DagreLib.created = null
-      DagreLib.id = null
-      DagreLib.json = null
-      this.dagreLib = DagreLib
+      /**NOTE - this.modifier is the main object used by all other components files */
+      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier.redraw(g)
+      console.log(this.modifier)
+
     },
     openMenu (){
         console.log(this.active)
         this.active = "Menu"
-        this.menuTrap = true
     },
     successToggle () {
       console.log('success toggle')
@@ -510,95 +500,47 @@ export default {
     menu(event){
       MenuKeys.menuAction(event.key, this)
     },
-    //keyPress(event, ref) {
-    //  if (D3Util.debug) {
-    //    console.log(event)
-    //    console.log(event.key)
-    //    console.log(ref)
-    //    console.log(this)
-    //    console.log(this.$refs)
-    //    console.log(this.$el)
-    //  }
-    //  Keys.activeWindow(event.key, this)
-    //},
      selectionBool (index) {
        console.log(this.menuLinks[index].title)
        this.currentMenuLink = this.menuLinks[index].title
      },
-     saveChanges: async function(app){
-       //var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
-       //var localData = D3Util.getLocal()
-       //var id = localData.id // means data has been saved to server
-       var id = app.dagreLib.id
-       var auth = D3Util.auth()
-       if (id && auth) {
-         var result = await D3VimApi.updateDiagram(app.dagreLib, app)
-         return result
-       } else if (auth){
-         console.log('id is empty')
-         app.active = "New"
-       } else {
-          /**
-           * broken was causing a lot of confusion
-           * need to rethink the approach to saving locally if 
-           * not logged in or authenticated
-           */
-         // var common = D3Util.commonMsg
-         app.$root.$emit('appMessage', true, 'Changes are being saved to localStorage, please consider creating an account or login to save remotely to the server', '')
-         // this is not needed
-         //D3Util.saveLocal(data)
-       }
-     },
+     //saveChanges: async function(){
+     // /*
+     //   1. Open Diagram form
+     //   2. Use the last samus.lastUpdated localStorage as data to save
+     // */
+     // this.emitter.emit('SaveDiagram')
+     //  //let localData = D3Util.getLocal()
+     //  //let id = localData.id // means data has been saved to server
+     //  //let id = this.d3dInfo.id
+     //  //var auth = D3Util.auth()
+     //  //if (id && auth) {
+     //  //  var result = await D3VimApi.updateDiagram(app.d3dInfo, app)
+     //  //  return result
+     //  //} else if (auth){
+     //  //console.log('id is empty')
+     //  //this.active = "New"
+     //  //} else {
+     //     /**
+     //      * broken was causing a lot of confusion
+     //      * need to rethink the approach to saving locally if 
+     //      * not logged in or authenticated
+     //      */
+     //    // var common = D3Util.commonMsg
+     //    this.emitter.emit('appMessage', true, 'Changes are being saved to localStorage, please consider creating an account or login to save remotely to the server', '')
+     //    // this is not needed
+     //    //D3Util.saveLocal(data)
+     //  //}
+     //},
   },
   computed: {
-//    selectionBool(){
-//       console.log("selection bool")
-//       return this.selectedMenuLinks
-//     },
-    // selectedMenuLinks(){
-    //   var newVueMenuComponents = this.menuLinks
-    //   var newSelection = this.liSelectionJ(this.vueMenuComponents, this.gNavMenu)
-    //   console.log(newSelection)
-    //   // if (menuList[prevMenu] != null) {
-    //   //   console.log('am I null')
-    //   //   //this.defaultButtonColor = "green"
-    //   //   menuList[prevMenu].color = "green"
-    //   // }
-    //     //this.defaultButtonColor = "orange"
-    //   // menuList[newMenu].color = "orange"
-    //   // this.selectedUrl = menuList[newMenu]
-    //   //return this.selectedUrl
-    //         // this.gNavMenu = newSelection
-    //   //console.log(this.newVueMenuComponents['Login'].color)
-    //   //console.log(this.vueMenuComponents[newSelection].color)
-    //   // newVueMenuComponents[newSelection].color = "orange"
-
-    //   return newVueMenuComponents
-    // }
-//     selectionBool (menuList, prevMenu, newMenu) {
-//       console.log(menuList)
-//       // console.log(liList[prevLi])
-//       if (menuList[prevMenu] != null) {
-//         console.log('am I null')
-//         //this.defaultButtonColor = "green"
-//         menuList[prevMenu].color = "green"
-//       }
-//         //this.defaultButtonColor = "orange"
-//       menuList[newMenu].color = "orange"
-//       this.selectedUrl = menuList[newMenu]
-//     },
   },
   watch: {
     active: function () {
       console.log('app.root.activewindow')
     //  console.log(this.activeWindow)
       this.showMenu = this.active === "Menu"?true:false
-      if (this.showMenu){
-        this.$nextTick(function(){
-          console.log('menuTrap active')
-          this.menuTrap = this.showMenu
-        })
-      }
+      this.showActionsMenu = this.active === "Actions Menu"?true:false
     },
     successMessage: function () {
       setTimeout( ()=> {
@@ -615,9 +557,6 @@ export default {
 </script>
 
 <style scoped>
-#v-application {
-  background-color: transparent;
-}
 
 .primary--text {
   color: red;
@@ -686,9 +625,8 @@ export default {
 </style>
 <link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
 <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
-<style src='./assets/css/samus.css'></style>
-<style src='./assets/css/parallax.css'></style>
+<style src='./assets/css/d3d.css'></style>
 <!--
-<style src='../node_modules/augmented-ui/augmented-ui.min.css'></style>
-
+<style src='./assets/css/parallax.css'></style>
+<style src='../node_modules/augmented-ui/augmented-ui.min.css'>
 -->
