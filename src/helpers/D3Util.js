@@ -365,7 +365,7 @@ export default {
       console.log(error)
     }
   },
-  updateLocalEntry(id, data){
+  updateLocalEntry(data){
     try{
       console.log(data)
       let updated = new Date()
@@ -378,8 +378,8 @@ export default {
         'updated': updated.toISOString(),
       }
 
-      localStorage.setItem(id, JSON.stringify(payload))
-      VueCookies.set('LastLocallySavedItemId', id)
+      localStorage.setItem(data.id, JSON.stringify(payload))
+      VueCookies.set('LastLocallySavedItemId', data.id)
       console.log('updating item succeeded')
     } catch (error) {
       console.log('updating item failed')

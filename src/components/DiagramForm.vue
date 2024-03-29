@@ -136,6 +136,7 @@ export default {
       id: null,
       diagram: null,
       username: '',
+      created:null,
       name: 'New diagram default name',
       description: 'New diagram default description',
       diagramModal: false,
@@ -239,7 +240,7 @@ export default {
       */
       console.log(this.modifier)
       let info = this.modifier.d3dInfo
-      this.id = info.id
+      this.id = newDiagram ? this.id : info.id
       this.name = newDiagram ? this.name : info.name
       this.description = newDiagram ? this.description : info.description
       this.diagram = newDiagram ? this.diagram : info.diagram
@@ -348,9 +349,6 @@ export default {
       }
     },
     updateLocalDiagram () {
-      /*NOTE - any changes to the diagram options are updated by
-      the setOptionsAndLabels method below*/
-      this.setOptionsAndLabels()
 
       /**
        * TODO: the line can be set for each line, we need a better
@@ -362,19 +360,25 @@ export default {
       /**NOTE - this info appers to be very similar to the newDiagram() method!!!
       In case the jsonDiagram has been updated/modified to 
       overwrite/create a new diagram
-       */
+      */
 
       let d3dInfo = {}
       d3dInfo.id = this.id
       d3dInfo.name = this.name
       d3dInfo.description = this.description
+      d3dInfo.created = this.created
       console.log(d3dInfo)
-      let g = new DagreD3.graphlib.json.read(JSON.parse(this.jsonDiagram))
-      d3dInfo.diagram = g
+      this.diagram = new DagreD3.graphlib.json.read(JSON.parse(this.jsonDiagram))
+
+      /*NOTE - any changes to the diagram options are
+      updated by the setOptionsAndLabels method below
+      */
+
+      this.setOptionsAndLabels()
+      d3dInfo.diagram = this.diagram
 
       this.newModifier(d3dInfo)
-      /** we should only need to pass the data and not the whole object? */
-      D3Util.updateLocalEntry(this.id, this)
+      D3Util.updateLocalEntry(this.$data)
       this.close()
       
     },
