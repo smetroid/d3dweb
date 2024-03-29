@@ -11,6 +11,7 @@ import DiagramModifier from '@/helpers/DiagramModifier.js'
 import DiagramList from '@/components/DiagramList.vue'
 import { computed } from 'vue'
 
+/*
 // Theme specific
 import { useTheme } from 'vuetify'
 
@@ -20,6 +21,7 @@ const theme = useTheme()
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
 }
+*/
 </script>
 <template>
   <v-app app>
@@ -410,6 +412,11 @@ export default {
       //this.loadFromServer(id)
       this.loadDiagram(id)
     })
+
+    this.emitter.on('toggleTheme', () => {
+      console.log(this)
+      this.toggleTheme()
+    })
      // this.$root.$on('newDiagram', () => {
      //   console.log('Message to create a new diagram received')
      //   // this.id = id
@@ -421,6 +428,9 @@ export default {
     // console.log(this.d3dInfo)
   },
   methods: {
+    toggleTheme () {
+      this.$vuetify.theme.global.name = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
+    },
     loadDiagram (id) {
       /*!SECTION - Logic to load a previously working diagram, or 
       * continue to work on a previously temporary item

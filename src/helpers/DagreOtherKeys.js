@@ -34,7 +34,7 @@ export default class DagreOtherKeys {
         break
       case 't':
         console.log('light dark toggle')
-        this.emitter.emit('changeActive', "Light/Dark")
+        this.emitter.emit('toggleTheme')
         break
 
       default:
