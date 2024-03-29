@@ -88,12 +88,9 @@ export default {
     }
   },
   mounted () {
-
-    if (this.$cookies.get('settings')['d3dInfo']) {
-      console.log()
-      this.diagramInfo = true
-    } else {
-      this.diagramInfo = false
+    let settings = this.$cookies.get('settings')
+    if (settings) {
+      this.diagramInfo = settings['d3Info']
     }
 
     this.emitter.on('d3ResetValues', () => {
