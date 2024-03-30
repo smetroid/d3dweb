@@ -88,11 +88,9 @@ export default {
     }
   },
   mounted () {
-    console.log('dagreGraphLib mounted')
     let settings = this.$cookies.get('settings')
     if (settings) {
-      console.log(settings['d3Info'])
-      this.diagramInfo = settings['d3Info']
+      this.diagramInfo = settings['d3dInfo']
     }
 
     this.emitter.on('d3ResetValues', () => {
@@ -172,13 +170,12 @@ export default {
         let data = hints.followLinks(event)
         console.log(data)
         console.log(Object.keys(data.hints).length)
+
         if (Object.keys(data.hints).length > 1){
           this.hints = data.hints
           this.hintKeysReplaced = data.hintKeys
         } else {
           console.log('only one item returned when making a hint selection')
-          console.log(event)
-
           if (event.key !== 'Escape') {
             this.hintSelection(data.hints[data.hintKeys].__data__)
           }
