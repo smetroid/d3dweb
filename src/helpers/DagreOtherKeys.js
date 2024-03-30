@@ -7,18 +7,19 @@ import Velocity from 'velocity-animate'
 import VueCookies from 'vue-cookies'
 //import MenuLink from '@/helpers/MenuLinks'
 export default class DagreOtherKeys {
-  constructor(emitter, modifier) {
+  constructor(emitter, modifier, hintFunction) {
     this.emitter = emitter
     this.modifier = modifier
     this.diagram = modifier.d3dInfo.diagram
     this.focusedIndex = modifier.focusedIndex
     this.selectedNodes = modifier.selectedNodes
     this.doubleSelection = modifier.doubleSelection
+    this.hintFunction = hintFunction
   }
 
   defaultActions (eventKey, edgeOrNode, focusedNodeId, focusedEdgeId) {
     console.log(this)
-    let resetValues = false
+    //let resetValues = false
     let d3Data = null
     switch (eventKey){
       case 'm':
@@ -178,8 +179,8 @@ export default class DagreOtherKeys {
       }
       var elements = labels['_groups'][0]
       var shortcut = ''
-      var hintLinkColor = VueCookies.get('hintLinkColor')
-      var hintBGColor = VueCookies.get('hintBGColor')
+      var hintLinkColor = VueCookies.get('settings')['hintLinkColor']
+      var hintBGColor = VueCookies.get('settings')['hintBGColor']
 
       var availHints = this.buildHints(elements)
       if (D3Util.debug) {
@@ -229,7 +230,7 @@ export default class DagreOtherKeys {
           .append('xhtml:div')
           .html('<a href="#" tabindex="-1"><div style="display: table-caption;color:'+ hintLinkColor +';padding: 1px 8px 1px 8px; border-radius: 10px; background: '+hintBGColor+'">' + shortcut + '</div></a>')
           // .data(data)
-          .on('click', this.dagreGraphLib.forwardLinkClicked)
+          .on('click', this.hintFunction)
           //.on('click', this.d3Action())
 
         if (D3Util.debug) {
@@ -247,18 +248,18 @@ export default class DagreOtherKeys {
   }
 
   buildHints (elements) {
-    var maxIterator = null
-    var hints = []
-    var hintOptions = D3Util.hintOptions()
-    var hintsLength = hintOptions.length
+    let maxIterator = null
+    let hints = []
+    let hintOptions = D3Util.hintOptions()
+    let hintsLength = hintOptions.length
     maxIterator = Math.floor(elements.length / hintsLength)
     if (D3Util.debug) {
       console.log(maxIterator)
       console.log(hintsLength)
       console.log(hintOptions)
     }
-    var hint = ''
-    for (var i = maxIterator; i <= elements.length; i++) {
+    let hint = ''
+    for (let i = maxIterator; i <= elements.length; i++) {
       hint = hintOptions.charAt(D3Util.mod(i, hintsLength))
       if (i >= hintsLength) {
         for (var t = 0; t < maxIterator; t++) {

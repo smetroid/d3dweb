@@ -1,29 +1,15 @@
-//import * as d3 from 'd3'
-// import DagreLib from '@/helpers/DagreLib'
-//import VueCookies from 'vue-cookies'
-//var prevFocusedIndex = null
-//var focusedIndex = null
-//var DagreLib = null
-<template>
-  <div>
-  </div>
-</template>
-
-<script>
 import D3Util from '@/helpers/D3Util'
-import * as Velocity from 'velocity-animate'
-export default {
-  name: 'Hints',
-  // props: ['diagram', 'diagramId'],
-  data () {
-    return {
-      data: null,
-      hintKeysReplaced: '',
-     }
-  },
+import Velocity from 'velocity-animate'
+export default class Hints{
+  constructor() {
+      this.data = null
+      this.hintKeysReplaced = null
+  }
+
   mounted () {
     console.log('hints loaded')
-  },
+  }
+
   followLinks (event) {
     if (D3Util.debug) {
       console.log('followingLinks')
@@ -34,18 +20,20 @@ export default {
     var regex = new RegExp(event.key, 'g')
     var filteredData = this.d3FilterKeys(this.data, regex, event.key)
     this.data = filteredData.newHints
-    var element = null
+    //var element = null
     if (Object.keys(this.data).length === 1) {
       console.log(this.data)
-      element = this.data[hintKeys]
+      //element = this.data[hintKeys]
       if (D3Util.debug) {
         console.log('click link')
       }
-      this.clickHref(element)
+      /*this line seems to be causing all kinds of problems/confusion */
+      //this.clickHref(element)
     }
     var data = {hints: this.data, hintKeys: hintKeys}
     return data
-  },
+  }
+
   d3FilterKeys (hints, filter, eventKey) { // var key = []
     var keys = {}
     var newHints = {}
@@ -92,7 +80,8 @@ export default {
     filterData['newHints'] = newHints
 
     return filterData
-  },
+  }
+
   clickHref (element) {
     if (D3Util.debug) {
       console.log(element)
@@ -112,17 +101,18 @@ export default {
     this.removeHints(this.data)
     // resetting hintkeys
     //this.hintsKeyReplaced = ''
-  },
+  }
+
   removeHints (hints) {
     // Remove all href links that do not start with the key in the filter
     for (var key in hints) {
       console.log(key)
       hints[key].lastElementChild.remove()
     }
-  },
+  }
+
   hrefLink (){
     console.log(this)
     console.log('hrefLink')
-  },
+  }
 }
-</script>
