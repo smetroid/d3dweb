@@ -90,7 +90,7 @@ export default {
   mounted () {
     let settings = this.$cookies.get('settings')
     if (settings) {
-      this.diagramInfo = settings['d3Info']
+      this.diagramInfo = settings['d3dInfo']
     }
 
     this.emitter.on('d3ResetValues', () => {
@@ -145,10 +145,8 @@ export default {
         console.log(this.d3Data)
         this.emitter.emit('changeActive', 'Edit Node')
       }
-      this.openSheet = true
-      this.hints = {}
-      this.hintKeysReplaced = ''
 
+      this.openSheet = true
     },
     keyPress(event) {
       /*NOTE - let's add additional properties to the modifier object
@@ -172,12 +170,18 @@ export default {
         let data = hints.followLinks(event)
         console.log(data)
         console.log(Object.keys(data.hints).length)
+
         if (Object.keys(data.hints).length > 1){
           this.hints = data.hints
           this.hintKeysReplaced = data.hintKeys
         } else {
           console.log('only one item returned when making a hint selection')
-          this.hintSelection(data.hints[data.hintKeys].__data__)
+          if (event.key !== 'Escape') {
+            this.hintSelection(data.hints[data.hintKeys].__data__)
+          }
+
+          this.hints = {}
+          this.hintKeysReplaced = ''
           hints.removeHints(data.hints)
         }
       } else if ((event.altKey === true) || 
