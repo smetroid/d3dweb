@@ -88,8 +88,10 @@ export default {
     }
   },
   mounted () {
+    console.log('dagreGraphLib mounted')
     let settings = this.$cookies.get('settings')
     if (settings) {
+      console.log(settings['d3Info'])
       this.diagramInfo = settings['d3Info']
     }
 
@@ -145,10 +147,8 @@ export default {
         console.log(this.d3Data)
         this.emitter.emit('changeActive', 'Edit Node')
       }
-      this.openSheet = true
-      this.hints = {}
-      this.hintKeysReplaced = ''
 
+      this.openSheet = true
     },
     keyPress(event) {
       /*NOTE - let's add additional properties to the modifier object
@@ -177,7 +177,14 @@ export default {
           this.hintKeysReplaced = data.hintKeys
         } else {
           console.log('only one item returned when making a hint selection')
-          this.hintSelection(data.hints[data.hintKeys].__data__)
+          console.log(event)
+
+          if (event.key !== 'Escape') {
+            this.hintSelection(data.hints[data.hintKeys].__data__)
+          }
+
+          this.hints = {}
+          this.hintKeysReplaced = ''
           hints.removeHints(data.hints)
         }
       } else if ((event.altKey === true) || 
