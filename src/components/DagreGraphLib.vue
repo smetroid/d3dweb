@@ -54,7 +54,7 @@ import * as d3 from 'd3'
 import D3Util from '@/helpers/D3Util'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
-import Hints from '@/helpers/Hints.vue'
+import Hints from '@/helpers/Hints.js'
 //import login from '@/components/Login'
 import D3DAltKeys from '@/helpers/DagreAltKeys.js'
 import D3DOtherKeys from '@/helpers/DagreOtherKeys.js'
@@ -124,41 +124,31 @@ export default {
     })
   },
   methods: {
-    /**
-     * used by DagreOtherKeys when creating the hyperlink hints
-    */
-    forwardLinkClicked (data) {
-      /*
-      NOTE - when using forward links to edit a node use the same logic for 
-      editing a node via a selection ... for consistency.
-      */
+    /*NOTE - when using the hints to make a selection the data parameter
+    usually contains a 'v' and 'w' key if it's an edge or just a 'v' if it's a node
+    the node html element contains an id, but the edge html element does not
+    */ 
+    hintSelection(data) {
       if (D3Util.debug) {
-        console.log('forwardLinkClicked')
+        console.log('hintSelection')
         console.log(data)
         //console.log(this.modifier)
       }
 
-      /*NOTE - need to test forwardLinkClicked methods to make sure this event key is the only thing we need
-      */
-      let event = {altKey: true, key: 'e', keyCode: 69}
-      this.keyPress(event)
+      if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
+        console.log('v and w')
+        this.d3Data = this.modifier.getEdgeData(data)
+        this.emitter.emit('changeActive', 'Edit Edge')
+      } else {
+        console.log('v')
+        this.d3Data = this.modifier.getNodeData(data)
+        console.log(this.d3Data)
+        this.emitter.emit('changeActive', 'Edit Node')
+      }
+      this.openSheet = true
+      this.hints = {}
+      this.hintKeysReplaced = ''
 
-      // if (Object.prototype.hasOwnProperty.call(data, 'v') && Object.prototype.hasOwnProperty.call(data, 'w')) {
-      //   console.log('v and w')
-      //   // /* We want to control the from using the active parent varible*/
-      //   // //this.showEdgeForm = true
-      //   // this.d3Data = this.modifier.getEdgeData(data)
-      //   // this.emitter.emit('changeActive', 'Edit Edge')
-      // } else {
-      //   console.log('v')
-      //   let event = {altKey: true, key: 'e', keyCode: 69}
-      //   this.keyPress(event)
-      //   // /* We want to control the from using the active parent variable*/
-      //   // //this.showNodeForm = true
-      //   // this.d3Data = this.modifier.getNodeData(data)
-      //   // console.log(this.d3Data)
-      //   // this.emitter.emit('changeActive', 'Edit Node')
-      // }
     },
     keyPress(event) {
       /*NOTE - let's add additional properties to the modifier object
@@ -176,28 +166,25 @@ export default {
       }
 
       if ( Object.keys(this.hints).length > 1 ) {
-        Hints.data = this.hints
-        Hints.hintKeysReplaced = this.hintKeysReplaced
-        var data = Hints.followLinks(event)
+        let hints = new Hints()
+        hints.data = this.hints
+        hints.hintKeysReplaced = this.hintKeysReplaced
+        let data = hints.followLinks(event)
         console.log(data)
         console.log(Object.keys(data.hints).length)
         if (Object.keys(data.hints).length > 1){
           this.hints = data.hints
           this.hintKeysReplaced = data.hintKeys
         } else {
-          console.log('no data returned from followLinks')
-          this.hints = {}
-          this.hintKeysReplaced = ''
+          console.log('only one item returned when making a hint selection')
+          this.hintSelection(data.hints[data.hintKeys].__data__)
+          hints.removeHints(data.hints)
         }
       } else if ((event.altKey === true) || 
                 (event.metaKey === true)) {
         if (D3Util.debug) {
           console.log('alt key')
         }
-        //DagreAltKeys.diagram = this.graphLib.diagram
-        //DagreAltKeys.focusedNodeId = this.focusedNodeId
-        //DagreAltKeys.focusedEdgeId = this.focusedEdgeId
-        //DagreAltKeys.diagram = this.modifier.diagram
         let altKeys = new D3DAltKeys(this.emitter, this.modifier)
         console.log(this.modifier)
         var resetValues = altKeys.key(event.key, this)
@@ -207,7 +194,7 @@ export default {
       } else {
         /*IF searching eg: "/" don't search for anything */
         console.log(this.modifier)
-        let otherKeys = new D3DOtherKeys(this.emitter, this.modifier )
+        let otherKeys = new D3DOtherKeys(this.emitter, this.modifier, this.keyPress)
         let result = otherKeys.defaultActions(event.key, this.edgeOrNode, this.focusedNodeId, this.focusedEdgeId)
 
         if ( D3Util.debug ) {

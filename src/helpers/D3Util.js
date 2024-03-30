@@ -1,7 +1,6 @@
 import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
 import * as DagreD3 from 'dagre-d3'
-import { local } from 'd3'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -81,8 +80,12 @@ export default {
   },
   hintOptions () {
     // Need to get from database or a cookie
-    var hintOptions = VueCookies.get('hints')
-    return hintOptions
+    var hintOptions = VueCookies.get('settings')
+    if ( hintOptions ) {
+      return hintOptions['hints']
+    } else {
+      console.log('cookie settings is missing')
+    }
   },
   randomId () {
   // Math.random should be unique because of its seeding algorithm.
@@ -90,7 +93,7 @@ export default {
   // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
-  appDefaults () {
+  appDefaults () { 
     var defaults = {
       'd3Line': 'curveBasis',
       'hintBGColor': '#36004c',
