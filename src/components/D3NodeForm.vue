@@ -59,12 +59,13 @@
                     <v-select
                       v-model="parentNode"
                       :items="parentOptions"
+                      item-title="value"
                       item-value="key"
-                      item-text="value"
                       auto-select-first
                       label="Parent"
                       hint="optional"
                       clearable
+                      density="compact"
                       >
                     </v-select>
                   </v-col>
