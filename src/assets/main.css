@@ -9,10 +9,10 @@
 }
 */
 
-a,
-.green {
+a
+{
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
+  color: rgb(24, 103, 192);
   transition: 0.4s;
   padding: 3px;
 }
