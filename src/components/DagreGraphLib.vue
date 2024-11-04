@@ -27,9 +27,9 @@
               <svg
                 ref="svg"
                 tabindex="0"
-                style="position: absolute; bottom: 30px; right: 1px"
-                class="">
-                <g/>
+                class="svgClass"
+                >
+                <g />
               </svg>
             </div>
         </FocusTrap>
@@ -122,6 +122,10 @@ export default {
         console.log('no edges or nodes')
       }
     })
+
+    //console.log(this.$vuetify.theme.global.current)
+    //console.log(this.$vuetify.theme)
+    //console.log(this.$vuetify)
   },
   methods: {
     /*NOTE - when using the hints to make a selection the data parameter
@@ -371,6 +375,12 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+  .svgClass{
+    position: absolute;
+    bottom: 30px;
+    right: 1px;
+  }
+
   h1, h2 {
     font-weight: normal;
   }
