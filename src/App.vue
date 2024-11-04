@@ -573,6 +573,7 @@ export default {
 
 <style scoped>
 
+/*
 .primary--text {
   color: red;
 }
@@ -580,6 +581,7 @@ export default {
 .transparent {
   background-color: transparent;
 }
+*/
 
 .pitch-mixin {
   width: 100%;
@@ -623,25 +625,30 @@ export default {
 .material-icons.md-24 { font-size: 24px; }
 .material-icons.md-36 { font-size: 36px; }
 .material-icons-outlined.md-48 { font-size: 48px; }
-*/
 .material-icons-outlined.md-48 { font-size: 48px; }
 .material-icons-outlined.md-64 { font-size: 64px; }
+*/
 
 /* Rules for using icons as black on a light background. */
+/*
 .material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
 .material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+*/
 
 /* Rules for using icons as white on a dark background. */
+/*
 .material-icons.md-light { color: rgba(255, 255, 255, 1); }
 .material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
 .material-icons.orange600 { color: #FB8C00; }
+*/
 
 
 </style>
-<link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
-<link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
+
 <style src='./assets/css/d3d.css'></style>
 <!--
-<style src='./assets/css/parallax.css'></style>
+<link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
+<link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
+<style src='./assets/css/parallax.css'></link>
 <style src='../node_modules/augmented-ui/augmented-ui.min.css'>
 -->
