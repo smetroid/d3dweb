@@ -38,25 +38,21 @@ div.htmlLabel {
 }
 
 .cluster rect {
-  /*
-  stroke: #333;
-  fill: #000;
-  fill-opacity: 0.1;
-  stroke-width: 2.5px;
+  stroke: rgb(var(--v-theme-primary));
+  fill: rgb(var(--v-theme-secondary));
+  fill-opacity: 0.5;
+  stroke-width: 2px;
   rx: 8px;
   padding: 10px 10px 10px 10px;
   margin: 10px 10px 10px 10px;
-  */
 }
 
 .cluster rect.selected{
-  /*
   stroke: orange;
-  fill: #000;
-  fill-opacity: 0.9;
+  fill: rgb(var(--v-theme-secondary));
+  fill-opacity: 0.2;
   stroke-width: 2.5px;
   rx: 8px;
-  */
 }
 
 .cluster rect.label{
