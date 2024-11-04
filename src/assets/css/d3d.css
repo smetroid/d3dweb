@@ -10,14 +10,16 @@ svg {
   overflow: hidden;
   */
 }
+/*
 div.htmlLabel {
   color: orange;
 }
+  */
 
 .label {
     display: block;
     position: absolute;
-    fill: rgb(24,103,192)
+    fill: rgb(var(--v-theme-on-surface));
 }
 
 .node {
@@ -29,29 +31,14 @@ div.htmlLabel {
 .node polygon,
 .node diamond,
 .node ellipse {
-  stroke: #999;
-  fill: hwb(160deg 0% 26% / 95%);
+  stroke: #BDBDBD;
+  fill: rgb(var(--v-theme-primary));
+  fill-opacity: 0.5;
   stroke-width: 2px;
-  box-shadow:
-  0 2.8px 2.2px rgba(0, 0, 0, 0.034),
-  0 6.7px 5.3px rgba(0, 0, 0, 0.048),
-  0 12.5px 10px rgba(0, 0, 0, 0.06),
-  0 22.3px 17.9px rgba(0, 0, 0, 0.072),
-  0 41.8px 33.4px rgba(0, 0, 0, 0.086),
-  0 100px 80px rgba(0, 0, 0, 0.12)
-;
-  padding: 10px 10px 10px 10px;
-
-/*
-  min-height: 200px;
-  width: 50vw;
-  margin: 100px auto;
-  background: white;
-  border-radius: 5px;
-*/
 }
 
 .cluster rect {
+  /*
   stroke: #333;
   fill: #000;
   fill-opacity: 0.1;
@@ -59,14 +46,17 @@ div.htmlLabel {
   rx: 8px;
   padding: 10px 10px 10px 10px;
   margin: 10px 10px 10px 10px;
+  */
 }
 
 .cluster rect.selected{
+  /*
   stroke: orange;
   fill: #000;
   fill-opacity: 0.9;
   stroke-width: 2.5px;
   rx: 8px;
+  */
 }
 
 .cluster rect.label{
@@ -85,15 +75,15 @@ div.htmlLabel {
 }
 
 .edgePath path.path {
-  fill: #3b5a2e;
-  stroke: #3b5a2e;
-  stroke-width: 2.5px;
+  stroke: rgb(var(--v-theme-secondary));
+  fill: rgb(var(--v-theme-secondary));
+  stroke-width: 1.5px;
 }
 
 [id^='arrowhead'] {
-  stroke: #164c00;
-  fill: #999;
-  stroke-width: 2.5px;
+  stroke: rgb(var(--v-theme-secondary));
+  fill: rgb(var(--v-theme-secondary));
+  stroke-width: 1.5px;
 }
 
 .node ellipse.selected,
@@ -103,7 +93,6 @@ div.htmlLabel {
 .edgePath path.selected,
 .node rect.selected{
   stroke: orange;
-  fill-opacity: 0.9;
   stroke-width: 2.5px;
 }
 
@@ -114,8 +103,8 @@ div.htmlLabel {
 .node polygon.active_node,
 .node circle.active_node,
 .node rect.active_node{
-  stroke: cyan;
-  fill-opacity: 0.1;
+  stroke: rgb(var(--v-theme-primary));
+  fill: rgb(var(--v-theme-secondary));
   stroke-width: 2.5px;
 }
 
@@ -176,14 +165,18 @@ label {
 }
 
 .top-div{
-  #border: 2px solid magenta;
+  /*
+  border: 2px solid magenta;
+  */
   position: relative;
   height: 5%;
   width: 100%
 }
 
 .main-section-div-wrapper{
-  #border: 2px solid cyan;
+  /*
+  border: 2px solid cyan;
+  */
   position: relative;
   height: 70%;
   width:100%;
@@ -191,7 +184,9 @@ label {
 }
 
 .left-div {
+  /*
   border: 2px solid yellow;
+  */
   height: 100%;
   position: absolute;
   transform-style: preserve-3d;
@@ -260,7 +255,9 @@ body {
 }
 
 .zoomTargetContainer {
-    #border: 1px solid red;
+    /*
+    border: 1px solid red;
+    */
     width: 97%;
     margin: auto;
     height: 97%;
@@ -275,16 +272,21 @@ body {
 }
 
 #graph-div{
-    #border: 1px solid green;
+    /*
+    border: 1px solid green;
+    */
 }
 
 #form-div-node{
-    #border: 1px solid green;
+    /*
+    border: 1px solid green;
+    */
     z-index: 200
 }
 
 #form-div-edge{
-    #border: 1px solid green;
+    /*border: 1px solid green;
+    */
 }
 
 #yaml-div{
@@ -296,7 +298,7 @@ body {
 }
 
 .zoomTarget{
-    #border: 1px solid grey;
+    /*border: 1px solid grey;*/
     height: 100%;
     width: 100%;
     position: absolute;
@@ -354,7 +356,9 @@ body {
 
 .nav {
   position: relative;
-  #border: 1px solid red;
+  /*
+  border: 1px solid red;
+  */
   width: 100px;
   float: left;
 }
@@ -449,11 +453,12 @@ input[type=text] {
   display: inline-table;
 }
 
-
+/*
 .samus__label {
   color: #42b983;
   font-weight: 1000;
 }
+*/
 
 /*
 textarea {
