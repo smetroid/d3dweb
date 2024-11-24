@@ -41,6 +41,9 @@ export default {
       case 'Open Diagram':
         app.emitter.emit('showDiagramList', '')
         break
+      case 'Login':
+        app.emitter.emit('showLogin', '')
+        break
       default:
         console.log('D3 Vim d3Action default event')
         console.log(event)

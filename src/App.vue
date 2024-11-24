@@ -9,6 +9,7 @@ import * as DagreD3 from 'dagre-d3'
 import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramModifier from '@/helpers/DiagramModifier.js'
 import DiagramList from '@/components/DiagramList.vue'
+import Login from '@/components/Login.vue'
 import { computed } from 'vue'
 
 /*
@@ -87,6 +88,9 @@ function toggleTheme() {
           :d3dInfo="d3dInfo"
         />
         <DiagramList
+          :active="active"
+        />
+        <Login
           :active="active"
         />
       </v-main>
@@ -268,7 +272,7 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DagreGraphLib, Settings, DiagramForm, HelperPane},
+  components: {DagreGraphLib, Settings, DiagramForm, HelperPane, Login},
   data () {
     return {
       active: "D3Dagre", //Default active component
@@ -309,6 +313,7 @@ export default {
       ],
       */
       menuLinks: [
+        {'icon':'mdi-login','title':'Login'},
         {'icon':'mdi-cog-outline','title':'D3D Settings'},
         {'icon':'mdi-open-in-new','title':'New Diagram'},
         {'icon':'mdi-open-in-app','title':'Open Diagram'},
