@@ -26,51 +26,35 @@ function toggleTheme() {
 </script>
 <template>
   <v-app app>
-      <!--
-      <v-card
-        class="mx-auto"
-        max-width="500"
-        >
-        <v-card-text class="pa-1 mb-n4">
+        <v-card-text
+          class="mx-auto"
+          max-width="500"
+          >
           <v-alert
             v-model="successMessage"
-            dismissible
-            normal
-            dense
-            outlined
-            transition="fade-transition"
+            closable
+            variant="outlined"
             type="success"
             >
-            <span class="pa-1 mt-2" v-html="alertMessage"></span>
+            <span v-html="alertMessage"></span>
           </v-alert>
           <v-alert
             v-model="errorMessage"
-            dismissible
-            normal
-            dense
-            transition="fade-transition"
-            outlined
-            text
+            closable
+            variant="outlined"
             type="error"
             >
             <span v-html="alertMessage"></span>
           </v-alert>
           <v-alert
             v-model="infoMessage"
-            dismissible
-            normal
-            dense
-            transition="fade-transition"
-            outlined
-            color="yellow"
-            text
+            closable
+            variant="outlined"
             type="info"
             >
             <span v-html="alertMessage"></span>
           </v-alert>
         </v-card-text>
-      </v-card>
-    -->
       <v-main app>
         <!--
         <DagreOtherKeys
@@ -350,25 +334,27 @@ export default {
     /*NOTE - Alert messages
     /*TODO - Move this to it's own Component, and keep the App.vue cleaner
     */
-    this.emitter.on('appMessage', (status, message, data) => {
+    this.emitter.on('appMessage', (data) => {
       if (D3Util.debug) {
-        console.log(status)
-        console.log(message)
         console.log(data)
+        console.log(data.message)
+        console.log(data.result.status)
       }
 
       var common = ''
-      if ((status == 'success') || (status === true)) {
-        common = '<br /> Message will be removed in 5 seconds <br />'
+      if ((status == 'success') || (data.result.status == '200')) {
+        common = '<br />Message will be removed in 5 seconds <br />'
         this.successMessage = true
-      } else if (status == 'error') {
+      } else if ((status == 'error') || (data.result.status != '200')) {
         this.errorMessage = true
-        common = '<br /> Message will be removed in 5 seconds <br />'
+        common = '<br />Message will be removed in 5 seconds <br />'
       } else if (status == 'info'){
         this.infoMessage = true
-        common = '</br> Message will be removed in 3 seconds <br /> Error:<br />'
+        common = '<br />Message will be removed in 3 seconds <br /> Error:<br />'
       }
-      this.alertMessage = message + common + data
+
+      //this.alertMessage = data.message + '<br />Status: ' +data.result.status + common
+      this.alertMessage = data.message + common
     })
 
     /*NOTE - modifer object from when creating a new diagram */

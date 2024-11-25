@@ -77,7 +77,6 @@ export default {
       //authInfo: null,
       authError: null,
       //alertMessage: null,
-      showAlert: null,
       loginModal: false
     }
   },
@@ -111,13 +110,11 @@ export default {
       if (D3Util.debug) {
         console.log(result)
       }
-      this.showAlert = true
-
       if (Object.prototype.hasOwnProperty.call(result, 'data')) {
         this.common()
-        this.$root.$emit('appMessage', true, 'Successfully Authenticated', result)
+        this.emitter.emit('appMessage', {message: 'Successfully Authenticated', result: result})
       } else {
-        this.$root.$emit('appMessage', false, 'Failed to Authenticate', result)
+        this.emitter.emit('appMessage', {message: 'Failed to Authenticate', result: result})
       }
     },
     close () {

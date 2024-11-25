@@ -12,13 +12,10 @@ export default {
       password: password,
     })
       .then(response => {
-        console.log(response)
         localStorage.token = JSON.stringify(response.data.token).replace(/"/g, '')
-        // this.$root.$emit('authenticated', (response))
         return response
       })
       .catch(error => {
-        // this.$emit('authFailure', (error))
         return error
       })
   },
