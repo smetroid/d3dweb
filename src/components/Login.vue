@@ -5,6 +5,7 @@
     v-model="loginModal"
     max-width="500"
     @keydown.esc="common($event)"
+    opacity="0"
     >
     <focus-trap
       v-model:active="loginModal">

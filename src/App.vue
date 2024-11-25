@@ -26,230 +26,238 @@ function toggleTheme() {
 </script>
 <template>
   <v-app app>
-        <v-card-text
-          class="mx-auto"
-          max-width="500"
-          >
-          <v-alert
-            v-model="successMessage"
-            closable
-            variant="outlined"
-            type="success"
-            >
-            <span v-html="alertMessage"></span>
-          </v-alert>
-          <v-alert
-            v-model="errorMessage"
-            closable
-            variant="outlined"
-            type="error"
-            >
-            <span v-html="alertMessage"></span>
-          </v-alert>
-          <v-alert
-            v-model="infoMessage"
-            closable
-            variant="outlined"
-            type="info"
-            >
-            <span v-html="alertMessage"></span>
-          </v-alert>
-        </v-card-text>
-      <v-main app>
-        <!--
-        <DagreOtherKeys
-          :d3dInfo="d3dInfo"
-        />
-        -->
-        <DagreGraphLib class=""
-          :active="active"
-        />
-        <DiagramForm
-          :active="active"
-        />
-        <Settings
-          :active="active"
-          :d3dInfo="d3dInfo"
-        />
-        <DiagramList
-          :active="active"
-        />
-        <Login
-          :active="active"
-        />
-      </v-main>
+    <!--
+    TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
+    -->
+    <v-card-text
+      class="mx-auto"
+      max-width="500"
+      >
+      <v-alert
+        v-model="successMessage"
+        closable
+        variant="outlined"
+        type="success"
+        >
+        <span v-html="alertMessage"></span>
+      </v-alert>
+      <v-alert
+        v-model="errorMessage"
+        closable
+        variant="outlined"
+        type="error"
+        >
+        <span v-html="alertMessage"></span>
+      </v-alert>
+      <v-alert
+        v-model="infoMessage"
+        closable
+        variant="outlined"
+        type="info"
+        >
+        <span v-html="alertMessage"></span>
+      </v-alert>
+    </v-card-text>
+    <v-main app>
       <!--
-        NOTE: app - in the footer makes the footer to stay at the bottom 
+      <DagreOtherKeys
+        :d3dInfo="d3dInfo"
+      />
       -->
-      <v-footer
-        app
-        class="pa-1 mr-0">
-        <v-row>
-          <v-card
-            color="primary"
-            width="100%" 
-            >
-            <v-container>
-              <v-row
-                align="center"
-                justify="center"
-                class="justify-space-around"
+      <DagreGraphLib class=""
+        :active="active"
+      />
+      <DiagramForm
+        :active="active"
+      />
+      <Settings
+        :active="active"
+        :d3dInfo="d3dInfo"
+      />
+      <DiagramList
+        :active="active"
+      />
+      <Login
+        :active="active"
+      />
+    </v-main>
+    <!--
+      NOTE: app - in the footer makes the footer to stay at the bottom
+    -->
+    <v-footer
+      app
+      class="pa-1 mr-0"
+      >
+      <v-row>
+        <v-card
+          color="primary"
+          width="100%"
+          >
+          <v-container>
+            <v-row
+              align="center"
+              justify="center"
+              class="justify-space-around"
+              >
+              <div>
+                <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span>
+              </div>
+              <div>
+                <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
+              </div>
+              <div class="d-flex">
+                <span class="font-weight-bold">Help Pane:</span>
+                <v-btn
+                  variant="outlined"
+                  density="compact"
+                  class="">/</v-btn>
+              </div>
+              <div class="d-flex">
+                <span class="text-decoration-underline font-weight-bold">T</span><span class="font-weight-bold">oggle:</span>
+                <v-btn
+                  variant="outlined"
+                  density="compact"
+                  @click="toggleTheme()">
+                  <v-icon icon="mdi-theme-light-dark"></v-icon>
+                </v-btn>
+              </div>
+              <div class="d-flex">
+                <span class="text-decoration-underline font-weight-bold" color="secondary">M</span>
+                <span class="font-weight-bold">enu:</span>
+                <div
+                  width="99%"
+                  height="100%"
+                  @keydown.stop.prevent="menu($event, $refs.menu)"
+                  @keypress.stop.prevent="menu($event, $refs.menu)">
+                  <focus-trap
+                    v-model:active="showMenu"
+                    :initial-focus="()=>$refs.menuDiv"
+                    >
+                    <div id="trap" ref="menuDiv" tabindex="0">
+                      <v-menu
+                        ref="speedDial"
+                        v-model="showMenu"
+                        >
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            density="compact"
+                            v-bind="props"
+                            variant="outlined">
+                          <v-icon v-if="showMenu">
+                            mdi-close
+                          </v-icon>
+                          <v-icon v-else>
+                            mdi-menu
+                          </v-icon>
+                          </v-btn>
+                        </template>
+                        <v-list
+                          nav
+                          density="compact"
+                          class="text-primary"
+                        >
+                          <v-list-item
+                            ref="menu"
+                            color="secondary"
+                            v-for="(item, i) in menuLinks"
+                            :active="currentMenuLink == item.title?true:false"
+                            :key="i" href="#" @click="d3Action(item.title)"
+                            >
+                            <template v-slot:prepend>
+                              <v-icon :icon="item.icon"></v-icon>
+                            </template>
+                            <v-list-item-title >
+                              {{ item.title }}
+                            </v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
+                    </div>
+                  </focus-trap>
+                </div>
+              </div>
+              <div class="d-flex">
+                <span
+                class="text-decoration-underline font-weight-bold" color="secondary">A</span>
+                <span class="font-weight-bold">ctions:</span>
+                <div
+                  width="99%"
+                  height="100%"
+                  @keydown.stop.prevent="menu($event, $refs.actionsMenu)"
+                  @keypress.stop.prevent="menu($event, $refs.actionsMenu)">
+                  <focus-trap
+                    v-model:active="showActionsMenu"
+                    :initial-focus="()=>$refs.menuActionsDiv"
+                    >
+                    <div
+                      id="trap"
+                      ref="menuActionsDiv"
+                      tabindex="0"
+                      >
+                      <v-menu
+                        ref="speedDial"
+                        v-model="showActionsMenu"
+                        >
+                        <template v-slot:activator="{ props }">
+                          <v-btn
+                            density="compact"
+                            v-bind="props"
+                            variant="outlined">
+                          <v-icon v-if="showActionsMenu">
+                            mdi-close
+                          </v-icon>
+                          <v-icon v-else>
+                            mdi-menu
+                          </v-icon>
+                          </v-btn>
+                        </template>
+                        <v-list
+                          nav
+                          density="compact"
+                          class="text-primary"
+                        >
+                          <v-list-item
+                            ref="actionsMenu"
+                            color="secondary"
+                            v-for="(item, i) in actionLinks"
+                            :active="currentMenuLink == item.title?true:false"
+                            :key="i" href="#" @click="d3Action(item.title)"
+                            >
+                            <template v-slot:prepend>
+                              <v-icon :icon="item.icon"></v-icon>
+                            </template>
+                            <v-list-item-title >
+                              {{ item.title }}
+                            </v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
+                    </div>
+                  </focus-trap>
+                </div>
+              </div>
+              </v-row>
+              <v-row>
+                <v-card
+                  width="100%"
                 >
-                <div>
-                  <span class="text-button font-weight-bold">ACTIVE:</span><span class=""> {{ active }} </span>
-                </div>
-                <div>
-                  <span class="text-button font-weight-bold">DEFAULT HINT:</span><span class=""> Open Read Only</span><br/>
-                </div>
-                <div class="d-flex">
-                  <span class="font-weight-bold">Help Pane:</span>
-                  <v-btn 
-                    variant="outlined"
-                    density="compact"
-                    class="">/</v-btn>
-                </div>
-                <div class="d-flex">
-                  <span class="text-decoration-underline font-weight-bold">T</span><span class="font-weight-bold">oggle:</span>
-                  <v-btn
-                    variant="outlined"
-                    density="compact"
-                    @click="toggleTheme()">
-                    <v-icon icon="mdi-theme-light-dark"></v-icon>
-                  </v-btn>
-                </div>
-                <div class="d-flex">
-                  <span class="text-decoration-underline font-weight-bold" color="secondary">M</span>
-                  <span class="font-weight-bold">enu:</span>
-                  <div
-                    width="99%"
-                    height="100%"
-                    @keydown.stop.prevent="menu($event, $refs.menu)"
-                    @keypress.stop.prevent="menu($event, $refs.menu)">
-                    <focus-trap 
-                      v-model:active="showMenu"
-                      :initial-focus="()=>$refs.menuDiv"
-                      >
-                      <div id="trap" ref="menuDiv" tabindex="0">
-                        <v-menu
-                          ref="speedDial"
-                          v-model="showMenu"
-                          >
-                          <template v-slot:activator="{ props }">
-                            <v-btn
-                              density="compact"
-                              v-bind="props"
-                              variant="outlined">
-                            <v-icon v-if="showMenu">
-                              mdi-close
-                            </v-icon>
-                            <v-icon v-else>
-                              mdi-menu
-                            </v-icon>
-                            </v-btn>
-                          </template>
-                          <v-list
-                            nav
-                            density="compact"
-                            class="text-primary"
-                          >
-                            <v-list-item
-                              ref="menu"
-                              color="secondary"
-                              v-for="(item, i) in menuLinks"
-                              :active="currentMenuLink == item.title?true:false"
-                              :key="i" href="#" @click="d3Action(item.title)"
-                              >
-                              <template v-slot:prepend>
-                                <v-icon :icon="item.icon"></v-icon>
-                              </template>
-                              <v-list-item-title >
-                                {{ item.title }}
-                              </v-list-item-title>
-                            </v-list-item>
-                          </v-list>
-                        </v-menu>
-                      </div>
-                    </focus-trap>
-                  </div>
-                </div>
-                <div class="d-flex">
-                  <span
-                  class="text-decoration-underline font-weight-bold" color="secondary">A</span>
-                  <span class="font-weight-bold">ctions:</span>
-                  <div
-                    width="99%"
-                    height="100%"
-                    @keydown.stop.prevent="menu($event, $refs.actionsMenu)"
-                    @keypress.stop.prevent="menu($event, $refs.actionsMenu)">
-                    <focus-trap 
-                      v-model:active="showActionsMenu"
-                      :initial-focus="()=>$refs.menuActionsDiv"
-                      >
-                      <div id="trap" ref="menuActionsDiv" tabindex="0">
-                        <v-menu
-                          ref="speedDial"
-                          v-model="showActionsMenu"
-                          >
-                          <template v-slot:activator="{ props }">
-                            <v-btn
-                              density="compact"
-                              v-bind="props"
-                              variant="outlined">
-                            <v-icon v-if="showActionsMenu">
-                              mdi-close
-                            </v-icon>
-                            <v-icon v-else>
-                              mdi-menu
-                            </v-icon>
-                            </v-btn>
-                          </template>
-                          <v-list
-                            nav
-                            density="compact"
-                            class="text-primary"
-                          >
-                            <v-list-item
-                              ref="actionsMenu"
-                              color="secondary"
-                              v-for="(item, i) in actionLinks"
-                              :active="currentMenuLink == item.title?true:false"
-                              :key="i" href="#" @click="d3Action(item.title)"
-                              >
-                              <template v-slot:prepend>
-                                <v-icon :icon="item.icon"></v-icon>
-                              </template>
-                              <v-list-item-title >
-                                {{ item.title }}
-                              </v-list-item-title>
-                            </v-list-item>
-                          </v-list>
-                        </v-menu>
-                      </div>
-                    </focus-trap>
-                  </div>
-                </div>
-                </v-row>
-                <v-row>
-                  <v-card
-                    width="100%"
-                  >
-                    <HelperPane
-                      :expand="showHelpPane"
-                      :diagramInfo="d3dInfo"
-                    />
-                  </v-card>
-                </v-row>
-                <!--
-                <v-row>
-                  <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
-                      {{ new Date().getFullYear() }} — <strong>D3D</strong>
-                  </v-col>
-                </v-row>
-                -->
-            </v-container>
-          </v-card>
-        </v-row>
-      </v-footer>
+                  <HelperPane
+                    :expand="showHelpPane"
+                    :diagramInfo="d3dInfo"
+                  />
+                </v-card>
+              </v-row>
+              <!--
+              <v-row>
+                <v-col class="text-center w-100 bg-grey-lighten-1" cols="12">
+                    {{ new Date().getFullYear() }} — <strong>D3D</strong>
+                </v-col>
+              </v-row>
+              -->
+          </v-container>
+        </v-card>
+      </v-row>
+    </v-footer>
   </v-app>
 </template>
 
@@ -551,6 +559,11 @@ export default {
     successMessage: function () {
       setTimeout( ()=> {
         this.successMessage = false
+      },5000)
+    },
+    errorMessage: function () {
+      setTimeout( ()=> {
+        this.errorMessage = false
       },5000)
     },
     infoMessage: function () {
