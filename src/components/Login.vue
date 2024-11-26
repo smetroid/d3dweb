@@ -114,6 +114,9 @@ export default {
       if (Object.prototype.hasOwnProperty.call(result, 'data')) {
         this.common()
         this.emitter.emit('appMessage', {message: 'Successfully Authenticated', result: result})
+
+        // move this to a http-only secure cookie, instead of saving the cookie in localstorage
+        localStorage.setItem('token', JSON.stringify(result.data.token).replace(/"/g, ''))
       } else {
         this.emitter.emit('appMessage', {message: 'Failed to Authenticate', result: result})
       }

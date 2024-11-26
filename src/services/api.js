@@ -12,7 +12,6 @@ export default {
       password: password,
     })
       .then(response => {
-        localStorage.token = JSON.stringify(response.data.token).replace(/"/g, '')
         return response
       })
       .catch(error => {

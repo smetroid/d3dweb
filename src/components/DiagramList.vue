@@ -41,10 +41,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.created).toLocaleString() }}</span>
+                  <span>{{ new Date(item.createTime).toLocaleString() }}</span>
                 </td>
                 <td>
-                    <span>{{ new Date(item.updated).toLocaleString() }}</span>
+                  <span>{{ new Date(item.updatedTime).toDateString() }}</span>
                 </td>
                 <v-icon
                   small
@@ -105,6 +105,7 @@
 </template>
 <script>
 import D3Util from '@/helpers/D3Util.js'
+import D3DApi from '@/services/api'
 export default {
   name: 'DiagramList',
   props: ['active'],
@@ -126,9 +127,9 @@ export default {
       headers: [
         {title: 'Id', key: 'id', sortable: false},
         {title: 'Name', key: 'name', sortable: true},
-        {title: 'Description', key: 'description'},
-        {title: 'Created', key: 'created'},
-        {title: 'Updated', key: 'updated'},
+        {title: 'Description', key: 'description', sortable: true},
+        {title: 'Created', key: 'created', sortable: true},
+        {title: 'Updated', key: 'updated', sortable: true},
         {title: 'Actions', key: 'actions', sortable: false},
       ],
       diagrams: [],
@@ -147,13 +148,16 @@ export default {
     },
   },
   mounted () {
-    /* for when we have a database backend ready
-    this.getDiagrams()
-    */
-    this.getLocalDiagrams()
-    console.log('diagram list')
-    console.log(this.active)
-    //this.diagramListModal = this.active == "Open"?true:false
+    //REVIEW - Not sure I need this during mount
+    // this is normaly being called from another component
+    // or link 
+    //if (localStorage.getItem('token')) {
+    //  console.log('Getting diagrams from server')
+    //  this.getDiagrams()
+    //} else {
+    //  console.log('Getting diagrams from LocalStorage')
+    //  this.getLocalDiagrams()
+    //}
 
     /* this may no longer be needed
       We need this for the trap else the trap does not work
@@ -165,17 +169,20 @@ export default {
       this.listTrap = this.diagramListModal
     })
 
-    //this.getDiagrams()
-    //this.diagramListModal = true
-    //this.listTrap = this.diagramListModal
     this.emitter.on('showDiagramList', (data) => {
-      //this.listTrap = true
       this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
       this.diagram = data.diagram
-      this.getLocalDiagrams()
+
+      if (localStorage.getItem('token')) {
+        console.log('Getting diagrams from server')
+        this.getDiagrams()
+      } else {
+        console.log('Getting diagrams from LocalStorage')
+        this.getLocalDiagrams()
+      }
 
       this.$nextTick(function(){
         console.log('DiagramList Trap Active')
@@ -306,13 +313,12 @@ export default {
       console.log(items)
       this.diagrams = items;
     },
-    /*NOTE - for when a database backend is ready
     getDiagrams: async function() {
-      var result = await D3VimApi.getDiagrams()
+      var result = await D3DApi.getDiagrams()
       console.log(result)
+      console.log(new Date(result.data.dags[0].updatedTime).toLocaleString())
       this.diagrams = result.data.dags
     },
-    */
     close () {
       console.log('Close method')
       this.diagramListModal= false

@@ -11,6 +11,7 @@ import DiagramModifier from '@/helpers/DiagramModifier.js'
 import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
 import { computed } from 'vue'
+import D3DApi from '@/services/api'
 
 /*
 // Theme specific
@@ -408,8 +409,11 @@ export default {
       console.log('Message to open diagram received')
       console.log(id)
       // this.id = id
-      //this.loadFromServer(id)
-      this.loadDiagram(id)
+      if (localStorage.getItem('token')) {
+        this.loadFromServer(id)
+      } else {
+        this.loadDiagram(id)
+      }
     })
 
     this.emitter.on('toggleTheme', () => {
@@ -438,6 +442,43 @@ export default {
       let localDiagramInfo = null
       if (id) {
         localDiagramInfo = D3Util.getLocalItem(id)
+        /**NOTE - setting the LastLocallySavedItemId will
+         * allow the application to open the last opened
+         * item when re-rendering
+         */
+        this.$cookies.set('LastLocallySavedItemId', id)
+      } else {
+        let diagramId = this.$cookies.get('LastLocallySavedItemId')
+        if (diagramId) {
+          localDiagramInfo = D3Util.getLocalItem(diagramId)
+          id = diagramId
+        } else {
+          // get the last temporary saved working item
+          localDiagramInfo = D3Util.getTempDiagram()
+        }
+      }
+
+      if (D3Util.debug) {
+        console.log(localDiagramInfo)
+        console.log(id)
+      }
+
+      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+
+      this.d3dInfo = localDiagramInfo
+      this.d3dInfo.id = id
+      this.d3dInfo.diagram = g
+
+      /**NOTE - this.modifier is the main object used by all other components files */
+      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier.redraw(g)
+      console.log(this.modifier)
+
+    },
+    loadFromServer: async function (id) {
+      let localDiagramInfo = null
+      if (id) {
+        localDiagramInfo = await D3DApi.getDiagram(id)
         /**NOTE - setting the LastLocallySavedItemId will
          * allow the application to open the last opened
          * item when re-rendering
