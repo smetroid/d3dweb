@@ -41,10 +41,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                  <span>{{ new Date(item.createTime).toLocaleString() }}</span>
+                  <span>{{ new Date(item.created).toLocaleString() }}</span>
                 </td>
                 <td>
-                  <span>{{ new Date(item.updatedTime).toDateString() }}</span>
+                  <span>{{ new Date(item.updated).toDateString() }}</span>
                 </td>
                 <v-icon
                   small
@@ -170,7 +170,7 @@ export default {
     })
 
     this.emitter.on('showDiagramList', (data) => {
-      this.diagramListModal = true
+      //this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
@@ -184,10 +184,10 @@ export default {
         this.getLocalDiagrams()
       }
 
-      this.$nextTick(function(){
-        console.log('DiagramList Trap Active')
-        this.listTrap = this.diagramListModal
-      })
+      //this.$nextTick(function(){
+      //  console.log('DiagramList Trap Active')
+      //  this.listTrap = this.diagramListModal
+      //})
     })
   },
   methods: {
@@ -316,8 +316,15 @@ export default {
     getDiagrams: async function() {
       var result = await D3DApi.getDiagrams()
       console.log(result)
-      console.log(new Date(result.data.dags[0].updatedTime).toLocaleString())
-      this.diagrams = result.data.dags
+      if (result.data === undefined) {
+        let data = {status: 'info', message: 'no data found ... Login to refresh token', result: result.response }
+        this.emitter.emit('appMessage', data)
+        this.close()
+      } else {
+        console.log(new Date(result.data.dags[0].updated).toLocaleString())
+        this.diagrams = result.data.dags
+        this.diagramListModal = true
+      }
     },
     close () {
       console.log('Close method')
