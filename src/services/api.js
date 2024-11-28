@@ -112,7 +112,8 @@ export default {
       'name': data.name,
       'description': data.description,
       'diagram': JSON.stringify(json),
-      'updatedTime': updated.toISOString(),
+      'updated': updated.toISOString(),
+      'created': data.created
     }
 
     return axios.post('/dag/' + data.id + '/update', updatedData,
