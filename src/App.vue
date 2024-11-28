@@ -162,7 +162,9 @@ function toggleTheme() {
                             color="secondary"
                             v-for="(item, i) in menuLinks"
                             :active="currentMenuLink == item.title?true:false"
-                            :key="i" href="#" @click="d3Action(item.title)"
+                            :key="i"
+                            :href="'#'+item.title"
+                            @click="d3Action(item.title)"
                             >
                             <template v-slot:prepend>
                               <v-icon :icon="item.icon"></v-icon>
@@ -222,7 +224,9 @@ function toggleTheme() {
                             color="secondary"
                             v-for="(item, i) in actionLinks"
                             :active="currentMenuLink == item.title?true:false"
-                            :key="i" href="#" @click="d3Action(item.title)"
+                            :key="i"
+                            :href="'#'+item.title"
+                            @click="d3Action(item.title)"
                             >
                             <template v-slot:prepend>
                               <v-icon :icon="item.icon"></v-icon>
@@ -294,17 +298,6 @@ export default {
         {'icon':'mdi-selection-remove','title':'Delete Edge'},
         {'icon':'mdi-selection','title':'Select Edges'}
       ],
-      /*
-      menuLinks: [
-        {'icon':'mdi-login','title':'Login'},
-        {'icon':'mdi-cog-outline','title':'D3D Settings'},
-        {'icon':'mdi-open-in-new','title':'New Diagram'},
-        {'icon':'mdi-open-in-app','title':'Open Diagram'},
-        {'icon':'mdi-pencil','title':'Edit Diagram'},
-        {'icon':'mdi-content-save-outline','title':'Save Changes'},
-        {'icon':'mdi-file-undo-outline','title':'Discard Changes'},
-      ],
-      */
       menuLinks: [
         {'icon':'mdi-login','title':'Login'},
         {'icon':'mdi-cog-outline','title':'D3D Settings'},
@@ -331,7 +324,13 @@ export default {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
-      this.loadDiagram()
+
+      if (localStorage.getItem('token')) {
+        this.loadFromServer()
+      } else {
+        this.loadDiagram()
+      }
+
     } catch (error) {
       console.log(error)
       this.emitter.emit('newDiagram')
@@ -350,16 +349,13 @@ export default {
         console.log(data.result.status)
       }
 
-      var common = ''
-      if ((status == 'success') || (data.result.status == '200')) {
-        common = '<br />Message will be removed in 5 seconds <br />'
+      let common = '<br />Message will be removed in 5 seconds <br />'
+      if ((data.status == 'success') || (data.result.status == '200')) {
         this.successMessage = true
-      } else if ((status == 'error') || (data.result.status != '200')) {
+      } else if ((data.status == 'error') || (data.result.status != '200')) {
         this.errorMessage = true
-        common = '<br />Message will be removed in 5 seconds <br />'
-      } else if (status == 'info'){
+      } else if (data.status == 'info'){
         this.infoMessage = true
-        common = '<br />Message will be removed in 3 seconds <br /> Error:<br />'
       }
 
       //this.alertMessage = data.message + '<br />Status: ' +data.result.status + common
@@ -476,9 +472,9 @@ export default {
 
     },
     loadFromServer: async function (id) {
-      let localDiagramInfo = null
+      let serverDiagramInfo = null
       if (id) {
-        localDiagramInfo = await D3DApi.getDiagram(id)
+        serverDiagramInfo = await D3DApi.getDiagram(id)
         /**NOTE - setting the LastLocallySavedItemId will
          * allow the application to open the last opened
          * item when re-rendering
@@ -487,22 +483,22 @@ export default {
       } else {
         let diagramId = this.$cookies.get('LastLocallySavedItemId')
         if (diagramId) {
-          localDiagramInfo = D3Util.getLocalItem(diagramId)
+          serverDiagramInfo = await D3DApi.getDiagram(diagramId)
           id = diagramId
         } else {
           // get the last temporary saved working item
-          localDiagramInfo = D3Util.getTempDiagram()
+          serverDiagramInfo = D3Util.getTempDiagram()
         }
       }
 
       if (D3Util.debug) {
-        console.log(localDiagramInfo)
+        console.log(serverDiagramInfo)
         console.log(id)
       }
 
-      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      let g = new DagreD3.graphlib.json.read(JSON.parse(serverDiagramInfo.diagram))
 
-      this.d3dInfo = localDiagramInfo
+      this.d3dInfo = serverDiagramInfo
       this.d3dInfo.id = id
       this.d3dInfo.diagram = g
 
