@@ -346,11 +346,19 @@ export default {
       if (D3Util.debug) {
         console.log(data)
         console.log(data.message)
-        console.log(data.result.status)
+        /*NOTE -
+        it appears like the api response has the status attribute in different
+        locations
+        data.result.status is a login api call return
+        data.status is a vue app message and post responses
+        */
+        //console.log(data.result.status)
       }
 
       let common = '<br />Message will be removed in 5 seconds <br />'
-      if ((data.status == 'success') || (data.result.status == '200')) {
+      if ((data.status == 'success')
+        || (data.status >= '200' && data.status < '300')
+        || (data.result.status >= '200' && data.result.status < '300')) {
         this.successMessage = true
       } else if ((data.status == 'error') || (data.result.status != '200')) {
         this.errorMessage = true
@@ -395,7 +403,7 @@ export default {
     })
 
     this.emitter.on('updateDiagramInfo', (payload) => {
-       console.log('diagramInfo')
+       console.log('Updating Diagram Info')
        this.d3dInfo.id = payload.id
        this.d3dInfo.name = payload.name
        this.d3dInfo.description = payload.description

@@ -74,8 +74,10 @@ export default {
     return selectLi
   },
   debug () {
-    var debug = Settings.debug
-    debug = false
+    //how the hell was this working, if it was working?
+    //I think we need to pull if from settings cookie
+    //var debug = Settings.debug
+    let debug = true
     return debug
   },
   hintOptions () {
@@ -410,6 +412,7 @@ export default {
     return localItem
 
   },
+  //Need to check if token is valid
   auth(){
     if (localStorage.getItem('token')){
       return true
