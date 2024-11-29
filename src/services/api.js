@@ -1,8 +1,5 @@
 import axios from 'axios'
-import * as dagreD3 from 'dagre-d3'
 import D3Util from '@/helpers/D3Util'
-// import VueCookies from 'vue-cookies'
-// import * as dagreD3 from 'dagre-d3'
 axios.defaults.baseURL = 'http://localhost:3000'
 
 export default {
