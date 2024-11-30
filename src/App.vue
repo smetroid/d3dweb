@@ -504,16 +504,27 @@ export default {
         console.log(id)
       }
 
-      let g = new DagreD3.graphlib.json.read(JSON.parse(serverDiagramInfo.diagram))
+      try {
+        let g = new DagreD3.graphlib.json.read(JSON.parse(serverDiagramInfo.diagram))
 
-      this.d3dInfo = serverDiagramInfo
-      this.d3dInfo.id = id
-      this.d3dInfo.diagram = g
+        this.d3dInfo = serverDiagramInfo
+        this.d3dInfo.id = id
+        this.d3dInfo.diagram = g
 
-      /**NOTE - this.modifier is the main object used by all other components files */
-      this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
-      this.modifier.redraw(g)
-      console.log(this.modifier)
+        /**NOTE - this.modifier is the main object used by all other components files */
+        this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
+        this.modifier.redraw(g)
+        console.log(this.modifier)
+
+      } catch (error) {
+        this.emitter.emit('appMessage',
+          {
+            message: 'Unable to load saved diagram, resetting last saved id', result: error
+          })
+        this.$cookies.remove('LastLocallySavedItemId')
+
+        console.log(error)
+      }
 
     },
     openMenu (){
