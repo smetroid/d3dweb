@@ -491,6 +491,7 @@ export default {
       } else {
         let diagramId = this.$cookies.get('LastLocallySavedItemId')
         if (diagramId) {
+          /*TODO - address errors from the api 400s or 500s */
           serverDiagramInfo = await D3DApi.getDiagram(diagramId)
           id = diagramId
         } else {
