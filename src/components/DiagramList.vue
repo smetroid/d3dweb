@@ -289,9 +289,19 @@ export default {
       if (D3Util.debug) {
         console.log(item)
       }
-      this.diagrams.pop(this)
-      D3Util.deleteLocalEntry(this.selectedRowId)
-      this.getLocalDiagrams()
+      const index= this.diagrams.indexOf(item)
+      console.log(index)
+      this.diagrams.splice(index, 1)
+
+      if (localStorage.getItem('token')) {
+        D3DApi.deleteDiagram(this.selectedRowId)
+        console.log('Getting diagrams from server')
+        this.getDiagrams()
+      } else {
+        D3Util.deleteLocalEntry(this.selectedRowId)
+        console.log('Getting diagrams from LocalStorage')
+        this.getLocalDiagrams()
+      }
     },
     filter (value, search) {
       return value != null &&
