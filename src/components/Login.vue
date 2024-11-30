@@ -113,7 +113,10 @@ export default {
       }
       if (Object.prototype.hasOwnProperty.call(result, 'data')) {
         this.common()
-        this.emitter.emit('appMessage', {message: 'Successfully Authenticated', result: result})
+        this.emitter.emit('appMessage',
+          { message: 'Successfully Authenticated',
+            result: result
+          })
 
         // move this to a http-only secure cookie, instead of saving the cookie in localstorage
         localStorage.setItem('token', JSON.stringify(result.data.token).replace(/"/g, ''))
@@ -132,7 +135,7 @@ export default {
     common (){
       this.loginModal = false
       //this.loginTrapActive = false
-      this.$root.$emit('changeActive')
+      this.emitter.emit('changeActive')
     }
   },
   watch: {
