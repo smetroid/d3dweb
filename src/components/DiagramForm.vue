@@ -443,6 +443,10 @@ export default {
     newModifier (d3dInfo) {
       let newModifier = new DiagramModifier(d3dInfo, this.emitter)
       console.log(this.newModifier)
+
+      /** dagre-d3 has some issues clearing clusters*/
+      newModifier.clearCluster()
+
       newModifier.redraw(d3dInfo.diagram)
       this.emitter.emit('updateModifier', newModifier)
     },
