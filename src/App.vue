@@ -356,14 +356,14 @@ export default {
       }
 
       let common = '<br />Message will be removed in 5 seconds <br />'
-      if ((data.status == 'success')
+      if (data.status == 'info') {
+        this.infoMessage = true
+      } else if ((data.status == 'success')
         || (data.status >= '200' && data.status < '300')
         || (data.result.status >= '200' && data.result.status < '300')) {
         this.successMessage = true
       } else if ((data.status == 'error') || (data.result.status != '200')) {
         this.errorMessage = true
-      } else if (data.status == 'info'){
-        this.infoMessage = true
       }
 
       //this.alertMessage = data.message + '<br />Status: ' +data.result.status + common
@@ -474,7 +474,7 @@ export default {
       this.d3dInfo.diagram = g
 
       /**NOTE - this.modifier is the main object used by all other components files */
-      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
       this.modifier.redraw(g)
       console.log(this.modifier)
 
@@ -511,7 +511,7 @@ export default {
       this.d3dInfo.diagram = g
 
       /**NOTE - this.modifier is the main object used by all other components files */
-      this.modifier = new DiagramModifier(this.d3dInfo)
+      this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
       this.modifier.redraw(g)
       console.log(this.modifier)
 
