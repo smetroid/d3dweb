@@ -707,4 +707,10 @@ export default class DiagramModifier {
     })
   }
 
+  clearCluster() {
+    const clusters = d3.select('g.clusters');
+    // Clear all its children
+    clusters.selectAll('*').remove();
+  }
+
 }
