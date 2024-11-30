@@ -441,7 +441,7 @@ export default {
     // },
     /**NOTE - this.modifier is the main object used by all other components files */
     newModifier (d3dInfo) {
-      let newModifier = new DiagramModifier(d3dInfo)
+      let newModifier = new DiagramModifier(d3dInfo, this.emitter)
       console.log(this.newModifier)
       newModifier.redraw(d3dInfo.diagram)
       this.emitter.emit('updateModifier', newModifier)
