@@ -514,6 +514,10 @@ export default {
 
         /**NOTE - this.modifier is the main object used by all other components files */
         this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
+
+        /** dagre-d3 has some issues clearing clusters*/
+        this.modifier.clearCluster()
+
         this.modifier.redraw(g)
         console.log(this.modifier)
 

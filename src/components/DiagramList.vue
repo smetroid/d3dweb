@@ -25,7 +25,6 @@
             :search="search"
             :items-per-page="itemsPerPage"
             :page="page"
-            @update:currentItems="updatedItems()"
           >
             <template v-slot:top>
               <v-text-field
@@ -164,10 +163,10 @@ export default {
       NOTE: we can probably just remove this and use the showDiagramList
       emitter
     */
-    this.$nextTick(function(){
-      console.log('DiagramList Trap Active')
-      this.listTrap = this.diagramListModal
-    })
+    //this.$nextTick(function(){
+    //  console.log('DiagramList Trap Active')
+    //  this.listTrap = this.diagramListModal
+    //})
 
     this.emitter.on('showDiagramList', (data) => {
       //this.diagramListModal = true
@@ -184,10 +183,6 @@ export default {
         this.getLocalDiagrams()
       }
 
-      //this.$nextTick(function(){
-      //  console.log('DiagramList Trap Active')
-      //  this.listTrap = this.diagramListModal
-      //})
     })
   },
   methods: {
@@ -333,7 +328,12 @@ export default {
       } else {
         console.log(new Date(result.data.dags[0].updated).toLocaleString())
         this.diagrams = result.data.dags
-        this.diagramListModal = true
+        this.listTrap = this.diagramListModal = true
+
+        //this.$nextTick(function(){
+        //  console.log('DiagramList Trap Active')
+        //  this.listTrap = true
+        //})
       }
     },
     close () {
@@ -344,8 +344,8 @@ export default {
     }
   },
   watch: {
-    active: function () {
-    }
+    //active: function () {
+    //}
   }
 }
 </script>
