@@ -25,7 +25,6 @@
             :search="search"
             :items-per-page="itemsPerPage"
             :page="page"
-            @update:currentItems="updatedItems()"
           >
             <template v-slot:top>
               <v-text-field
@@ -41,10 +40,10 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.description }}</td>
                 <td>
-                    <span>{{ new Date(item.created).toLocaleString() }}</span>
+                  <span>{{ new Date(item.created).toLocaleString() }}</span>
                 </td>
                 <td>
-                    <span>{{ new Date(item.updated).toLocaleString() }}</span>
+                  <span>{{ new Date(item.updated).toDateString() }}</span>
                 </td>
                 <v-icon
                   small
@@ -105,6 +104,7 @@
 </template>
 <script>
 import D3Util from '@/helpers/D3Util.js'
+import D3DApi from '@/services/api'
 export default {
   name: 'DiagramList',
   props: ['active'],
@@ -126,9 +126,9 @@ export default {
       headers: [
         {title: 'Id', key: 'id', sortable: false},
         {title: 'Name', key: 'name', sortable: true},
-        {title: 'Description', key: 'description'},
-        {title: 'Created', key: 'created'},
-        {title: 'Updated', key: 'updated'},
+        {title: 'Description', key: 'description', sortable: true},
+        {title: 'Created', key: 'created', sortable: true},
+        {title: 'Updated', key: 'updated', sortable: true},
         {title: 'Actions', key: 'actions', sortable: false},
       ],
       diagrams: [],
@@ -147,40 +147,42 @@ export default {
     },
   },
   mounted () {
-    /* for when we have a database backend ready
-    this.getDiagrams()
-    */
-    this.getLocalDiagrams()
-    console.log('diagram list')
-    console.log(this.active)
-    //this.diagramListModal = this.active == "Open"?true:false
+    //REVIEW - Not sure I need this during mount
+    // this is normaly being called from another component
+    // or link 
+    //if (localStorage.getItem('token')) {
+    //  console.log('Getting diagrams from server')
+    //  this.getDiagrams()
+    //} else {
+    //  console.log('Getting diagrams from LocalStorage')
+    //  this.getLocalDiagrams()
+    //}
 
     /* this may no longer be needed
       We need this for the trap else the trap does not work
       NOTE: we can probably just remove this and use the showDiagramList
       emitter
     */
-    this.$nextTick(function(){
-      console.log('DiagramList Trap Active')
-      this.listTrap = this.diagramListModal
-    })
+    //this.$nextTick(function(){
+    //  console.log('DiagramList Trap Active')
+    //  this.listTrap = this.diagramListModal
+    //})
 
-    //this.getDiagrams()
-    //this.diagramListModal = true
-    //this.listTrap = this.diagramListModal
     this.emitter.on('showDiagramList', (data) => {
-      //this.listTrap = true
-      this.diagramListModal = true
+      //this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
       this.diagram = data.diagram
-      this.getLocalDiagrams()
 
-      this.$nextTick(function(){
-        console.log('DiagramList Trap Active')
-        this.listTrap = this.diagramListModal
-      })
+      if (localStorage.getItem('token')) {
+        console.log('Getting diagrams from server')
+        this.getDiagrams()
+      } else {
+        console.log('Getting diagrams from LocalStorage')
+        this.getLocalDiagrams()
+      }
+
     })
   },
   methods: {
@@ -282,9 +284,19 @@ export default {
       if (D3Util.debug) {
         console.log(item)
       }
-      this.diagrams.pop(this)
-      D3Util.deleteLocalEntry(this.selectedRowId)
-      this.getLocalDiagrams()
+      const index= this.diagrams.indexOf(item)
+      console.log(index)
+      this.diagrams.splice(index, 1)
+
+      if (localStorage.getItem('token')) {
+        D3DApi.deleteDiagram(this.selectedRowId)
+        console.log('Getting diagrams from server')
+        this.getDiagrams()
+      } else {
+        D3Util.deleteLocalEntry(this.selectedRowId)
+        console.log('Getting diagrams from LocalStorage')
+        this.getLocalDiagrams()
+      }
     },
     filter (value, search) {
       return value != null &&
@@ -306,13 +318,24 @@ export default {
       console.log(items)
       this.diagrams = items;
     },
-    /*NOTE - for when a database backend is ready
     getDiagrams: async function() {
-      var result = await D3VimApi.getDiagrams()
+      var result = await D3DApi.getDiagrams()
       console.log(result)
-      this.diagrams = result.data.dags
+      if (result.data === undefined) {
+        let data = {status: 'info', message: 'no data found ... Login to refresh token', result: result.response }
+        this.emitter.emit('appMessage', data)
+        this.close()
+      } else {
+        console.log(new Date(result.data.dags[0].updated).toLocaleString())
+        this.diagrams = result.data.dags
+        this.listTrap = this.diagramListModal = true
+
+        //this.$nextTick(function(){
+        //  console.log('DiagramList Trap Active')
+        //  this.listTrap = true
+        //})
+      }
     },
-    */
     close () {
       console.log('Close method')
       this.diagramListModal= false
@@ -321,8 +344,8 @@ export default {
     }
   },
   watch: {
-    active: function () {
-    }
+    //active: function () {
+    //}
   }
 }
 </script>

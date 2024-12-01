@@ -126,7 +126,8 @@
 import D3Util from '@/helpers/D3Util.js'
 import * as DagreD3 from 'dagre-d3'
 import DiagramModifier from '@/helpers/DiagramModifier.js'
-//import VueCookies from 'vue-cookies'
+import VueCookies from 'vue-cookies'
+import D3DApi from '@/services/api'
 export default {
   name: 'DiagramForm',
   props: ['active'],
@@ -186,7 +187,11 @@ export default {
       this.setDiagramInfo()
       if (this.modifier.d3dInfo.id){
         console.log('found diagram info id ... saving changes')
-        this.updateLocalDiagram();
+        if (D3Util.auth) {
+          this.updateServerDiagram()
+        } else {
+          this.updateLocalDiagram();
+        }
       } else {
         this.diagramModal = true
       }
@@ -265,7 +270,6 @@ export default {
       console.log('creating a new diagramForm')
       /*NOTE - gets latest/updated modified objects, and sets it as it's value */
       this.setDiagramInfo(true)
-
       this.setOptionsAndLabels()
 
       /**
@@ -283,14 +287,14 @@ export default {
       if we don't do it this way the application 
       errors out when reloading the page
       */
-      //let json = new DagreD3.graphlib.json.write(this.diagram)
-      //let payload = { 
-      //  'name': this.name,
-      //  'description': this.description,
-      //  'diagram': JSON.stringify(json),
-      //  'createdTime': created.toISOString(),
-      //  'updatedTime': null,
-      //}
+      let json = new DagreD3.graphlib.json.write(this.diagram)
+      let payload = {
+        'name': this.name,
+        'description': this.description,
+        'diagram': JSON.stringify(json),
+        'created': this.created,
+        'updated': new Date().toISOString(),
+      }
 
       if (D3Util.debug()){
         console.log(this.diagramInfo)
@@ -298,34 +302,36 @@ export default {
       }
 
       if (D3Util.auth()) {
-        /*NOTE - Commenting this out for now
-      //  var result = await D3VimApi.postDiagram(payload)
-      //  if(D3Util.debug()){
-      //    console.log(result)
-      //  }
-      //  var statusText = result.statusText + " ID: " + result.data
+        var result = await D3DApi.postDiagram(payload)
+        if(D3Util.debug()){
+          console.log(result)
+        }
+        var statusText = result.statusText + " ID: " + result.data
+        console.log(result)
 
-      //  if (Object.prototype.hasOwnProperty.call(result, 'data')) {
-      //    payload.id = result.data
-      //    D3Util.saveTempDiagram(payload)
-      //    this.$root.$emit('appMessage', true, 'New diagram successfully created', statusText)
-      //    this.$root.$emit('updateHelperDiagramInfo', payload.name, payload.description, result.data)
+        if (Object.prototype.hasOwnProperty.call(result, 'data')) {
+          this.id = result.data
+          // we are no longer able to use saveTempDiagram, since
+          // this is just used temporarily when playing with d3d
+          // D3Util.saveTempDiagram(payload)
+          this.emitter.emit('appMessage', {message: 'New diagram successfully created', result: result})
+          this.emitter.emit('updateDiagramInfo', this)
 
-      //  } else {
-      //    this.$root.$emit('appMessage', false, 'Failed to create or save diagram', statusText)
-      //  }
-      //  /**
-      //   * TODO: Move this to the backend api 
-      //   * a temporary workaround to set save
-      //   * and retrieve the edgeLine setting
-      //  */
-      //  VueCookies.set('edgeLine'+this.id, this.edgeLine)
+        } else {
+          this.emitter.emit('appMessage', {message: 'Failed to create or save diagram', result: statusText})
+        }
+        /**
+         * TODO: Move this to the backend api
+         * a temporary workaround to set save
+         * and retrieve the edgeLine setting
+        */
+        //VueCookies.set('edgeLine'+this.id, this.edgeLine)
       } else {
         console.log(this)
         /*NOTE - once the setDiagramInfo completes ... DiagramForm.vue should have the latest/updated information */
         let id = D3Util.createLocalEntry(this)
         this.id = id
-        this.emitter.emit('appMessage', true, 'Changes are being saved to local storage')
+        this.emitter.emit('appMessage', {message: 'Changes are being saved to local storage', status: 'info'})
         this.emitter.emit('updateDiagramInfo', this)
       }
 
@@ -382,33 +388,68 @@ export default {
       this.close()
       
     },
-    newModifier (d3dInfo) {
-      /**NOTE - this.modifier is the main object used by all other components files */
-      let newModifier = new DiagramModifier(d3dInfo)
-      console.log(this.newModifier)
-      newModifier.redraw(d3dInfo.diagram)
-      this.emitter.emit('updateModifier', newModifier)
+    updateServerDiagram: async function () {
+      let d3dInfo = {}
+      d3dInfo.id = this.id
+      d3dInfo.name = this.name
+      d3dInfo.description = this.description
+      d3dInfo.created = this.created
+      console.log(d3dInfo)
+      this.diagram = new DagreD3.graphlib.json.read(JSON.parse(this.jsonDiagram))
+
+      this.setOptionsAndLabels()
+      d3dInfo.diagram = this.diagram
+
+      /* eslint-disable-next-line  */
+      var json = new DagreD3.graphlib.json.write(this.diagram)
+      console.log(json)
+
+      var updated = new Date()
+      var updatedData = {
+        'id': this.id,
+        'name': this.name,
+        'description': this.description,
+        'diagram': JSON.stringify(json),
+        'updated': updated.toISOString(),
+        'created': this.created
+      }
+
+      this.newModifier(d3dInfo)
+      var response = await D3DApi.updateDiagram(updatedData)
+
+      if(D3Util.debug){
+        console.log('updateDiagram')
+        console.log(response)
+      }
+
+      if (Object.prototype.hasOwnProperty.call(response, 'data')) {
+        this.emitter.emit('appMessage', {message: 'Diagram saved', result: response})
+      } else {
+        this.emitter.emit('appMessage', {message: 'Failed to save diagram', result: response})
+      }
+      this.emitter.emit("changeActive")
+
+      console.log('this.edgeLine')
+      console.log(this.edgeLine)
+      console.log(this.$data)
+      VueCookies.set('edgeLine'+this.id, this.edgeLine)
+      this.close()
     },
-    //updateDiagram: async function () {
-    //  this.setOptionsAndLabels()
-    //  this.diagramInfo.redraw(this.diagram) 
-    //  var result = await D3VimApi.updateDiagram(this.$data, this)
-
-    //  if(D3Util.debug){
-    //    console.log('updateDiagram')
-    //    console.log(result)
-    //  }
-
-    //  console.log('this.edgeLine')
-    //  console.log(this.edgeLine)
-    //  console.log(this.$data)
-    //  VueCookies.set('edgeLine'+this.id, this.edgeLine)
-    //  this.close()
-    //},
     // Not being used at the moment
     // keyPress(event) {
     //   this.hints = D3Util.formHints(event, this)
     // },
+    /**NOTE - this.modifier is the main object used by all other components files */
+    newModifier (d3dInfo) {
+      let newModifier = new DiagramModifier(d3dInfo, this.emitter)
+      console.log(this.newModifier)
+
+      /** dagre-d3 has some issues clearing clusters*/
+      newModifier.clearCluster()
+
+      newModifier.redraw(d3dInfo.diagram)
+      this.emitter.emit('updateModifier', newModifier)
+    },
     close () {
       console.log('Close method')
       this.diagramModal= false

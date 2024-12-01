@@ -112,12 +112,12 @@ export default class DiagramModifier {
 
     let randomId = D3Util.randomId()
     this.diagram.setNode(randomId, { 
-    'label': data.nodeLabel, 
-    'shape': data.nodeShape, 
-    'labelType': data.nodeLabelType, 
-    'clusterLabelPos': data.clusterLabelPos,
-    'style': data.style,
-    'id': randomId
+      'label': data.nodeLabel,
+      'shape': data.nodeShape,
+      'labelType': data.nodeLabelType,
+      'clusterLabelPos': data.clusterLabelPos,
+      'style': data.style,
+      'id': randomId
     })
 
     if(data.parentNode) {
@@ -152,10 +152,58 @@ export default class DiagramModifier {
     if (data.parentNode) {
       var parentId = data.parentNode
       try{
-        this.diagram.setParent(id, parentId)
+        /*NOTE -
+          dagre-d3 can't handle clusters very well
+          This is a way to
+          1. create a copy of a node that has an edge
+          2. set the editing node as a child of the node we just copied
+        */
+        /*does the new parent have edges?*/
+        let edges = this.diagram.nodeEdges(parentId)
+        if (edges.length > 0){
+          let node = this.getNodeData(parentId) // get copy of parent
+          let newNodeId = this.copyNode(node) // parent node
+          this.deleteNode(parentId) // delete original parent node
+          this.diagram.setParent(id, newNodeId) // set new parent node of child node
+
+          //TODO - only send message if node has edges
+          console.log(edges)
+          this.emitter.emit('appMessage',
+            { message: 'Creating edges to clusters is not currently not supported',
+              status: 'info'
+            })
+        } else {
+          this.diagram.setParent(id, parentId)
+        }
       }
-      catch{
+      catch (error) {
         console.log('check logs for error')
+        console.error(error)
+      }
+    } else {
+      console.log('updating node without parent node')
+      //check if updated node had a parent
+      let oldParentId = this.diagram.parent(id)
+
+      if (oldParentId){
+        this.diagram.setParent(id, undefined)
+        /*FIXME -
+          setting parent to undefined causes the diagram to not render correctly
+          a page refresh fixes the rendering
+          the cluster html class are not being removed,
+          creating the rendering problem workaround:
+        */
+        // Check if the element exists
+        const clusterElement = d3.select('g.cluster#'+oldParentId)
+        console.log(customElements)
+        // Check if the element exists
+        if (!clusterElement.empty()) {
+          // Remove the element
+          clusterElement.remove();
+          console.log("Cluster element removed successfully.");
+        } else {
+            console.error("Cluster element not found.");
+        }
       }
     }
 
@@ -168,11 +216,11 @@ export default class DiagramModifier {
       console.log(id)
     }
     try{
-      var g = this.diagram
+      let g = this.diagram
       /**
        * if node is a parent, then we remove the children before we delete the node
        */
-      var children = this.getChildren(id)
+      let children = this.getChildren(id)
       if (children.length > 0) {
       //  /**
       //   * we need to remove the parent label position
@@ -217,12 +265,13 @@ export default class DiagramModifier {
    */
   removeClusterClass (id) {
     console.log('remove cluster class')
-    var element = document.getElementById(id).remove()
+    let element = document.getElementById(id)
     console.log(element)
+    element = document.getElementById(id).remove()
   }
 
   copyNode(data, parentId) {
-    var copy = {}
+    let copy = {}
     console.log(data)
 
     copy.name = data.name
@@ -236,8 +285,8 @@ export default class DiagramModifier {
 		if (parentId) {
       copy.parentNode = parentId
     }
-
-    return parentId = this.addNode(copy)
+    let newNode = this.addNode(copy)
+    return newNode
   }
 
   /**
@@ -656,6 +705,12 @@ export default class DiagramModifier {
     return gActiveNodes.filter(function (ele) {
       return ele !== valueToRemove
     })
+  }
+
+  clearCluster() {
+    const clusters = d3.select('g.clusters');
+    // Clear all its children
+    clusters.selectAll('*').remove();
   }
 
 }

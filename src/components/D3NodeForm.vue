@@ -65,7 +65,6 @@
                       label="Parent"
                       hint="optional"
                       clearable
-                      density="compact"
                       >
                     </v-select>
                   </v-col>

@@ -178,7 +178,7 @@ export default {
     },
     save () {
       this.$cookies.set('settings', this.settings)
-      this.emitter.emit('appMessage', true, 'Settings saved')
+      this.emitter.emit('appMessage', {status: 'success', message: 'Settings saved'})
       this.common()
     },
     resetSettings () {

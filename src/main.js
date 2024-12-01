@@ -2,7 +2,7 @@ import '@/assets/main.css'
 
 import { createApp } from 'vue'
 import App from '@/App.vue'
-import router from '@/router'
+//import router from '@/router'
 // Vuetify
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
@@ -31,7 +31,8 @@ const emitter = mitt()
 import VueCookies from 'vue-cookies'
 
 const app = createApp(App)
-app.use(router)
+// fixes the warning in the debugger
+//app.use(router)
 app.use(vuetify)
 app.use(VueCookies)
 app.component('FocusTrap', FocusTrap)
