@@ -169,7 +169,7 @@ export default {
     //})
 
     this.emitter.on('showDiagramList', (data) => {
-      //this.diagramListModal = true
+      this.diagramListModal = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
@@ -307,13 +307,13 @@ export default {
     getLocalDiagrams: function() {
       let items = [];
       for (let i = 0; i < localStorage.length; i++) {
-          let key = localStorage.key(i);
-          /*NOTE - only get the localitems that start with D3D_*/
-          if (key.startsWith('D3D_')) {
-            let item = JSON.parse(localStorage.getItem(key))
-            item.id = key
-            items.push(item);
-          }
+        let key = localStorage.key(i);
+        /*NOTE - only get the localitems that start with D3D_*/
+        if (key.startsWith('D3D_')) {
+          let item = JSON.parse(localStorage.getItem(key))
+          item.id = key
+          items.push(item);
+        }
       }
       console.log(items)
       this.diagrams = items;
@@ -328,7 +328,7 @@ export default {
       } else {
         console.log(new Date(result.data.dags[0].updated).toLocaleString())
         this.diagrams = result.data.dags
-        this.listTrap = this.diagramListModal = true
+        //this.listTrap = this.diagramListModal = true
 
         //this.$nextTick(function(){
         //  console.log('DiagramList Trap Active')

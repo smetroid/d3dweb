@@ -12,6 +12,7 @@ import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
 import { computed } from 'vue'
 import D3DApi from '@/services/api'
+//import jq from 'jq-web'
 
 /*
 // Theme specific
@@ -79,6 +80,9 @@ function toggleTheme() {
         :active="active"
       />
       <Login
+        :active="active"
+      />
+      <JQ
         :active="active"
       />
     </v-main>
@@ -517,6 +521,7 @@ export default {
 
         /** dagre-d3 has some issues clearing clusters*/
         this.modifier.clearCluster()
+        this.modifier.listEdges()
 
         this.modifier.redraw(g)
         console.log(this.modifier)

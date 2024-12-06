@@ -713,4 +713,10 @@ export default class DiagramModifier {
     clusters.selectAll('*').remove();
   }
 
+  listEdges() {
+    let edges = this.diagram.edges()
+    for (let edge in edges) {
+      console.log(this.getEdgeById(edges[edge]))
+    }
+  }
 }
