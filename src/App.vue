@@ -329,7 +329,7 @@ export default {
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
 
-      if (localStorage.getItem('token')) {
+      if (D3Util.auth()) {
         this.loadFromServer()
       } else {
         this.loadDiagram()
