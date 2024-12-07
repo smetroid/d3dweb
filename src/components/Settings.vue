@@ -5,6 +5,9 @@
       v-model="settingsModal"
       max-width="600"
       @keydown.esc="common($event)"
+      @keyup.alt.s="updateNode()"
+      @keyup.meta.s="updateNode()"
+      @keyup.ctrl.c="close()"
       >
       <focus-trap
         v-model:active="settingsModal"
@@ -90,24 +93,25 @@
                   </v-radio>
                 </v-radio-group>
                 <v-btn 
-                  color="red"
+                  color=""
                   v-model="settings.reset"
                   @click="resetSettings()"
                 >
                   Reset Settings 
                 </v-btn>
               </v-card-text>
+            <v-divider></v-divider>
               <v-card-actions 
-                class="bg-primary">
+                class="mx-auto text-indigo">
                 <v-btn 
-                  variant="outlined"
-                  class="bg-green"
-                  @click="save()">Save</v-btn>
+                  variant="tonal"
+                  class=""
+                  @click="save()">Save (alt+s)</v-btn>
                 <v-spacer></v-spacer>
                 <v-btn 
-                  variant="outlined"
-                  class="bg-red"
-                  @click="close()">Close</v-btn>
+                  variant="tonal"
+                  class=""
+                  @click="close()">Close (ctrl+c)</v-btn>
               </v-card-actions>
           </v-card>
         </div>

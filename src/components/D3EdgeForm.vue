@@ -107,14 +107,18 @@
               color=""
               density="comfortable"
               @click="updateEdge()" 
-              @keypress.stop="">Update Edge</v-btn>
+              @keypress.stop="">
+              Update Edge (alt+s)
+            </v-btn>
             <v-btn v-else 
               class="text-primary" 
               variant="tonal"
               color=""
               density="comfortable"
               @click="addEdge()" 
-              @keypress.stop="">Add Edge</v-btn>
+              @keypress.stop="">
+              Add Edge (alt+s)
+            </v-btn>
             <v-btn 
               class="text-primary" 
               variant="tonal"
@@ -122,7 +126,10 @@
               density="comfortable"
               color=""
               @click="close()" 
-              @keypress.stop="">Cancel</v-btn>
+              @keypress.stop=""
+              >
+              Cancel (ctrl+c)
+            </v-btn>
           </v-card-actions>
         </div>
       </focus-trap>

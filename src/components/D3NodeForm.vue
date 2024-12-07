@@ -113,11 +113,11 @@
                 <v-btn 
                   v-if="update" 
                   variant="tonal"
-                  class="text-primary" 
+                  class="text-primary custom-text" 
                   density="comfortable"
                   @click="updateNode()" 
                   @keypress.stop="">
-                  Update Node
+                  Update Node (alt+s)
                   </v-btn>
                 <v-btn 
                   v-else 
@@ -127,7 +127,7 @@
                   type="submit"
                   density="comfortable"
                   @keypress.stop="">
-                  Add Node
+                  Add Node (alt+c)
                 </v-btn>
                 <v-btn 
                   variant="tonal"
@@ -135,7 +135,10 @@
                   density="comfortable"
                   class="text-primary" 
                   @click="close()" 
-                  @keypress.stop="">Cancel</v-btn>
+                  @keypress.stop=""
+                  >
+                  Cancel (ctrl+c)
+                </v-btn>
             </v-card-actions>
           </div>
         </focus-trap>
