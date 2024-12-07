@@ -111,14 +111,15 @@
             </v-btn>
             <v-btn 
               v-else
-              variant="tonal"
-              class=""
+              variant="outlined"
+              class="text-green"
+              density="comfortable"
               @click="create()">
-              Create
+              Create (alt+s)
             </v-btn>
             <v-btn
-              variant="tonal"
-              class=""
+              variant="outlined"
+              class="text-red"
               density="comfortable"
               @click="close()">
               Cancel (ctrl+c)
@@ -194,10 +195,10 @@ export default {
       this.setDiagramInfo()
       if (this.modifier.d3dInfo.id){
         console.log('found diagram info id ... saving changes')
-        if (D3Util.auth) {
+        if (D3Util.auth()) {
           this.updateServerDiagram()
         } else {
-          this.updateLocalDiagram();
+          this.updateLocalDiagram()
         }
       } else {
         this.diagramModal = true
@@ -318,6 +319,12 @@ export default {
 
         if (Object.prototype.hasOwnProperty.call(result, 'data')) {
           this.id = result.data
+          /**NOTE - adding the id as the last LocallySavedItemId
+           * so that when we re-render the application, we can
+           * load the last network saved diagram
+           */
+          this.$cookies.set('LastLocallySavedItemId', this.id)
+
           // we are no longer able to use saveTempDiagram, since
           // this is just used temporarily when playing with d3d
           // D3Util.saveTempDiagram(payload)
