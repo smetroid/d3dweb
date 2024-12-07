@@ -2,18 +2,22 @@
   <div id="iform">
     <v-card
       ref="formfields"
-      class="text-primary"
+      class="mx-auto text-indigo"
+      @keyup.alt.s="updateEdge()"
+      @keyup.meta.s="updateEdge()"
+      @keyup.ctrl.c="close()"
       @keydown.esc="keyPress($event)"
       @keypress.stop.prevent="keyPress($event)">
       <focus-trap
         v-model:action="enableTrap">
         <div tabindex="0">
-          <v-card-title class="bg-primary">
+          <v-card-title class="">
             <v-row class="pa-3" justify="center">
               <b v-if="update">Update Edge</b>
               <b v-else>Add Edge</b>
             </v-row>
           </v-card-title>
+          <v-divider></v-divider>
           <v-card-text class="pb-0">
             <v-container class="pb-0 fluid">
               <v-row
@@ -75,51 +79,47 @@
                 </v-col>
                 <v-col
                 >
-                  <v-textarea v-if="update" 
-                    class="mb-n3"
-                    v-model="edgeLabel"
-                    rows="3"
-                    row-height="50"
-                    placeholder="Add edge label... can be html"
-                    ref="textField" 
-                    persistent-hint=""
+                  <v-textarea
+                    autofocus
+                    class=""
                     label="Edge Label"
-                    @keypress.stop="">
-                  </v-textarea>
-                  <v-textarea v-else 
                     v-model="edgeLabel"
+                    placeholder="Add edge label... can be html ... alt+shift+w to clear value"
+                    @keypress.stop=""
+                    @keydown.alt.shift.w="edgeLabel=''"
+                    @keydown.meta.shift.w="edgeLabel=''"
+                    clearable
                     rows="3"
-                    row-height="50"
-                    placeholder="Add edge label... can be html"
-                    ref="textField" 
-                    persistent-hint=""
-                    label="Edge Label"
-                    @keypress.stop="">
+                    >
                   </v-textarea>
                 </v-col>
               </v-row>
             </v-container>
           </v-card-text>
+          <v-divider></v-divider>
           <v-card-actions
-            class="text-primary bg-primary d-flex justify-center justify-space-around"
+            class="text-primary d-flex"
             >
             <v-btn v-if="update" 
               @keyup.enter="updateEdge()"
-              class="bg-green" 
-              variant="outlined"
+              class="text-primary" 
+              variant="tonal"
               color=""
+              density="comfortable"
               @click="updateEdge()" 
               @keypress.stop="">Update Edge</v-btn>
             <v-btn v-else 
-              class="bg-green" 
-              variant="outlined"
-              color="green"
+              class="text-primary" 
+              variant="tonal"
+              color=""
+              density="comfortable"
               @click="addEdge()" 
               @keypress.stop="">Add Edge</v-btn>
             <v-btn 
-              class="bg-red" 
+              class="text-primary" 
+              variant="tonal"
               type="submit"
-              variant="outlined"
+              density="comfortable"
               color=""
               @click="close()" 
               @keypress.stop="">Cancel</v-btn>
