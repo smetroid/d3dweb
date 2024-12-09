@@ -12,7 +12,7 @@
           v-model:action="enableTrap"
           >
           <div tabindex="0">
-            <v-card-title class="text-primary">
+            <v-card-title class="bg-primary">
               <v-row class="pa-3" justify="center">
                 <b v-if="update">Update Node</b>
                 <b v-else>Add Node</b>

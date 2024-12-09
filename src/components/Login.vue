@@ -90,10 +90,10 @@ export default {
     console.log('active window watch')
     console.log(this.active)
     //this.loginModal = this.active == "Login"?true:false
-    this.$nextTick(function(){
-      console.log('loginTrap active')
-      this.enableTrap = this.loginModal
-    })
+    //this.$nextTick(function(){
+    //  console.log('loginTrap active')
+    //  this.enableTrap = this.loginModal
+    //})
     // if (D3Util.debug) {
     //   localStorage.getItem('token')
     // }

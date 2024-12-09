@@ -11,7 +11,7 @@
       <focus-trap
         v-model:action="enableTrap">
         <div tabindex="0">
-          <v-card-title class="">
+          <v-card-title class="bg-primary">
             <v-row class="pa-3" justify="center">
               <b v-if="update">Update Edge</b>
               <b v-else>Add Edge</b>
