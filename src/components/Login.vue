@@ -6,20 +6,24 @@
     max-width="500"
     @keydown.esc="common($event)"
     opacity="0"
+    class="mx-auto"
+    @keyup.alt.l="login()"
+    @keyup.meta.l="login()"
+    @keyup.ctrl.c="close()"
     >
     <focus-trap
       v-model:active="loginModal">
       <div
         id="trapDiv"
-        tabindex="-1"
+        tabindex="0"
         class="trap is-active">
         <v-card
-          class="text-primary">
+          class="">
           <v-card-title
             class="bg-primary d-flex justify-center">
               <b>Login</b>
           </v-card-title>
-          <v-card-text class="blue-grey darken-4">
+          <v-card-text class="">
             <v-container>
               <v-form>
                 <v-row>
@@ -42,18 +46,19 @@
               </v-form>
             </v-container>
           </v-card-text>
+          <v-divider></v-divider>
           <v-card-actions
-            class="bg-primary"
+            class="text-primary"
           >
             <v-btn
-              class="bg-green"
-              variant="outlined"
-              @click="login()">Login</v-btn>
+              class=""
+              variant="tonal"
+              @click="login()">Login (alt+l)</v-btn>
             <v-spacer></v-spacer>
             <v-btn
-              class="bg-red"
-              variant="outlined"
-              @click="close()">Close</v-btn>
+              class=""
+              variant="tonal"
+              @click="close()">Close (ctrl+c)</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -85,10 +90,10 @@ export default {
     console.log('active window watch')
     console.log(this.active)
     //this.loginModal = this.active == "Login"?true:false
-    this.$nextTick(function(){
-      console.log('loginTrap active')
-      this.enableTrap = this.loginModal
-    })
+    //this.$nextTick(function(){
+    //  console.log('loginTrap active')
+    //  this.enableTrap = this.loginModal
+    //})
     // if (D3Util.debug) {
     //   localStorage.getItem('token')
     // }

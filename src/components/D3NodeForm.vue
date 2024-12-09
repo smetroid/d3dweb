@@ -1,10 +1,10 @@
 <template>
   <div id="iform">
-      <v-card
-        class="text-primary"
+      <v-card 
+        class="mx-auto text-indigo"
         ref="formfields" 
-        @keyup.alt.u="updateNode()"
-        @keyup.meta.u="updateNode()"
+        @keyup.alt.s="updateNode()"
+        @keyup.meta.s="updateNode()"
         @keyup.ctrl.c="close()"
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
@@ -18,6 +18,7 @@
                 <b v-else>Add Node</b>
               </v-row>
             </v-card-title>
+            <v-divider></v-divider>
             <v-card-text class="pb-0">
               <v-container class="pb-0">
                 <v-row
@@ -76,28 +77,18 @@
                     cols="6"
                     >
                     <v-textarea
-                      tabindex="0"
+                      autofocus
                       class=""
                       label="Node Label"
                       v-model="nodeLabel"
-                      placeholder="Add a node label ... if label contains HTML then Label Type must be Html"
+                      placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... alt+shift+w to clear value"
                       @keypress.stop=""
-                      @keyup.alt.shift.w="nodeLabel=''"
-                      @keyup.meta.shift.w="nodeLabel=''"
+                      @keydown.alt.shift.w="nodeLabel=''"
+                      @keydown.meta.shift.w="nodeLabel=''"
                       ref="nodeLabelTextField"
                       clearable
                       rows="5"
                       />
-                      <!--
-                        *Leaving here for reference 
-                    <v-textarea v-if="update" dense outline v-model="nodeLabel"
-                      rows="3"
-                      row-height="50"
-                      @keypress.stop="" @keydown.enter.prevent="updateNode()"
-                      placeholder="Add a node label ... can be html"
-                      ref="textField" persistent-hint
-                      hint="Pressing enter will update the node" />
-                      -->
                   </v-col>
                   <v-col 
                     cols="6"
@@ -115,35 +106,39 @@
                 </v-row>
               </v-container>
             </v-card-text>
+            <v-divider></v-divider>
             <v-card-actions
-              class="text-primary bg-primary d-flex justify-center justify-space-around"
-            >
+              class="mx-auto"
+              >
                 <v-btn 
                   v-if="update" 
-                  variant="outlined"
-                  color=""
-                  class="bg-green" 
+                  variant="tonal"
+                  class="text-primary custom-text" 
+                  density="comfortable"
                   @click="updateNode()" 
                   @keypress.stop="">
-                  Update Node
+                  Update Node (alt+s)
                   </v-btn>
                 <v-btn 
                   v-else 
-                  variant="outlined"
-                  class="bg-green" 
+                  variant="tonal"
+                  class="text-primary" 
                   @click="addNode()" 
                   type="submit"
-                  color=""
+                  density="comfortable"
                   @keypress.stop="">
-                  Add Node
+                  Add Node (alt+c)
                 </v-btn>
                 <v-btn 
-                  variant="outlined"
+                  variant="tonal"
                   type="submit"
-                  color=""
-                  class="bg-red" 
+                  density="comfortable"
+                  class="text-primary" 
                   @click="close()" 
-                  @keypress.stop="">Cancel</v-btn>
+                  @keypress.stop=""
+                  >
+                  Cancel (ctrl+c)
+                </v-btn>
             </v-card-actions>
           </div>
         </focus-trap>

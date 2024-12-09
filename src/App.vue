@@ -31,42 +31,44 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <v-card-text
-      class="mx-auto"
-      max-width="500"
-      >
-      <v-alert
-        v-model="successMessage"
-        closable
-        variant="outlined"
-        type="success"
-        >
-        <span v-html="alertMessage"></span>
-      </v-alert>
-      <v-alert
-        v-model="errorMessage"
-        closable
-        variant="outlined"
-        type="error"
-        >
-        <span v-html="alertMessage"></span>
-      </v-alert>
-      <v-alert
-        v-model="infoMessage"
-        closable
-        variant="outlined"
-        type="info"
-        >
-        <span v-html="alertMessage"></span>
-      </v-alert>
-    </v-card-text>
     <v-main app>
+      <div class="d-flex justify-center">
+      <v-card-text
+        class="position-absolute"
+        max-width="500"
+        >
+        <v-alert
+          v-model="successMessage"
+          closable
+          variant="outlined"
+          type="success"
+          >
+          <span v-html="alertMessage"></span>
+        </v-alert>
+        <v-alert
+          v-model="errorMessage"
+          closable
+          variant="outlined"
+          type="error"
+          >
+          <span v-html="alertMessage"></span>
+        </v-alert>
+        <v-alert
+          v-model="infoMessage"
+          closable
+          variant="outlined"
+          type="info"
+          >
+          <span v-html="alertMessage"></span>
+        </v-alert>
+      </v-card-text>
+      </div>
       <!--
       <DagreOtherKeys
         :d3dInfo="d3dInfo"
       />
       -->
-      <DagreGraphLib class=""
+      <DagreGraphLib
         :active="active"
       />
       <DiagramForm
@@ -329,7 +331,7 @@ export default {
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
 
-      if (localStorage.getItem('token')) {
+      if (D3Util.auth()) {
         this.loadFromServer()
       } else {
         this.loadDiagram()

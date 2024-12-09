@@ -1,5 +1,10 @@
 <template>
   <v-dialog
+    class="mx-auto text-indigo"
+    @keyup.alt.s="updateNode()"
+    @keyup.meta.s="updateNode()"
+    @keyup.ctrl.c="close()"
+    @keydown.esc="keyPress($event)"
     scrollable
     v-model="diagramModal"
     max-width="600">
@@ -92,29 +97,32 @@
                 />
             </v-form>
           </v-card-text>
+          <v-divider></v-divider>
           <v-card-actions
-            class="text-primary bg-primary d-flex justify-center justify-space-around"
+            class=""
             >
             <v-btn
               v-if="update"
-              variant="outlined"
-              class="bg-green"
+              variant="tonal"
+              class=""
+              density="comfortable"
               @click="updateLocalDiagram()">
-              Update
+              Update (alt+s)
             </v-btn>
             <v-btn 
               v-else
               variant="outlined"
-              class="bg-green"
+              class="text-green"
+              density="comfortable"
               @click="create()">
-              Create
+              Create (alt+s)
             </v-btn>
-            <v-spacer></v-spacer>
             <v-btn
               variant="outlined"
-              class="bg-red"
+              class="text-red"
+              density="comfortable"
               @click="close()">
-              Cancel
+              Cancel (ctrl+c)
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -187,10 +195,10 @@ export default {
       this.setDiagramInfo()
       if (this.modifier.d3dInfo.id){
         console.log('found diagram info id ... saving changes')
-        if (D3Util.auth) {
+        if (D3Util.auth()) {
           this.updateServerDiagram()
         } else {
-          this.updateLocalDiagram();
+          this.updateLocalDiagram()
         }
       } else {
         this.diagramModal = true
@@ -311,6 +319,12 @@ export default {
 
         if (Object.prototype.hasOwnProperty.call(result, 'data')) {
           this.id = result.data
+          /**NOTE - adding the id as the last LocallySavedItemId
+           * so that when we re-render the application, we can
+           * load the last network saved diagram
+           */
+          this.$cookies.set('LastLocallySavedItemId', this.id)
+
           // we are no longer able to use saveTempDiagram, since
           // this is just used temporarily when playing with d3d
           // D3Util.saveTempDiagram(payload)
