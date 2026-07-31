@@ -120,7 +120,7 @@ describe('_fitToGraph', () => {
     renderer.nodeObjects.set('b', { obj: { position: v(400, 100) } })
     renderer._fitToGraph()
     const halfFov = (40 * Math.PI) / 360
-    expect(renderer.camera.position.z).toBeCloseTo((800 / 2) / Math.tan(halfFov) * 1.15, 6)
+    expect(renderer.camera.position.z).toBeCloseTo((800 / 2) / Math.tan(halfFov) * 2.4, 6)
   })
 
   it('no-ops when there are no nodes', () => {

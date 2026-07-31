@@ -71,6 +71,13 @@ export default class ThreeDRenderer {
     this.controls.dampingFactor  = 0.05
     this.controls.enableRotate   = false   // flat/2-D mode by default
     this.controls.screenSpacePanning = true
+    // Diagram-tool bindings: left-drag pans, right-drag rotates (3-D only),
+    // wheel/middle-drag zooms.
+    this.controls.mouseButtons = {
+      LEFT:   THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT:  THREE.MOUSE.ROTATE,
+    }
 
     this._resizeHandler = this._onResize.bind(this)
     window.addEventListener('resize', this._resizeHandler)
@@ -415,7 +422,7 @@ export default class ThreeDRenderer {
     const extent = Math.max(maxX - minX, maxY - minY, 100)
 
     const halfFov = (this.camera.fov * Math.PI) / 360
-    const dist    = Math.max((extent / 2) / Math.tan(halfFov) * 1.15, 200)
+    const dist    = Math.max((extent / 2) / Math.tan(halfFov) * 2.4, 200)
 
     this.controls.target.set(cx, cy, 0)
     this.camera.position.set(cx, cy, dist)
