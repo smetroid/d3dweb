@@ -5,12 +5,13 @@ import MenuKeys from '@/helpers/MenuKeys.js'
 import MenuLinks from '@/helpers/MenuLinks.js'
 import Settings from '@/components/Settings.vue'
 import HelperPane from '@/components/Helper.vue'
-import * as DagreD3 from 'dagre-d3'
+import cytoscape from 'cytoscape'
+import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
+import { graphlibToCytoscape, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
 import DiagramForm from '@/components/DiagramForm.vue'
-import DiagramModifier from '@/helpers/DiagramModifier.js'
 import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
-import { computed } from 'vue'
+import { computed, markRaw } from 'vue'
 import D3DApi from '@/services/api'
 //import jq from 'jq-web'
 
@@ -473,15 +474,15 @@ export default {
         console.log(id)
       }
 
-      let g = new DagreD3.graphlib.json.read(JSON.parse(localDiagramInfo.diagram))
+      const parsed = JSON.parse(localDiagramInfo.diagram)
+      const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
+      const cy = markRaw(cytoscape({ headless: true, elements }))
 
       this.d3dInfo = localDiagramInfo
       this.d3dInfo.id = id
-      this.d3dInfo.diagram = g
+      this.d3dInfo.diagram = cy
 
-      /**NOTE - this.modifier is the main object used by all other components files */
-      this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
-      this.modifier.redraw(g)
+      this.modifier = markRaw(new CytoscapeGraph(this.d3dInfo, this.emitter))
       console.log(this.modifier)
 
     },
@@ -512,20 +513,15 @@ export default {
       }
 
       try {
-        let g = new DagreD3.graphlib.json.read(JSON.parse(serverDiagramInfo.diagram))
+        const parsed = JSON.parse(serverDiagramInfo.diagram)
+        const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
+        const cy = markRaw(cytoscape({ headless: true, elements }))
 
         this.d3dInfo = serverDiagramInfo
         this.d3dInfo.id = id
-        this.d3dInfo.diagram = g
+        this.d3dInfo.diagram = cy
 
-        /**NOTE - this.modifier is the main object used by all other components files */
-        this.modifier = new DiagramModifier(this.d3dInfo, this.emitter)
-
-        /** dagre-d3 has some issues clearing clusters*/
-        this.modifier.clearCluster()
-        this.modifier.listEdges()
-
-        this.modifier.redraw(g)
+        this.modifier = markRaw(new CytoscapeGraph(this.d3dInfo, this.emitter))
         console.log(this.modifier)
 
       } catch (error) {

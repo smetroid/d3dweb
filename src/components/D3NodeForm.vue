@@ -6,6 +6,7 @@
         @keyup.alt.s="updateNode()"
         @keyup.meta.s="updateNode()"
         @keyup.ctrl.c="close()"
+        @keyup.meta.c="close()"
         @keydown.esc="keyPress($event)"
         @keypress.stop.prevent="keyPress($event)">
         <focus-trap 
@@ -81,7 +82,7 @@
                       class=""
                       label="Node Label"
                       v-model="nodeLabel"
-                      placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... alt+shift+w to clear value"
+                      placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... {{ shortcutLabels.clear }} to clear value"
                       @keypress.stop=""
                       @keydown.alt.shift.w="nodeLabel=''"
                       @keydown.meta.shift.w="nodeLabel=''"
@@ -117,7 +118,7 @@
                   density="comfortable"
                   @click="updateNode()" 
                   @keypress.stop="">
-                  Update Node (alt+s)
+                  Update Node ({{ shortcutLabels.save }})
                   </v-btn>
                 <v-btn 
                   v-else 
@@ -127,7 +128,7 @@
                   type="submit"
                   density="comfortable"
                   @keypress.stop="">
-                  Add Node (alt+c)
+                  Add Node
                 </v-btn>
                 <v-btn 
                   variant="tonal"
@@ -137,7 +138,7 @@
                   @click="close()" 
                   @keypress.stop=""
                   >
-                  Cancel (ctrl+c)
+                  Cancel ({{ shortcutLabels.close }})
                 </v-btn>
             </v-card-actions>
           </div>
@@ -199,7 +200,7 @@ export default {
       console.log(this.d3Data)
       console.log(this.modifier.diagram)
       console.log(this.d3Data.id)
-      console.log(this.modifier.diagram.parent(this.modifier.d3dInfo.id))
+      console.log(this.modifier.cy.getElementById(this.modifier.d3dInfo?.id).parent().first().id())
     }
 
     this.update = this.active == 'Edit Node'? true : false
@@ -210,7 +211,8 @@ export default {
       this.nodeLabel = this.d3Data.label
       this.nodeShape = this.d3Data.shape
       this.nodeId = this.d3Data.id
-      this.parentNode = this.modifier.diagram.parent(this.d3Data.id)
+      const parentEl = this.modifier.cy.getElementById(this.d3Data.id).parent().first()
+      this.parentNode = parentEl.length ? parentEl.id() : null
       // console.log("troubleshooting cluster label")
 
       // for( var key in this.clusterLabelPosOptions){
@@ -264,12 +266,16 @@ export default {
     })
   },
   computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
     parentOptions() {
-      var nodes = this.modifier.diagram.nodes()
-      console.log('computed'+nodes)
-      var data = Object.values(nodes).map((key) => ({"key":key, "value":this.modifier.getNodeData(key).label}))
-      console.log(data)
-      return data
+      const mod = this.modifier
+      if (!mod || !mod.cy) return []
+      return mod.cy.nodes().map((n) => ({
+        key:   n.id(),
+        value: n.data('label') || n.id(),
+      }))
     },
   },
   methods: {

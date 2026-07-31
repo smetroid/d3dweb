@@ -10,6 +10,7 @@
     @keyup.alt.l="login()"
     @keyup.meta.l="login()"
     @keyup.ctrl.c="close()"
+    @keyup.meta.c="close()"
     >
     <focus-trap
       v-model:active="loginModal">
@@ -53,12 +54,12 @@
             <v-btn
               class=""
               variant="tonal"
-              @click="login()">Login (alt+l)</v-btn>
+              @click="login()">Login ({{ shortcutLabels.login }})</v-btn>
             <v-spacer></v-spacer>
             <v-btn
               class=""
               variant="tonal"
-              @click="close()">Close (ctrl+c)</v-btn>
+              @click="close()">Close ({{ shortcutLabels.close }})</v-btn>
           </v-card-actions>
         </v-card>
       </div>
@@ -85,6 +86,11 @@ export default {
       //alertMessage: null,
       loginModal: false
     }
+  },
+  computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
   },
   mounted () {
     console.log('active window watch')

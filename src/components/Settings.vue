@@ -8,6 +8,7 @@
       @keyup.alt.s="updateNode()"
       @keyup.meta.s="updateNode()"
       @keyup.ctrl.c="close()"
+      @keyup.meta.c="close()"
       >
       <focus-trap
         v-model:active="settingsModal"
@@ -106,12 +107,12 @@
                 <v-btn 
                   variant="tonal"
                   class=""
-                  @click="save()">Save (alt+s)</v-btn>
+                  @click="save()">Save ({{ shortcutLabels.save }})</v-btn>
                 <v-spacer></v-spacer>
                 <v-btn 
                   variant="tonal"
                   class=""
-                  @click="close()">Close (ctrl+c)</v-btn>
+                  @click="close()">Close ({{ shortcutLabels.close }})</v-btn>
               </v-card-actions>
           </v-card>
         </div>
@@ -138,6 +139,11 @@ export default {
         {'value':'curveStepBefore', 'label':'StepBefore'},
       ]
     }
+  },
+  computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
   },
   mounted () {
     console.log('settings')

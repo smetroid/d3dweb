@@ -55,6 +55,15 @@
                       {{ helper.shortcut }} 
                     </span><br/>
                   </span>
+                  <v-divider></v-divider>
+                  <span class="font-weight-bold">3D Layouts:</span><br/>
+                  <span 
+                    v-for="helper in layouts"
+                    :key="helper.title">
+                    <span class="font-weight-bold">
+                      {{ helper.title }}: </span>
+                    <span> {{ helper.shortcut }} </span><br/>
+                  </span>
                 </v-card>
                 <v-divider vertical></v-divider>
                 <v-card
@@ -147,6 +156,7 @@
   </div>
 </template>
 <script>
+import D3Util from '@/helpers/D3Util.js'
 //import D3VimApi from '@/services/api/SamusApi'
 //import D3Util from '@/services/D3Util'
 export default {
@@ -166,14 +176,6 @@ export default {
       //alertMessage: null,
       showAlert: null,
       loginModal: false,
-      zoom: [
-        {"title": "Zoom In","shortcut": "alt + ="},
-        {"title": "Zoom Out", "shortcut": "alt + -"},
-        {"title": "Pan Right", "shortcut": "alt + l"},
-        {"title": "Pan Left","shortcut": "alt + h"},
-        {"title": "Pan Up","shortcut": "alt + k"},
-        {"title": "Pan Down","shortcut": "alt + j"}
-      ],
       selectionOptions: [
         {"title": "Focus Node","shortcut": "j or k"},
         {"title": "Active 1", "shortcut": "enter"},
@@ -191,12 +193,6 @@ export default {
       main: [
         'Diagram', 'Zoom','Dagre'
       ],
-      samus: [
-        {"title": "New Diagram", "shortcut": "alt + n"},
-        {"title": "Open Diagram", "shortcut": "alt + o"},
-        {"title": "Edit Diagram", "shortcut": "alt + e"},
-        {"title": "Save Diagram", "shortcut": "alt + s"},
-      ],
       other: [
         /*{"title": "Login", "shortcut": "Ctrl + l"}, */
         {"title": "Settings", "shortcut": "Ctrl + t"},
@@ -204,6 +200,37 @@ export default {
       ],
       //auth:
     }
+  },
+  computed: {
+    mod() {
+      return D3Util.isMac() ? '⌘' : 'Alt'
+    },
+    zoom() {
+      return [
+        { title: 'Zoom In',     shortcut: `${this.mod} + =` },
+        { title: 'Zoom Out',    shortcut: `${this.mod} + -` },
+        { title: 'Pan Right',   shortcut: `${this.mod} + l` },
+        { title: 'Pan Left',    shortcut: `${this.mod} + h` },
+        { title: 'Pan Up',      shortcut: `${this.mod} + k` },
+        { title: 'Pan Down',    shortcut: `${this.mod} + j` },
+      ]
+    },
+    samus() {
+      return [
+        { title: 'New Diagram',  shortcut: `${this.mod} + n` },
+        { title: 'Open Diagram', shortcut: `${this.mod} + o` },
+        { title: 'Edit Diagram', shortcut: `${this.mod} + e` },
+        { title: 'Save Diagram', shortcut: `${this.mod} + s` },
+      ]
+    },
+    layouts() {
+      return [
+        { title: '2D Layout',     shortcut: `${this.mod} + 1` },
+        { title: '3D Sphere',     shortcut: `${this.mod} + 2` },
+        { title: '3D Helix',      shortcut: `${this.mod} + 3` },
+        { title: '3D Hierarchy',  shortcut: `${this.mod} + 4` },
+      ]
+    },
   },
   mounted () {
    // if (D3Util.debug) {

@@ -463,3 +463,97 @@ textarea {
   color:red;
 }
 */
+
+/* ── Three.js / CSS3DRenderer node cards ─────────────────────────── */
+
+.node-card {
+  position: relative;
+  min-width: 80px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 2px solid #BDBDBD;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-primary), 0.5);
+  color: rgb(var(--v-theme-on-surface));
+  font-family: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.node-card.node-shape-ellipse {
+  border-radius: 50%;
+  min-width: 100px;
+  min-height: 60px;
+}
+
+.node-card.node-shape-diamond {
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+
+.node-card.node-shape-diamond .node-label {
+  transform: rotate(-45deg);
+}
+
+.node-card.selected {
+  border-color: orange;
+  box-shadow: 0 0 0 2px orange;
+}
+
+.node-card.active_node {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-secondary), 0.7);
+  box-shadow: 0 0 6px 1px rgb(var(--v-theme-secondary));
+}
+
+.node-card.d_active_node {
+  border-color: magenta;
+  background: rgba(255, 0, 255, 0.1);
+  box-shadow: 0 0 6px 1px magenta;
+}
+
+.node-label {
+  pointer-events: none;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Cluster / compound parent node ─────────────────────────────── */
+
+.node-card.cluster {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-secondary), 0.5);
+  border-width: 2px;
+  border-style: dashed;
+  border-radius: 8px;
+}
+
+.node-card.cluster.selected {
+  border-color: orange;
+  border-style: solid;
+}
+
+/* ── Keyboard hint badges (f-key hint mode) ─────────────────────── */
+
+.hint-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background: orange;
+  color: black;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 9999;
+  line-height: 1.4;
+}

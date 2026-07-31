@@ -6,6 +6,7 @@
       @keyup.alt.s="updateEdge()"
       @keyup.meta.s="updateEdge()"
       @keyup.ctrl.c="close()"
+      @keyup.meta.c="close()"
       @keydown.esc="keyPress($event)"
       @keypress.stop.prevent="keyPress($event)">
       <focus-trap
@@ -84,7 +85,7 @@
                     class=""
                     label="Edge Label"
                     v-model="edgeLabel"
-                    placeholder="Add edge label... can be html ... alt+shift+w to clear value"
+                    placeholder="Add edge label... can be html ... {{ shortcutLabels.clear }} to clear value"
                     @keypress.stop=""
                     @keydown.alt.shift.w="edgeLabel=''"
                     @keydown.meta.shift.w="edgeLabel=''"
@@ -108,7 +109,7 @@
               density="comfortable"
               @click="updateEdge()" 
               @keypress.stop="">
-              Update Edge (alt+s)
+              Update Edge ({{ shortcutLabels.save }})
             </v-btn>
             <v-btn v-else 
               class="text-primary" 
@@ -117,7 +118,7 @@
               density="comfortable"
               @click="addEdge()" 
               @keypress.stop="">
-              Add Edge (alt+s)
+              Add Edge ({{ shortcutLabels.save }})
             </v-btn>
             <v-btn 
               class="text-primary" 
@@ -128,7 +129,7 @@
               @click="close()" 
               @keypress.stop=""
               >
-              Cancel (ctrl+c)
+              Cancel ({{ shortcutLabels.close }})
             </v-btn>
           </v-card-actions>
         </div>
@@ -170,6 +171,11 @@ export default {
       fromNode: '',
       toNode: ''
     }
+  },
+  computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
   },
   mounted () {
     console.log('active window d3EdgeForm')

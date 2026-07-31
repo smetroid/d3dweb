@@ -1,10 +1,25 @@
-import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
-import * as DagreD3 from 'dagre-d3'
+import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
 export default {
+  isMac () {
+    if (typeof navigator === 'undefined') return false
+    const platform = navigator.platform || navigator.userAgentData?.platform || ''
+    return platform.toLowerCase().includes('mac') ||
+      /Mac|iPhone|iPad/.test(navigator.userAgent)
+  },
+  shortcutLabels () {
+    const saveKey  = this.isMac() ? '⌘' : 'Alt'
+    const closeKey = this.isMac() ? '⌘' : 'Ctrl'
+    return {
+      save:  `${saveKey}+S`,
+      close: `${closeKey}+C`,
+      login: `${saveKey}+L`,
+      clear: `${saveKey}+Shift+W`,
+    }
+  },
   tempInfo () {
     let temp = {
       name: 'D3D Temp Name',
@@ -339,7 +354,7 @@ export default {
     try{
       let randomId ='D3D'+this.randomId()
       let created = new Date()
-      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let json = cytoscapeToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -374,7 +389,7 @@ export default {
     try{
       console.log(data)
       let updated = new Date()
-      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let json = cytoscapeToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -391,17 +406,21 @@ export default {
       console.log(error)
     }
   },
-  saveTempDiagram(g){
-    this.json = new DagreD3.graphlib.json.write(g)
-    let created = new Date()
-    let updatedData = {
-      'created': created.toISOString(),
-      'updated': created.toISOString(),
-      'name': this.tempInfo().name,
-      'description': this.tempInfo().description,
-      'diagram': JSON.stringify(this.json),
+  saveTempDiagram(cy){
+    try {
+      let json = cytoscapeToGraphlib(cy)
+      let created = new Date()
+      let updatedData = {
+        'created': created.toISOString(),
+        'updated': created.toISOString(),
+        'name': this.tempInfo().name,
+        'description': this.tempInfo().description,
+        'diagram': JSON.stringify(json),
+      }
+      localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
+    } catch (error) {
+      console.log('saveTempDiagram failed', error)
     }
-    localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
   },
   getTempDiagram(){
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))

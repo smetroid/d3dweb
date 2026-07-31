@@ -1,46 +1,34 @@
-
 export default class DagreAltKeys {
   constructor(emitter, modifier) {
-    this.emitter = emitter
+    this.emitter  = emitter
     this.modifier = modifier
-    this.diagram = modifier.d3dInfo.diagram
   }
 
   key(eventKey) {
-    // var g = this.g
-    //var svg = d3.select('svg')
-    // var inner = svg.select('g')
-
-    console.log(eventKey)
-    var resetValues = false
-    var options = {}
-    // this.modifier.redraw(this.DagreLib.graph, "zoomOut")
+    console.log('AltKey:', eventKey)
+    let resetValues = false
 
     switch (eventKey) {
+      // Camera pan — delegated to ThreeDRenderer via modifier.redraw(options)
       case 'j':
-        options = {"pan": "Down"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ pan: 'Down' })
         break
       case 'k':
-        options = {"pan": "Up"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ pan: 'Up' })
         break
       case 'h':
-        options = {"pan": "Left"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ pan: 'Left' })
         break
       case 'l':
-        options = {"pan": "Right"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ pan: 'Right' })
         break
       case '-':
-        options = {"zoom": "Out"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ zoom: 'Out' })
         break
       case '=':
-        options = {"zoom": "In"}
-        this.modifier.redraw(this.diagram, options)
+        this.modifier.redraw({ zoom: 'In' })
         break
+      // Diagram-level actions
       case 'n':
         this.emitter.emit('newDiagram')
         break
@@ -53,9 +41,23 @@ export default class DagreAltKeys {
       case 'e':
         this.emitter.emit('editDiagram')
         break
+      // 3-D layout modes
+      case '1':
+        this.modifier.backTo2D()
+        break
+      case '2':
+        this.modifier.apply3DLayout('sphere')
+        break
+      case '3':
+        this.modifier.apply3DLayout('helix')
+        break
+      case '4':
+        this.modifier.apply3DLayout('hierarchy')
+        break
       default:
-        console.log('zoomPan Default')
+        console.log('AltKey default — no action')
     }
+
     return resetValues
   }
 }
