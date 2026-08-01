@@ -176,6 +176,7 @@ export default {
 
       const cy = markRaw(cytoscape({
         headless: true,
+        styleEnabled: true,
         elements: [
           { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
         ]
@@ -280,7 +281,7 @@ export default {
       try {
         const parsed   = JSON.parse(this.jsonDiagram)
         const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        this.diagram   = markRaw(cytoscape({ headless: true, elements }))
+        this.diagram   = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
       } catch (e) {
         console.error('JSON parse failed', e)
         return
@@ -314,7 +315,7 @@ export default {
       try {
         const parsed   = JSON.parse(this.jsonDiagram)
         const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        this.diagram   = markRaw(cytoscape({ headless: true, elements }))
+        this.diagram   = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
       } catch (e) {
         console.error('JSON parse failed', e)
         return

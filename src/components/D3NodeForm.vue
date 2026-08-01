@@ -286,7 +286,16 @@ export default {
         hasId:  !!this.d3Data?.id,
         d3Data: this.d3Data,
       })
-      if (!(this.update && this.d3Data?.id)) return
+      if (!(this.update && this.d3Data?.id)) {
+        this.nodeLabel  = null
+        this.nodeShape  = 'rectangle'
+        this.nodeId     = null
+        this.parentNode = null
+        this.textHalign = 'center'
+        this.textValign = 'top'
+        this.style      = 'fill: #5f9488'
+        return
+      }
       const mod = this.modifier?.value ?? this.modifier
       this.nodeLabel  = this.d3Data.label
       this.nodeShape  = this.d3Data.nodeShape || this.d3Data.shape

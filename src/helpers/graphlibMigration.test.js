@@ -82,7 +82,7 @@ describe('graphlibToCytoscape', () => {
   })
 
   it('round-trips through a real cytoscape instance', () => {
-    const cy = cytoscape({ headless: true, elements })
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements })
     expect(cy.nodes()).toHaveLength(6)
     expect(cy.edges()).toHaveLength(5)
     expect(cy.getElementById('n4').parent().id()).toBe('c1')
@@ -91,7 +91,7 @@ describe('graphlibToCytoscape', () => {
 
 describe('cytoscapeToGraphlib', () => {
   const elements = graphlibToCytoscape(graphlibJson)
-  const cy = cytoscape({ headless: true, elements })
+  const cy = cytoscape({ headless: true, styleEnabled: true, elements })
   const roundTrip = cytoscapeToGraphlib(cy)
 
   it('serializes all nodes and edges', () => {
@@ -128,7 +128,7 @@ describe('cytoscapeToGraphlib', () => {
 describe('round-trip stability', () => {
   it('graphlib → cytoscape → graphlib is idempotent for the full payload', () => {
     const elements = graphlibToCytoscape(graphlibJson)
-    const cy = cytoscape({ headless: true, elements })
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements })
     const out = cytoscapeToGraphlib(cy)
 
     expect(out.nodes.map(n => n.v).sort()).toEqual(graphlibJson.nodes.map(n => n.v).sort())
@@ -153,7 +153,7 @@ describe('round-trip stability', () => {
   it('handles empty graphs', () => {
     const empty = graphlibToCytoscape({ nodes: [], edges: [] })
     expect(empty).toHaveLength(0)
-    const cy = cytoscape({ headless: true, elements: empty })
+    const cy = cytoscape({ headless: true, styleEnabled: true, elements: empty })
     const out = cytoscapeToGraphlib(cy)
     expect(out.nodes).toHaveLength(0)
     expect(out.edges).toHaveLength(0)

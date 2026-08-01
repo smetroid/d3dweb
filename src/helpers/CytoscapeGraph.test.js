@@ -18,7 +18,7 @@ function makeGraph(nodeCount = 6) {
   const elements = Array.from({ length: nodeCount }, (_, i) => ({
     data: { id: `n${i}`, label: `Node ${i}` },
   }))
-  const cy = cytoscape({ headless: true, elements })
+  const cy = cytoscape({ headless: true, styleEnabled: true, elements })
   const renderer = {
     updateScene: vi.fn(),
     enable3D: vi.fn(),
@@ -70,6 +70,20 @@ describe('node CRUD', () => {
     expect(cy.getElementById('n0').empty()).toBe(true)
   })
 
+  it('detaches children before deleting a parent', () => {
+    const { cy, graph } = makeGraph(3)
+    cy.getElementById('n2').move({ parent: 'n0' })
+    graph.deleteNode('n0')
+    expect(cy.getElementById('n0').empty()).toBe(true)
+    expect(cy.getElementById('n2').empty()).toBe(false)
+    expect(cy.getElementById('n2').parent().empty()).toBe(true)
+  })
+
+  it('returns false for missing nodes', () => {
+    const { graph } = makeGraph(1)
+    expect(graph.deleteNode('nope')).toBe(false)
+  })
+
   it('returns null for missing nodes', () => {
     const { graph } = makeGraph(1)
     expect(graph.getNodeData('nope')).toBeNull()
@@ -102,6 +116,47 @@ describe('edge CRUD', () => {
     cy.add({ group: 'edges', data: { id: 'e1', source: 'n0', target: 'n1', label: 'x' } })
     graph.deleteEdge('e1')
     expect(cy.edges()).toHaveLength(0)
+  })
+})
+
+describe('_runLayout cluster handling', () => {
+  function spyLayout(cy) {
+    const spy = vi.spyOn(cy, 'layout')
+    spy.mockReturnValue({ run: vi.fn() })
+    return spy
+  }
+
+  it('uses dagre for plain graphs', () => {
+    const { cy, graph } = makeGraph(3)
+    const spy = spyLayout(cy)
+    graph._runLayout()
+    expect(spy).toHaveBeenCalled()
+    expect(spy.mock.calls[0][0].name).toBe('dagre')
+  })
+
+  it('falls back to fcose when the graph has compound parents', () => {
+    const { cy, graph } = makeGraph(3)
+    cy.getElementById('n1').move({ parent: 'n0' })
+    const spy = spyLayout(cy)
+    graph._runLayout()
+    expect(spy.mock.calls[0][0].name).toBe('fcose')
+  })
+
+  it('respects an explicit fcose choice', () => {
+    const { cy, graph } = makeGraph(3)
+    graph.layoutMode = 'fcose'
+    const spy = spyLayout(cy)
+    graph._runLayout()
+    expect(spy.mock.calls[0][0].name).toBe('fcose')
+  })
+
+  it('respects an explicit cola choice even with clusters', () => {
+    const { cy, graph } = makeGraph(3)
+    cy.getElementById('n1').move({ parent: 'n0' })
+    graph.layoutMode = 'cola'
+    const spy = spyLayout(cy)
+    graph._runLayout()
+    expect(spy.mock.calls[0][0].name).toBe('cola')
   })
 })
 

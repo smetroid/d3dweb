@@ -3,7 +3,6 @@ import dagre from 'cytoscape-dagre'
 import fcose from 'cytoscape-fcose'
 import cola from 'cytoscape-cola'
 import D3Util from '@/helpers/D3Util'
-import VueCookies from 'vue-cookies'
 import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
 import { SCALE } from '@/helpers/ThreeDRenderer'
 
@@ -91,9 +90,18 @@ export default class CytoscapeGraph {
     this.redraw()
   }
 
+  _detachChildren(node) {
+    if (node.isParent()) {
+      node.children().move({ parent: null })
+    }
+  }
+
   deleteNode(id) {
     try {
-      this.cy.getElementById(id).remove()
+      const node = this.cy.getElementById(id)
+      if (node.empty()) return false
+      this._detachChildren(node)
+      node.remove()
       this.redraw()
       return true
     } catch (err) {
@@ -105,7 +113,11 @@ export default class CytoscapeGraph {
   deleteNodes(nodeIndices) {
     nodeIndices.forEach(index => {
       const id = this.getNodeId(index)
-      if (id) this.cy.getElementById(id).remove()
+      if (id) {
+        const node = this.cy.getElementById(id)
+        this._detachChildren(node)
+        node.remove()
+      }
     })
     this.redraw()
     return []
@@ -425,9 +437,14 @@ export default class CytoscapeGraph {
   }
 
   _runLayout() {
-    const name = this.layoutMode === 'fcose' ? 'fcose'
-               : this.layoutMode === 'cola'  ? 'cola'
-               : 'dagre'
+    let name = this.layoutMode === 'fcose' ? 'fcose'
+             : this.layoutMode === 'cola'  ? 'cola'
+             : 'dagre'
+
+    // dagre can't lay out edges that touch compound parents (it drops them),
+    // so for graphs with clusters fall back to fcose which supports them.
+    const hasClusters = this.cy.nodes().some(node => node.isParent())
+    if (name === 'dagre' && hasClusters) name = 'fcose'
 
     let layoutOptions
     if (name === 'dagre') {

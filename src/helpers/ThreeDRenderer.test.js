@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as THREE from 'three'
+
+vi.mock('vue-cookies', () => ({
+  default: { get: () => null, set: () => {}, config: () => {} },
+}))
+
 import ThreeDRenderer from '@/helpers/ThreeDRenderer.js'
 
 vi.mock('gsap', () => {
@@ -101,6 +106,73 @@ describe('_nodeRadius', () => {
   })
 })
 
+describe('_createNodeElement clusters', () => {
+  function stubEl() {
+    return {
+      classList: { add: vi.fn(), remove: vi.fn(), contains: vi.fn() },
+      style: { cssText: '' },
+      dataset: {},
+      appendChild: vi.fn(),
+      addEventListener: vi.fn(),
+    }
+  }
+
+  it('adds the cluster class for compound parents', () => {
+    vi.stubGlobal('document', { createElement: () => stubEl() })
+    try {
+      const renderer = makeRenderer()
+      const { el } = renderer._createNodeElement('p1', { label: 'Group', shape: 'rectangle' }, true)
+      expect(el.classList.add).toHaveBeenCalledWith('cluster')
+      expect(el.classList.add).toHaveBeenCalledWith('node-shape-rectangle')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('leaves ordinary nodes as plain cards', () => {
+    vi.stubGlobal('document', { createElement: () => stubEl() })
+    try {
+      const renderer = makeRenderer()
+      const { el } = renderer._createNodeElement('n1', { label: 'Node', shape: 'ellipse' }, false)
+      expect(el.classList.add).not.toHaveBeenCalledWith('cluster')
+      expect(el.classList.add).toHaveBeenCalledWith('node-shape-ellipse')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+})
+
+describe('_resizeClusters', () => {
+  it('sizes and centres the container on the child bounding box', () => {
+    const renderer = makeRenderer()
+    renderer.nodeObjects.set('c1', { obj: { position: v(0, 0) }, el: { clientWidth: 80, clientHeight: 40 } })
+    renderer.nodeObjects.set('c2', { obj: { position: v(200, 100) }, el: { clientWidth: 80, clientHeight: 40 } })
+    const obj = { position: v(0, 0, 0) }
+    const el = { style: {} }
+    renderer._clusters.set('p1', { obj, el, childIds: ['c1', 'c2'] })
+
+    renderer._resizeClusters()
+
+    expect(el.style.width).toBe('332px')
+    expect(el.style.height).toBe('192px')
+    expect(obj.position.x).toBeCloseTo(100, 6)
+    expect(obj.position.y).toBeCloseTo(50, 6)
+    expect(obj.position.z).toBe(-1)
+  })
+
+  it('no-ops for a cluster without children', () => {
+    const renderer = makeRenderer()
+    renderer._clusters.set('p1', { obj: { position: v(0, 0, 0) }, el: { style: {} }, childIds: [] })
+    expect(() => renderer._resizeClusters()).not.toThrow()
+  })
+
+  it('no-ops when no child has a position yet', () => {
+    const renderer = makeRenderer()
+    renderer._clusters.set('p1', { obj: { position: v(0, 0, 0) }, el: { style: {} }, childIds: ['missing'] })
+    expect(() => renderer._resizeClusters()).not.toThrow()
+  })
+})
+
 describe('_fitToGraph', () => {
   function makeFitRenderer() {
     const renderer = makeRenderer()
@@ -128,7 +200,22 @@ describe('_fitToGraph', () => {
     renderer.nodeObjects.set('b', { obj: { position: v(400, 100) } })
     renderer._fitToGraph()
     const halfFov = (40 * Math.PI) / 360
-    expect(renderer.camera.position.z).toBeCloseTo((800 / 2) / Math.tan(halfFov) * 2.4, 6)
+    expect(renderer.camera.position.z).toBeCloseTo((800 / 2) / Math.tan(halfFov) * 2.8, 6)
+  })
+
+  it('sizes the camera distance using dynamic zoomFitFactor from cookies', async () => {
+    const renderer = makeFitRenderer()
+    renderer.nodeObjects.set('a', { obj: { position: v(-400, -100) } })
+    renderer.nodeObjects.set('b', { obj: { position: v(400, 100) } })
+    
+    const VueCookies = await import('vue-cookies')
+    vi.spyOn(VueCookies.default, 'get').mockReturnValue({ zoomFitFactor: 4.5 })
+    
+    renderer._fitToGraph()
+    const halfFov = (40 * Math.PI) / 360
+    expect(renderer.camera.position.z).toBeCloseTo((800 / 2) / Math.tan(halfFov) * 4.5, 6)
+    
+    vi.restoreAllMocks()
   })
 
   it('no-ops when there are no nodes', () => {

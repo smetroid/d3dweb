@@ -5,6 +5,7 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import { gsap } from 'gsap'
+import VueCookies from 'vue-cookies'
 
 export const SCALE = 2   // converts cytoscape layout units → Three.js world units
 const CAMERA_Z = 1500    // initial camera distance
@@ -28,6 +29,8 @@ export default class ThreeDRenderer {
 
     // id → { obj: CSS3DObject, el: HTMLElement }
     this.nodeObjects = new Map()
+    // parentId → { obj: CSS3DObject, el: HTMLElement, childIds: string[] }
+    this._clusters   = new Map()
     // edgeId → { group: THREE.Group, line: Line2, arrow: THREE.Mesh }
     this.edgeLines   = new Map()
     this._viewportSize = null
@@ -119,10 +122,12 @@ export default class ThreeDRenderer {
     this.css3dRenderer.render(this.scene, this.camera)
 
     // Node cards are only in the DOM (with real sizes) after the first CSS3D
-    // render — rebuild edges once so arrowheads sit on the actual card edges.
+    // render — rebuild edges and size cluster containers once so arrowheads
+    // sit on the actual card edges.
     if (!this._firstFrame) {
       this._firstFrame = true
       if (this._cy && this.edgeLines.size > 0) this._rebuildEdges()
+      this._resizeClusters()
     }
   }
 
@@ -141,17 +146,40 @@ export default class ThreeDRenderer {
 
     this._clearScene()
     this._cy = cy
+    // Re-measure card sizes on the next frame so cluster containers can
+    // size to their (now visible) children.
+    this._firstFrame = false
 
-    cy.nodes().forEach(node => {
+    // Cluster containers first so they render behind their child cards.
+    cy.nodes().filter(node => node.isParent()).forEach(parent => {
+      const id  = parent.id()
+      const pos = parent.position()
+      const { wrapper, el } = this._createNodeElement(id, parent.data(), true)
+      const obj = new CSS3DObject(wrapper)
+      // Invert Y because Three.js Y-up vs dagre Y-down; z=-1 keeps the
+      // container behind the z=0 child cards.
+      obj.position.set(pos.x * SCALE, -pos.y * SCALE, -1)
+      this.scene.add(obj)
+      this.nodeObjects.set(id, { obj, el })
+      this._clusters.set(id, {
+        obj,
+        el,
+        childIds: parent.children().map(child => child.id()),
+      })
+    })
+
+    cy.nodes().filter(node => !node.isParent()).forEach(node => {
       const id  = node.id()
       const pos = node.position()
-      const { wrapper, el } = this._createNodeElement(id, node.data())
+      const { wrapper, el } = this._createNodeElement(id, node.data(), false)
       const obj = new CSS3DObject(wrapper)
       // Invert Y because Three.js Y-up vs dagre Y-down.
       obj.position.set(pos.x * SCALE, -pos.y * SCALE, 0)
       this.scene.add(obj)
       this.nodeObjects.set(id, { obj, el })
     })
+
+    this._resizeClusters()
 
     cy.edges().forEach(edge => {
       this._buildEdge(edge, cy)
@@ -164,7 +192,7 @@ export default class ThreeDRenderer {
     this.emitter?.emit('scene-updated', { count: this.nodeObjects.size })
   }
 
-  _createNodeElement(id, data) {
+  _createNodeElement(id, data, isCluster = false) {
     // wrapper is what CSS3DRenderer applies matrix3d to (position only)
     const wrapper = document.createElement('div')
 
@@ -174,6 +202,7 @@ export default class ThreeDRenderer {
     el.id = id
     el.dataset.nodeId = id
 
+    if (isCluster) el.classList.add('cluster')
     if (data.shape) el.classList.add(`node-shape-${data.shape}`)
     if (data.style) el.style.cssText += ';' + data.style
 
@@ -185,6 +214,33 @@ export default class ThreeDRenderer {
     el.addEventListener('click', () => this.emitter.emit('node-click', id))
     wrapper.appendChild(el)
     return { wrapper, el }
+  }
+
+  // Size each cluster container so it visually wraps its child cards.
+  // Uses estimated card sizes until the first render exposes real ones.
+  _resizeClusters() {
+    const PAD = 26
+    this._clusters.forEach(({ obj, el, childIds }) => {
+      if (!childIds.length) return
+      let minX = Infinity, maxX = -Infinity
+      let minY = Infinity, maxY = -Infinity
+      childIds.forEach(childId => {
+        const child = this.nodeObjects.get(childId)
+        if (!child) return
+        const hw = (child.el?.clientWidth  || 80) / 2
+        const hh = (child.el?.clientHeight || 36) / 2
+        minX = Math.min(minX, child.obj.position.x - hw)
+        maxX = Math.max(maxX, child.obj.position.x + hw)
+        minY = Math.min(minY, child.obj.position.y - hh)
+        maxY = Math.max(maxY, child.obj.position.y + hh)
+      })
+      if (!Number.isFinite(minX)) return
+      el.style.width  = `${maxX - minX + PAD * 2}px`
+      el.style.height = `${maxY - minY + PAD * 2}px`
+      obj.position.x = (minX + maxX) / 2
+      obj.position.y = (minY + maxY) / 2
+      obj.position.z = -1
+    })
   }
 
   _buildEdge(edge, cy) {
@@ -323,6 +379,7 @@ export default class ThreeDRenderer {
       if (obj.element && obj.element.parentNode) obj.element.parentNode.removeChild(obj.element)
     })
     this.nodeObjects.clear()
+    this._clusters.clear()
 
     this._disposeEdges()
     this.edgeLines.clear()
@@ -598,7 +655,9 @@ export default class ThreeDRenderer {
     const extent = Math.max(maxX - minX, maxY - minY, 100)
 
     const halfFov = (this.camera.fov * Math.PI) / 360
-    const dist    = Math.max((extent / 2) / Math.tan(halfFov) * 2.4, 200)
+    const settings = VueCookies.get('settings')
+    const zoomFactor = settings && settings.zoomFitFactor !== undefined ? Number(settings.zoomFitFactor) : 2.8
+    const dist    = Math.max((extent / 2) / Math.tan(halfFov) * zoomFactor, 200)
 
     return { cx, cy, dist }
   }

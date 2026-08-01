@@ -69,6 +69,16 @@
                   placeholder=""
                   @keypress.stop.prevent="">
                 </v-text-field>
+                <v-text-field
+                  v-model="settings.zoomFitFactor"
+                  label="Fit Zoom Factor (larger = zooms further out)"
+                  placeholder="2.8"
+                  type="number"
+                  step="0.1"
+                  min="1"
+                  max="10"
+                  @keypress.stop.prevent="">
+                </v-text-field>
                 <v-radio-group 
                   inline
                   label="Theme Options"
@@ -139,6 +149,8 @@ export default {
           (key === 'd3dInfo') ||
           (key === 'reset')) {
           getSettings[key] = Boolean(getSettings[key])
+        } else if (key === 'zoomFitFactor') {
+          getSettings[key] = Number(getSettings[key]) || 2.8
         }
       }
       this.settings = getSettings

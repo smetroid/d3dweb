@@ -458,7 +458,7 @@ export default {
 
       const parsed = migrateDiagramPayload(JSON.parse(localDiagramInfo.diagram))
       const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-      const cy = markRaw(cytoscape({ headless: true, elements }))
+      const cy = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
 
       this.d3dInfo = localDiagramInfo
       this.d3dInfo.id = id
@@ -497,7 +497,7 @@ export default {
       try {
         const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
         const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        const cy = markRaw(cytoscape({ headless: true, elements }))
+        const cy = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
 
         this.d3dInfo = serverDiagramInfo
         this.d3dInfo.id = id

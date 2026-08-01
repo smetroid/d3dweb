@@ -124,7 +124,8 @@ export default {
       'themes': [
         {'value':'light', 'label':'Light Theme'},
         {'value':'dark', 'label':'Dark Theme'},
-      ]
+      ],
+      'zoomFitFactor': 2.8
     }
     return defaults
   },
