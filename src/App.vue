@@ -303,6 +303,7 @@ export default {
         this.$vuetify.theme.name = this.$cookies.get('settings').defaultTheme
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
+      this.syncThemeAttr()
 
       if (D3Util.auth()) {
         this.loadFromServer()
@@ -417,6 +418,13 @@ export default {
     toggleTheme () {
       this.$vuetify.theme.global.name = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
       this.emitter.emit('themeChanged')
+    },
+    syncThemeAttr () {
+      if (typeof document === 'undefined') return
+      document.documentElement.setAttribute(
+        'data-theme',
+        this.$vuetify.theme.global.name === 'dark' ? 'dark' : 'light'
+      )
     },
     loadDiagram (id) {
       /*!SECTION - Logic to load a previously working diagram, or 
@@ -607,6 +615,9 @@ export default {
       setTimeout( ()=> {
         this.infoMessage = false
       },3000 )
+    },
+    '$vuetify.theme.global.name': function () {
+      this.syncThemeAttr()
     }
   }
 }
