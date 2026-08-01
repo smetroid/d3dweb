@@ -1,142 +1,164 @@
 <template>
-  <div id="iform">
-    <v-card
-      ref="formfields"
-      class="mx-auto text-indigo"
-      @keyup.alt.s="updateEdge()"
-      @keyup.meta.s="updateEdge()"
-      @keyup.ctrl.c="close()"
-      @keyup.meta.c="close()"
-      @keydown.esc="keyPress($event)"
-      @keypress.stop.prevent="keyPress($event)">
-      <focus-trap
-        v-model:action="enableTrap">
-        <div tabindex="0">
-          <v-card-title class="bg-primary">
-            <v-row class="pa-3" justify="center">
-              <b v-if="update">Update Edge</b>
-              <b v-else>Add Edge</b>
-            </v-row>
-          </v-card-title>
-          <v-divider></v-divider>
-          <v-card-text class="pb-0">
-            <v-container class="pb-0 fluid">
-              <v-row
-              >
-                <v-col 
-                  >
-                  <v-select
-                    v-model="edgeLabelType"
-                    :items="edgeLabelTypeOptions"
-                    label="Edge Label"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                    label-color="green"
-                  ></v-select>
-                </v-col>
-                <v-col
-                  >
-                  <v-select
-                    v-model="edgeArrowHeadStyle"
-                    :items="edgeArrowHeadStyleOptions"
-                    label="Edge Arrow Head Style"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                    label-color="green"
-                  ></v-select>
-                </v-col>
-                <v-col
-                  >
-                  <v-select
-                    v-model="edgeArrowHead"
-                    :items="edgeArrowHeadOptions"
-                    label="Edge Arrow Head"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                  ></v-select>
-                </v-col>
-              </v-row>
-              <v-row
-                class="mt-n8"
-              >
-                <v-col
-                >
-                  <v-text-field 
-                    v-model="fromNode"
-                    label="From Node"
-                    @keypress.stop="">
-                  </v-text-field>
-                </v-col>
-                <v-col
-                  >
-                  <v-text-field 
-                    v-model="toNode"
-                    label="To Node"
-                    @keypress.stop="">
-                  </v-text-field>
-                </v-col>
-                <v-col
-                >
-                  <v-textarea
-                    autofocus
-                    class=""
-                    label="Edge Label"
-                    v-model="edgeLabel"
-                    placeholder="Add edge label... can be html ... {{ shortcutLabels.clear }} to clear value"
-                    @keypress.stop=""
-                    @keydown.alt.shift.w="edgeLabel=''"
-                    @keydown.meta.shift.w="edgeLabel=''"
-                    clearable
-                    rows="3"
-                    >
-                  </v-textarea>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions
-            class="text-primary d-flex"
-            >
-            <v-btn v-if="update" 
-              @keyup.enter="updateEdge()"
-              class="text-primary" 
-              variant="tonal"
-              color=""
-              density="comfortable"
-              @click="updateEdge()" 
-              @keypress.stop="">
-              Update Edge ({{ shortcutLabels.save }})
-            </v-btn>
-            <v-btn v-else 
-              class="text-primary" 
-              variant="tonal"
-              color=""
-              density="comfortable"
-              @click="addEdge()" 
-              @keypress.stop="">
-              Add Edge ({{ shortcutLabels.save }})
-            </v-btn>
-            <v-btn 
-              class="text-primary" 
-              variant="tonal"
-              type="submit"
-              density="comfortable"
-              color=""
-              @click="close()" 
-              @keypress.stop=""
-              >
-              Cancel ({{ shortcutLabels.close }})
-            </v-btn>
-          </v-card-actions>
+  <div
+    id="iform"
+    ref="formfields"
+    class="fx-panel"
+    @keyup.alt.s="updateEdge()"
+    @keyup.meta.s="updateEdge()"
+    @keyup.ctrl.c="close()"
+    @keyup.meta.c="close()"
+    @keydown.esc="keyPress($event)"
+    @keypress.stop.prevent="keyPress($event)"
+  >
+    <focus-trap v-model:active="enableTrap">
+      <div tabindex="0" class="fx-panel-inner">
+        <header class="fx-panel-header">
+          <div class="fx-panel-title">
+            <span class="fx-title-chip" :class="update ? 'fx-chip-edit' : 'fx-chip-add'">
+              {{ update ? 'EDIT' : 'CREATE' }}
+            </span>
+            <h2 class="fx-title">EDGE</h2>
+          </div>
+          <button type="button" class="fx-close" @click="close()" @keypress.stop="" aria-label="Close">✕</button>
+        </header>
+
+        <div class="fx-readout">
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">ID</span>
+            <span class="fx-readout-v">{{ update ? edgeId : 'auto' }}</span>
+          </span>
+          <span class="fx-readout-kv fx-readout-wide">
+            <span class="fx-readout-k">PATH</span>
+            <span class="fx-readout-v">{{ pathText }}</span>
+          </span>
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">MODE</span>
+            <span class="fx-readout-v">{{ update ? 'FOCUS' : 'PENDING' }}</span>
+          </span>
         </div>
-      </focus-trap>
-    </v-card>
+
+        <div class="fx-panel-body">
+          <div class="fx-grid">
+            <label class="fx-field">
+              <span class="fx-label">Edge Label Type</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('labelType')"
+                >{{ labelTypeLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'labelType'" class="fx-options">
+                    <li
+                      v-for="opt in edgeLabelTypeOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeLabelType === opt.value }"
+                      @click="pick('edgeLabelType', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Arrow Head Style</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('arrowStyle')"
+                >{{ arrowStyleLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'arrowStyle'" class="fx-options">
+                    <li
+                      v-for="opt in edgeArrowHeadStyleOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeArrowHeadStyle === opt.value }"
+                      @click="pick('edgeArrowHeadStyle', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Arrow Head</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('arrow')"
+                >{{ arrowLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'arrow'" class="fx-options">
+                    <li
+                      v-for="opt in edgeArrowHeadOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeArrowHead === opt.value }"
+                      @click="pick('edgeArrowHead', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+          </div>
+
+          <div class="fx-grid fx-grid-2">
+            <label class="fx-field">
+              <span class="fx-label">From Node</span>
+              <input class="fx-input fx-input-static" type="text" v-model="fromNode" readonly placeholder="select source" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-label">To Node</span>
+              <input class="fx-input fx-input-static" type="text" v-model="toNode" readonly placeholder="select target" />
+            </label>
+          </div>
+
+          <label class="fx-field fx-field-full">
+            <span class="fx-label">Edge Label</span>
+            <textarea
+              ref="edgeLabelTextField"
+              class="fx-input fx-textarea"
+              v-model="edgeLabel"
+              :rows="edgeRows"
+              placeholder="Add edge label... can be html ... {{ shortcutLabels.clear }} to clear value"
+              @keypress.stop=""
+              @keydown.alt.shift.w="edgeLabel=''"
+              @keydown.meta.shift.w="edgeLabel=''"
+            ></textarea>
+          </label>
+        </div>
+
+        <footer class="fx-panel-actions">
+          <button
+            v-if="update"
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="updateEdge()"
+            @keypress.stop=""
+          >Update Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          <button
+            v-else
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="addEdge()"
+            @keypress.stop=""
+          >Add Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          <button
+            type="button"
+            class="fx-btn fx-btn-ghost"
+            @click="close()"
+            @keypress.stop=""
+          >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+        </footer>
+      </div>
+    </focus-trap>
   </div>
 </template>
+
 <script>
 import D3Util from '@/helpers/D3Util'
 export default {
@@ -155,18 +177,19 @@ export default {
       d3EdgesData: null,
       edgeId: null,
       update: false,
+      openSel: null,
       edgeLabelTypeOptions: [
-        {"value":"text", "label":"Text"},
-        {"value":"html", "label":"HTML"}
+        { 'value': 'text', 'label': 'Text' },
+        { 'value': 'html', 'label': 'HTML' }
       ],
       edgeArrowHeadStyleOptions: [
-        {"value":"solid", "label":"Solid"},
-        {"value":"hollow", "label":"Hollow"}
+        { 'value': 'solid', 'label': 'Solid' },
+        { 'value': 'hollow', 'label': 'Hollow' }
       ],
       edgeArrowHeadOptions: [
-        {"value":"normal", "label":"Normal"},
-        {"value": "vee", "label": "Vee"}, 
-        {"value": "undirected", "label": "Undirected"}
+        { 'value': 'normal', 'label': 'Normal' },
+        { 'value': 'vee', 'label': 'Vee' },
+        { 'value': 'undirected', 'label': 'Undirected' }
       ],
       fromNode: '',
       toNode: ''
@@ -176,173 +199,129 @@ export default {
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
+    labelTypeLabel() {
+      return this._optLabel(this.edgeLabelTypeOptions, this.edgeLabelType, 'value', 'label', 'Text')
+    },
+    arrowStyleLabel() {
+      return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Solid')
+    },
+    arrowLabel() {
+      return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Normal')
+    },
+    pathText() {
+      if (this.fromNode && this.toNode) return `${this.fromNode} → ${this.toNode}`
+      if (this.fromNode || this.toNode) return this.fromNode || this.toNode
+      return '—'
+    },
+    edgeRows() {
+      const count = (this.edgeLabel || '').split('\n').length
+      return Math.min(6, Math.max(2, count))
+    },
   },
   mounted () {
-    console.log('active window d3EdgeForm')
-    this.update = this.active == 'Edit Edge' ? true : false
-    if (this.active == "Edit Edge" || this.active == "Add Edge") {
-      this.edgeModal = true
-    } else {
-      this.edgeModal = false
-    }
+    this.update = this.active == 'Edit Edge'
+    this.edgeModal = this.active == 'Edit Edge' || this.active == 'Add Edge'
 
-    // this.edgeModal = this.active == "Edit Edge"?true:false
-    //this.edgeModal = this.active == "Add Edge"?true:false
+    if (this.update || this.edgeModal) {
+      this.edgeId = this.d3Data?.id
+      this.edgeLabelType = this.d3Data?.labelType || ''
+      this.edgeLabel = this.d3Data?.label || ''
+      this.edgeArrowHeadStyle = this.d3Data?.arrowheadStyle || ''
+      this.edgeArrowHead = this.d3Data?.arrowhead || ''
 
-    if(this.update || this.edgeModal){
-      console.log(this.d3Data)
-      this.edgeModal = true
-      this.edgeId = this.d3Data.id
-      this.edgeLabelType = this.d3Data.labelType
-      this.edgeLabel = this.d3Data.label
-      this.edgeArrowHeadStyle = this.d3Data.arrowheadStyle
-      this.edgeArrowHead = this.d3Data.arrowhead
-      this.fromNode = this.modifier.getNodeData(this.d3Data.id.v).label
-      this.toNode = this.modifier.getNodeData(this.d3Data.id.w).label
-    } else {
-      this.edgeModal = false
-    }
-
-    if(this.edgeModal){
-      this.$nextTick(function(){
-        console.log('loginTrap active')
-        this.enableTrap = this.edgeModal
-      })
-    }
-
-    this.emitter.on('showEdgeForm', () => {
-      console.log('Message Received From D3Vim')
-      this.showForm()
-    })
-
-    this.emitter.on('edgesD3Data', (data, id) => {
-      console.log('edgesD3Data message received')
-      if (D3Util.debug) {
-        console.log(data.labeltype)
-        console.log(data)
-        console.log(id)
+      const mod = this.modifier
+      let srcId = null
+      let tgtId = null
+      if (typeof this.edgeId === 'string' && mod?.cy) {
+        const edge = mod.cy.getElementById(this.edgeId)
+        if (edge && edge.nonempty()) {
+          srcId = edge.data('source')
+          tgtId = edge.data('target')
+        }
+      } else if (this.edgeId?.v && this.edgeId?.w) {
+        srcId = this.edgeId.v
+        tgtId = this.edgeId.w
       }
+      this.fromNode = srcId ? (mod.getNodeData(srcId)?.label || srcId) : ''
+      this.toNode = tgtId ? (mod.getNodeData(tgtId)?.label || tgtId) : ''
+    }
+
+    this._showEdgeFormHandler = () => this.showForm()
+    this._edgesD3DataHandler = (data, id) => {
       this.d3EdgesData = data
       this.edgeId = id
       this.edgeLabelType = data.labelType
       this.edgeLabel = data.label
       this.edgeArrowHeadStyle = data.arrowheadStyle
       this.edgeArrowHead = data.arrowhead
-    })
+    }
+    this._editEdgeHandler = () => this.editEdge()
+    this.emitter.on('showEdgeForm', this._showEdgeFormHandler)
+    this.emitter.on('edgesD3Data', this._edgesD3DataHandler)
+    this.emitter.on('editEdge', this._editEdgeHandler)
+    document.addEventListener('click', this.onDocClick)
 
-    this.emitter.on('editEdge', () => {
-      console.log('editEdge message received')
-      this.editEdge()
-    })
+    if (this.edgeModal) {
+      this.$nextTick(() => {
+        if (this.update && this.modifier?.renderer) {
+          this.modifier.renderer.zoomTo(this.edgeId)
+        }
+        this.enableTrap = true
+        if (this.$refs.edgeLabelTextField) this.$refs.edgeLabelTextField.focus()
+      })
+    }
+  },
+  beforeUnmount () {
+    this.emitter.off('showEdgeForm', this._showEdgeFormHandler)
+    this.emitter.off('edgesD3Data', this._edgesD3DataHandler)
+    this.emitter.off('editEdge', this._editEdgeHandler)
+    document.removeEventListener('click', this.onDocClick)
   },
   methods: {
+    _optLabel(list, val, valKey, labelKey, fallback) {
+      if (!val) return fallback
+      const opt = list.find(o => o[valKey] === val)
+      return opt ? opt[labelKey] : fallback
+    },
+    toggleSel(key) {
+      this.openSel = this.openSel === key ? null : key
+    },
+    pick(field, val) {
+      this[field] = val
+      this.openSel = null
+    },
+    onDocClick() {
+      this.openSel = null
+    },
     updateEdge () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('updateEdge Function')
-        console.log(this.edgeLabel)
-        console.log(this.edgeArrowHeadStyle)
-        console.log(this.edgeId)
-        console.log(this.$data)
-      }
-
       this.modifier.updateEdge(this.$data, this.edgeId)
       this.close()
     },
     editEdge () {
-      console.log(this.d3EdgesData)
-      this.buttonUpdate = true
       this.enableTrap = true
     },
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
     },
     addEdge () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('addEdge Function')
-        console.log(this.edgeLabel)
-        console.log(this.edgeLabelType)
-        console.log(this.edgeArrowHead)
-        console.log(this.edgeArrowHeadStyle)
-        console.log(this.edgeId)
-        console.log(this.$data)
-        console.log(this.modifier)
-      }
       this.modifier.addEdge(this.$data)
       this.common()
-      //this.$root.$emit('addDagreEdge', this.$data, false)
     },
     close () {
-      console.log('close method')
       this.common()
     },
-    common(){
-      /*REVIEW - this code is the same for both forms */
-      //this.enableTrap= false
+    common() {
       this.edgeModal = false
       this.hints = D3Util.removeHints(this.hints)
       this.emitter.emit('setSheetToFalse')
-      //this.emitter.emit("changeActive")
-      //this.emitter.emit("d3ResetValues")
     }
-  },
-  // watch: {
-  //   active: function() {
-  //   },
-  //   d3Data: function(){
-  //     //this.d3EdgesData = data
-  //     console.log(this.d3Data)
-  //   }
-  // }
+  }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
-}
-
-.hints{
+.hints {
   border: 1px solid magenta;
   color: magenta;
-  /*# display: table-caption; */
 }
-
-#iform {
-  /*
-  color: #42b983;
-  margin: auto;
-  background: #343a40;
-  border-radius: 15px;
-  width: 40%;
-  padding: 10px 10px 10px 10px;
-  bottom: auto;
-  */
-}
-
-.trap.is-active {
-  brackground: #f3c5f5;
-}
-
-.samus__label {
-  color: #42b983;
-  font-weight: 1000;
-}
-
 </style>

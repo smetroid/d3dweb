@@ -28,21 +28,35 @@
           tabindex="0"
           class="three-container"
         />
+
+        <div v-if="graphEmpty" class="graph-empty-hint">
+          Empty diagram —
+          press <span class="kbd">n</span> to create a node
+          <span class="sep">·</span>
+          <span class="kbd">/</span> for help
+        </div>
       </div>
     </FocusTrap>
 
-    <v-bottom-sheet hide-overlay v-model="openSheet">
-      <D3EdgeForm
-        v-if="active === 'Add Edge' || active === 'Edit Edge'"
-        :active="active"
-        :d3Data="d3Data"
-      />
-      <D3NodeForm
-        v-if="active === 'Add Node' || active === 'Edit Node'"
-        :active="active"
-        :d3Data="d3Data"
-      />
-    </v-bottom-sheet>
+    <Teleport to="body">
+      <transition name="fx-scrim">
+        <div v-if="openSheet" class="fx-scrim" @click="cancelForm()"></div>
+      </transition>
+      <transition name="fx-panel">
+        <div v-if="openSheet" class="fx-hud-stage">
+          <D3EdgeForm
+            v-if="active === 'Add Edge' || active === 'Edit Edge'"
+            :active="active"
+            :d3Data="d3Data"
+          />
+          <D3NodeForm
+            v-if="active === 'Add Node' || active === 'Edit Node'"
+            :active="active"
+            :d3Data="d3Data"
+          />
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
@@ -78,6 +92,7 @@ export default {
       openSheet:       false,
       escCount:        0,
       threeDRenderer:  null,
+      graphEmpty:      false,
     }
   },
   mounted() {
@@ -91,9 +106,11 @@ export default {
 
     this.emitter.on('node-click', this._onNodeClick)
     this.emitter.on('d3ResetValues', () => this.resetValues())
+    this.emitter.on('scene-updated', ({ count }) => { this.graphEmpty = count === 0 })
 
     this.emitter.on('setSheetToFalse', () => {
       this.openSheet = false
+      this.threeDRenderer?.zoomOut()
       setTimeout(() => this.emitter.emit('changeActive'), 300)
     })
 
@@ -241,6 +258,10 @@ export default {
       }
     },
 
+    cancelForm() {
+      this.emitter.emit('setSheetToFalse')
+    },
+
     resetValues() {
       const mod = this.modifier?.value ?? this.modifier
       if (mod) {
@@ -282,6 +303,13 @@ export default {
         this.escCount++
       }
       this.trapGraph = val === 'D3Dagre'
+
+      const isEdit = val === 'Add Node' || val === 'Edit Node' ||
+                     val === 'Add Edge' || val === 'Edit Edge'
+      this.openSheet = isEdit
+      if (isEdit) {
+        this.$nextTick(() => this.threeDRenderer?.zoomTo(this.d3Data?.id))
+      }
     },
   },
 }
@@ -295,6 +323,37 @@ export default {
   width: 100%;
   height: 100%;
   outline: none;
+}
+
+.graph-empty-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(var(--v-theme-surface), 0.7);
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 1px 7px;
+  margin: 0 2px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.4);
+  border-radius: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.sep {
+  margin: 0 6px;
+  opacity: 0.5;
 }
 
 .d3d-info {

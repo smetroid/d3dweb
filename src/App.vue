@@ -444,6 +444,7 @@ export default {
   methods: {
     toggleTheme () {
       this.$vuetify.theme.global.name = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
+      this.emitter.emit('themeChanged')
     },
     loadDiagram (id) {
       /*!SECTION - Logic to load a previously working diagram, or 

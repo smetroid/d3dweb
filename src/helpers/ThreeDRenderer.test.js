@@ -1,6 +1,14 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as THREE from 'three'
 import ThreeDRenderer from '@/helpers/ThreeDRenderer.js'
+
+vi.mock('gsap', () => {
+  const to = vi.fn()
+  const timeline = () => ({ to: () => ({}) })
+  const fromTo = () => ({})
+  return { gsap: { to, timeline, fromTo } }
+})
+import { gsap } from 'gsap'
 
 function makeRenderer() {
   return new ThreeDRenderer(null, null)
@@ -132,5 +140,156 @@ describe('_fitToGraph', () => {
   it('no-ops without a camera or controls', () => {
     const renderer = makeRenderer()
     expect(() => renderer._fitToGraph()).not.toThrow()
+  })
+})
+
+describe('_readTheme', () => {
+  it('falls back to a default palette outside the browser', () => {
+    const renderer = makeRenderer()
+    const palette = renderer._readTheme()
+    expect(palette.primary).toBe(0x1867c0)
+    expect(palette.source).toBeLessThan(palette.target)
+    expect(palette.active).toBe(0xff9f43)
+    expect(palette.grid).toEqual([0, 0, 0])
+  })
+
+  it('converts an rgb triplet to a hex int', () => {
+    const renderer = makeRenderer()
+    expect(renderer._rgbToHex([24, 103, 192])).toBe(0x1867c0)
+  })
+})
+
+describe('_buildLineGeometry', () => {
+  it('emits positions and a source→target colour gradient', () => {
+    const renderer = makeRenderer()
+    renderer._palette = { source: 0x0000ff, target: 0xff0000 }
+    const { curve } = renderer._buildCurve(v(0, 0), v(100, 0), 10)
+    const lineGeo = renderer._buildLineGeometry(curve)
+    const starts = lineGeo.attributes.instanceColorStart.array
+    const ends   = lineGeo.attributes.instanceColorEnd.array
+    expect(lineGeo.attributes.instanceStart.count).toBe(48)
+    expect(starts.length).toBe(48 * 6)
+    expect(ends.length).toBe(48 * 6)
+    expect(starts[0]).toBeCloseTo(0, 1)               // first segment: source blue
+    expect(starts[1]).toBeCloseTo(0, 1)
+    expect(starts[2]).toBeCloseTo(1, 1)
+    expect(ends[ends.length - 3]).toBeCloseTo(1, 1)   // last segment: target red
+    expect(ends[ends.length - 2]).toBeCloseTo(0, 1)
+    expect(ends[ends.length - 1]).toBeCloseTo(0, 1)
+  })
+})
+
+describe('_buildArrowhead', () => {
+  it('uses the palette target colour', () => {
+    const renderer = makeRenderer()
+    renderer._palette = { target: 0x00ff00 }
+    const cone = renderer._buildArrowhead(v(0, 0), new THREE.Vector3(0, 1, 0))
+    expect(cone.material.color.getHex()).toBe(0x00ff00)
+  })
+})
+
+describe('_rayPointDistance', () => {
+  it('measures perpendicular distance to the ray', () => {
+    const renderer = makeRenderer()
+    const ray = new THREE.Ray(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
+    expect(renderer._rayPointDistance(ray, v(3, 4, 10))).toBeCloseTo(5, 6)
+  })
+
+  it('falls back to euclidean distance behind the ray origin', () => {
+    const renderer = makeRenderer()
+    const ray = new THREE.Ray(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
+    expect(renderer._rayPointDistance(ray, v(3, 4, -10))).toBeCloseTo(Math.hypot(3, 4, 10), 6)
+  })
+})
+
+describe('edge highlight', () => {
+  it('selectEdge/deselectEdge toggle the active colour and opacity', () => {
+    const renderer = makeRenderer()
+    renderer._palette = { active: 0xff0000, target: 0x0000ff }
+    const line  = { material: { color: { setHex: vi.fn() }, opacity: null } }
+    const arrow = { material: { color: { setHex: vi.fn() } } }
+    renderer.edgeLines.set('e1', { line, arrow })
+    renderer.selectEdge('e1')
+    expect(line.material.opacity).toBe(0.95)
+    expect(line.material.color.setHex).toHaveBeenCalledWith(0xff0000)
+    renderer.deselectEdge('e1')
+    expect(line.material.opacity).toBe(0.7)
+    expect(arrow.material.color.setHex).toHaveBeenLastCalledWith(0x0000ff)
+  })
+})
+
+describe('zoomTo / zoomOut', () => {
+  beforeEach(() => {
+    gsap.to.mockClear()
+  })
+
+  function makeZoomRenderer() {
+    const renderer = makeRenderer()
+    renderer.camera = new THREE.PerspectiveCamera(40, 1, 1, 10000)
+    renderer.controls = { target: new THREE.Vector3(), update: vi.fn() }
+    return renderer
+  }
+
+  it('zoomTo focuses the camera on a node', () => {
+    const renderer = makeZoomRenderer()
+    const obj = { position: v(100, 200, 0) }
+    renderer.nodeObjects.set('n1', { obj, el: { clientWidth: 80, clientHeight: 40 } })
+    renderer.zoomTo('n1')
+    const calls = gsap.to.mock.calls
+    expect(calls[0][0]).toBe(renderer.camera.position)
+    expect(calls[0][1].x).toBe(100)
+    expect(calls[0][1].y).toBe(200)
+    expect(calls[0][1].z).toBeGreaterThan(0)
+    expect(calls[1][0]).toBe(renderer.controls.target)
+    expect(calls[1][1].x).toBe(100)
+    expect(calls[1][1].y).toBe(200)
+  })
+
+  it('zoomTo focuses the midpoint of an edge', () => {
+    const renderer = makeZoomRenderer()
+    renderer.nodeObjects.set('a', { obj: { position: v(0, 0) } })
+    renderer.nodeObjects.set('b', { obj: { position: v(200, 0) } })
+    renderer.edgeLines.set('e1', { srcId: 'a', tgtId: 'b' })
+    renderer.zoomTo('e1')
+    const calls = gsap.to.mock.calls
+    expect(calls[0][1].x).toBe(100)
+    expect(calls[0][1].y).toBe(0)
+  })
+
+  it('zoomTo accepts a legacy {v, w} edge object', () => {
+    const renderer = makeZoomRenderer()
+    renderer.nodeObjects.set('a', { obj: { position: v(0, 0) } })
+    renderer.nodeObjects.set('b', { obj: { position: v(100, 100) } })
+    renderer.edgeLines.set('e1', { srcId: 'a', tgtId: 'b' })
+    renderer.zoomTo({ v: 'a', w: 'b' })
+    const calls = gsap.to.mock.calls
+    expect(calls[0][1].x).toBe(50)
+    expect(calls[0][1].y).toBe(50)
+  })
+
+  it('no-ops on an unknown id', () => {
+    const renderer = makeZoomRenderer()
+    renderer.zoomTo('missing')
+    expect(gsap.to).not.toHaveBeenCalled()
+    renderer.zoomTo(undefined)
+    expect(gsap.to).not.toHaveBeenCalled()
+  })
+
+  it('zoomOut returns to the fit target', () => {
+    const renderer = makeZoomRenderer()
+    renderer.nodeObjects.set('a', { obj: { position: v(0, 0) } })
+    renderer.nodeObjects.set('b', { obj: { position: v(200, 100) } })
+    renderer.zoomOut()
+    const calls = gsap.to.mock.calls
+    expect(calls[0][1].x).toBeCloseTo(100, 6)
+    expect(calls[0][1].y).toBeCloseTo(50, 6)
+    expect(calls[1][1].x).toBeCloseTo(100, 6)
+    expect(calls[1][1].y).toBeCloseTo(50, 6)
+  })
+
+  it('zoomOut no-ops without a camera or controls', () => {
+    const renderer = makeRenderer()
+    expect(() => renderer.zoomOut()).not.toThrow()
+    expect(() => renderer.zoomTo('n1')).not.toThrow()
   })
 })

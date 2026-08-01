@@ -1,156 +1,193 @@
 <template>
-  <div id="iform">
-      <v-card 
-        class="mx-auto text-indigo"
-        ref="formfields" 
-        @keyup.alt.s="updateNode()"
-        @keyup.meta.s="updateNode()"
-        @keyup.ctrl.c="close()"
-        @keyup.meta.c="close()"
-        @keydown.esc="keyPress($event)"
-        @keypress.stop.prevent="keyPress($event)">
-        <focus-trap 
-          v-model:action="enableTrap"
-          >
-          <div tabindex="0">
-            <v-card-title class="bg-primary">
-              <v-row class="pa-3" justify="center">
-                <b v-if="update">Update Node</b>
-                <b v-else>Add Node</b>
-              </v-row>
-            </v-card-title>
-            <v-divider></v-divider>
-            <v-card-text class="pb-0">
-              <v-container class="pb-0">
-                <v-row
-                >
-                  <v-col 
-                    >
-                    <v-select
-                      v-model="nodeLabelType"
-                      :items="nodeLabelTypeOptions"
-                      item-title="value"
-                      item-value="key"
-                      label="Node Label Type"
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    >
-                    <v-select
-                      v-model="nodeShape"
-                      :items="nodeShapes"
-                      label="Node Shape"
-                      item-value="value"
-                      item-title="label"
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    >
-                    <v-select
-                      v-model="clusterLabelPos"
-                      :items="clusterLabelPosOptions"
-                      label="Cluster Label Position"
-                      item-value="value"
-                      item-title="label"
-                      hint="optional"
-                      clearable
-                    ></v-select>
-                  </v-col>
-                  <v-col 
-                    >
-                    <v-select
-                      v-model="parentNode"
-                      :items="parentOptions"
-                      item-title="value"
-                      item-value="key"
-                      auto-select-first
-                      label="Parent"
-                      hint="optional"
-                      clearable
-                      >
-                    </v-select>
-                  </v-col>
-                </v-row>
-                <v-row
-                  class="mt-n7"
-                  >
-                  <v-col 
-                    cols="6"
-                    >
-                    <v-textarea
-                      autofocus
-                      class=""
-                      label="Node Label"
-                      v-model="nodeLabel"
-                      placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... {{ shortcutLabels.clear }} to clear value"
-                      @keypress.stop=""
-                      @keydown.alt.shift.w="nodeLabel=''"
-                      @keydown.meta.shift.w="nodeLabel=''"
-                      ref="nodeLabelTextField"
-                      clearable
-                      rows="5"
-                      />
-                  </v-col>
-                  <v-col 
-                    cols="6"
-                    >
-                    <v-text-field 
-                      v-model="style"
-                      placeholder="fill: #d3d7e8"
-                      label="Node Style"
-                      hint="optional"
-                      @keypress.stop=""
-                      clearable
-                      >
-                    </v-text-field>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-divider></v-divider>
-            <v-card-actions
-              class="mx-auto"
-              >
-                <v-btn 
-                  v-if="update" 
-                  variant="tonal"
-                  class="text-primary custom-text" 
-                  density="comfortable"
-                  @click="updateNode()" 
-                  @keypress.stop="">
-                  Update Node ({{ shortcutLabels.save }})
-                  </v-btn>
-                <v-btn 
-                  v-else 
-                  variant="tonal"
-                  class="text-primary" 
-                  @click="addNode()" 
-                  type="submit"
-                  density="comfortable"
-                  @keypress.stop="">
-                  Add Node
-                </v-btn>
-                <v-btn 
-                  variant="tonal"
-                  type="submit"
-                  density="comfortable"
-                  class="text-primary" 
-                  @click="close()" 
-                  @keypress.stop=""
-                  >
-                  Cancel ({{ shortcutLabels.close }})
-                </v-btn>
-            </v-card-actions>
+  <div
+    id="iform"
+    ref="formfields"
+    class="fx-panel"
+    @keyup.alt.s="updateNode()"
+    @keyup.meta.s="updateNode()"
+    @keyup.ctrl.c="close()"
+    @keyup.meta.c="close()"
+    @keydown.esc="keyPress($event)"
+    @keypress.stop.prevent="keyPress($event)"
+  >
+    <focus-trap v-model:active="enableTrap">
+      <div tabindex="0" class="fx-panel-inner">
+        <header class="fx-panel-header">
+          <div class="fx-panel-title">
+            <span class="fx-title-chip" :class="update ? 'fx-chip-edit' : 'fx-chip-add'">
+              {{ update ? 'EDIT' : 'CREATE' }}
+            </span>
+            <h2 class="fx-title">NODE</h2>
           </div>
-        </focus-trap>
-      </v-card>
+          <button type="button" class="fx-close" @click="close()" @keypress.stop="" aria-label="Close">✕</button>
+        </header>
+
+        <div class="fx-readout">
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">ID</span>
+            <span class="fx-readout-v">{{ update ? nodeId : 'auto' }}</span>
+          </span>
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">POS</span>
+            <span class="fx-readout-v">{{ update ? posText : '—' }}</span>
+          </span>
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">MODE</span>
+            <span class="fx-readout-v">{{ update ? 'FOCUS' : 'PENDING' }}</span>
+          </span>
+        </div>
+
+        <div class="fx-panel-body">
+          <div class="fx-grid">
+            <label class="fx-field">
+              <span class="fx-label">Node Label Type</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('labelType')"
+                >{{ labelTypeLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'labelType'" class="fx-options">
+                    <li
+                      v-for="opt in nodeLabelTypeOptions"
+                      :key="opt.key"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': nodeLabelType === opt.key }"
+                      @click="pick('nodeLabelType', opt.key)"
+                    >{{ opt.value }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Node Shape</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('shape')"
+                >{{ shapeLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'shape'" class="fx-options">
+                    <li
+                      v-for="opt in nodeShapes"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': nodeShape === opt.value }"
+                      @click="pick('nodeShape', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Cluster Label Position <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('cluster')"
+                >{{ clusterPosLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'cluster'" class="fx-options">
+                    <li
+                      v-for="opt in clusterLabelPosOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': clusterLabelPos === opt.value }"
+                      @click="pick('clusterLabelPos', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Parent <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('parent')"
+                >{{ parentLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'parent'" class="fx-options">
+                    <li
+                      class="fx-option"
+                      :class="{ 'fx-option-active': parentNode === null }"
+                      @click="pick('parentNode', null)"
+                    >— none —</li>
+                    <li
+                      v-for="opt in parentOptions"
+                      :key="opt.key"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': parentNode === opt.key }"
+                      @click="pick('parentNode', opt.key)"
+                    >{{ opt.value }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+          </div>
+
+          <label class="fx-field fx-field-full">
+            <span class="fx-label">Node Label</span>
+            <textarea
+              ref="nodeLabelTextField"
+              class="fx-input fx-textarea"
+              v-model="nodeLabel"
+              :rows="labelRows"
+              placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... {{ shortcutLabels.clear }} to clear value"
+              @keypress.stop=""
+              @keydown.alt.shift.w="nodeLabel=''"
+              @keydown.meta.shift.w="nodeLabel=''"
+            ></textarea>
+          </label>
+
+          <label class="fx-field fx-field-full">
+            <span class="fx-label">Node Style <em class="fx-opt">optional</em></span>
+            <input
+              class="fx-input"
+              type="text"
+              v-model="style"
+              placeholder="fill: #d3d7e8"
+              @keypress.stop=""
+            />
+          </label>
+        </div>
+
+        <footer class="fx-panel-actions">
+          <button
+            v-if="update"
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="updateNode()"
+            @keypress.stop=""
+          >Update Node <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          <button
+            v-else
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="addNode()"
+            @keypress.stop=""
+          >Add Node</button>
+          <button
+            type="button"
+            class="fx-btn fx-btn-ghost"
+            @click="close()"
+            @keypress.stop=""
+          >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+        </footer>
+      </div>
+    </focus-trap>
   </div>
 </template>
 
 <script>
-// import * as Velocity from 'velocity-animate'
 import D3Util from '@/helpers/D3Util'
-// import VueCookies from 'vue-cookies'
 export default {
   name: 'D3Node',
   props: ['active', 'd3Data'],
@@ -165,105 +202,68 @@ export default {
       d3DagreData: null,
       nodeId: null,
       update: false,
-      //nodeLabelType: 'text',
-      nodeLabelType: {
-        'key':'text',
-        'value':'Text'
-      },
+      nodeLabelType: 'text',
+      openSel: null,
       nodeLabelTypeOptions: [
-        { 'key':'text','value':'Text' },
-        { 'key':'html','value':'HTML' }
+        { 'key': 'text', 'value': 'Text' },
+        { 'key': 'html', 'value': 'HTML' }
       ],
       nodeShapes: [
-        {'value':'rect','label':'Rectangle'},
-        {'value':'circle','label':'Circle'},
-        {'value':'ellipse','label':'Ellipse'},
-        {'value':'diamond','label':'Diamond'}
+        { 'value': 'rect', 'label': 'Rectangle' },
+        { 'value': 'circle', 'label': 'Circle' },
+        { 'value': 'ellipse', 'label': 'Ellipse' },
+        { 'value': 'diamond', 'label': 'Diamond' }
       ],
-      //parentOptions: {},
       parentNode: null,
       clusterLabelPos: 'top',
       clusterLabelPosOptions: [
-        {'value':'top','label':'Top'},
-        {'value':'bottom','label':'Bottom'},
-        {'value':'topLeft','label':'TopLeft'},
-        {'value':'topRight','label':'TopRight'},
-        {'value':'bottomLeft','label':'BottomLeft'},
-        {'value':'bottomRight','label':'BottomRight'}
+        { 'value': 'top', 'label': 'Top' },
+        { 'value': 'bottom', 'label': 'Bottom' },
+        { 'value': 'topLeft', 'label': 'TopLeft' },
+        { 'value': 'topRight', 'label': 'TopRight' },
+        { 'value': 'bottomLeft', 'label': 'BottomLeft' },
+        { 'value': 'bottomRight', 'label': 'BottomRight' }
       ],
       style: 'fill: #5f9488',
     }
   },
   mounted () {
-    if (D3Util.debug) {
-      console.log('active window watch d3nodeform')
-      console.log(this.d3Data)
-      console.log(this.modifier.diagram)
-      console.log(this.d3Data.id)
-      console.log(this.modifier.cy.getElementById(this.modifier.d3dInfo?.id).parent().first().id())
+    this.update = this.active == 'Edit Node'
+
+    if (this.update) {
+      const lt = this.d3Data?.labelType
+      this.nodeLabelType = (typeof lt === 'string' && lt) ? lt : (lt?.key || 'text')
+      this.nodeLabel      = this.d3Data.label
+      this.nodeShape      = this.d3Data.shape
+      this.nodeId         = this.d3Data.id
+      const parentEl      = this.modifier.cy.getElementById(this.d3Data.id).parent().first()
+      this.parentNode     = parentEl.length ? parentEl.id() : null
+      this.clusterLabelPos = (this.d3Data.clusterLabelPos) || 'top'
+      this.style          = this.d3Data.style
     }
 
-    this.update = this.active == 'Edit Node'? true : false
-
-    if(this.update || this.nodeModal){
-      //Setting up nodeModal to true if update is true
-      this.nodeLabelType = (this.d3Data.labelType) || this.nodeLabelType
-      this.nodeLabel = this.d3Data.label
-      this.nodeShape = this.d3Data.shape
-      this.nodeId = this.d3Data.id
-      const parentEl = this.modifier.cy.getElementById(this.d3Data.id).parent().first()
-      this.parentNode = parentEl.length ? parentEl.id() : null
-      // console.log("troubleshooting cluster label")
-
-      // for( var key in this.clusterLabelPosOptions){
-      //   console.log(this.clusterLabelPosOptions[key])
-      //   var pos = this.clusterLabelPosOptions[key]
-      //   console.log(pos.value)
-      //   if (pos.value === this.d3Data.clusterLabelPos){
-      //     console.log(pos)
-      //     break
-      //   }
-      // }
-
-      // //this.clusterLabelPos = (this.clusterLabelPosOptions[pos]) || this.clusterLabelPos
-      // this.clusterLabelPos = this.clusterLabelPosOptions[key] || this.clusterLabelPos
-      this.clusterLabelPos = (this.d3Data.clusterLabelPos) || "top" 
-
-      this.style = this.d3Data.style
-      //this.parentOptions = this.diagram.nodes()
-    } 
-    /*
-    if(this.nodeModal){
-      this.$nextTick(function(){
-        console.log('Trap active')
-        this.enableTrap = this.nodeModal
-        console.log(this.$refs)
-        console.log(this.$refs.nodeLabelTextField)
-        setTimeout(() => {
-          this.$refs.nodeLabelTextField.focus()
-        })
-      })
-    }
-    */
- //    this.$root.$on('showNodeForm', (nodeAction) => {
- //      console.log('Message Received From D3Vim')
- //      console.log(this.$el)
- //      console.log(this.$root)
- //      this.viewNode(nodeAction)
- //    })
-
-    this.emitter.on('d3NodeData', (data, nodeId) => {
-      console.log('Message Received from D3Dagre')
-      if (D3Util.debug) {
-        console.log(data)
-      }
+    this._d3NodeDataHandler = (data, nodeId) => {
+      if (D3Util.debug) console.log(data)
       this.d3DagreData = data
       this.nodeId = nodeId
-    })
+    }
+    this._editNodeHandler = () => this.editNode()
+    this.emitter.on('d3NodeData', this._d3NodeDataHandler)
+    this.emitter.on('editNode', this._editNodeHandler)
+    document.addEventListener('click', this.onDocClick)
 
-    this.emitter.on('editNode', () => {
-      this.editNode()
+    this.$nextTick(() => {
+      if (this.update && this.modifier?.renderer) {
+        this.modifier.renderer.zoomTo(this.nodeId)
+      }
+      this.enableTrap = true
+      if (this.$refs.nodeLabelTextField) this.$refs.nodeLabelTextField.focus()
     })
+  },
+  beforeUnmount () {
+    this.emitter.off('d3NodeData', this._d3NodeDataHandler)
+    this.emitter.off('editNode', this._editNodeHandler)
+    document.removeEventListener('click', this.onDocClick)
   },
   computed: {
     shortcutLabels() {
@@ -277,184 +277,73 @@ export default {
         value: n.data('label') || n.id(),
       }))
     },
+    labelTypeLabel() {
+      return this._optLabel(this.nodeLabelTypeOptions, this.nodeLabelType, 'key', 'value', 'Text')
+    },
+    shapeLabel() {
+      return this._optLabel(this.nodeShapes, this.nodeShape, 'value', 'label', 'Rectangle')
+    },
+    clusterPosLabel() {
+      return this._optLabel(this.clusterLabelPosOptions, this.clusterLabelPos, 'value', 'label', 'Top')
+    },
+    parentLabel() {
+      if (!this.parentNode) return '— none —'
+      const opt = this.parentOptions.find(o => o.key === this.parentNode)
+      return opt ? opt.value : this.parentNode
+    },
+    posText() {
+      if (!this.nodeId || !this.modifier?.cy) return '—'
+      const el = this.modifier.cy.getElementById(this.nodeId)
+      if (!el || el.empty()) return '—'
+      const pos = el.position()
+      return `${Math.round(pos.x)}, ${Math.round(pos.y)}`
+    },
+    labelRows() {
+      const count = (this.nodeLabel || '').split('\n').length
+      return Math.min(8, Math.max(3, count))
+    },
   },
   methods: {
+    _optLabel(list, val, valKey, labelKey, fallback) {
+      if (!val) return fallback
+      const opt = list.find(o => o[valKey] === val)
+      return opt ? opt[labelKey] : fallback
+    },
+    toggleSel(key) {
+      this.openSel = this.openSel === key ? null : key
+    },
+    pick(field, val) {
+      this[field] = val
+      this.openSel = null
+    },
+    onDocClick() {
+      this.openSel = null
+    },
     updateNode () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('addNode Function')
-        console.log(this.nodeLabel)
-        console.log(this.nodeLabelType)
-        console.log(this.clusterLabelPos)
-        console.log(this.nodeShape)
-        console.log(this.$data)
-        console.log(this.nodeId)
-      }
-
       this.modifier.updateNode(this.$data, this.nodeId)
       this.close()
-      //this.$root.$emit('updateNode', this.$data, this.d3NodeId)
     },
-    // viewNode () {
-    //   this.trapActive = true
-    //   this.nodeFormIsActive = true
-    //   this.update = false
-    // },
-    // editNode () {
-    //   // this.d3DagreId = this.d3DagreData.id
-    //   if (D3Util.debug) {
-    //     console.log(this.d3DagreData)
-    //     console.log(this.d3DagreData.label)
-    //   }
-    //   this.trapActive = true
-    //   this.nodeFormIsActive = true
-    //   this.nodeLabelType = this.d3DagreData.labelType
-    //   this.nodeLabel = this.d3DagreData.label
-    //   this.nodeShape = this.d3DagreData.shape
-    //   this.update = true
-    // },
     keyPress(event) {
-      if(D3Util.debug){
-        console.log("keypress event")
-        console.log(this.hints)
-      }
       this.hints = D3Util.formHints(event, this)
     },
     addNode () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('addNode Function')
-        console.log(this.nodeLabel)
-        console.log(this.nodeLabelType)
-        console.log(this.nodeShape)
-        console.log(this.$refs.textField.$el)
-        console.log(this.$data)
-      }
-      //this.$root.$emit('addDagreNode', this.$data, false)
       this.modifier.addNode(this.$data)
-      // this.hints['l'].focus()
       this.common()
     },
     close () {
       this.common()
-      //console.log('Close method')
-      ////this.trapActive = false
-      //this.nodeModal = false
-      //this.$root.$emit("changeActive")
-      ////this.$root.$emit('d3DagreActivate')
-      //this.hints = {}
-      //D3Util.removeHints(this.hints)
-      //// this.$root.$emit('nodeModal', 'node')
     },
     common() {
-      /*FIXME - I think we need to copy the object before we make any changes
-      in case we make changes and we 'Cancel' any changes made should be reverted
-      else the changes will stay even though we don't save them? ... need to test
-      this out
-      */
-      console.log(this.hints)
       this.hints = D3Util.removeHints(this.hints)
-      /**
-       * Close the parents sheet
-       */
       this.emitter.emit('setSheetToFalse')
-      //this.emitter.emit("changeActive")
-      //this.emitter.emit('d3DagreActivate')
     }
-  },
-  //watch: {
-  //  active: function() {
-  //  // NOTE: Since we moved from a v-modal to a v-if from the 
-  //  // this code no longer works because the v-if does not render
-  //  // the component until v-if is valid.
-  //  // Moved the logic to the mount method instead.
-
-  //  //  console.log('active window watch d3nodeform')
-  //  //  this.update = this.active == 'Edit Node'?true:false
-  //  //  this.nodeModal = this.active == 'Add Node'?true:false
-  //  //  if(this.update || this.nodeModal){
-  //  //    //Setting up nodeModal to true if update is true
-  //  //    this.nodeModal = true
-  //  //    this.nodeLabelType = this.d3Data.labelType
-  //  //    this.nodeLabel = this.d3Data.label
-  //  //    this.nodeShape = this.d3Data.shape
-  //  //    this.nodeId = this.d3Data.id
-  //  //  } else {
-  //  //    this.nodeModal = false
-  //  //  }
-  //  //  if(this.nodeModal){
-  //  //    this.$nextTick(function(){
-  //  //      console.log('Trap active')
-  //  //    })
-  //  //  }
-  //  },
-  //  d3Data: function(){
-  //    //console.log(this.d3Data)
-  //  }
-  //}
+  }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
-}
-
-/*
-leaving here for reference
-*/
-/*
-::v-deep .v-textarea textarea {
-  color: red;
-  height: auto;
-  line-height: initial;
-  margin: 0px 10px 7px 0px;
-  padding-top: 6px;
-}
-*/
-
-.hints{
+.hints {
   border: 1px solid magenta;
   color: magenta;
-  /*# display: table-caption;*/
 }
-
-/*
-#iform {
-  margin: auto;
-  background: #343a40;
-  border-radius: 15px;
-  width: 40%;
-  bottom: auto;
-}
-*/
-
-/*
-.trap {
-  brackground: #f3c5f5;
-  border:1px solid #c21414;
-}
-*/
-
-/*
-button:focus {
-  border: #42b983;
-  background-color: #42b983;
-}
-*/
 </style>
