@@ -1,4 +1,14 @@
 /*TODO - remove this specific CSS and have the colors be managed by vuetify if possible */
+
+/* ── Futuristic HUD palette (consumed by ThreeDRenderer._readTheme) ── */
+
+:root {
+  --fx-accent-deep: 75, 88, 255;   /* #4B58FF — edge tails / arrows   */
+  --fx-accent:      94, 116, 255;  /* #5E74FF — edge heads / primary  */
+  --fx-amber:       255, 171, 64;  /* #FFAB40 — hover / active        */
+  --fx-muted:       92, 106, 168;  /* #5C6AA8 — blueprint grid dots   */
+}
+
 svg {
   height: 100%;
   width: 100%;

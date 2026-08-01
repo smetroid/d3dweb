@@ -144,18 +144,43 @@ describe('_fitToGraph', () => {
 })
 
 describe('_readTheme', () => {
-  it('falls back to a default palette outside the browser', () => {
+  it('falls back to the fx HUD palette outside the browser', () => {
     const renderer = makeRenderer()
     const palette = renderer._readTheme()
-    expect(palette.primary).toBe(0x1867c0)
+    expect(palette.primary).toBe(0x5e74ff)
+    expect(palette.source).toBe(0x4b58ff)
+    expect(palette.target).toBe(0x5e74ff)
     expect(palette.source).toBeLessThan(palette.target)
-    expect(palette.active).toBe(0xff9f43)
-    expect(palette.grid).toEqual([0, 0, 0])
+    expect(palette.active).toBe(0xffab40)
+    expect(palette.grid).toEqual([92, 106, 168])
   })
 
   it('converts an rgb triplet to a hex int', () => {
     const renderer = makeRenderer()
     expect(renderer._rgbToHex([24, 103, 192])).toBe(0x1867c0)
+  })
+
+  it('reads the fx palette from CSS variables in the browser', () => {
+    vi.stubGlobal('document', {})
+    vi.stubGlobal('getComputedStyle', () => ({
+      getPropertyValue: (name) => ({
+        '--fx-accent':      '94, 116, 255',
+        '--fx-accent-deep': '75, 88, 255',
+        '--fx-amber':       '255, 171, 64',
+        '--fx-muted':       '92, 106, 168',
+      })[name] ?? '',
+    }))
+    try {
+      const renderer = makeRenderer()
+      renderer.container = {}
+      const palette = renderer._readTheme()
+      expect(palette.primary).toBe(0x5e74ff)
+      expect(palette.source).toBe(0x4b58ff)
+      expect(palette.active).toBe(0xffab40)
+      expect(palette.grid).toEqual([92, 106, 168])
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

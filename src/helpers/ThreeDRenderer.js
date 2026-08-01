@@ -232,8 +232,8 @@ export default class ThreeDRenderer {
     const positions = []
     const colors = []
     const n = points.length
-    const from = new THREE.Color(this._palette?.source ?? 0x0d396a)
-    const to   = new THREE.Color(this._palette?.target ?? 0x1867c0)
+    const from = new THREE.Color(this._palette?.source ?? 0x4b58ff)
+    const to   = new THREE.Color(this._palette?.target ?? 0x5e74ff)
     const c    = new THREE.Color()
     points.forEach((p, i) => {
       positions.push(p.x, p.y, p.z)
@@ -305,7 +305,7 @@ export default class ThreeDRenderer {
   _buildArrowhead(tipPoint, dir) {
     const cone = new THREE.Mesh(
       new THREE.ConeGeometry(ARROW_LENGTH * 0.32, ARROW_LENGTH, 10),
-      new THREE.MeshBasicMaterial({ color: this._palette?.target ?? 0x1867c0 })
+      new THREE.MeshBasicMaterial({ color: this._palette?.target ?? 0x5e74ff })
     )
     return this._placeArrowhead(cone, tipPoint, dir)
   }
@@ -405,8 +405,8 @@ export default class ThreeDRenderer {
   }
 
   _selectEdgeState(entry, on) {
-    const active = this._palette?.active ?? 0xff6600
-    const target = this._palette?.target ?? 0x1867c0
+    const active = this._palette?.active ?? 0xffab40
+    const target = this._palette?.target ?? 0x5e74ff
     entry.line.material.color.setHex(on ? active : 0xffffff)
     entry.line.material.opacity = on ? EDGE_OPACITY_ACTIVE : EDGE_OPACITY
     entry.arrow.material.color.setHex(on ? active : target)
@@ -437,15 +437,19 @@ export default class ThreeDRenderer {
   }
 
   _readTheme() {
-    const primary   = this._readRgbVar('--v-theme-primary')
-    const onSurface = this._readRgbVar('--v-theme-on-surface')
-    const prim      = new THREE.Color(primary ? this._rgbToHex(primary) : 0x1867c0)
+    // fx-* CSS vars are defined in d3d.css (:root); the hardcoded fallbacks
+    // mirror the futuristic HUD palette so the scene matches the UI.
+    const accent = this._readRgbVar('--fx-accent')
+    const deep   = this._readRgbVar('--fx-accent-deep')
+    const amber  = this._readRgbVar('--fx-amber')
+    const muted  = this._readRgbVar('--fx-muted')
+    const a      = accent ? this._rgbToHex(accent) : 0x5e74ff
     this._palette = {
-      primary: prim.getHex(),
-      source:  prim.clone().multiplyScalar(0.55).getHex(),  // dim at the tail
-      target:  prim.getHex(),                               // bright at the head
-      active:  0xff9f43,                                    // hover / selection
-      grid:    onSurface ?? [0, 0, 0],
+      primary: a,                                          // edges / arrowheads
+      source:  deep ? this._rgbToHex(deep) : 0x4b58ff,     // dim at the tail
+      target:  a,                                          // bright at the head
+      active:  amber ? this._rgbToHex(amber) : 0xffab40,   // hover / selection
+      grid:    muted ?? [92, 106, 168],                    // blueprint grid dots
     }
     return this._palette
   }
@@ -469,7 +473,7 @@ export default class ThreeDRenderer {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = tex
     const ctx = canvas.getContext('2d')
-    const [r, g, b] = this._palette?.grid ?? [0, 0, 0]
+    const [r, g, b] = this._palette?.grid ?? [92, 106, 168]
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`
     ctx.beginPath()
     ctx.arc(tex / 2, tex / 2, 2.5, 0, Math.PI * 2)
