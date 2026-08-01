@@ -1,4 +1,4 @@
-export default class DagreAltKeys {
+export default class AltKeys {
   constructor(emitter, modifier) {
     this.emitter  = emitter
     this.modifier = modifier

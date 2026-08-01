@@ -17,17 +17,23 @@ export default class CytoscapeGraph {
     this.emitter = emitter
     this.cy = d3dInfo.diagram          // cytoscape instance (headless)
     this.diagram = d3dInfo.diagram     // alias kept for backward compat
-    this.renderer = null               // ThreeDRenderer, set by DagreGraphLib
+    this.renderer = null               // ThreeDRenderer, set by CytoscapeGraphView
     this.selectedNodes = []
     this.doubleSelection = []
     this.selectedEdges = []
     this.focusedIndex = null
 
     // Layout options — read/written by DiagramForm
-    this.rankdir = d3dInfo.rankdir || 'TB'
-    this.ranksep = d3dInfo.ranksep || 50
-    this.nodesep = d3dInfo.nodesep || 10
-    this.layoutMode = 'flat'           // 'flat' | 'force' | 'hierarchy'
+    this.layoutMode = d3dInfo.layoutMode || 'dagre'  // 'dagre' | 'fcose' | 'cola'
+    this.dagreOpts = Object.assign({ rankdir: 'TB', ranksep: 50, nodesep: 10, ranker: 'network-simplex' }, d3dInfo.dagreOpts)
+    this.fcoseOpts = Object.assign({ idealEdgeLength: 50, nodeRepulsion: 4500, gravity: 0.25, numIter: 2500 }, d3dInfo.fcoseOpts)
+    this.colaOpts  = Object.assign({ edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 }, d3dInfo.colaOpts)
+
+    // Keep legacy aliases so existing save/load code still works
+    this.rankdir = this.dagreOpts.rankdir
+    this.ranksep = this.dagreOpts.ranksep
+    this.nodesep = this.dagreOpts.nodesep
+
     this.viewMode = '2D'               // '2D' | '3D'
     this.threePositions = null         // Map<nodeId, {x,y,z}> when viewMode === '3D'
   }
@@ -48,11 +54,11 @@ export default class CytoscapeGraph {
     const id = D3Util.randomId()
     const nodeData = {
       id,
-      label:            data.nodeLabel     || 'Node',
-      shape:            data.nodeShape     || 'rect',
-      labelType:        data.nodeLabelType || 'text',
-      clusterLabelPos:  data.clusterLabelPos,
-      style:            data.style,
+      label:       data.nodeLabel  || 'Node',
+      shape:       data.nodeShape  || 'rectangle',
+      textHalign:  data.textHalign || 'center',
+      textValign:  data.textValign || 'top',
+      style:       data.style,
     }
     if (data.parentNode) {
       nodeData.parent = data.parentNode
@@ -67,11 +73,11 @@ export default class CytoscapeGraph {
     if (node.empty()) return
 
     node.data({
-      label:           data.nodeLabel,
-      shape:           data.nodeShape,
-      labelType:       data.nodeLabelType,
-      clusterLabelPos: data.clusterLabelPos,
-      style:           data.style,
+      label:      data.nodeLabel,
+      shape:      data.nodeShape,
+      textHalign: data.textHalign || 'center',
+      textValign: data.textValign || 'top',
+      style:      data.style,
     })
 
     if (data.parentNode) {
@@ -107,11 +113,11 @@ export default class CytoscapeGraph {
 
   copyNode(data, parentId) {
     const copy = {
-      nodeLabel:       data.label,
-      nodeShape:       data.shape,
-      nodeLabelType:   data.labelType,
-      clusterLabelPos: data.clusterLabelPos,
-      style:           data.style,
+      nodeLabel:  data.label,
+      nodeShape:  data.shape,
+      textHalign: data.textHalign || 'center',
+      textValign: data.textValign || 'top',
+      style:      data.style,
     }
     if (parentId) copy.parentNode = parentId
     return this.addNode(copy)
@@ -170,7 +176,6 @@ export default class CytoscapeGraph {
         source,
         target,
         label,
-        labelType:      data.edgeLabelType,
         arrowheadStyle: data.edgeArrowHeadStyle,
         arrowhead:      data.edgeArrowHead,
       }
@@ -182,7 +187,6 @@ export default class CytoscapeGraph {
     if (!edge.empty()) {
       edge.data({
         label:          data.edgeLabel || ' ',
-        labelType:      data.edgeLabelType,
         arrowheadStyle: data.edgeArrowHeadStyle,
         arrowhead:      data.edgeArrowHead,
       })
@@ -225,12 +229,14 @@ export default class CytoscapeGraph {
     const node = this.cy.getElementById(id)
     if (!node || node.empty()) return null
     const data = node.data()
-    // Provide both raw and prefixed forms so node/edge forms work unchanged
+    const SHAPE_ALIASES = { rect: 'rectangle', circle: 'ellipse' }
+    const shape = SHAPE_ALIASES[data.shape] || data.shape
     return {
       ...data,
-      nodeLabel:       data.label,
-      nodeShape:       data.shape,
-      nodeLabelType:   data.labelType,
+      nodeLabel:  data.label,
+      nodeShape:  shape,
+      textHalign: data.textHalign || 'center',
+      textValign: data.textValign || 'top',
       id,
     }
   }
@@ -242,7 +248,6 @@ export default class CytoscapeGraph {
     return {
       ...data,
       edgeLabel:          data.label,
-      edgeLabelType:      data.labelType,
       edgeArrowHeadStyle: data.arrowheadStyle,
       edgeArrowHead:      data.arrowhead,
       id:                 edge.id(),
@@ -420,20 +425,43 @@ export default class CytoscapeGraph {
   }
 
   _runLayout() {
-    const settings = VueCookies.get('settings') || {}
-    const name = this.layoutMode === 'force' ? 'fcose'
+    const name = this.layoutMode === 'fcose' ? 'fcose'
                : this.layoutMode === 'cola'  ? 'cola'
                : 'dagre'
 
-    const layoutOptions = {
-      name,
-      animate: false,
-      ...(name === 'dagre' ? {
-        rankDir:  settings.rankdir || this.rankdir,
-        ranksep:  Number(settings.ranksep || this.ranksep),
-        nodesep:  Number(settings.nodesep || this.nodesep),
-      } : {}),
-      ...(name === 'fcose' ? { randomize: false } : {}),
+    let layoutOptions
+    if (name === 'dagre') {
+      const o = this.dagreOpts
+      layoutOptions = {
+        name,
+        animate: false,
+        rankDir:  o.rankdir,
+        ranksep:  Number(o.ranksep),
+        nodesep:  Number(o.nodesep),
+        ranker:   o.ranker || 'network-simplex',
+      }
+    } else if (name === 'fcose') {
+      const o = this.fcoseOpts
+      layoutOptions = {
+        name,
+        animate: false,
+        randomize:      false,
+        idealEdgeLength: Number(o.idealEdgeLength),
+        nodeRepulsion:   Number(o.nodeRepulsion),
+        gravity:         Number(o.gravity),
+        numIter:         Number(o.numIter),
+      }
+    } else {
+      const o = this.colaOpts
+      layoutOptions = {
+        name,
+        animate:           false,
+        edgeLengthVal:     Number(o.edgeLength),
+        nodeSpacing:       Number(o.nodeSpacing),
+        avoidOverlap:      o.avoidOverlap,
+        maxSimulationTime: Number(o.maxSimulationTime),
+        ...(o.flow ? { flow: { axis: o.flow, minSeparation: Number(o.nodeSpacing) } } : {}),
+      }
     }
 
     try {

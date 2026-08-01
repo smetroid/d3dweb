@@ -112,7 +112,6 @@ export default {
   },
   appDefaults () { 
     var defaults = {
-      'd3Line': 'curveBasis',
       'hintBGColor': '#36004c',
       'hintLinkColor': '#fff', 
       'debug': false, 
@@ -448,19 +447,18 @@ export default {
   },
   defaultNodeValues() {
     var data = {
-      nodeLabel: 'Node',
-      nodeShape: 'rect',
-      nodeLabelType: 'text'
+      nodeLabel:  'Node',
+      nodeShape:  'rectangle',
+      textHalign: 'center',
+      textValign: 'top',
     }
     return data
   },
   defaultEdgeValues() {
     var data = {
-      edgeLabel: 'Edge ', /** this needs to be a space else it hings won't work */
-      edgeLabelType: 'text',
-      edgeArrowHeadStyle: 'solid',
-      edgeArrowHead: 'normal',
-      //d3.curveBasis: 'text'
+      edgeLabel:          'Edge ', /** this needs to be a space else hints won't work */
+      edgeArrowHeadStyle: 'filled',
+      edgeArrowHead:      'triangle',
     }
     return data
   },

@@ -557,6 +557,15 @@ textarea {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
+/* rectangle is the default card shape — explicit class for completeness */
+.node-card.node-shape-rectangle {
+  border-radius: 4px;
+}
+
+.node-card.node-shape-round-rectangle {
+  border-radius: 16px;
+}
+
 .node-card.node-shape-ellipse {
   border-radius: 50%;
   min-width: 100px;
@@ -570,6 +579,39 @@ textarea {
 
 .node-card.node-shape-diamond .node-label {
   transform: rotate(-45deg);
+}
+
+.node-card.node-shape-round-diamond {
+  border-radius: 0;
+  transform: rotate(45deg);
+  clip-path: inset(0 round 12px);
+}
+
+.node-card.node-shape-round-diamond .node-label {
+  transform: rotate(-45deg);
+}
+
+.node-card.node-shape-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.node-card.node-shape-octagon {
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+}
+
+.node-card.node-shape-star {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  min-width: 80px;
+  min-height: 80px;
+}
+
+.node-card.node-shape-tag {
+  clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%);
+  padding-right: 20%;
+}
+
+.node-card.node-shape-barrel {
+  border-radius: 40% / 10%;
 }
 
 .node-card.selected {

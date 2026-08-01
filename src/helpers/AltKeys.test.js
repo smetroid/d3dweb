@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import DagreAltKeys from '@/helpers/DagreAltKeys.js'
+import AltKeys from '@/helpers/AltKeys.js'
 
 function makeSut() {
   const emitter = { emit: vi.fn() }
@@ -8,11 +8,11 @@ function makeSut() {
     backTo2D: vi.fn(),
     apply3DLayout: vi.fn(),
   }
-  const alt = new DagreAltKeys(emitter, modifier)
+  const alt = new AltKeys(emitter, modifier)
   return { emitter, modifier, alt }
 }
 
-describe('DagreAltKeys diagram actions', () => {
+describe('AltKeys diagram actions', () => {
   it('routes Alt+n/o/s/e to emitter events', () => {
     const { emitter, alt } = makeSut()
     alt.key('n')
@@ -26,7 +26,7 @@ describe('DagreAltKeys diagram actions', () => {
   })
 })
 
-describe('DagreAltKeys camera controls', () => {
+describe('AltKeys camera controls', () => {
   it('pans with hjkl', () => {
     const { modifier, alt } = makeSut()
     alt.key('j')
@@ -48,7 +48,7 @@ describe('DagreAltKeys camera controls', () => {
   })
 })
 
-describe('DagreAltKeys 3D layout modes', () => {
+describe('AltKeys 3D layout modes', () => {
   it('Alt+1 returns to 2D', () => {
     const { modifier, alt } = makeSut()
     alt.key('1')
@@ -66,7 +66,7 @@ describe('DagreAltKeys 3D layout modes', () => {
   })
 })
 
-describe('DagreAltKeys misc', () => {
+describe('AltKeys misc', () => {
   it('never returns a reset signal', () => {
     const { alt } = makeSut()
     expect(alt.key('q')).toBe(false)

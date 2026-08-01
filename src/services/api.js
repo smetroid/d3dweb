@@ -56,25 +56,7 @@ export default {
       })
   },
   async postDiagram (payload) {
-    // var json = new dagreD3.graphlib.json.write(data.diagram)
-    if (D3Util.debug){
-      // console.log(json)
-      // console.log(data)
-    }
-    // var created = new Date()
-    // var payload = { 'name': data.name,
-    //   'description': data.description,
-    //   'diagram': JSON.stringify(json),
-    //   'createTime': created.toISOString(),
-    //   'updatedTime': created.toISOString(),
-    // }
-
     return axios.post('/dag', payload, {
-      /*
-      name: data.name,
-      description: data.description,
-      diagram: data.diagram,
-      */
       headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then(response => {
@@ -110,11 +92,4 @@ export default {
         return response.data
       })
   }
-  // addNode (id, update = false, g, nodes) {
-  // if (update) {
-  //   g.setNode(nodes[0], { 'label': inputs[0].value, 'shape': selections[0].value, 'labelType': selections[1].value })
-  // } else {
-  //   g.setNode(this.randomId(), { 'label': inputs[0].value, 'shape': selections[0].value, 'labelType': selections[1].value })
-  // }
-  // }
 }

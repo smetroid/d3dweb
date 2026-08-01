@@ -2,7 +2,7 @@ import D3Util from '@/helpers/D3Util'
 import { gsap } from 'gsap'
 import VueCookies from 'vue-cookies'
 
-export default class DagreOtherKeys {
+export default class OtherKeys {
   constructor(emitter, modifier, hintFunction) {
     this.emitter       = emitter
     this.modifier      = modifier

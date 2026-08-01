@@ -6,7 +6,7 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import { gsap } from 'gsap'
 
-export const SCALE = 2   // converts dagre pixel units → Three.js world units
+export const SCALE = 2   // converts cytoscape layout units → Three.js world units
 const CAMERA_Z = 1500    // initial camera distance
 
 const EDGE_OPACITY        = 0.7
@@ -545,7 +545,7 @@ export default class ThreeDRenderer {
     if (this.container) this.container.style.cursor = 'default'
   }
 
-  // ─── Camera controls (called from DagreAltKeys) ───────────────────────────────
+  // ─── Camera controls (called from AltKeys) ───────────────────────────────────
 
   _pan(direction) {
     const delta = 80
@@ -578,7 +578,7 @@ export default class ThreeDRenderer {
   }
 
   // Move camera + orbit target so the current node set is centred and fills
-  // the viewport (like dagre-d3's auto-fit-to-viewBox).
+  // the viewport.
   _fitTargets() {
     if (this.nodeObjects.size === 0) {
       return { cx: 0, cy: 0, dist: CAMERA_Z }

@@ -6,11 +6,18 @@ export default {
     this.hints = D3Util.removeHints(this.hints)
 
     /*NOTE - When changing the type of selection the active pane should always 
-    * be D3Dagre
+    * be Graph
     */
+    if (( event === 'Edit Node' ) || ( event === 'Edit Edge' )) {
+      app.emitter.emit(event === 'Edit Node' ? 'editNode' : 'editEdge')
+      app.showMenu = false
+      app.showActionsMenu = false
+      return
+    }
+
     if (( event === 'Select Node' ) || ( event === 'Select Edges' )) {
       app.emitter.emit('edgeOrNode', event)
-      app.active = 'D3Dagre'
+      app.active = 'Graph'
     } else {
       app.active = event
       app.showMenu = false
@@ -35,7 +42,7 @@ export default {
         app.$root.$emit('discardChanges')
         break
       case 'New Diagram':
-        app.active = "D3Dagre"
+        app.active = "Graph"
         app.emitter.emit('newDiagram')
         break
       case 'Open Diagram':

@@ -40,28 +40,6 @@
         <div class="fx-panel-body">
           <div class="fx-grid">
             <label class="fx-field">
-              <span class="fx-label">Edge Label Type</span>
-              <div class="fx-select">
-                <button
-                  type="button"
-                  class="fx-select-trigger"
-                  @click.stop="toggleSel('labelType')"
-                >{{ labelTypeLabel }}<span class="fx-caret">▾</span></button>
-                <transition name="fx-drop">
-                  <ul v-if="openSel === 'labelType'" class="fx-options">
-                    <li
-                      v-for="opt in edgeLabelTypeOptions"
-                      :key="opt.value"
-                      class="fx-option"
-                      :class="{ 'fx-option-active': edgeLabelType === opt.value }"
-                      @click="pick('edgeLabelType', opt.value)"
-                    >{{ opt.label }}</li>
-                  </ul>
-                </transition>
-              </div>
-            </label>
-
-            <label class="fx-field">
               <span class="fx-label">Edge Arrow Head Style</span>
               <div class="fx-select">
                 <button
@@ -168,7 +146,6 @@ export default {
   data () {
     return {
       edgeModal: false,
-      edgeLabelType: '',
       edgeLabel: '',
       edgeArrowHead: '',
       edgeArrowHeadStyle: '',
@@ -178,18 +155,20 @@ export default {
       edgeId: null,
       update: false,
       openSel: null,
-      edgeLabelTypeOptions: [
-        { 'value': 'text', 'label': 'Text' },
-        { 'value': 'html', 'label': 'HTML' }
-      ],
       edgeArrowHeadStyleOptions: [
-        { 'value': 'solid', 'label': 'Solid' },
+        { 'value': 'filled', 'label': 'Filled' },
         { 'value': 'hollow', 'label': 'Hollow' }
       ],
       edgeArrowHeadOptions: [
-        { 'value': 'normal', 'label': 'Normal' },
-        { 'value': 'vee', 'label': 'Vee' },
-        { 'value': 'undirected', 'label': 'Undirected' }
+        { 'value': 'triangle',       'label': 'Triangle' },
+        { 'value': 'vee',            'label': 'Vee' },
+        { 'value': 'none',           'label': 'None (undirected)' },
+        { 'value': 'chevron',        'label': 'Chevron' },
+        { 'value': 'tee',            'label': 'Tee' },
+        { 'value': 'circle',         'label': 'Circle' },
+        { 'value': 'diamond',        'label': 'Diamond' },
+        { 'value': 'triangle-tee',   'label': 'Triangle Tee' },
+        { 'value': 'triangle-cross', 'label': 'Triangle Cross' },
       ],
       fromNode: '',
       toNode: ''
@@ -199,14 +178,11 @@ export default {
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
-    labelTypeLabel() {
-      return this._optLabel(this.edgeLabelTypeOptions, this.edgeLabelType, 'value', 'label', 'Text')
-    },
     arrowStyleLabel() {
-      return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Solid')
+      return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Filled')
     },
     arrowLabel() {
-      return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Normal')
+      return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Triangle')
     },
     pathText() {
       if (this.fromNode && this.toNode) return `${this.fromNode} → ${this.toNode}`
@@ -219,17 +195,56 @@ export default {
     },
   },
   mounted () {
-    this.update = this.active == 'Edit Edge'
-    this.edgeModal = this.active == 'Edit Edge' || this.active == 'Add Edge'
+    this._showEdgeFormHandler = () => this.showForm()
+    this._edgesD3DataHandler = (data, id) => {
+      this.d3EdgesData = data
+      this.edgeId = id
+      this.edgeLabel = data.label
+      this.edgeArrowHeadStyle = data.arrowheadStyle
+      this.edgeArrowHead = data.arrowhead
+    }
+    this._editEdgeHandler = () => this.editEdge()
+    this.emitter.on('showEdgeForm', this._showEdgeFormHandler)
+    this.emitter.on('edgesD3Data', this._edgesD3DataHandler)
+    this.emitter.on('editEdge', this._editEdgeHandler)
+    document.addEventListener('click', this.onDocClick)
 
-    if (this.update || this.edgeModal) {
+    if (this.edgeModal) {
+      this.$nextTick(() => {
+        const mod2 = this.modifier?.value ?? this.modifier
+        if (this.update && mod2?.renderer) {
+          mod2.renderer.zoomTo(this.edgeId)
+        }
+        this.enableTrap = true
+        if (this.$refs.edgeLabelTextField) this.$refs.edgeLabelTextField.focus()
+      })
+    }
+  },
+  beforeUnmount () {
+    this.emitter.off('showEdgeForm', this._showEdgeFormHandler)
+    this.emitter.off('edgesD3Data', this._edgesD3DataHandler)
+    this.emitter.off('editEdge', this._editEdgeHandler)
+    document.removeEventListener('click', this.onDocClick)
+  },
+  methods: {
+    _populate() {
+      // Derive from the prop every time: the immediate d3Data watcher runs
+      // before created(), so we can't rely on update/edgeModal being set yet.
+      this.update    = this.active == 'Edit Edge'
+      this.edgeModal = this.active == 'Edit Edge' || this.active == 'Add Edge'
+      if (D3Util.debug) console.log('[D3EdgeForm] _populate', {
+        active:    this.active,
+        update:    this.update,
+        edgeModal: this.edgeModal,
+        d3Data:    this.d3Data,
+      })
+      if (!(this.update || this.edgeModal)) return
+      const mod = this.modifier?.value ?? this.modifier
       this.edgeId = this.d3Data?.id
-      this.edgeLabelType = this.d3Data?.labelType || ''
       this.edgeLabel = this.d3Data?.label || ''
       this.edgeArrowHeadStyle = this.d3Data?.arrowheadStyle || ''
       this.edgeArrowHead = this.d3Data?.arrowhead || ''
 
-      const mod = this.modifier
       let srcId = null
       let tgtId = null
       if (typeof this.edgeId === 'string' && mod?.cy) {
@@ -244,40 +259,15 @@ export default {
       }
       this.fromNode = srcId ? (mod.getNodeData(srcId)?.label || srcId) : ''
       this.toNode = tgtId ? (mod.getNodeData(tgtId)?.label || tgtId) : ''
-    }
-
-    this._showEdgeFormHandler = () => this.showForm()
-    this._edgesD3DataHandler = (data, id) => {
-      this.d3EdgesData = data
-      this.edgeId = id
-      this.edgeLabelType = data.labelType
-      this.edgeLabel = data.label
-      this.edgeArrowHeadStyle = data.arrowheadStyle
-      this.edgeArrowHead = data.arrowhead
-    }
-    this._editEdgeHandler = () => this.editEdge()
-    this.emitter.on('showEdgeForm', this._showEdgeFormHandler)
-    this.emitter.on('edgesD3Data', this._edgesD3DataHandler)
-    this.emitter.on('editEdge', this._editEdgeHandler)
-    document.addEventListener('click', this.onDocClick)
-
-    if (this.edgeModal) {
-      this.$nextTick(() => {
-        if (this.update && this.modifier?.renderer) {
-          this.modifier.renderer.zoomTo(this.edgeId)
-        }
-        this.enableTrap = true
-        if (this.$refs.edgeLabelTextField) this.$refs.edgeLabelTextField.focus()
+      if (D3Util.debug) console.log('[D3EdgeForm] fields', {
+        edgeId:    this.edgeId,
+        edgeLabel: this.edgeLabel,
+        edgeArrowHeadStyle: this.edgeArrowHeadStyle,
+        edgeArrowHead: this.edgeArrowHead,
+        fromNode:  this.fromNode,
+        toNode:    this.toNode,
       })
-    }
-  },
-  beforeUnmount () {
-    this.emitter.off('showEdgeForm', this._showEdgeFormHandler)
-    this.emitter.off('edgesD3Data', this._edgesD3DataHandler)
-    this.emitter.off('editEdge', this._editEdgeHandler)
-    document.removeEventListener('click', this.onDocClick)
-  },
-  methods: {
+    },
     _optLabel(list, val, valKey, labelKey, fallback) {
       if (!val) return fallback
       const opt = list.find(o => o[valKey] === val)
@@ -294,7 +284,8 @@ export default {
       this.openSel = null
     },
     updateEdge () {
-      this.modifier.updateEdge(this.$data, this.edgeId)
+      const mod = this.modifier?.value ?? this.modifier
+      mod.updateEdge(this.$data, this.edgeId)
       this.close()
     },
     editEdge () {
@@ -304,7 +295,8 @@ export default {
       this.hints = D3Util.formHints(event, this)
     },
     addEdge () {
-      this.modifier.addEdge(this.$data)
+      const mod = this.modifier?.value ?? this.modifier
+      mod.addEdge(this.$data)
       this.common()
     },
     close () {
@@ -315,7 +307,20 @@ export default {
       this.hints = D3Util.removeHints(this.hints)
       this.emitter.emit('setSheetToFalse')
     }
-  }
+  },
+  watch: {
+    active(val) {
+      this.update    = val == 'Edit Edge'
+      this.edgeModal = val == 'Edit Edge' || val == 'Add Edge'
+      this._populate()
+    },
+    d3Data: {
+      handler() {
+        this._populate()
+      },
+      immediate: true,
+    },
+  },
 }
 </script>
 

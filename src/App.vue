@@ -1,5 +1,5 @@
 <script setup>
-import DagreGraphLib from '@/components/DagreGraphLib.vue'
+import CytoscapeGraphView from '@/components/CytoscapeGraphView.vue'
 import D3Util from '@/helpers/D3Util.js'
 import MenuKeys from '@/helpers/MenuKeys.js'
 import MenuLinks from '@/helpers/MenuLinks.js'
@@ -8,6 +8,7 @@ import HelperPane from '@/components/Helper.vue'
 import cytoscape from 'cytoscape'
 import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
 import { graphlibToCytoscape, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
+import { migrateDiagramPayload } from '@/helpers/legacyMigration.js'
 import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
@@ -69,7 +70,7 @@ function toggleTheme() {
         :d3dInfo="d3dInfo"
       />
       -->
-      <DagreGraphLib
+      <CytoscapeGraphView
         :active="active"
       />
       <DiagramForm
@@ -248,10 +249,10 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DagreGraphLib, Settings, DiagramForm, HelperPane, Login},
+  components: {CytoscapeGraphView, Settings, DiagramForm, HelperPane, Login},
   data () {
     return {
-      active: "D3Dagre", //Default active component
+      active: "Graph", //Default active component
       showMenu: false,
       showActionsMenu: false,
       showHelpPane: true,
@@ -370,7 +371,7 @@ export default {
         console.log(menu)
       }
       if (menu === undefined){
-        this.active = 'D3Dagre'
+        this.active = 'Graph'
       } else {
         this.active = menu
         //this.showMenu = true
@@ -455,7 +456,7 @@ export default {
         console.log(id)
       }
 
-      const parsed = JSON.parse(localDiagramInfo.diagram)
+      const parsed = migrateDiagramPayload(JSON.parse(localDiagramInfo.diagram))
       const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
       const cy = markRaw(cytoscape({ headless: true, elements }))
 
@@ -494,7 +495,7 @@ export default {
       }
 
       try {
-        const parsed = JSON.parse(serverDiagramInfo.diagram)
+        const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
         const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
         const cy = markRaw(cytoscape({ headless: true, elements }))
 
@@ -697,7 +698,6 @@ export default {
 
 </style>
 
-<style src='./assets/css/d3d.css'></style>
 <!--
 <link href='https://fonts.googleapis.com/css?family=Material+Icons' rel='stylesheet'/>
 <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>

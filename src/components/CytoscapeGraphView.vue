@@ -51,6 +51,7 @@
           />
           <D3NodeForm
             v-if="active === 'Add Node' || active === 'Edit Node'"
+            :key="active"
             :active="active"
             :d3Data="d3Data"
           />
@@ -67,11 +68,11 @@ import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
 import Hints from '@/helpers/Hints.js'
-import D3DAltKeys from '@/helpers/DagreAltKeys.js'
-import D3DOtherKeys from '@/helpers/DagreOtherKeys.js'
+import AltKeys from '@/helpers/AltKeys.js'
+import OtherKeys from '@/helpers/OtherKeys.js'
 
 export default {
-  name: 'DagreGraphLib',
+  name: 'CytoscapeGraphView',
   props: ['active'],
   inject: ['modifier'],
   components: { D3NodeForm, D3EdgeForm },
@@ -105,6 +106,8 @@ export default {
     this._initRenderer()
 
     this.emitter.on('node-click', this._onNodeClick)
+    this.emitter.on('editNode', () => this._openEdit('nodes'))
+    this.emitter.on('editEdge', () => this._openEdit('edges'))
     this.emitter.on('d3ResetValues', () => this.resetValues())
     this.emitter.on('scene-updated', ({ count }) => { this.graphEmpty = count === 0 })
 
@@ -145,8 +148,31 @@ export default {
     _onNodeClick(nodeId) {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod) return
-      this.d3Data = mod.getNodeData(nodeId)
+      const data = mod.getNodeData(nodeId)
+      if (D3Util.debug) console.log('[node-click]', nodeId, data)
+      this.d3Data = data
       this.emitter.emit('changeActive', 'Edit Node')
+      this.openSheet = true
+    },
+
+    // Actions-menu "Edit Node"/"Edit Edge" — mirrors the 'e' keyboard shortcut:
+    // populate from the currently focused element and only open the form when
+    // there is something to edit.
+    _openEdit(which) {
+      const mod = this.modifier?.value ?? this.modifier
+      if (!mod) return
+      const isNode = which === 'nodes'
+      const id = isNode ? this.focusedNodeId : this.focusedEdgeId
+      const data = id ? (isNode ? mod.getNodeData(id) : mod.getEdgeData(id)) : null
+      if (!data?.id) {
+        this.emitter.emit('appMessage', {
+          message: `Focus a ${isNode ? 'node' : 'edge'} first (j/k to navigate) to edit it`,
+          status: 'info',
+        })
+        return
+      }
+      this.d3Data = data
+      this.emitter.emit('changeActive', isNode ? 'Edit Node' : 'Edit Edge')
       this.openSheet = true
     },
 
@@ -209,11 +235,11 @@ export default {
           hints.removeHints(data.hints)
         }
       } else if (event.altKey === true || event.metaKey === true) {
-        const altKeys   = new D3DAltKeys(this.emitter, mod)
-        const reset     = altKeys.key(event.key, this)
+        const altKeys = new AltKeys(this.emitter, mod)
+        const reset   = altKeys.key(event.key, this)
         if (reset) this.resetValues()
       } else {
-        const otherKeys = new D3DOtherKeys(this.emitter, mod, this.keyPress)
+        const otherKeys = new OtherKeys(this.emitter, mod, this.keyPress)
         const result    = otherKeys.defaultActions(
           event.key, this.edgeOrNode, this.focusedNodeId, this.focusedEdgeId
         )
@@ -302,7 +328,7 @@ export default {
       } else {
         this.escCount++
       }
-      this.trapGraph = val === 'D3Dagre'
+      this.trapGraph = val === 'Graph'
 
       const isEdit = val === 'Add Node' || val === 'Edit Node' ||
                      val === 'Add Edge' || val === 'Edit Edge'

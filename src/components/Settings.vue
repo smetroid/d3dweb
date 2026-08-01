@@ -71,18 +71,6 @@
                 </v-text-field>
                 <v-radio-group 
                   inline
-                  label="Edge Line"
-                  color="primary"
-                  v-model="settings.d3Line">
-                  <v-radio
-                    dense v-for="n in d3EdgeLine"
-                    :key="n.value"
-                    :label="`${n.label}`"
-                    :value="n.value">
-                  </v-radio>
-                </v-radio-group>
-                <v-radio-group 
-                  inline
                   label="Theme Options"
                   color="primary"
                   v-model="settings.defaultTheme">
@@ -131,13 +119,7 @@ export default {
     return {
       settingsModal: null,
       settings: {},
-      d3EdgeLine: [
-        {'value':'curveBasis', 'label':'Basis'},
-        {'value':'curveLinear', 'label':'Linear'},
-        {'value':'curveStep', 'label': 'Step'},
-        {'value':'curveStepAfter', 'label':'StepAfter'},
-        {'value':'curveStepBefore', 'label':'StepBefore'},
-      ]
+      
     }
   },
   computed: {

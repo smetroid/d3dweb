@@ -92,8 +92,9 @@ describe('defaultNodeValues', () => {
   it('returns a complete node defaults object', () => {
     const defaults = D3Util.defaultNodeValues()
     expect(defaults.nodeLabel).toBe('Node')
-    expect(defaults.nodeShape).toBe('rect')
-    expect(defaults.nodeLabelType).toBe('text')
+    expect(defaults.nodeShape).toBe('rectangle')
+    expect(defaults.textHalign).toBe('center')
+    expect(defaults.textValign).toBe('top')
   })
 })
 
@@ -101,14 +102,14 @@ describe('defaultEdgeValues', () => {
   it('returns a complete edge defaults object', () => {
     const defaults = D3Util.defaultEdgeValues()
     expect(defaults.edgeLabel).toBe('Edge ')
-    expect(defaults.edgeArrowHead).toBe('normal')
+    expect(defaults.edgeArrowHead).toBe('triangle')
+    expect(defaults.edgeArrowHeadStyle).toBe('filled')
   })
 })
 
 describe('appDefaults', () => {
   it('includes graph defaults and themes', () => {
     const defaults = D3Util.appDefaults()
-    expect(defaults.d3Line).toBe('curveBasis')
     expect(defaults.defaultTheme).toBe('light')
     expect(defaults.themes).toEqual([
       { value: 'light', label: 'Light Theme' },

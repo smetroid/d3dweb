@@ -40,28 +40,6 @@
         <div class="fx-panel-body">
           <div class="fx-grid">
             <label class="fx-field">
-              <span class="fx-label">Node Label Type</span>
-              <div class="fx-select">
-                <button
-                  type="button"
-                  class="fx-select-trigger"
-                  @click.stop="toggleSel('labelType')"
-                >{{ labelTypeLabel }}<span class="fx-caret">▾</span></button>
-                <transition name="fx-drop">
-                  <ul v-if="openSel === 'labelType'" class="fx-options">
-                    <li
-                      v-for="opt in nodeLabelTypeOptions"
-                      :key="opt.key"
-                      class="fx-option"
-                      :class="{ 'fx-option-active': nodeLabelType === opt.key }"
-                      @click="pick('nodeLabelType', opt.key)"
-                    >{{ opt.value }}</li>
-                  </ul>
-                </transition>
-              </div>
-            </label>
-
-            <label class="fx-field">
               <span class="fx-label">Node Shape</span>
               <div class="fx-select">
                 <button
@@ -84,22 +62,36 @@
             </label>
 
             <label class="fx-field">
-              <span class="fx-label">Cluster Label Position <em class="fx-opt">optional</em></span>
+              <span class="fx-label">Label H-Align <em class="fx-opt">compound nodes</em></span>
               <div class="fx-select">
                 <button
                   type="button"
                   class="fx-select-trigger"
-                  @click.stop="toggleSel('cluster')"
-                >{{ clusterPosLabel }}<span class="fx-caret">▾</span></button>
+                  @click.stop="toggleSel('halign')"
+                >{{ textHalign }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
-                  <ul v-if="openSel === 'cluster'" class="fx-options">
-                    <li
-                      v-for="opt in clusterLabelPosOptions"
-                      :key="opt.value"
-                      class="fx-option"
-                      :class="{ 'fx-option-active': clusterLabelPos === opt.value }"
-                      @click="pick('clusterLabelPos', opt.value)"
-                    >{{ opt.label }}</li>
+                  <ul v-if="openSel === 'halign'" class="fx-options">
+                    <li v-for="opt in ['left','center','right']" :key="opt"
+                      class="fx-option" :class="{ 'fx-option-active': textHalign === opt }"
+                      @click="pick('textHalign', opt)">{{ opt }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Label V-Align <em class="fx-opt">compound nodes</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('valign')"
+                >{{ textValign }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'valign'" class="fx-options">
+                    <li v-for="opt in ['top','center','bottom']" :key="opt"
+                      class="fx-option" :class="{ 'fx-option-active': textValign === opt }"
+                      @click="pick('textValign', opt)">{{ opt }}</li>
                   </ul>
                 </transition>
               </div>
@@ -202,67 +194,51 @@ export default {
       d3DagreData: null,
       nodeId: null,
       update: false,
-      nodeLabelType: 'text',
       openSel: null,
-      nodeLabelTypeOptions: [
-        { 'key': 'text', 'value': 'Text' },
-        { 'key': 'html', 'value': 'HTML' }
-      ],
       nodeShapes: [
-        { 'value': 'rect', 'label': 'Rectangle' },
-        { 'value': 'circle', 'label': 'Circle' },
-        { 'value': 'ellipse', 'label': 'Ellipse' },
-        { 'value': 'diamond', 'label': 'Diamond' }
+        { 'value': 'rectangle',       'label': 'Rectangle' },
+        { 'value': 'round-rectangle', 'label': 'Round Rectangle' },
+        { 'value': 'ellipse',         'label': 'Ellipse' },
+        { 'value': 'diamond',         'label': 'Diamond' },
+        { 'value': 'round-diamond',   'label': 'Round Diamond' },
+        { 'value': 'hexagon',         'label': 'Hexagon' },
+        { 'value': 'octagon',         'label': 'Octagon' },
+        { 'value': 'star',            'label': 'Star' },
+        { 'value': 'tag',             'label': 'Tag' },
+        { 'value': 'barrel',          'label': 'Barrel' },
       ],
       parentNode: null,
-      clusterLabelPos: 'top',
-      clusterLabelPosOptions: [
-        { 'value': 'top', 'label': 'Top' },
-        { 'value': 'bottom', 'label': 'Bottom' },
-        { 'value': 'topLeft', 'label': 'TopLeft' },
-        { 'value': 'topRight', 'label': 'TopRight' },
-        { 'value': 'bottomLeft', 'label': 'BottomLeft' },
-        { 'value': 'bottomRight', 'label': 'BottomRight' }
-      ],
+      textHalign: 'center',
+      textValign: 'top',
       style: 'fill: #5f9488',
     }
   },
   mounted () {
-    this.update = this.active == 'Edit Node'
-
-    if (this.update) {
-      const lt = this.d3Data?.labelType
-      this.nodeLabelType = (typeof lt === 'string' && lt) ? lt : (lt?.key || 'text')
-      this.nodeLabel      = this.d3Data.label
-      this.nodeShape      = this.d3Data.shape
-      this.nodeId         = this.d3Data.id
-      const parentEl      = this.modifier.cy.getElementById(this.d3Data.id).parent().first()
-      this.parentNode     = parentEl.length ? parentEl.id() : null
-      this.clusterLabelPos = (this.d3Data.clusterLabelPos) || 'top'
-      this.style          = this.d3Data.style
-    }
-
-    this._d3NodeDataHandler = (data, nodeId) => {
-      if (D3Util.debug) console.log(data)
-      this.d3DagreData = data
-      this.nodeId = nodeId
-    }
-    this._editNodeHandler = () => this.editNode()
-    this.emitter.on('d3NodeData', this._d3NodeDataHandler)
-    this.emitter.on('editNode', this._editNodeHandler)
     document.addEventListener('click', this.onDocClick)
 
     this.$nextTick(() => {
-      if (this.update && this.modifier?.renderer) {
-        this.modifier.renderer.zoomTo(this.nodeId)
+      const mod = this.modifier?.value ?? this.modifier
+      if (this.update && mod?.renderer) {
+        mod.renderer.zoomTo(this.nodeId)
       }
       this.enableTrap = true
       if (this.$refs.nodeLabelTextField) this.$refs.nodeLabelTextField.focus()
+      if (D3Util.debug) {
+        const root  = this.$refs.formfields
+        const trig  = root ? [...root.querySelectorAll('.fx-select-trigger')] : []
+        const style = root ? root.querySelector('input.fx-input') : null
+        console.log('[D3NodeForm] dom', JSON.stringify({
+          triggers: trig.map(b => b.textContent),
+          triggerColors: trig.map(b => getComputedStyle(b).color),
+          triggerBg: trig.map(b => getComputedStyle(b).backgroundColor),
+          styleInput: style ? style.value : null,
+          styleInputColor: style ? getComputedStyle(style).color : null,
+          panelBg: root ? getComputedStyle(root).backgroundColor : null,
+        }))
+      }
     })
   },
   beforeUnmount () {
-    this.emitter.off('d3NodeData', this._d3NodeDataHandler)
-    this.emitter.off('editNode', this._editNodeHandler)
     document.removeEventListener('click', this.onDocClick)
   },
   computed: {
@@ -270,21 +246,15 @@ export default {
       return D3Util.shortcutLabels()
     },
     parentOptions() {
-      const mod = this.modifier
+      const mod = this.modifier?.value ?? this.modifier
       if (!mod || !mod.cy) return []
       return mod.cy.nodes().map((n) => ({
         key:   n.id(),
         value: n.data('label') || n.id(),
       }))
     },
-    labelTypeLabel() {
-      return this._optLabel(this.nodeLabelTypeOptions, this.nodeLabelType, 'key', 'value', 'Text')
-    },
     shapeLabel() {
       return this._optLabel(this.nodeShapes, this.nodeShape, 'value', 'label', 'Rectangle')
-    },
-    clusterPosLabel() {
-      return this._optLabel(this.clusterLabelPosOptions, this.clusterLabelPos, 'value', 'label', 'Top')
     },
     parentLabel() {
       if (!this.parentNode) return '— none —'
@@ -292,8 +262,10 @@ export default {
       return opt ? opt.value : this.parentNode
     },
     posText() {
-      if (!this.nodeId || !this.modifier?.cy) return '—'
-      const el = this.modifier.cy.getElementById(this.nodeId)
+      if (!this.nodeId) return '—'
+      const mod = this.modifier?.value ?? this.modifier
+      if (!mod?.cy) return '—'
+      const el = mod.cy.getElementById(this.nodeId)
       if (!el || el.empty()) return '—'
       const pos = el.position()
       return `${Math.round(pos.x)}, ${Math.round(pos.y)}`
@@ -304,6 +276,36 @@ export default {
     },
   },
   methods: {
+    _populate() {
+      // Derive from the prop every time: the immediate d3Data watcher runs
+      // before created(), so we can't rely on this.update being set yet.
+      this.update = this.active == 'Edit Node'
+      if (D3Util.debug) console.log('[D3NodeForm] _populate', {
+        active: this.active,
+        update: this.update,
+        hasId:  !!this.d3Data?.id,
+        d3Data: this.d3Data,
+      })
+      if (!(this.update && this.d3Data?.id)) return
+      const mod = this.modifier?.value ?? this.modifier
+      this.nodeLabel  = this.d3Data.label
+      this.nodeShape  = this.d3Data.nodeShape || this.d3Data.shape
+      this.nodeId     = this.d3Data.id
+      const parentEl  = mod?.cy?.getElementById(this.d3Data.id)?.parent()?.first()
+      this.parentNode = parentEl?.length ? parentEl.id() : null
+      this.textHalign = this.d3Data.textHalign || 'center'
+      this.textValign = this.d3Data.textValign || 'top'
+      this.style      = this.d3Data.style
+      if (D3Util.debug) console.log('[D3NodeForm] fields', JSON.stringify({
+        nodeLabel:  this.nodeLabel,
+        nodeShape:  this.nodeShape,
+        nodeId:     this.nodeId,
+        parentNode: this.parentNode,
+        textHalign: this.textHalign,
+        textValign: this.textValign,
+        style:      this.style,
+      }))
+    },
     _optLabel(list, val, valKey, labelKey, fallback) {
       if (!val) return fallback
       const opt = list.find(o => o[valKey] === val)
@@ -320,14 +322,16 @@ export default {
       this.openSel = null
     },
     updateNode () {
-      this.modifier.updateNode(this.$data, this.nodeId)
+      const mod = this.modifier?.value ?? this.modifier
+      mod.updateNode(this.$data, this.nodeId)
       this.close()
     },
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
     },
     addNode () {
-      this.modifier.addNode(this.$data)
+      const mod = this.modifier?.value ?? this.modifier
+      mod.addNode(this.$data)
       this.common()
     },
     close () {
@@ -337,7 +341,19 @@ export default {
       this.hints = D3Util.removeHints(this.hints)
       this.emitter.emit('setSheetToFalse')
     }
-  }
+  },
+  watch: {
+    active(val) {
+      this.update = val == 'Edit Node'
+      this._populate()
+    },
+    d3Data: {
+      handler() {
+        this._populate()
+      },
+      immediate: true,
+    },
+  },
 }
 </script>
 

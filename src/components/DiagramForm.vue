@@ -26,26 +26,47 @@
                 hint="Enter a description for the new diagram"
                 rows="2" row-height="10"
               />
-              <div class="d-flex justify-space-around">
-                Options
-                <v-switch
-                  color="primary"
-                  v-for="(v, k) in diagramDefaults"
-                  :key="k"
-                  :label="`${k}`"
-                  :model-value="v"
-                />
-              </div>
               <v-select
-                label="Rank Direction"
-                v-model="rankdir"
-                :items="rankdirOptions"
-                item-value="key"
-                item-text="value"
-                auto-select-first
+                label="Layout Engine"
+                v-model="layoutMode"
+                :items="layoutModeOptions"
               />
-              <v-text-field label="Rank Separation" v-model="ranksep" />
-              <v-text-field label="Node Separation" v-model="nodesep" />
+
+              <template v-if="layoutMode === 'dagre'">
+                <v-select
+                  label="Rank Direction"
+                  v-model="dagreOpts.rankdir"
+                  :items="rankdirOptions"
+                  auto-select-first
+                />
+                <v-text-field label="Rank Separation" v-model="dagreOpts.ranksep" type="number" />
+                <v-text-field label="Node Separation" v-model="dagreOpts.nodesep" type="number" />
+                <v-select
+                  label="Ranker"
+                  v-model="dagreOpts.ranker"
+                  :items="['network-simplex', 'tight-tree', 'longest-path']"
+                />
+              </template>
+
+              <template v-if="layoutMode === 'fcose'">
+                <v-text-field label="Ideal Edge Length" v-model="fcoseOpts.idealEdgeLength" type="number" />
+                <v-text-field label="Node Repulsion" v-model="fcoseOpts.nodeRepulsion" type="number" />
+                <v-text-field label="Gravity" v-model="fcoseOpts.gravity" type="number" />
+                <v-text-field label="Iterations" v-model="fcoseOpts.numIter" type="number" />
+              </template>
+
+              <template v-if="layoutMode === 'cola'">
+                <v-text-field label="Edge Length" v-model="colaOpts.edgeLength" type="number" />
+                <v-text-field label="Node Spacing" v-model="colaOpts.nodeSpacing" type="number" />
+                <v-select
+                  label="Flow Direction"
+                  v-model="colaOpts.flow"
+                  :items="[{title: 'None', value: null}, {title: 'Horizontal (x)', value: 'x'}, {title: 'Vertical (y)', value: 'y'}]"
+                  item-title="title"
+                  item-value="value"
+                />
+                <v-text-field label="Max Simulation Time (ms)" v-model="colaOpts.maxSimulationTime" type="number" />
+              </template>
               <v-textarea
                 label="JSON Diagram"
                 v-model="jsonDiagram"
@@ -88,7 +109,6 @@
 
 <script>
 import cytoscape from 'cytoscape'
-import dagre from 'cytoscape-dagre'
 import { markRaw } from 'vue'
 import D3Util from '@/helpers/D3Util.js'
 import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
@@ -96,8 +116,6 @@ import { cytoscapeToGraphlib, graphlibToCytoscape, isGraphlibFormat } from '@/he
 import D3DApi from '@/services/api'
 
 // Register dagre plugin for diagrams created here
-cytoscape.use(dagre)
-
 export default {
   name: 'DiagramForm',
   props: ['active'],
@@ -112,16 +130,12 @@ export default {
       description: 'New diagram default description',
       diagramModal: false,
       update:      null,
-      diagramOptions: [],
-      diagramDefaults: {
-        directed:   true,
-        multigraph: true,
-        compound:   true,
-      },
-      rankdir: 'TB',
+      layoutMode: 'dagre',
+      layoutModeOptions: ['dagre', 'fcose', 'cola'],
       rankdirOptions: ['TB', 'BT', 'LR', 'RL'],
-      ranksep: '50',
-      nodesep: '10',
+      dagreOpts: { rankdir: 'TB', ranksep: 50, nodesep: 10, ranker: 'network-simplex' },
+      fcoseOpts: { idealEdgeLength: 50, nodeRepulsion: 4500, gravity: 0.25, numIter: 2500 },
+      colaOpts:  { edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 },
       jsonDiagram: null,
     }
   },
@@ -163,7 +177,7 @@ export default {
       const cy = markRaw(cytoscape({
         headless: true,
         elements: [
-          { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rect', labelType: 'text' } }
+          { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
         ]
       }))
 
@@ -172,9 +186,10 @@ export default {
         diagram:     cy,
         name:        D3Util.tempInfo().name,
         description: D3Util.tempInfo().description,
-        rankdir:     this.rankdir,
-        ranksep:     Number(this.ranksep),
-        nodesep:     Number(this.nodesep),
+        layoutMode:  this.layoutMode,
+        dagreOpts:   { ...this.dagreOpts },
+        fcoseOpts:   { ...this.fcoseOpts },
+        colaOpts:    { ...this.colaOpts },
       }
 
       this._newModifier(d3dInfo)
@@ -196,9 +211,10 @@ export default {
       }
 
       // Layout options live on the modifier
-      this.rankdir = mod?.rankdir || 'TB'
-      this.ranksep = String(mod?.ranksep || 50)
-      this.nodesep = String(mod?.nodesep || 10)
+      this.layoutMode = mod?.layoutMode || 'dagre'
+      if (mod?.dagreOpts) this.dagreOpts = { ...mod.dagreOpts }
+      if (mod?.fcoseOpts) this.fcoseOpts = { ...mod.fcoseOpts }
+      if (mod?.colaOpts)  this.colaOpts  = { ...mod.colaOpts }
     },
 
     async create() {
@@ -237,9 +253,14 @@ export default {
     _applyLayoutOptions() {
       const mod = this._mod()
       if (mod) {
-        mod.rankdir = this.rankdir
-        mod.ranksep = Number(this.ranksep)
-        mod.nodesep = Number(this.nodesep)
+        mod.layoutMode = this.layoutMode
+        mod.dagreOpts  = { ...this.dagreOpts }
+        mod.fcoseOpts  = { ...this.fcoseOpts }
+        mod.colaOpts   = { ...this.colaOpts }
+        // Keep legacy aliases in sync
+        mod.rankdir = this.dagreOpts.rankdir
+        mod.ranksep = Number(this.dagreOpts.ranksep)
+        mod.nodesep = Number(this.dagreOpts.nodesep)
       }
     },
 
@@ -249,9 +270,10 @@ export default {
         name:        this.name,
         description: this.description,
         created:     this.created,
-        rankdir:     this.rankdir,
-        ranksep:     Number(this.ranksep),
-        nodesep:     Number(this.nodesep),
+        layoutMode:  this.layoutMode,
+        dagreOpts:   { ...this.dagreOpts },
+        fcoseOpts:   { ...this.fcoseOpts },
+        colaOpts:    { ...this.colaOpts },
       }
 
       // Parse the edited JSON (may be graphlib or cytoscape format)
@@ -283,9 +305,10 @@ export default {
         name:        this.name,
         description: this.description,
         created:     this.created,
-        rankdir:     this.rankdir,
-        ranksep:     Number(this.ranksep),
-        nodesep:     Number(this.nodesep),
+        layoutMode:  this.layoutMode,
+        dagreOpts:   { ...this.dagreOpts },
+        fcoseOpts:   { ...this.fcoseOpts },
+        colaOpts:    { ...this.colaOpts },
       }
 
       try {
@@ -322,7 +345,7 @@ export default {
 
     _newModifier(d3dInfo) {
       const newMod = markRaw(new CytoscapeGraph(d3dInfo, this.emitter))
-      // ThreeDRenderer will be reconnected automatically by DagreGraphLib watcher
+      // ThreeDRenderer will be reconnected automatically by CytoscapeGraphView watcher
       this.emitter.emit('updateModifier', newMod)
     },
 
@@ -331,10 +354,7 @@ export default {
       this.emitter.emit('changeActive')
     },
 
-    setGraphOptions() {
-      // Cytoscape is always directed and compound — keep UI in sync
-      this.diagramOptions = ['directed', 'compound']
-    },
+    
   },
 }
 </script>

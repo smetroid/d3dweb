@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import DagreOtherKeys from '@/helpers/DagreOtherKeys.js'
+import OtherKeys from '@/helpers/OtherKeys.js'
 
 vi.mock('vue-cookies', () => ({
   default: { get: () => null, set: () => {} },
@@ -29,7 +29,7 @@ function makeSut(opts = {}) {
     ...opts.modifier,
   }
   const hintFunction = vi.fn()
-  const keys = new DagreOtherKeys(emitter, modifier, hintFunction)
+  const keys = new OtherKeys(emitter, modifier, hintFunction)
   return { emitter, modifier, hintFunction, keys }
 }
 
@@ -40,7 +40,7 @@ function fakeElement() {
   }
 }
 
-describe('DagreOtherKeys emitter routes', () => {
+describe('OtherKeys emitter routes', () => {
   it('m / / / a / t emit their events', () => {
     const { emitter, keys } = makeSut()
     keys.defaultActions('m')
@@ -78,7 +78,7 @@ describe('DagreOtherKeys emitter routes', () => {
   })
 })
 
-describe('DagreOtherKeys j/k navigation', () => {
+describe('OtherKeys j/k navigation', () => {
   it('j moves to the next node, wrapping around', () => {
     const { keys } = makeSut()
     let r = keys.defaultActions('j', 'nodes')
@@ -105,7 +105,7 @@ describe('DagreOtherKeys j/k navigation', () => {
   })
 })
 
-describe('DagreOtherKeys buildHints', () => {
+describe('OtherKeys buildHints', () => {
   it('assigns sequential hint characters to elements', () => {
     const { keys } = makeSut()
     const elements = [{}, {}, {}, {}]
@@ -123,7 +123,7 @@ describe('DagreOtherKeys buildHints', () => {
   })
 })
 
-describe('DagreOtherKeys enter selection', () => {
+describe('OtherKeys enter selection', () => {
   it('toggles node selection state', () => {
     const { keys } = makeSut()
     keys.focusedIndex = 0
