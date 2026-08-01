@@ -293,3 +293,55 @@ describe('zoomTo / zoomOut', () => {
     expect(() => renderer.zoomTo('n1')).not.toThrow()
   })
 })
+
+describe('zoom framing offset', () => {
+  beforeEach(() => {
+    gsap.to.mockClear()
+  })
+
+  it('shifts left in proportion to the panel share of the viewport', () => {
+    const renderer = makeRenderer()
+    const dx = renderer._zoomFramingOffset(500, 2000, 1000, 40, 2)
+    expect(dx).toBeCloseTo(-(500 / 2000) * 1000 * Math.tan((40 * Math.PI) / 360) * 2, 6)
+    expect(dx).toBeLessThan(0)
+  })
+
+  it('returns 0 when there is no panel or viewport', () => {
+    const renderer = makeRenderer()
+    expect(renderer._zoomFramingOffset(0, 2000, 1000, 40, 2)).toBe(0)
+    expect(renderer._zoomFramingOffset(500, 0, 1000, 40, 2)).toBe(0)
+    expect(renderer._zoomFramingOffset(500, 2000, 0, 40, 2)).toBe(0)
+  })
+
+  it('applies the panel offset to the camera target while editing', () => {
+    vi.stubGlobal('document', { querySelector: () => ({ offsetWidth: 500 }) })
+    try {
+      const renderer = makeRenderer()
+      renderer.camera = new THREE.PerspectiveCamera(40, 1, 1, 10000)
+      renderer.controls = { target: new THREE.Vector3(), update: vi.fn() }
+      renderer._viewportSize = new THREE.Vector2(2000, 1000)
+      renderer.camera.position.set(0, 0, 800)
+      renderer.nodeObjects.set('n1', { obj: { position: v(100, 200, 0) }, el: { clientWidth: 80, clientHeight: 40 } })
+      renderer.zoomTo('n1')
+      const calls = gsap.to.mock.calls
+      expect(calls[0][1].x).toBeLessThan(100)
+      expect(calls[1][1].x).toBeLessThan(100)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('centres normally when the edit rail is closed', () => {
+    vi.stubGlobal('document', undefined)
+    const renderer = makeRenderer()
+    renderer.camera = new THREE.PerspectiveCamera(40, 1, 1, 10000)
+    renderer.controls = { target: new THREE.Vector3(), update: vi.fn() }
+    renderer._viewportSize = new THREE.Vector2(2000, 1000)
+    renderer.camera.position.set(0, 0, 800)
+    renderer.nodeObjects.set('n1', { obj: { position: v(100, 200, 0) }, el: { clientWidth: 80, clientHeight: 40 } })
+    renderer.zoomTo('n1')
+    vi.unstubAllGlobals()
+    const calls = gsap.to.mock.calls
+    expect(calls[0][1].x).toBe(100)
+  })
+})

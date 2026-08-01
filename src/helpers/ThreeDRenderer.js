@@ -611,11 +611,39 @@ export default class ThreeDRenderer {
 
   // ─── Focus / de-focus a node or edge (edit panel) ─────────────────────────────
 
+  // Width of the open edit rail, if any (the side panel that covers the right
+  // edge of the viewport while editing).
+  _visiblePanelWidth() {
+    if (typeof document === 'undefined') return 0
+    const panel = document.querySelector('.fx-panel')
+    return panel ? (panel.offsetWidth || 500) : 0
+  }
+
+  // Horizontal world-space shift that frames the focus point in the visible
+  // (non-panel) portion of the viewport instead of the full viewport centre.
+  _zoomFramingOffset(panelWidth, viewportWidth, dist, fov, aspect) {
+    if (!panelWidth || !viewportWidth || !dist) return 0
+    const halfFov = (fov * Math.PI) / 360
+    return -(panelWidth / viewportWidth) * dist * Math.tan(halfFov) * aspect
+  }
+
+  _screenOffsetX() {
+    if (!this.camera || !this.controls) return 0
+    return this._zoomFramingOffset(
+      this._visiblePanelWidth(),
+      this._viewportSize?.x || 1,
+      this.camera.position.distanceTo(this.controls.target),
+      this.camera.fov,
+      this.camera.aspect || 1,
+    )
+  }
+
   _zoomToPoint(point, size) {
     if (!this.camera || !this.controls) return
     const dist = Math.max(size * 3, 350)
-    gsap.to(this.camera.position, { x: point.x, y: point.y, z: point.z + dist, duration: 0.6, ease: 'power2.inOut' })
-    gsap.to(this.controls.target, { x: point.x, y: point.y, z: 0, duration: 0.6, ease: 'power2.inOut' })
+    const dx   = this._screenOffsetX()
+    gsap.to(this.camera.position, { x: point.x + dx, y: point.y, z: point.z + dist, duration: 0.6, ease: 'power2.inOut' })
+    gsap.to(this.controls.target, { x: point.x + dx, y: point.y, z: 0, duration: 0.6, ease: 'power2.inOut' })
   }
 
   // id: node id (string), edge id (string) or legacy {v, w} edge object
@@ -651,8 +679,9 @@ export default class ThreeDRenderer {
   zoomOut() {
     if (!this.camera || !this.controls) return
     const { cx, cy, dist } = this._fitTargets()
-    gsap.to(this.camera.position, { x: cx, y: cy, z: dist, duration: 0.6, ease: 'power2.inOut' })
-    gsap.to(this.controls.target, { x: cx, y: cy, z: 0, duration: 0.6, ease: 'power2.inOut' })
+    const dx = this._screenOffsetX()
+    gsap.to(this.camera.position, { x: cx + dx, y: cy, z: dist, duration: 0.6, ease: 'power2.inOut' })
+    gsap.to(this.controls.target, { x: cx + dx, y: cy, z: 0, duration: 0.6, ease: 'power2.inOut' })
   }
 
   // ─── 2-D ↔ 3-D mode toggle ───────────────────────────────────────────────────
