@@ -68,8 +68,12 @@ export default class CytoscapeGraph {
   }
 
   updateNode(data, id) {
+    console.log('[CytoscapeGraph] updateNode called', { id, nodeLabel: data.nodeLabel, shape: data.nodeShape, data })
     const node = this.cy.getElementById(id)
-    if (node.empty()) return
+    if (node.empty()) {
+      console.warn('[CytoscapeGraph] updateNode target node was empty/not found', id)
+      return
+    }
 
     node.data({
       label:      data.nodeLabel,

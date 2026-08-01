@@ -202,7 +202,13 @@ export default class ThreeDRenderer {
     el.id = id
     el.dataset.nodeId = id
 
-    if (isCluster) el.classList.add('cluster')
+    if (isCluster) {
+      el.classList.add('cluster')
+      const halign = data.textHalign || 'left'
+      const valign = data.textValign || 'top'
+      el.classList.add(`halign-${halign}`)
+      el.classList.add(`valign-${valign}`)
+    }
     if (data.shape) el.classList.add(`node-shape-${data.shape}`)
     if (data.style) el.style.cssText += ';' + data.style
 

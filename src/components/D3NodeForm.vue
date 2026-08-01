@@ -332,6 +332,7 @@ export default {
     },
     updateNode () {
       const mod = this.modifier?.value ?? this.modifier
+      console.log('[D3NodeForm] updateNode clicked', { nodeId: this.nodeId, nodeLabel: this.nodeLabel, data: this.$data })
       mod.updateNode(this.$data, this.nodeId)
       this.close()
     },
