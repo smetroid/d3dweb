@@ -218,8 +218,8 @@ export default {
 
     this.$nextTick(() => {
       const mod = this.modifier?.value ?? this.modifier
-      if (this.update && mod?.zoomTo) {
-        mod.zoomTo(this.nodeId)
+      if (this.update && mod?.renderer) {
+        mod.renderer.zoomTo(this.nodeId)
       }
       this.enableTrap = true
       if (this.$refs.nodeLabelTextField) this.$refs.nodeLabelTextField.focus()

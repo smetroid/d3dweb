@@ -355,7 +355,7 @@ export default {
 
     _newModifier(d3dInfo) {
       const newMod = markRaw(new CytoscapeGraph(d3dInfo, this.emitter))
-      // CytoscapeGraphView will mount the new diagram's cy instance automatically
+      // ThreeDRenderer will be reconnected automatically by CytoscapeGraphView watcher
       this.emitter.emit('updateModifier', newMod)
     },
 

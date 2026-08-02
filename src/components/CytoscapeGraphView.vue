@@ -6,7 +6,7 @@
       v-model:active="trapGraph"
       :escapeDeactivates="false"
       :delayInitialFocus="true"
-      :initial-focus="() => $refs.cyContainer"
+      :initial-focus="() => $refs.threeContainer"
       ref="graphTrap"
     >
       <div id="trap" ref="trapDiv" class="trap is-active">
@@ -22,11 +22,11 @@
           EdgesOrNodes: {{ edgeOrNode }} <br>
         </div>
 
-        <!-- Cytoscape's native DOM (canvas) renderer mounts here -->
+        <!-- Three.js mounts its CSS3D + WebGL canvases here -->
         <div
-          ref="cyContainer"
+          ref="threeContainer"
           tabindex="0"
-          class="cy-container"
+          class="three-container"
         />
 
         <div v-if="graphEmpty" class="graph-empty-hint">
@@ -63,6 +63,8 @@
 
 <script>
 import D3Util from '@/helpers/D3Util'
+import ThreeDRenderer from '@/helpers/ThreeDRenderer'
+import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
 import Hints from '@/helpers/Hints.js'
@@ -90,7 +92,7 @@ export default {
       doubleSelection: [],
       openSheet:       false,
       escCount:        0,
-      mountedCy:       null,
+      threeDRenderer:  null,
       graphEmpty:      false,
     }
   },
@@ -100,22 +102,18 @@ export default {
       this.diagramInfo = settings['d3dInfo']
     }
 
-    // Mount the (headless) cytoscape instance into the container and
-    // connect it to the current modifier
-    this._connectCytoscape()
+    // Initialise Three.js renderer and attach to the current modifier
+    this._initRenderer()
 
     this.emitter.on('node-click', this._onNodeClick)
     this.emitter.on('editNode', () => this._openEdit('nodes'))
     this.emitter.on('editEdge', () => this._openEdit('edges'))
     this.emitter.on('d3ResetValues', () => this.resetValues())
     this.emitter.on('scene-updated', ({ count }) => { this.graphEmpty = count === 0 })
-    // Re-apply the theme-derived stylesheet when the user toggles light/dark
-    this.emitter.on('themeChanged', this._onThemeChanged)
 
     this.emitter.on('setSheetToFalse', () => {
       this.openSheet = false
-      const mod = this.modifier?.value ?? this.modifier
-      mod?.fitGraph?.()
+      this.threeDRenderer?.zoomOut()
       setTimeout(() => this.emitter.emit('changeActive'), 300)
     })
 
@@ -125,50 +123,26 @@ export default {
     })
   },
   beforeUnmount() {
-    this.emitter.off('themeChanged', this._onThemeChanged)
-    if (this._resizeHandler) window.removeEventListener('resize', this._resizeHandler)
-    if (this.mountedCy) this.mountedCy.unmount()
+    if (this.threeDRenderer) this.threeDRenderer.teardown()
   },
   methods: {
-    _connectCytoscape() {
-      const container = this.$refs.cyContainer
+    _initRenderer() {
+      const container = this.$refs.threeContainer
       if (!container) return
 
-      const mod = this.modifier?.value ?? this.modifier
-      if (!mod?.cy) return
-      this._mount(mod.cy, container)
-
-      // Trigger an initial layout + scene-updated so the graph is positioned
-      if (typeof mod.redraw === 'function') mod.redraw()
-    },
-
-    _mount(cy, container) {
-      if (this.mountedCy === cy) return
-      if (this.mountedCy) this.mountedCy.unmount()
-
-      this.mountedCy = cy
-      cy.mount(container)
-      cy.resize()
-      cy.fit(undefined, 40)
-      cy.center()
-      this._bindCyEvents(cy)
-
-      if (!this._resizeHandler) {
-        this._resizeHandler = () => this.mountedCy?.resize?.()
-        window.addEventListener('resize', this._resizeHandler)
+      if (!this.threeDRenderer) {
+        // markRaw: Vue must never proxy the THREE scene graph (non-configurable
+        // props like Object3D.modelViewMatrix break Proxy get invariants).
+        this.threeDRenderer = markRaw(new ThreeDRenderer(container, this.emitter))
+        this.threeDRenderer.init()
       }
-    },
 
-    _bindCyEvents(cy) {
-      // Tap a node to open its edit form (mirrors the old CSS3D card click)
-      cy.on('tap', 'node', (event) => {
-        this.emitter.emit('node-click', event.target.id())
-      })
-    },
-
-    _onThemeChanged() {
+      // Connect to modifier if it is already a CytoscapeGraph
       const mod = this.modifier?.value ?? this.modifier
-      mod?.refreshStyle?.()
+      if (mod && typeof mod.redraw === 'function') {
+        mod.renderer = this.threeDRenderer
+        mod.redraw()
+      }
     },
 
     _onNodeClick(nodeId) {
@@ -332,14 +306,13 @@ export default {
     },
   },
   watch: {
-    // When App.vue replaces the modifier (new diagram opened), mount the
-    // new cytoscape instance into the same container.
+    // When App.vue replaces the modifier (new diagram opened), reconnect renderer
     modifier: {
       handler(newMod) {
         const mod = newMod?.value ?? newMod
-        if (mod?.cy && this.$refs.cyContainer) {
-          this._mount(mod.cy, this.$refs.cyContainer)
-          if (typeof mod.redraw === 'function') mod.redraw()
+        if (mod && typeof mod.redraw === 'function' && this.threeDRenderer) {
+          mod.renderer = this.threeDRenderer
+          mod.redraw()
         }
       },
       deep: false,
@@ -361,8 +334,7 @@ export default {
                      val === 'Add Edge' || val === 'Edit Edge'
       this.openSheet = isEdit
       if (isEdit) {
-        const mod = this.modifier?.value ?? this.modifier
-        this.$nextTick(() => mod?.zoomTo?.(this.d3Data?.id))
+        this.$nextTick(() => this.threeDRenderer?.zoomTo(this.d3Data?.id))
       }
     },
   },
@@ -370,7 +342,7 @@ export default {
 </script>
 
 <style scoped>
-.cy-container {
+.three-container {
   position: absolute;
   top: 0;
   left: 0;
