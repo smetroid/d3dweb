@@ -3,6 +3,7 @@ import dagre from 'cytoscape-dagre'
 import fcose from 'cytoscape-fcose'
 import cola from 'cytoscape-cola'
 import D3Util from '@/helpers/D3Util'
+import VueCookies from 'vue-cookies'
 import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
 import { SCALE } from '@/helpers/ThreeDRenderer'
 
@@ -23,10 +24,27 @@ export default class CytoscapeGraph {
     this.focusedIndex = null
 
     // Layout options — read/written by DiagramForm
-    this.layoutMode = d3dInfo.layoutMode || 'dagre'  // 'dagre' | 'fcose' | 'cola'
-    this.dagreOpts = Object.assign({ rankdir: 'TB', ranksep: 50, nodesep: 10, ranker: 'network-simplex' }, d3dInfo.dagreOpts)
-    this.fcoseOpts = Object.assign({ idealEdgeLength: 50, nodeRepulsion: 4500, gravity: 0.25, numIter: 2500 }, d3dInfo.fcoseOpts)
-    this.colaOpts  = Object.assign({ edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 }, d3dInfo.colaOpts)
+    const settings = VueCookies.get('settings') || D3Util.appDefaults()
+    this.layoutMode = d3dInfo.layoutMode || settings.defaultLayoutMode || 'dagre'  // 'dagre' | 'fcose' | 'cola'
+    this.dagreOpts = Object.assign({
+      rankdir: settings.defaultRankDir || 'TB',
+      ranksep: settings.defaultRankSep !== undefined ? Number(settings.defaultRankSep) : 100,
+      nodesep: settings.defaultNodeSep !== undefined ? Number(settings.defaultNodeSep) : 80,
+      ranker:  settings.defaultRanker || 'network-simplex',
+    }, d3dInfo.dagreOpts)
+    this.fcoseOpts = Object.assign({
+      idealEdgeLength: settings.defaultFcoseIdealEdgeLength !== undefined ? Number(settings.defaultFcoseIdealEdgeLength) : 50,
+      nodeRepulsion:   settings.defaultFcoseNodeRepulsion !== undefined ? Number(settings.defaultFcoseNodeRepulsion) : 4500,
+      gravity:         settings.defaultFcoseGravity !== undefined ? Number(settings.defaultFcoseGravity) : 0.25,
+      numIter:         settings.defaultFcoseNumIter !== undefined ? Number(settings.defaultFcoseNumIter) : 2500,
+    }, d3dInfo.fcoseOpts)
+    this.colaOpts  = Object.assign({
+      edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : 80,
+      nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : 10,
+      flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
+      avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : true,
+      maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
+    }, d3dInfo.colaOpts)
 
     // Keep legacy aliases so existing save/load code still works
     this.rankdir = this.dagreOpts.rankdir
@@ -457,8 +475,8 @@ export default class CytoscapeGraph {
         name,
         animate: false,
         rankDir:  o.rankdir,
-        ranksep:  Number(o.ranksep),
-        nodesep:  Number(o.nodesep),
+        rankSep:  Number(o.ranksep),
+        nodeSep:  Number(o.nodesep),
         ranker:   o.ranker || 'network-simplex',
       }
     } else if (name === 'fcose') {

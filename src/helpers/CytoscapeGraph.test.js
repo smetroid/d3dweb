@@ -158,6 +158,20 @@ describe('_runLayout cluster handling', () => {
     graph._runLayout()
     expect(spy.mock.calls[0][0].name).toBe('cola')
   })
+
+  it('correctly formats and forwards camelCase rankSep and nodeSep layout options to cytoscape-dagre', () => {
+    const { cy, graph } = makeGraph(3)
+    graph.dagreOpts = { rankdir: 'LR', ranksep: 123, nodesep: 45, ranker: 'longest-path' }
+    const spy = spyLayout(cy)
+    graph._runLayout()
+    expect(spy).toHaveBeenCalled()
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('dagre')
+    expect(opts.rankDir).toBe('LR')
+    expect(opts.rankSep).toBe(123)
+    expect(opts.nodeSep).toBe(45)
+    expect(opts.ranker).toBe('longest-path')
+  })
 })
 
 describe('3D sphere layout', () => {

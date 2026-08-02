@@ -265,12 +265,17 @@ export default class ThreeDRenderer {
     const group = new THREE.Group()
 
     const lineGeo = this._buildLineGeometry(curve)
+    
+    const settings = VueCookies.get('settings') || {}
+    const opacity = settings.defaultEdgeOpacity !== undefined ? Number(settings.defaultEdgeOpacity) : 0.7
+    const linewidth = settings.defaultEdgeWidth !== undefined ? Number(settings.defaultEdgeWidth) : 2
+
     const lineMat = new LineMaterial({
       color:       0xffffff,   // vertex colors drive the source→target gradient
       vertexColors: true,
       transparent:  true,
-      opacity:      EDGE_OPACITY,
-      linewidth:    2,
+      opacity:      opacity,
+      linewidth:    linewidth,
       resolution:   this._viewportSize ? this._viewportSize.clone() : new THREE.Vector2(800, 600),
     })
     group.add(new Line2(lineGeo, lineMat))
@@ -317,9 +322,13 @@ export default class ThreeDRenderer {
     // Stop the arrow at the target card's edge instead of its center
     const endPoint = end.clone().sub(dir.clone().multiplyScalar(tgtRadius))
 
+    // Read style from settings cookie
+    const settings = VueCookies.get('settings') || {}
+    const isStraight = settings.defaultEdgeStyle === 'straight'
+
     // Deterministic side choice so parallel edges don't fully overlap
     const hash   = (Math.round(start.x) * 73856093) ^ (Math.round(start.y) * 19349663) ^ (Math.round(end.x) * 83492791)
-    const amount = Math.max(dist * 0.12, 30) * (hash % 2 === 0 ? 1 : -1)
+    const amount = isStraight ? 0 : (Math.max(dist * 0.12, 30) * (hash % 2 === 0 ? 1 : -1))
     const mid    = start.clone().lerp(endPoint, 0.5)
     const side   = new THREE.Vector3(-dir.y, dir.x, 0)
     const control = mid.clone().add(side.multiplyScalar(amount))
@@ -354,22 +363,26 @@ export default class ThreeDRenderer {
 
   // ConeGeometry is centered on its midpoint, so the apex would overshoot the
   // edge point by half its height — pull the cone back so the apex lands on it.
-  _placeArrowhead(cone, tipPoint, dir) {
+  _placeArrowhead(cone, tipPoint, dir, arrowLength) {
+    const length = arrowLength !== undefined ? arrowLength : 18
     cone.position.copy(tipPoint)
     if (dir.lengthSq() > 0) {
       const n = dir.clone().normalize()
       cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n)
-      cone.position.addScaledVector(n, -ARROW_LENGTH / 2)
+      cone.position.addScaledVector(n, -length / 2)
     }
     return cone
   }
 
   _buildArrowhead(tipPoint, dir) {
+    const settings = VueCookies.get('settings') || {}
+    const arrowLength = settings.defaultArrowScale !== undefined ? Number(settings.defaultArrowScale) : 18
+
     const cone = new THREE.Mesh(
-      new THREE.ConeGeometry(ARROW_LENGTH * 0.32, ARROW_LENGTH, 10),
+      new THREE.ConeGeometry(arrowLength * 0.32, arrowLength, 10),
       new THREE.MeshBasicMaterial({ color: this._palette?.target ?? 0x5e74ff })
     )
-    return this._placeArrowhead(cone, tipPoint, dir)
+    return this._placeArrowhead(cone, tipPoint, dir, arrowLength)
   }
 
   // Approximate world radius of a node card (world units ≈ CSS px at the graph plane)
@@ -468,10 +481,14 @@ export default class ThreeDRenderer {
   }
 
   _selectEdgeState(entry, on) {
+    const settings = VueCookies.get('settings') || {}
+    const defaultOpacity = settings.defaultEdgeOpacity !== undefined ? Number(settings.defaultEdgeOpacity) : 0.7
+    const activeOpacity = Math.min(1.0, defaultOpacity + 0.25)
+
     const active = this._palette?.active ?? 0xffab40
     const target = this._palette?.target ?? 0x5e74ff
     entry.line.material.color.setHex(on ? active : 0xffffff)
-    entry.line.material.opacity = on ? EDGE_OPACITY_ACTIVE : EDGE_OPACITY
+    entry.line.material.opacity = on ? activeOpacity : defaultOpacity
     entry.arrow.material.color.setHex(on ? active : target)
   }
 

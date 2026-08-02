@@ -754,14 +754,14 @@ textarea {
 .fx-scrim {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1009;
   background: rgba(var(--fx-scrim), 0.45);
 }
 
 .fx-hud-stage {
   position: fixed;
   inset: 0;
-  z-index: 91;
+  z-index: 1010;
   display: flex;
   justify-content: flex-end;
   pointer-events: none;

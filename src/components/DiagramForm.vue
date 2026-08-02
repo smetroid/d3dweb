@@ -133,7 +133,7 @@ export default {
       layoutMode: 'dagre',
       layoutModeOptions: ['dagre', 'fcose', 'cola'],
       rankdirOptions: ['TB', 'BT', 'LR', 'RL'],
-      dagreOpts: { rankdir: 'TB', ranksep: 50, nodesep: 10, ranker: 'network-simplex' },
+      dagreOpts: { rankdir: 'TB', ranksep: 100, nodesep: 80, ranker: 'network-simplex' },
       fcoseOpts: { idealEdgeLength: 50, nodeRepulsion: 4500, gravity: 0.25, numIter: 2500 },
       colaOpts:  { edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 },
       jsonDiagram: null,
@@ -173,6 +173,15 @@ export default {
 
     newDiagram() {
       this.$cookies.remove('LastLocallySavedItemId')
+
+      const settings = this.$cookies.get('settings') || D3Util.appDefaults()
+      this.layoutMode = settings.defaultLayoutMode || 'dagre'
+      this.dagreOpts = {
+        rankdir: settings.defaultRankDir || 'TB',
+        ranksep: settings.defaultRankSep !== undefined ? Number(settings.defaultRankSep) : 50,
+        nodesep: settings.defaultNodeSep !== undefined ? Number(settings.defaultNodeSep) : 10,
+        ranker:  settings.defaultRanker || 'network-simplex',
+      }
 
       const cy = markRaw(cytoscape({
         headless: true,

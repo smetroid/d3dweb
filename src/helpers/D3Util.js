@@ -125,7 +125,25 @@ export default {
         {'value':'light', 'label':'Light Theme'},
         {'value':'dark', 'label':'Dark Theme'},
       ],
-      'zoomFitFactor': 2.8
+      'zoomFitFactor': 2.8,
+      'defaultLayoutMode': 'dagre',
+      'defaultRankDir': 'TB',
+      'defaultRankSep': 100,
+      'defaultNodeSep': 80,
+      'defaultRanker': 'network-simplex',
+      'defaultFcoseIdealEdgeLength': 50,
+      'defaultFcoseNodeRepulsion': 4500,
+      'defaultFcoseGravity': 0.25,
+      'defaultFcoseNumIter': 2500,
+      'defaultColaEdgeLength': 80,
+      'defaultColaNodeSpacing': 10,
+      'defaultColaFlow': null,
+      'defaultColaAvoidOverlap': true,
+      'defaultColaMaxSimulationTime': 1500,
+      'defaultEdgeStyle': 'curved',
+      'defaultEdgeWidth': 2,
+      'defaultEdgeOpacity': 0.7,
+      'defaultArrowScale': 18
     }
     return defaults
   },
