@@ -23,32 +23,73 @@ function v(x, y, z = 0) {
   return new THREE.Vector3(x, y, z)
 }
 
-describe('_buildCurve', () => {
-  it('stops the tip at the target node edge', () => {
+// Register nodes with clientWidth=48, clientHeight=36 → hw=24, hh=18.
+// For a horizontal direction (ax=1, ay=0) _cardEdgeDist returns hw/ax = 24.
+function makeRendererWithNodes() {
+  const renderer = makeRenderer()
+  renderer.nodeObjects.set('src', { el: { clientWidth: 48, clientHeight: 36 } })
+  renderer.nodeObjects.set('tgt', { el: { clientWidth: 48, clientHeight: 36 } })
+  return renderer
+}
+
+describe('_cardEdgeDist', () => {
+  it('returns half-width for a purely horizontal direction', () => {
     const renderer = makeRenderer()
-    const { tipPoint } = renderer._buildCurve(v(0, 0), v(100, 0), 24)
+    renderer.nodeObjects.set('n1', { el: { clientWidth: 160, clientHeight: 60 } })
+    expect(renderer._cardEdgeDist('n1', v(1, 0))).toBeCloseTo(80, 6)
+  })
+
+  it('returns half-height for a purely vertical direction', () => {
+    const renderer = makeRenderer()
+    renderer.nodeObjects.set('n1', { el: { clientWidth: 160, clientHeight: 60 } })
+    expect(renderer._cardEdgeDist('n1', v(0, 1))).toBeCloseTo(30, 6)
+  })
+
+  it('returns the shorter rect intersection for a diagonal', () => {
+    const renderer = makeRenderer()
+    // 100×40 card; dir = (1,1)/√2 → ax=ay=0.707
+    renderer.nodeObjects.set('n1', { el: { clientWidth: 100, clientHeight: 40 } })
+    const dir = v(1, 1).normalize()
+    const dist = renderer._cardEdgeDist('n1', dir)
+    // hw/ax = 50/0.707 ≈ 70.7; hh/ay = 20/0.707 ≈ 28.3 → min = 28.3
+    expect(dist).toBeCloseTo(20 / dir.y, 4)
+  })
+
+  it('falls back to default card size for unknown nodes', () => {
+    const renderer = makeRenderer()
+    // default hw=40, hh=18; horizontal → 40
+    expect(renderer._cardEdgeDist('missing', v(1, 0))).toBeCloseTo(40, 6)
+  })
+})
+
+describe('_buildCurve', () => {
+  it('stops the tip at the target card boundary', () => {
+    const renderer = makeRendererWithNodes()
+    const { tipPoint } = renderer._buildCurve('src', 'tgt', v(0, 0), v(100, 0))
+    // horizontal: _cardEdgeDist = 24; tipPoint = (100 - 24, 0) = (76, 0)
     expect(tipPoint.x).toBeCloseTo(76, 6)
     expect(tipPoint.y).toBeCloseTo(0, 6)
     expect(tipPoint.distanceTo(v(100, 0))).toBeCloseTo(24, 6)
   })
 
-  it('curve starts at source center and ends at the tip', () => {
-    const renderer = makeRenderer()
-    const { curve } = renderer._buildCurve(v(0, 0), v(100, 0), 10)
-    expect(curve.getPoint(0).distanceTo(v(0, 0))).toBeLessThan(0.001)
-    expect(curve.getPoint(1).distanceTo(v(90, 0))).toBeLessThan(0.001)
+  it('curve starts at source card edge and ends at target card edge', () => {
+    const renderer = makeRendererWithNodes()
+    const { curve } = renderer._buildCurve('src', 'tgt', v(0, 0), v(100, 0))
+    // both offsets = 24 for horizontal
+    expect(curve.getPoint(0).distanceTo(v(24, 0))).toBeLessThan(0.001)
+    expect(curve.getPoint(1).distanceTo(v(76, 0))).toBeLessThan(0.001)
   })
 
   it('tipDir matches the curve tangent at its end', () => {
-    const renderer = makeRenderer()
-    const { curve, tipDir } = renderer._buildCurve(v(0, 0), v(100, 0), 0)
+    const renderer = makeRendererWithNodes()
+    const { curve, tipDir } = renderer._buildCurve('src', 'tgt', v(0, 0), v(100, 0))
     expect(tipDir.dot(curve.getTangent(1))).toBeCloseTo(1, 6)
   })
 
   it('is deterministic for identical endpoints', () => {
-    const renderer = makeRenderer()
-    const a = renderer._buildCurve(v(10, 20), v(80, -40), 15)
-    const b = renderer._buildCurve(v(10, 20), v(80, -40), 15)
+    const renderer = makeRendererWithNodes()
+    const a = renderer._buildCurve('src', 'tgt', v(10, 20), v(80, -40))
+    const b = renderer._buildCurve('src', 'tgt', v(10, 20), v(80, -40))
     expect(a.tipPoint).toEqual(b.tipPoint)
     expect(a.curve.getPoint(0.5)).toEqual(b.curve.getPoint(0.5))
   })
@@ -275,7 +316,7 @@ describe('_buildLineGeometry', () => {
   it('emits positions and a source→target colour gradient', () => {
     const renderer = makeRenderer()
     renderer._palette = { source: 0x0000ff, target: 0xff0000 }
-    const { curve } = renderer._buildCurve(v(0, 0), v(100, 0), 10)
+    const { curve } = renderer._buildCurve('src', 'tgt', v(0, 0), v(100, 0))
     const lineGeo = renderer._buildLineGeometry(curve)
     const starts = lineGeo.attributes.instanceColorStart.array
     const ends   = lineGeo.attributes.instanceColorEnd.array

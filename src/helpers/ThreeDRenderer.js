@@ -269,6 +269,7 @@ export default class ThreeDRenderer {
     const settings = VueCookies.get('settings') || {}
     const opacity = settings.defaultEdgeOpacity !== undefined ? Number(settings.defaultEdgeOpacity) : 0.7
     const linewidth = settings.defaultEdgeWidth !== undefined ? Number(settings.defaultEdgeWidth) : 2
+    const arrowLength = settings.defaultArrowScale !== undefined ? Number(settings.defaultArrowScale) : 18
 
     const lineMat = new LineMaterial({
       color:       0xffffff,   // vertex colors drive the source→target gradient
@@ -285,13 +286,13 @@ export default class ThreeDRenderer {
     this.scene.add(group)
     this.edgeLines.set(edge.id(), {
       group, line: group.children[0], lineGeo, arrow: group.children[1],
-      srcId, tgtId, srcRadius, tgtRadius, curve, tipPoint, tipDir,
+      srcId, tgtId, srcRadius, tgtRadius, curve, tipPoint, tipDir, arrowLength,
     })
   }
 
   _computeCurve(srcId, tgtId, start, end, srcRadius, tgtRadius) {
     if (srcId === tgtId) return this._buildSelfLoop(start, srcRadius)
-    return this._buildCurve(start, end, tgtRadius)
+    return this._buildCurve(srcId, tgtId, start, end)
   }
 
   _buildLineGeometry(curve) {
@@ -313,27 +314,28 @@ export default class ThreeDRenderer {
     return lineGeo
   }
 
-  // Straight-ish bow between two nodes, sagging perpendicular to the direct line
-  _buildCurve(start, end, tgtRadius) {
+  // Arc between two nodes, trimmed to each card's rectangular boundary
+  _buildCurve(srcId, tgtId, start, end) {
     const dir  = end.clone().sub(start)
     const dist = dir.length()
     dir.normalize()
 
-    // Stop the arrow at the target card's edge instead of its center
-    const endPoint = end.clone().sub(dir.clone().multiplyScalar(tgtRadius))
+    // Trim both endpoints to the card edges (box intersection, not diagonal)
+    const startPoint = start.clone().add(dir.clone().multiplyScalar(this._cardEdgeDist(srcId, dir)))
+    const endPoint   = end.clone().sub(dir.clone().multiplyScalar(this._cardEdgeDist(tgtId, dir)))
 
     // Read style from settings cookie
     const settings = VueCookies.get('settings') || {}
     const isStraight = settings.defaultEdgeStyle === 'straight'
 
-    // Deterministic side choice so parallel edges don't fully overlap
+    // Use original centers for hash so parallel edges get consistent sides
     const hash   = (Math.round(start.x) * 73856093) ^ (Math.round(start.y) * 19349663) ^ (Math.round(end.x) * 83492791)
     const amount = isStraight ? 0 : (Math.max(dist * 0.12, 30) * (hash % 2 === 0 ? 1 : -1))
-    const mid    = start.clone().lerp(endPoint, 0.5)
+    const mid    = startPoint.clone().lerp(endPoint, 0.5)
     const side   = new THREE.Vector3(-dir.y, dir.x, 0)
     const control = mid.clone().add(side.multiplyScalar(amount))
 
-    const curve = new THREE.QuadraticBezierCurve3(start, control, endPoint)
+    const curve = new THREE.QuadraticBezierCurve3(startPoint, control, endPoint)
     return {
       curve,
       tipPoint: endPoint,
@@ -385,11 +387,25 @@ export default class ThreeDRenderer {
     return this._placeArrowhead(cone, tipPoint, dir, arrowLength)
   }
 
-  // Approximate world radius of a node card (world units ≈ CSS px at the graph plane)
+  // Approximate world radius of a node card — used only for self-loops
   _nodeRadius(id) {
     const el = this.nodeObjects.get(id)?.el
     if (!el) return 24
     return Math.max(Math.hypot(el.clientWidth, el.clientHeight) / 2, 12)
+  }
+
+  // Distance from the card center to its rectangular boundary along dir.
+  // CSS pixels ≈ Three.js world units at z=0 with CSS3DRenderer, so clientWidth maps directly.
+  _cardEdgeDist(id, dir) {
+    const el = this.nodeObjects.get(id)?.el
+    const hw = ((el?.clientWidth  || 80)) / 2
+    const hh = ((el?.clientHeight || 36)) / 2
+    const ax = Math.abs(dir.x)
+    const ay = Math.abs(dir.y)
+    if (ax < 1e-6 && ay < 1e-6) return Math.min(hw, hh)
+    if (ax < 1e-6) return hh / ay
+    if (ay < 1e-6) return hw / ax
+    return Math.min(hw / ax, hh / ay)
   }
 
   _clearScene() {
@@ -444,7 +460,7 @@ export default class ThreeDRenderer {
     entry.tipPoint = tipPoint
     entry.tipDir   = tipDir
     entry.lineGeo.setPositions(this._curvePositions(curve))
-    this._placeArrowhead(entry.arrow, tipPoint, tipDir)
+    this._placeArrowhead(entry.arrow, tipPoint, tipDir, entry.arrowLength)
   }
 
   _curvePositions(curve) {
