@@ -79,6 +79,11 @@ export function runColaLayout(model, colaOpts = {}, constraints = []) {
   const { iterations } = config
   layout.start(iterations.initial, iterations.structural, iterations.all, iterations.gridSnap, false, true)
 
+  // webcola's final `separateOverlappingComponents` packing moves whole
+  // disconnected components after the projection pass, which can break
+  // cross-component constraints. Re-assert them so the guarantees hold.
+  enforceConstraints(config.nodes, config.constraints)
+
   config.nodes.forEach(node => {
     model.setPosition(node.id, node.x, node.y)
   })
@@ -157,6 +162,48 @@ export function translateConstraints(constraints, idToIndex) {
       }
       return true
     })
+}
+
+/**
+ * Re-assert separation/alignment constraints on the laid-out positions.
+ *
+ * webcola's projection enforces constraints during the descent, but the final
+ * component-packing pass can separate disconnected components and violate
+ * cross-component constraints. This deterministic post-pass restores the
+ * guarantees, minimally nudging nodes outward so constraints hold.
+ *
+ * `constraints` must already be translated to node indices (i.e. the output
+ * of `translateConstraints`). Mutates the cola node objects in place.
+ */
+export function enforceConstraints(colNodes, constraints) {
+  if (!Array.isArray(constraints) || constraints.length === 0) return colNodes
+
+  constraints.forEach(c => {
+    if (!c || typeof c !== 'object') return
+
+    if (c.type === 'alignment' && Array.isArray(c.offsets)) {
+      const first = colNodes[c.offsets[0]?.node]
+      if (!first || (c.axis !== 'x' && c.axis !== 'y')) return
+      const base = first[c.axis]
+      c.offsets.forEach(o => {
+        const n = colNodes[o.node]
+        if (n) n[c.axis] = base + (Number(o.offset) || 0)
+      })
+      return
+    }
+
+    if (c.axis !== 'x' && c.axis !== 'y') return
+    if (c.left === undefined || c.right === undefined) return
+    const left = colNodes[c.left]
+    const right = colNodes[c.right]
+    if (!left || !right) return
+    const gap = Number(c.gap) || 0
+    if (left[c.axis] + gap > right[c.axis]) {
+      right[c.axis] = left[c.axis] + gap
+    }
+  })
+
+  return colNodes
 }
 
 export function iterationsFor(maxSimulationTime) {

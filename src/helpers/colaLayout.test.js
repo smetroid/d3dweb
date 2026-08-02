@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import GraphModel from '@/helpers/GraphModel.js'
-import { buildColaConfig, translateConstraints, runColaLayout, iterationsFor } from '@/helpers/colaLayout.js'
+import { buildColaConfig, translateConstraints, runColaLayout, enforceConstraints, iterationsFor } from '@/helpers/colaLayout.js'
 
 function makeModel(elements) {
   return new GraphModel(elements)
@@ -169,5 +169,88 @@ describe('runColaLayout', () => {
     ])
     const count = runColaLayout(model, { maxSimulationTime: 200 })
     expect(count).toBe(3)
+  })
+
+  it('enforces a separation gap across disconnected components', () => {
+    const model = makeModel([
+      { group: 'nodes', data: { id: 'a' } },
+      { group: 'nodes', data: { id: 'b' } },
+      { group: 'nodes', data: { id: 'x' } },
+    ])
+    const count = runColaLayout(model, { flow: 'x', maxSimulationTime: 400 }, [
+      { axis: 'x', left: 'a', right: 'x', gap: 60 },
+    ])
+    expect(count).toBe(3)
+    const [a, , x] = model.nodes().map(n => n.position())
+    // webcola's component packing would otherwise collapse this to ~1 node width
+    expect(x.x - a.x).toBeGreaterThanOrEqual(60)
+  })
+
+  it('enforces an alignment constraint across disconnected components', () => {
+    const model = makeModel([
+      { group: 'nodes', data: { id: 'a' } },
+      { group: 'nodes', data: { id: 'b' } },
+      { group: 'nodes', data: { id: 'x' } },
+    ])
+    runColaLayout(model, { maxSimulationTime: 400 }, [
+      { type: 'alignment', axis: 'x', offsets: [{ node: 'a', offset: 0 }, { node: 'x', offset: 0 }] },
+    ])
+    const [a, , x] = model.nodes().map(n => n.position())
+    expect(Math.abs(a.x - x.x)).toBeLessThan(0.001)
+  })
+})
+
+describe('enforceConstraints', () => {
+  const makeNodes = () => [
+    { id: 'a', x: 0, y: 0 },
+    { id: 'b', x: 0, y: 0 },
+    { id: 'x', x: 0, y: 0 },
+  ]
+
+  it('pushes the right node out to meet the separation gap', () => {
+    const nodes = makeNodes()
+    enforceConstraints(nodes, [{ axis: 'x', left: 0, right: 2, gap: 60 }])
+    expect(nodes[2].x).toBe(60)
+  })
+
+  it('does not move nodes that already satisfy the gap', () => {
+    const nodes = makeNodes()
+    nodes[2].x = 80
+    enforceConstraints(nodes, [{ axis: 'x', left: 0, right: 2, gap: 60 }])
+    expect(nodes[2].x).toBe(80)
+  })
+
+  it('applies separation on the y axis too', () => {
+    const nodes = makeNodes()
+    enforceConstraints(nodes, [{ axis: 'y', left: 0, right: 2, gap: 30 }])
+    expect(nodes[2].y).toBe(30)
+  })
+
+  it('sets aligned nodes to the first offset position', () => {
+    const nodes = makeNodes()
+    nodes[0].x = 10
+    nodes[2].x = -40
+    enforceConstraints(nodes, [
+      { type: 'alignment', axis: 'x', offsets: [{ node: 0, offset: 0 }, { node: 2, offset: 0 }] },
+    ])
+    expect(nodes[2].x).toBe(10)
+  })
+
+  it('respects alignment offsets', () => {
+    const nodes = makeNodes()
+    nodes[0].y = 5
+    enforceConstraints(nodes, [
+      { type: 'alignment', axis: 'y', offsets: [{ node: 0, offset: 0 }, { node: 2, offset: 3 }] },
+    ])
+    expect(nodes[2].y).toBe(8)
+  })
+
+  it('ignores constraints referencing missing nodes', () => {
+    const nodes = makeNodes()
+    enforceConstraints(nodes, [
+      { axis: 'x', left: 0, right: 9, gap: 60 },
+      { type: 'alignment', axis: 'x', offsets: [{ node: 5, offset: 0 }] },
+    ])
+    expect(nodes.map(n => n.x)).toEqual([0, 0, 0])
   })
 })
