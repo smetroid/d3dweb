@@ -463,10 +463,7 @@ export default class CytoscapeGraph {
              : this.layoutMode === 'cola'  ? 'cola'
              : 'dagre'
 
-    // dagre can't lay out edges that touch compound parents (it drops them),
-    // so for graphs with clusters fall back to fcose which supports them.
-    const hasClusters = this.cy.nodes().some(node => node.isParent())
-    if (name === 'dagre' && hasClusters) name = 'fcose'
+    // cytoscape-dagre supports compound (parent-child) graphs natively.
 
     // CSS cards are min 80×36px; SCALE=2 maps CSS px → Cytoscape units.
     // Setting these lets dagre/fCoSE space nodes to avoid card overlap.
