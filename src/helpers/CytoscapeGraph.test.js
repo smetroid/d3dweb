@@ -134,12 +134,12 @@ describe('_runLayout cluster handling', () => {
     expect(spy.mock.calls[0][0].name).toBe('dagre')
   })
 
-  it('falls back to fcose when the graph has compound parents', () => {
+  it('uses dagre even when the graph has compound parents', () => {
     const { cy, graph } = makeGraph(3)
     cy.getElementById('n1').move({ parent: 'n0' })
     const spy = spyLayout(cy)
     graph._runLayout()
-    expect(spy.mock.calls[0][0].name).toBe('fcose')
+    expect(spy.mock.calls[0][0].name).toBe('dagre')
   })
 
   it('respects an explicit fcose choice', () => {
