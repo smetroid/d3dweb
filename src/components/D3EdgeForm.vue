@@ -212,8 +212,8 @@ export default {
     if (this.edgeModal) {
       this.$nextTick(() => {
         const mod2 = this.modifier?.value ?? this.modifier
-        if (this.update && mod2?.renderer) {
-          mod2.renderer.zoomTo(this.edgeId)
+        if (this.update && mod2?.zoomTo) {
+          mod2.zoomTo(this.edgeId)
         }
         this.enableTrap = true
         if (this.$refs.edgeLabelTextField) this.$refs.edgeLabelTextField.focus()

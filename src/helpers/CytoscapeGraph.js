@@ -5,7 +5,7 @@ import cola from 'cytoscape-cola'
 import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
-import { SCALE } from '@/helpers/ThreeDRenderer'
+import { buildStyle } from '@/helpers/cytoscapeStyle'
 
 cytoscape.use(dagre)
 cytoscape.use(fcose)
@@ -15,9 +15,9 @@ export default class CytoscapeGraph {
   constructor(d3dInfo, emitter) {
     this.d3dInfo = d3dInfo
     this.emitter = emitter
-    this.cy = d3dInfo.diagram          // cytoscape instance (headless)
+    this.cy = d3dInfo.diagram          // cytoscape instance (headless; mounted by CytoscapeGraphView)
     this.diagram = d3dInfo.diagram     // alias kept for backward compat
-    this.renderer = null               // ThreeDRenderer, set by CytoscapeGraphView
+    this.cy.style(buildStyle())        // native DOM-renderer stylesheet
     this.selectedNodes = []
     this.doubleSelection = []
     this.selectedEdges = []
@@ -50,9 +50,6 @@ export default class CytoscapeGraph {
     this.rankdir = this.dagreOpts.rankdir
     this.ranksep = this.dagreOpts.ranksep
     this.nodesep = this.dagreOpts.nodesep
-
-    this.viewMode = '2D'               // '2D' | '3D'
-    this.threePositions = null         // Map<nodeId, {x,y,z}> when viewMode === '3D'
   }
 
   // ─── Convenience counts (replaces diagram.nodeCount() / edgeCount()) ─────────
@@ -300,17 +297,19 @@ export default class CytoscapeGraph {
     return (index >= 0 && index < edges.length) ? edges[index].id() : null
   }
 
-  // Returns the HTML element for a node (the CSS3D node card div)
+  // Returns the cytoscape node element (the DOM renderer draws to canvas,
+  // so there is no per-node HTML element anymore).
   getNode(index) {
-    const id = this.getNodeId(index)
-    return id && this.renderer ? this.renderer.getNodeElement(id) : null
+    const nodes = this.cy.nodes()
+    return (index >= 0 && index < nodes.length) ? nodes[index] : null
   }
 
   getNodeById(id) {
-    return this.renderer ? this.renderer.getNodeElement(id) : null
+    if (!id) return null
+    const node = this.cy.getElementById(id)
+    return node.empty() ? null : node
   }
 
-  // Edges are WebGL lines — no DOM element; returns null for compat
   getEdge() {
     return null
   }
@@ -319,143 +318,98 @@ export default class CytoscapeGraph {
     return null
   }
 
-  // ─── Visual selection (delegates to ThreeDRenderer) ──────────────────────────
+  // ─── Visual selection (drives the Cytoscape stylesheet classes) ───────────────
 
   selectNode(index) {
     const id = this.getNodeId(index)
-    if (id && this.renderer) this.renderer.selectNode(id)
+    if (id) this.cy.getElementById(id).addClass('selected')
     return id
   }
 
   removeSelection(index) {
     const id = this.getNodeId(index)
-    if (id && this.renderer) this.renderer.deselectNode(id)
+    if (id) this.cy.getElementById(id).removeClass('selected')
   }
 
   removeNodeSelectionById(id) {
-    if (this.renderer) this.renderer.deselectNode(id)
+    if (id) this.cy.getElementById(id).removeClass('selected active_node d_active_node')
   }
 
   selectEdge(index) {
     const id = this.getEdgeId(index)
-    if (id && this.renderer) this.renderer.selectEdge(id)
+    if (id) this.cy.getElementById(id).addClass('selected')
     return id
   }
 
   removeEdgeSelection(index) {
     const id = this.getEdgeId(index)
-    if (id && this.renderer) this.renderer.deselectEdge(id)
+    if (id) this.cy.getElementById(id).removeClass('selected')
   }
 
   removeEdgeSelectionById(id) {
-    if (this.renderer) this.renderer.deselectEdge(typeof id === 'string' ? id : this._resolveEdge(id)?.id())
+    const resolved = typeof id === 'string' ? this.cy.getElementById(id) : this._resolveEdge(id)
+    if (resolved && !resolved.empty()) resolved.removeClass('selected')
   }
 
   // ─── Layout & render ──────────────────────────────────────────────────────────
 
   redraw(options = {}) {
-    if (!this.renderer) return
-
-    if (!options.pan && !options.zoom && this.viewMode !== '3D') {
-      this._runLayout()
+    if (options.pan) {
+      this._pan(options.pan)
+      return
+    }
+    if (options.zoom) {
+      this._zoom(options.zoom)
+      return
     }
 
-    this.renderer.updateScene(this.cy, options)
-
-    // In 3-D mode nodes live outside cytoscape's 2-D positions — re-apply them
-    if (this.viewMode === '3D' && this.threePositions) {
-      this.renderer.transitionToPositions(this.threePositions)
-    }
-
+    this._runLayout()
+    this.emitter?.emit('scene-updated', { count: this.nodeCount() })
     this._saveTempDiagram()
   }
 
-  // ─── 3-D layout modes ─────────────────────────────────────────────────────────
+  // ─── Camera / viewport (drives the Cytoscape viewport) ───────────────────────
 
-  /**
-   * Animate nodes into a 3-D arrangement. mode: 'sphere' | 'helix' | 'hierarchy'
-   */
-  apply3DLayout(mode) {
-    if (!this.renderer) return
-    let positions
-    switch (mode) {
-      case 'sphere':    positions = this._spherePositions(this.cy.nodes()); break
-      case 'helix':     positions = this._helixPositions(this.cy.nodes());  break
-      case 'hierarchy': positions = this._hierarchyPositions(this.cy.nodes()); break
-      default: return
+  _pan(direction) {
+    const delta = 80
+    const pans = {
+      Down:  { x: 0,      y: -delta },
+      Up:    { x: 0,      y:  delta },
+      Left:  { x:  delta, y: 0 },
+      Right: { x: -delta, y: 0 },
     }
-    this.viewMode = '3D'
-    this.threePositions = positions
-    this.renderer.enable3D()
-    this.renderer.transitionToPositions(positions)
+    const pan = pans[direction]
+    if (pan) this.cy.panBy(pan)
   }
 
-  backTo2D() {
-    if (!this.renderer) return
-    this.viewMode = '2D'
-    this.threePositions = null
-    this._runLayout()
-    this.renderer.enable2D()
-    this.renderer.updateScene(this.cy)
+  _zoom(direction) {
+    const factor = direction === 'In' ? 1.43 : 0.7
+    this.cy.zoom(Math.min(Math.max(this.cy.zoom() * factor, 0.1), 10))
   }
 
-  // Nodes spread evenly over a sphere (fibonacci/golden-angle spiral)
-  _spherePositions(nodes) {
-    const n = nodes.length
-    const R = Math.max(n * 55, 300)
-    const positions = new Map()
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5))
-    nodes.forEach((node, i) => {
-      const y      = 1 - (i / Math.max(n - 1, 1)) * 2
-      const radius = Math.sqrt(Math.max(0, 1 - y * y))
-      const theta  = goldenAngle * i
-      positions.set(node.id(), {
-        x: Math.cos(theta) * radius * R,
-        y: y * R,
-        z: Math.sin(theta) * radius * R,
-      })
-    })
-    return positions
+  // Fit + centre the whole graph in the viewport
+  fitGraph() {
+    this.cy.fit(undefined, 40)
+    this.cy.center()
   }
 
-  // Nodes wound around a vertical helix
-  _helixPositions(nodes) {
-    const n = nodes.length
-    const positions = new Map()
-    const radius = Math.max(n * 40, 250)
-    const height = Math.max(n * 80, 500)
-    nodes.forEach((node, i) => {
-      const t     = n > 1 ? i / (n - 1) : 0
-      const angle = t * 3 * Math.PI * 2
-      positions.set(node.id(), {
-        x: Math.cos(angle) * radius,
-        y: (t - 0.5) * height,
-        z: Math.sin(angle) * radius,
-      })
-    })
-    return positions
+  // id: node id (string), edge id (string) or legacy {v, w} edge object
+  zoomTo(id) {
+    if (!id) return
+    let eles = null
+    if (typeof id === 'string') {
+      const el = this.cy.getElementById(id)
+      if (!el.empty()) eles = el
+    } else if (id.v && id.w) {
+      eles = this.cy.edges(`[source = "${id.v}"][target = "${id.w}"]`)
+    }
+    if (!eles || eles.empty()) return
+    this.cy.animate({ fit: { eles, padding: 80 }, duration: 500, easing: 'ease-out' })
   }
 
-  // Reuse the current 2-D layout, then push each rank (by y) deeper on the Z axis
-  _hierarchyPositions(nodes) {
-    this._runLayout()
-    const sorted = nodes
-      .map(node => ({ id: node.id(), y: node.position().y }))
-      .sort((a, b) => a.y - b.y)
-
-    const positions = new Map()
-    let layer = -1
-    let lastY = null
-    sorted.forEach(({ id, y }) => {
-      if (y !== lastY) { layer++; lastY = y }
-      const p = this.cy.getElementById(id).position()
-      positions.set(id, {
-        x: p.x * SCALE,
-        y: -p.y * SCALE,
-        z: -layer * 120,
-      })
-    })
-    return positions
+  // Re-apply the theme-derived stylesheet (e.g. after light/dark toggle)
+  refreshStyle() {
+    this.cy.style(buildStyle())
   }
 
   _runLayout() {
@@ -464,12 +418,8 @@ export default class CytoscapeGraph {
              : 'dagre'
 
     // cytoscape-dagre supports compound (parent-child) graphs natively.
-
-    // CSS cards are min 80×36px; SCALE=2 maps CSS px → Cytoscape units.
-    // Setting these lets dagre/fCoSE space nodes to avoid card overlap.
-    const CARD_W = 40   // 80px / SCALE
-    const CARD_H = 18   // 36px / SCALE
-    this.cy.nodes().filter(n => !n.isParent()).style({ width: CARD_W, height: CARD_H })
+    // Node sizes come from the stylesheet (see cytoscapeStyle.js), which the
+    // layouts read so nodes space out to avoid card overlap.
 
     let layoutOptions
     if (name === 'dagre') {
@@ -546,6 +496,6 @@ export default class CytoscapeGraph {
   }
 
   reset() {
-    if (this.renderer) this.renderer.resetCamera()
+    this.fitGraph()
   }
 }

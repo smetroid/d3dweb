@@ -1,6 +1,4 @@
 import D3Util from '@/helpers/D3Util'
-import { gsap } from 'gsap'
-import VueCookies from 'vue-cookies'
 
 export default class OtherKeys {
   constructor(emitter, modifier, hintFunction) {
@@ -119,32 +117,10 @@ export default class OtherKeys {
   }
 
   F() {
-    // In 3D mode, node cards are real HTML elements — query them directly
-    const elements = this.modifier.renderer
-      ? this.modifier.renderer.getAllNodeElements()
-      : []
-
-    const availHints    = this.buildHints(elements)
-    const hints         = {}
-    const settings      = VueCookies.get('settings') || {}
-    const hintLinkColor = settings.hintLinkColor || '#fff'
-    const hintBGColor   = settings.hintBGColor   || '#36004c'
-
-    for (let i = 0; i < elements.length; i++) {
-      const shortcut = availHints[i]
-      const el       = elements[i]
-
-      // Append a floating badge div to the node card
-      const badge = document.createElement('div')
-      badge.className = 'hint-badge'
-      badge.innerHTML = `<a href="#" tabindex="-1"><div style="display:table-caption;color:${hintLinkColor};padding:1px 8px 1px 8px;border-radius:10px;background:${hintBGColor}">${shortcut}</div></a>`
-      badge.addEventListener('click', this.hintFunction)
-      el.appendChild(badge)
-
-      hints[shortcut] = el
-    }
-
-    return hints
+    // The Cytoscape DOM renderer draws to canvas — there are no per-node
+    // HTML elements to hang hint badges on, so the visual hint system is
+    // disabled for now (buildHints stays for future rework).
+    return {}
   }
 
   buildHints(elements) {
@@ -175,23 +151,21 @@ export default class OtherKeys {
   }
 
   activeDeactiveNode(index) {
-    const el = this.modifier.getNode(index)
+    const id   = this.modifier.getNodeId?.(index)
+    const node = id ? this.modifier.cy?.getElementById(id) : null
     const selectionExists = this.selectedNodes.indexOf(index)
 
     if (selectionExists === -1) {
       this.selectedNodes.push(this.focusedIndex)
-      if (el) {
-        gsap.fromTo(el, { scale: 1 }, { scale: 1.2, duration: 0.3, yoyo: true, repeat: 1 })
-        el.classList.add('active_node')
-      }
+      node?.addClass('selected')
     } else {
       if (this.doubleSelection.length === 0) {
-        if (el) el.classList.add('d_active_node')
+        node?.addClass('d_active_node').removeClass('selected')
         this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
         this.doubleSelection.push(index)
       } else {
         this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
-        if (el) el.classList.remove('d_active_node')
+        node?.removeClass('d_active_node')
       }
     }
 
@@ -200,16 +174,13 @@ export default class OtherKeys {
 
   activeDeactiveEdge(index) {
     const edgeId = this.modifier.getEdgeId(index)
+    const edge   = edgeId ? this.modifier.cy?.getElementById(edgeId) : null
 
     if (this.selectedEdges.indexOf(index) === -1) {
       this.selectedEdges.push(this.focusedIndex)
-      if (edgeId && this.modifier.renderer) {
-        this.modifier.renderer.selectEdge(edgeId)
-      }
+      edge?.addClass('selected')
     } else {
-      if (edgeId && this.modifier.renderer) {
-        this.modifier.renderer.deselectEdge(edgeId)
-      }
+      edge?.removeClass('selected')
       this.selectedEdges = this.modifier.arrayRemove(this.selectedEdges, index)
     }
 

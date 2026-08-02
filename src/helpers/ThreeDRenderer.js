@@ -10,9 +10,6 @@ import VueCookies from 'vue-cookies'
 export const SCALE = 2   // converts cytoscape layout units → Three.js world units
 const CAMERA_Z = 1500    // initial camera distance
 
-const EDGE_OPACITY        = 0.7
-const EDGE_OPACITY_ACTIVE = 0.95
-const ARROW_LENGTH        = 18
 const HOVER_THRESHOLD     = 14
 
 export default class ThreeDRenderer {
@@ -260,7 +257,7 @@ export default class ThreeDRenderer {
     const tgtRadius = this._nodeRadius(tgtId)
     const start = new THREE.Vector3(srcPos.x * SCALE, -srcPos.y * SCALE, -1)
     const end   = new THREE.Vector3(tgtPos.x * SCALE, -tgtPos.y * SCALE, -1)
-    const { curve, tipPoint, tipDir } = this._computeCurve(srcId, tgtId, start, end, srcRadius, tgtRadius)
+    const { curve, tipPoint, tipDir } = this._computeCurve(srcId, tgtId, start, end, srcRadius)
 
     const group = new THREE.Group()
 
@@ -290,7 +287,7 @@ export default class ThreeDRenderer {
     })
   }
 
-  _computeCurve(srcId, tgtId, start, end, srcRadius, tgtRadius) {
+  _computeCurve(srcId, tgtId, start, end, srcRadius) {
     if (srcId === tgtId) return this._buildSelfLoop(start, srcRadius)
     return this._buildCurve(srcId, tgtId, start, end)
   }
@@ -455,7 +452,7 @@ export default class ThreeDRenderer {
     const start = srcObj.position.clone()
     const end   = tgtObj.position.clone()
     const { curve, tipPoint, tipDir } = this._computeCurve(
-      entry.srcId, entry.tgtId, start, end, entry.srcRadius, entry.tgtRadius
+      entry.srcId, entry.tgtId, start, end, entry.srcRadius
     )
 
     entry.curve    = curve

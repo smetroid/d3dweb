@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import cytoscape from 'cytoscape'
 import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
-import { SCALE } from '@/helpers/ThreeDRenderer.js'
 
 vi.mock('vue-cookies', () => ({
   default: { get: () => null, set: () => {}, config: () => {} },
@@ -19,24 +18,8 @@ function makeGraph(nodeCount = 6) {
     data: { id: `n${i}`, label: `Node ${i}` },
   }))
   const cy = cytoscape({ headless: true, styleEnabled: true, elements })
-  const renderer = {
-    updateScene: vi.fn(),
-    enable3D: vi.fn(),
-    enable2D: vi.fn(),
-    transitionToPositions: vi.fn(),
-    selectNode: vi.fn(),
-    deselectNode: vi.fn(),
-    selectEdge: vi.fn(),
-    deselectEdge: vi.fn(),
-    getNodeElement: vi.fn(() => ({})),
-  }
   const graph = new CytoscapeGraph({ diagram: cy, name: 'test' }, { emit: vi.fn() })
-  graph.renderer = renderer
-  return { cy, renderer, graph }
-}
-
-function distances(positions) {
-  return [...positions.values()].map(p => Math.hypot(p.x, p.y, p.z))
+  return { cy, graph }
 }
 
 describe('counts', () => {
@@ -50,11 +33,10 @@ describe('counts', () => {
 
 describe('node CRUD', () => {
   it('adds a node with mapped data', () => {
-    const { cy, graph, renderer } = makeGraph(2)
+    const { cy, graph } = makeGraph(2)
     const id = graph.addNode({ nodeLabel: 'Brand New', nodeShape: 'ellipse' })
     expect(cy.nodes()).toHaveLength(3)
     expect(graph.getNodeData(id).nodeLabel).toBe('Brand New')
-    expect(renderer.updateScene).toHaveBeenCalled()
   })
 
   it('updates an existing node', () => {
@@ -174,111 +156,66 @@ describe('_runLayout cluster handling', () => {
   })
 })
 
-describe('3D sphere layout', () => {
-  it('places every node on a sphere of radius R', () => {
-    const { graph } = makeGraph(12)
-    const positions = graph._spherePositions(graph.cy.nodes())
-    expect(positions.size).toBe(12)
-    const R = Math.max(12 * 55, 300)
-    for (const d of distances(positions)) {
-      expect(Math.abs(d - R)).toBeLessThan(0.01)
-    }
+describe('viewport controls (Cytoscape native)', () => {
+  it('pans the viewport via cy.panBy', () => {
+    const { cy, graph } = makeGraph(2)
+    const spy = vi.spyOn(cy, 'panBy')
+    graph.redraw({ pan: 'Left' })
+    expect(spy).toHaveBeenCalledWith({ x: 80, y: 0 })
   })
 
-  it('is deterministic for the same node set', () => {
-    const { graph } = makeGraph(6)
-    const a = graph._spherePositions(graph.cy.nodes())
-    const b = graph._spherePositions(graph.cy.nodes())
-    expect([...a.entries()]).toEqual([...b.entries()])
+  it('zooms in via cy.zoom', () => {
+    const { cy, graph } = makeGraph(2)
+    const before = cy.zoom()
+    graph.redraw({ zoom: 'In' })
+    expect(cy.zoom()).toBeGreaterThan(before)
   })
 
-  it('y stays within ±R', () => {
-    const { graph } = makeGraph(20)
-    const R = Math.max(20 * 55, 300)
-    for (const p of graph._spherePositions(graph.cy.nodes()).values()) {
-      expect(Math.abs(p.y)).toBeLessThanOrEqual(R + 0.001)
-    }
-  })
-})
-
-describe('3D helix layout', () => {
-  it('winds nodes around a vertical axis with monotonically increasing y', () => {
-    const { graph } = makeGraph(15)
-    const positions = graph._helixPositions(graph.cy.nodes())
-    const radius = Math.max(15 * 40, 250)
-    const height = Math.max(15 * 80, 500)
-    const values = [...positions.values()]
-    expect(positions.size).toBe(15)
-    for (const p of values) {
-      expect(Math.abs(Math.hypot(p.x, p.z) - radius)).toBeLessThan(0.01)
-    }
-    const ys = values.map(p => p.y)
-    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(height + 0.001)
-  })
-})
-
-describe('3D hierarchy layout', () => {
-  function makeLayeredGraph(nodeCount) {
-    const { cy, graph } = makeGraph(nodeCount)
-    for (let i = 0; i < nodeCount - 1; i++) {
-      cy.add({ group: 'edges', data: { id: `e${i}`, source: `n${i}`, target: `n${i + 1}` } })
-    }
-    return { cy, graph }
-  }
-
-  it('flattens nodes into depth layers by rank', () => {
-    const { graph } = makeLayeredGraph(8)
-    const positions = graph._hierarchyPositions(graph.cy.nodes())
-    expect(positions.size).toBe(8)
-    const layers = [...positions.values()].map(p => p.z)
-    expect(new Set(layers).size).toBeGreaterThan(1)
-    layers.forEach(z => expect(z).toBeLessThanOrEqual(0))
-    expect(layers.every(z => z % 120 === 0)).toBe(true)
-  })
-
-  it('scales x/y to world units', () => {
-    const { graph } = makeLayeredGraph(8)
-    const positions = graph._hierarchyPositions(graph.cy.nodes())
-    for (const p of positions.values()) {
-      expect(p.x).not.toBe(0)
-      expect(p.y).not.toBe(0)
-      expect(Math.abs(p.y)).toBeCloseTo(Math.abs(p.y) / SCALE * SCALE, 6)
-    }
-  })
-})
-
-describe('apply3DLayout / backTo2D', () => {
-  it('enters 3D mode and animates to a sphere', () => {
-    const { graph, renderer } = makeGraph(6)
-    graph.apply3DLayout('sphere')
-    expect(graph.viewMode).toBe('3D')
-    expect(renderer.enable3D).toHaveBeenCalled()
-    expect(renderer.transitionToPositions).toHaveBeenCalledWith(graph.threePositions)
-    expect(graph.threePositions).toBeInstanceOf(Map)
-  })
-
-  it('ignores unknown layout modes', () => {
-    const { graph, renderer } = makeGraph(3)
-    graph.apply3DLayout('flat-earth')
-    expect(graph.viewMode).toBe('2D')
-    expect(renderer.transitionToPositions).not.toHaveBeenCalled()
-  })
-
-  it('returns to 2D and clears stored positions', () => {
-    const { graph, renderer } = makeGraph(4)
-    graph.apply3DLayout('helix')
-    graph.backTo2D()
-    expect(graph.viewMode).toBe('2D')
-    expect(graph.threePositions).toBeNull()
-    expect(renderer.enable2D).toHaveBeenCalled()
-    expect(renderer.updateScene).toHaveBeenCalled()
-  })
-
-  it('redraw in 3D mode re-applies stored positions', () => {
-    const { graph, renderer } = makeGraph(5)
-    graph.apply3DLayout('sphere')
-    renderer.transitionToPositions.mockClear()
+  it('runs the layout and reports scene-updated on a full redraw', () => {
+    const { cy, graph } = makeGraph(2)
+    const spy = vi.spyOn(cy, 'layout')
+    spy.mockReturnValue({ run: vi.fn() })
     graph.redraw()
-    expect(renderer.transitionToPositions).toHaveBeenCalledWith(graph.threePositions)
+    expect(spy).toHaveBeenCalled()
+    expect(graph.emitter.emit).toHaveBeenCalledWith('scene-updated', { count: 2 })
+  })
+
+  it('centres on a node when zoomTo is called', () => {
+    const { cy, graph } = makeGraph(3)
+    const spy = vi.spyOn(cy, 'animate')
+    graph.zoomTo('n1')
+    expect(spy).toHaveBeenCalled()
+    expect(spy.mock.calls[0][0].fit.eles.id()).toBe('n1')
+  })
+
+  it('fits and centres the whole graph', () => {
+    const { cy, graph } = makeGraph(3)
+    const fit = vi.spyOn(cy, 'fit')
+    const center = vi.spyOn(cy, 'center')
+    graph.fitGraph()
+    expect(fit).toHaveBeenCalled()
+    expect(center).toHaveBeenCalled()
+  })
+
+  it('re-applies the stylesheet on refreshStyle', () => {
+    const { cy, graph } = makeGraph(2)
+    const spy = vi.spyOn(cy, 'style')
+    graph.refreshStyle()
+    expect(spy).toHaveBeenCalled()
+  })
+})
+
+describe('selection classes', () => {
+  it('selects nodes and edges via the selected class', () => {
+    const { cy, graph } = makeGraph(3)
+    cy.add({ group: 'edges', data: { id: 'e1', source: 'n0', target: 'n1' } })
+    graph.selectNode(1)
+    graph.selectEdge(0)
+    expect(cy.getElementById('n1').hasClass('selected')).toBe(true)
+    expect(cy.getElementById('e1').hasClass('selected')).toBe(true)
+    graph.removeSelection(1)
+    graph.removeEdgeSelection(0)
+    expect(cy.getElementById('n1').hasClass('selected')).toBe(false)
+    expect(cy.getElementById('e1').hasClass('selected')).toBe(false)
   })
 })

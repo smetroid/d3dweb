@@ -9,7 +9,7 @@ export default class AltKeys {
     let resetValues = false
 
     switch (eventKey) {
-      // Camera pan — delegated to ThreeDRenderer via modifier.redraw(options)
+      // Camera pan — delegated to the Cytoscape viewport via modifier.redraw(options)
       case 'j':
         this.modifier.redraw({ pan: 'Down' })
         break
@@ -40,19 +40,6 @@ export default class AltKeys {
         break
       case 'e':
         this.emitter.emit('editDiagram')
-        break
-      // 3-D layout modes
-      case '1':
-        this.modifier.backTo2D()
-        break
-      case '2':
-        this.modifier.apply3DLayout('sphere')
-        break
-      case '3':
-        this.modifier.apply3DLayout('helix')
-        break
-      case '4':
-        this.modifier.apply3DLayout('hierarchy')
         break
       default:
         console.log('AltKey default — no action')
