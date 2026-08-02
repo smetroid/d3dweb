@@ -320,9 +320,11 @@ export default class ThreeDRenderer {
     const dist = dir.length()
     dir.normalize()
 
-    // Trim both endpoints to the card edges (box intersection, not diagonal)
-    const startPoint = start.clone().add(dir.clone().multiplyScalar(this._cardEdgeDist(srcId, dir)))
-    const endPoint   = end.clone().sub(dir.clone().multiplyScalar(this._cardEdgeDist(tgtId, dir)))
+    // Trim both endpoints to the card edges, capped at 45 % of total distance
+    // so endpoints never cross each other when nodes are close together.
+    const safeMax    = dist * 0.45
+    const startPoint = start.clone().add(dir.clone().multiplyScalar(Math.min(this._cardEdgeDist(srcId, dir), safeMax)))
+    const endPoint   = end.clone().sub(dir.clone().multiplyScalar(Math.min(this._cardEdgeDist(tgtId, dir), safeMax)))
 
     // Read style from settings cookie
     const settings = VueCookies.get('settings') || {}

@@ -132,7 +132,7 @@ export default {
       'defaultNodeSep': 80,
       'defaultRanker': 'network-simplex',
       'defaultFcoseIdealEdgeLength': 50,
-      'defaultFcoseNodeRepulsion': 4500,
+      'defaultFcoseNodeRepulsion': 45000,
       'defaultFcoseGravity': 0.25,
       'defaultFcoseNumIter': 2500,
       'defaultColaEdgeLength': 80,

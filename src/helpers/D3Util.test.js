@@ -125,7 +125,7 @@ describe('appDefaults', () => {
     expect(defaults.defaultNodeSep).toBe(80)
     expect(defaults.defaultRanker).toBe('network-simplex')
     expect(defaults.defaultFcoseIdealEdgeLength).toBe(50)
-    expect(defaults.defaultFcoseNodeRepulsion).toBe(4500)
+    expect(defaults.defaultFcoseNodeRepulsion).toBe(45000)
     expect(defaults.defaultFcoseGravity).toBe(0.25)
     expect(defaults.defaultFcoseNumIter).toBe(2500)
     expect(defaults.defaultColaEdgeLength).toBe(80)

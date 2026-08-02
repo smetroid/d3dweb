@@ -468,6 +468,12 @@ export default class CytoscapeGraph {
     const hasClusters = this.cy.nodes().some(node => node.isParent())
     if (name === 'dagre' && hasClusters) name = 'fcose'
 
+    // CSS cards are min 80×36px; SCALE=2 maps CSS px → Cytoscape units.
+    // Setting these lets dagre/fCoSE space nodes to avoid card overlap.
+    const CARD_W = 40   // 80px / SCALE
+    const CARD_H = 18   // 36px / SCALE
+    this.cy.nodes().filter(n => !n.isParent()).style({ width: CARD_W, height: CARD_H })
+
     let layoutOptions
     if (name === 'dagre') {
       const o = this.dagreOpts
