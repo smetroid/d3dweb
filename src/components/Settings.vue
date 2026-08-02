@@ -33,7 +33,7 @@
               <div class="fx-readout">
                 <span class="fx-readout-kv fx-readout-wide">
                   <span class="fx-readout-k">STATUS</span>
-                  <span class="fx-readout-v">Cytoscape · three.js</span>
+                  <span class="fx-readout-v">Cola · three.js</span>
                 </span>
                 <span class="fx-readout-kv">
                   <span class="fx-readout-k">RELOAD</span>
@@ -128,126 +128,51 @@
                       <label class="fx-field">
                         <span class="fx-label">Default Layout Mode</span>
                         <select class="fx-input" v-model="settings.defaultLayoutMode">
-                          <option value="dagre">Dagre (Hierarchical)</option>
-                          <option value="fcose">fCoSE (Force-directed)</option>
                           <option value="cola">Cola (Physics-based)</option>
                         </select>
                       </label>
-                      <template v-if="settings.defaultLayoutMode === 'dagre'">
-                        <label class="fx-field">
-                          <span class="fx-label">Default Rank Direction</span>
-                          <select class="fx-input" v-model="settings.defaultRankDir">
-                            <option value="TB">Top to Bottom (TB)</option>
-                            <option value="BT">Bottom to Top (BT)</option>
-                            <option value="LR">Left to Right (LR)</option>
-                            <option value="RL">Right to Left (RL)</option>
-                          </select>
-                        </label>
-                      </template>
-                    </div>
-
-                    <template v-if="settings.defaultLayoutMode === 'dagre'">
-                      <div class="fx-grid">
-                        <label class="fx-field">
-                          <span class="fx-label">Default Rank Separation</span>
-                          <input
-                            class="fx-input"
-                            type="number"
-                            v-model.number="settings.defaultRankSep"
-                            placeholder="50"
-                          />
-                        </label>
-                        <label class="fx-field">
-                          <span class="fx-label">Default Node Separation</span>
-                          <input
-                            class="fx-input"
-                            type="number"
-                            v-model.number="settings.defaultNodeSep"
-                            placeholder="10"
-                          />
-                        </label>
-                      </div>
                       <label class="fx-field">
-                        <span class="fx-label">Default Ranker Algorithm</span>
-                        <select class="fx-input" v-model="settings.defaultRanker">
-                          <option value="network-simplex">Network Simplex</option>
-                          <option value="tight-tree">Tight Tree</option>
-                          <option value="longest-path">Longest Path</option>
+                        <span class="fx-label">Flow Direction</span>
+                        <select class="fx-input" v-model="settings.defaultColaFlow">
+                          <option :value="null">None</option>
+                          <option value="x">Horizontal (x)</option>
+                          <option value="y">Vertical (y)</option>
                         </select>
                       </label>
-                    </template>
-
-                    <!-- Advanced layouts wrapped in details for a collapsible, non-intrusive look -->
-                    <details class="fx-advanced-details">
-                      <summary class="fx-advanced-summary">Advanced Layout Configurations</summary>
-                      <div class="fx-advanced-content">
-                        <!-- fCoSE Options -->
-                        <div class="fx-advanced-subsection" v-if="settings.defaultLayoutMode === 'fcose'">
-                          <h4 class="fx-subsection-title">fCoSE (Force-directed) Settings</h4>
-                          <div class="fx-grid">
-                            <label class="fx-field">
-                              <span class="fx-label">Ideal Edge Length</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultFcoseIdealEdgeLength" />
-                            </label>
-                            <label class="fx-field">
-                              <span class="fx-label">Node Repulsion</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultFcoseNodeRepulsion" />
-                            </label>
-                          </div>
-                          <div class="fx-grid">
-                            <label class="fx-field">
-                              <span class="fx-label">Gravity</span>
-                              <input class="fx-input" type="number" step="0.05" v-model.number="settings.defaultFcoseGravity" />
-                            </label>
-                            <label class="fx-field">
-                              <span class="fx-label">Max Iterations</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultFcoseNumIter" />
-                            </label>
-                          </div>
-                        </div>
-
-                        <!-- Cola Options -->
-                        <div class="fx-advanced-subsection" v-if="settings.defaultLayoutMode === 'cola'">
-                          <h4 class="fx-subsection-title">Cola (Physics-based) Settings</h4>
-                          <div class="fx-grid">
-                            <label class="fx-field">
-                              <span class="fx-label">Edge Length</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultColaEdgeLength" />
-                            </label>
-                            <label class="fx-field">
-                              <span class="fx-label">Node Spacing</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultColaNodeSpacing" />
-                            </label>
-                          </div>
-                          <div class="fx-grid">
-                            <label class="fx-field">
-                              <span class="fx-label">Flow Direction</span>
-                              <select class="fx-input" v-model="settings.defaultColaFlow">
-                                <option :value="null">None</option>
-                                <option value="x">Horizontal (x)</option>
-                                <option value="y">Vertical (y)</option>
-                              </select>
-                            </label>
-                            <label class="fx-field">
-                              <span class="fx-label">Max Simulation Time (ms)</span>
-                              <input class="fx-input" type="number" v-model.number="settings.defaultColaMaxSimulationTime" />
-                            </label>
-                          </div>
-                          <label class="fx-toggle">
-                            <div class="fx-toggle-text">
-                              <span>Avoid Node Overlap</span>
-                              <small>Enforces separation of nodes</small>
-                            </div>
-                            <input type="checkbox" v-model="settings.defaultColaAvoidOverlap" />
-                            <span class="fx-toggle-track"></span>
-                          </label>
-                        </div>
-                        
-                        <div class="fx-advanced-hint" v-if="settings.defaultLayoutMode === 'dagre'">
-                          <small>Dagre layout options are currently configured directly above.</small>
-                        </div>
+                    </div>
+                    <div class="fx-grid">
+                      <label class="fx-field">
+                        <span class="fx-label">Default Edge Length</span>
+                        <input class="fx-input" type="number" v-model.number="settings.defaultColaEdgeLength" />
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Default Node Spacing</span>
+                        <input class="fx-input" type="number" v-model.number="settings.defaultColaNodeSpacing" />
+                      </label>
+                    </div>
+                    <div class="fx-grid">
+                      <label class="fx-field">
+                        <span class="fx-label">Max Simulation Time (ms)</span>
+                        <input class="fx-input" type="number" v-model.number="settings.defaultColaMaxSimulationTime" />
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Rank Direction</span>
+                        <select class="fx-input" v-model="settings.defaultRankDir">
+                          <option value="TB">Top to Bottom (TB)</option>
+                          <option value="BT">Bottom to Top (BT)</option>
+                          <option value="LR">Left to Right (LR)</option>
+                          <option value="RL">Right to Left (RL)</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label class="fx-toggle">
+                      <div class="fx-toggle-text">
+                        <span>Avoid Node Overlap</span>
+                        <small>Enforces separation of nodes</small>
                       </div>
-                    </details>
+                      <input type="checkbox" v-model="settings.defaultColaAvoidOverlap" />
+                      <span class="fx-toggle-track"></span>
+                    </label>
                   </div>
                 </section>
 

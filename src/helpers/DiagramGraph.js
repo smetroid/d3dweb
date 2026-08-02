@@ -1,23 +1,16 @@
-import cytoscape from 'cytoscape'
-import dagre from 'cytoscape-dagre'
-import fcose from 'cytoscape-fcose'
-import cola from 'cytoscape-cola'
+import { runColaLayout } from '@/helpers/colaLayout'
 import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
-import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
+import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import { SCALE } from '@/helpers/ThreeDRenderer'
 
-cytoscape.use(dagre)
-cytoscape.use(fcose)
-cytoscape.use(cola)
-
-export default class CytoscapeGraph {
+export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
     this.d3dInfo = d3dInfo
     this.emitter = emitter
-    this.cy = d3dInfo.diagram          // cytoscape instance (headless)
+    this.cy = d3dInfo.diagram          // GraphModel (facade: nodes()/edges()/getElementById())
     this.diagram = d3dInfo.diagram     // alias kept for backward compat
-    this.renderer = null               // ThreeDRenderer, set by CytoscapeGraphView
+    this.renderer = null               // ThreeDRenderer, set by DiagramGraphView
     this.selectedNodes = []
     this.doubleSelection = []
     this.selectedEdges = []
@@ -25,20 +18,8 @@ export default class CytoscapeGraph {
 
     // Layout options — read/written by DiagramForm
     const settings = VueCookies.get('settings') || D3Util.appDefaults()
-    this.layoutMode = d3dInfo.layoutMode || settings.defaultLayoutMode || 'dagre'  // 'dagre' | 'fcose' | 'cola'
-    this.dagreOpts = Object.assign({
-      rankdir: settings.defaultRankDir || 'TB',
-      ranksep: settings.defaultRankSep !== undefined ? Number(settings.defaultRankSep) : 100,
-      nodesep: settings.defaultNodeSep !== undefined ? Number(settings.defaultNodeSep) : 80,
-      ranker:  settings.defaultRanker || 'network-simplex',
-    }, d3dInfo.dagreOpts)
-    this.fcoseOpts = Object.assign({
-      idealEdgeLength: settings.defaultFcoseIdealEdgeLength !== undefined ? Number(settings.defaultFcoseIdealEdgeLength) : 50,
-      nodeRepulsion:   settings.defaultFcoseNodeRepulsion !== undefined ? Number(settings.defaultFcoseNodeRepulsion) : 4500,
-      gravity:         settings.defaultFcoseGravity !== undefined ? Number(settings.defaultFcoseGravity) : 0.25,
-      numIter:         settings.defaultFcoseNumIter !== undefined ? Number(settings.defaultFcoseNumIter) : 2500,
-    }, d3dInfo.fcoseOpts)
-    this.colaOpts  = Object.assign({
+    this.layoutMode = 'cola'           // cola is the single layout engine now
+    this.colaOpts = Object.assign({
       edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : 80,
       nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : 10,
       flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
@@ -46,10 +27,10 @@ export default class CytoscapeGraph {
       maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
     }, d3dInfo.colaOpts)
 
-    // Keep legacy aliases so existing save/load code still works
-    this.rankdir = this.dagreOpts.rankdir
-    this.ranksep = this.dagreOpts.ranksep
-    this.nodesep = this.dagreOpts.nodesep
+    // User constraints (webcola DSL) — ride on the model so serialization picks
+    // them up, and are mirrored here for DiagramForm.
+    this.colaConstraints = d3dInfo.colaConstraints || []
+    this.cy.colaConstraints = this.colaConstraints
 
     this.viewMode = '2D'               // '2D' | '3D'
     this.threePositions = null         // Map<nodeId, {x,y,z}> when viewMode === '3D'
@@ -68,9 +49,7 @@ export default class CytoscapeGraph {
   // ─── Node CRUD ────────────────────────────────────────────────────────────────
 
   addNode(data) {
-    const id = D3Util.randomId()
     const nodeData = {
-      id,
       label:       data.nodeLabel  || 'Node',
       shape:       data.nodeShape  || 'rectangle',
       textHalign:  data.textHalign || 'center',
@@ -80,16 +59,16 @@ export default class CytoscapeGraph {
     if (data.parentNode) {
       nodeData.parent = data.parentNode
     }
-    this.cy.add({ group: 'nodes', data: nodeData })
+    const id = this.cy.addNode(nodeData)
     this.redraw()
     return id
   }
 
   updateNode(data, id) {
-    console.log('[CytoscapeGraph] updateNode called', { id, nodeLabel: data.nodeLabel, shape: data.nodeShape, data })
+    console.log('[DiagramGraph] updateNode called', { id, nodeLabel: data.nodeLabel, shape: data.nodeShape, data })
     const node = this.cy.getElementById(id)
     if (node.empty()) {
-      console.warn('[CytoscapeGraph] updateNode target node was empty/not found', id)
+      console.warn('[DiagramGraph] updateNode target node was empty/not found', id)
       return
     }
 
@@ -103,11 +82,8 @@ export default class CytoscapeGraph {
 
     if (data.parentNode) {
       node.move({ parent: data.parentNode })
-    } else {
-      const currentParent = node.data('parent')
-      if (currentParent) {
-        node.move({ parent: null })
-      }
+    } else if (node.data('parent')) {
+      node.move({ parent: null })
     }
     this.redraw()
   }
@@ -203,16 +179,12 @@ export default class CytoscapeGraph {
   }
 
   _addEdgeElement(source, target, data, label) {
-    this.cy.add({
-      group: 'edges',
-      data: {
-        id:             D3Util.randomId(),
-        source,
-        target,
-        label,
-        arrowheadStyle: data.edgeArrowHeadStyle,
-        arrowhead:      data.edgeArrowHead,
-      }
+    this.cy.addEdge({
+      source,
+      target,
+      label,
+      arrowheadStyle: data.edgeArrowHeadStyle,
+      arrowhead:      data.edgeArrowHead,
     })
   }
 
@@ -251,7 +223,8 @@ export default class CytoscapeGraph {
     if (!id) return null
     if (typeof id === 'string') return this.cy.getElementById(id)
     if (id.v && id.w) {
-      return this.cy.edges(`[source = "${id.v}"][target = "${id.w}"]`).first()
+      const edge = this.cy.edges().find(e => e.data('source') === id.v && e.data('target') === id.w)
+      return edge || this.cy.getElementById('__none__')
     }
     return null
   }
@@ -362,7 +335,7 @@ export default class CytoscapeGraph {
 
     this.renderer.updateScene(this.cy, options)
 
-    // In 3-D mode nodes live outside cytoscape's 2-D positions — re-apply them
+    // In 3-D mode nodes live outside the 2-D positions — re-apply them
     if (this.viewMode === '3D' && this.threePositions) {
       this.renderer.transitionToPositions(this.threePositions)
     }
@@ -459,64 +432,17 @@ export default class CytoscapeGraph {
   }
 
   _runLayout() {
-    let name = this.layoutMode === 'fcose' ? 'fcose'
-             : this.layoutMode === 'cola'  ? 'cola'
-             : 'dagre'
-
-    // cytoscape-dagre supports compound (parent-child) graphs natively.
-
-    // CSS cards are min 80×36px; SCALE=2 maps CSS px → Cytoscape units.
-    // Setting these lets dagre/fCoSE space nodes to avoid card overlap.
-    const CARD_W = 40   // 80px / SCALE
-    const CARD_H = 18   // 36px / SCALE
-    this.cy.nodes().filter(n => !n.isParent()).style({ width: CARD_W, height: CARD_H })
-
-    let layoutOptions
-    if (name === 'dagre') {
-      const o = this.dagreOpts
-      layoutOptions = {
-        name,
-        animate: false,
-        rankDir:  o.rankdir,
-        rankSep:  Number(o.ranksep),
-        nodeSep:  Number(o.nodesep),
-        ranker:   o.ranker || 'network-simplex',
-      }
-    } else if (name === 'fcose') {
-      const o = this.fcoseOpts
-      layoutOptions = {
-        name,
-        animate: false,
-        randomize:      false,
-        idealEdgeLength: Number(o.idealEdgeLength),
-        nodeRepulsion:   Number(o.nodeRepulsion),
-        gravity:         Number(o.gravity),
-        numIter:         Number(o.numIter),
-      }
-    } else {
-      const o = this.colaOpts
-      layoutOptions = {
-        name,
-        animate:           false,
-        edgeLengthVal:     Number(o.edgeLength),
-        nodeSpacing:       Number(o.nodeSpacing),
-        avoidOverlap:      o.avoidOverlap,
-        maxSimulationTime: Number(o.maxSimulationTime),
-        ...(o.flow ? { flow: { axis: o.flow, minSeparation: Number(o.nodeSpacing) } } : {}),
-      }
-    }
-
+    if (this.nodeCount() === 0) return
     try {
-      this.cy.layout(layoutOptions).run()
+      runColaLayout(this.cy, this.colaOpts, this.colaConstraints)
     } catch (err) {
-      console.error('Layout failed, falling back to preset', err)
-      this.cy.layout({ name: 'preset' }).run()
+      console.error('Cola layout failed', err)
     }
   }
 
   _saveTempDiagram() {
     try {
-      const json = cytoscapeToGraphlib(this.cy)
+      const json = modelToGraphlib(this.cy)
       const created = new Date()
       const updatedData = {
         created:     created.toISOString(),
@@ -538,7 +464,7 @@ export default class CytoscapeGraph {
   }
 
   clearCluster() {
-    // No-op: Cytoscape handles compound nodes without DOM hacks
+    // No-op: compound clusters are handled by cola groups + the renderer
   }
 
   listEdges() {

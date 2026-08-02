@@ -26,47 +26,24 @@
                 hint="Enter a description for the new diagram"
                 rows="2" row-height="10"
               />
+              <v-text-field label="Layout Engine" readonly :model-value="'Cola'" hint="Cola is the single layout engine" />
+              <v-text-field label="Edge Length" v-model="colaOpts.edgeLength" type="number" />
+              <v-text-field label="Node Spacing" v-model="colaOpts.nodeSpacing" type="number" />
               <v-select
-                label="Layout Engine"
-                v-model="layoutMode"
-                :items="layoutModeOptions"
+                label="Flow Direction"
+                v-model="colaOpts.flow"
+                :items="[{title: 'None', value: null}, {title: 'Horizontal (x)', value: 'x'}, {title: 'Vertical (y)', value: 'y'}]"
+                item-title="title"
+                item-value="value"
               />
-
-              <template v-if="layoutMode === 'dagre'">
-                <v-select
-                  label="Rank Direction"
-                  v-model="dagreOpts.rankdir"
-                  :items="rankdirOptions"
-                  auto-select-first
-                />
-                <v-text-field label="Rank Separation" v-model="dagreOpts.ranksep" type="number" />
-                <v-text-field label="Node Separation" v-model="dagreOpts.nodesep" type="number" />
-                <v-select
-                  label="Ranker"
-                  v-model="dagreOpts.ranker"
-                  :items="['network-simplex', 'tight-tree', 'longest-path']"
-                />
-              </template>
-
-              <template v-if="layoutMode === 'fcose'">
-                <v-text-field label="Ideal Edge Length" v-model="fcoseOpts.idealEdgeLength" type="number" />
-                <v-text-field label="Node Repulsion" v-model="fcoseOpts.nodeRepulsion" type="number" />
-                <v-text-field label="Gravity" v-model="fcoseOpts.gravity" type="number" />
-                <v-text-field label="Iterations" v-model="fcoseOpts.numIter" type="number" />
-              </template>
-
-              <template v-if="layoutMode === 'cola'">
-                <v-text-field label="Edge Length" v-model="colaOpts.edgeLength" type="number" />
-                <v-text-field label="Node Spacing" v-model="colaOpts.nodeSpacing" type="number" />
-                <v-select
-                  label="Flow Direction"
-                  v-model="colaOpts.flow"
-                  :items="[{title: 'None', value: null}, {title: 'Horizontal (x)', value: 'x'}, {title: 'Vertical (y)', value: 'y'}]"
-                  item-title="title"
-                  item-value="value"
-                />
-                <v-text-field label="Max Simulation Time (ms)" v-model="colaOpts.maxSimulationTime" type="number" />
-              </template>
+              <v-text-field label="Max Simulation Time (ms)" v-model="colaOpts.maxSimulationTime" type="number" />
+              <v-textarea
+                label="Cola Constraints (JSON)"
+                v-model="colaConstraintsText"
+                hint='Array of cola constraints: [{"type":"alignment","axis":"y","offsets":[{"node":"id","offset":0}]}, {"axis":"x","left":"id","right":"id","gap":50}]'
+                rows="4"
+                row-height="40"
+              />
               <v-textarea
                 label="JSON Diagram"
                 v-model="jsonDiagram"
@@ -108,14 +85,13 @@
 </template>
 
 <script>
-import cytoscape from 'cytoscape'
 import { markRaw } from 'vue'
 import D3Util from '@/helpers/D3Util.js'
-import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
-import { cytoscapeToGraphlib, graphlibToCytoscape, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
+import GraphModel from '@/helpers/GraphModel.js'
+import DiagramGraph from '@/helpers/DiagramGraph.js'
+import { modelToGraphlib, graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
 import D3DApi from '@/services/api'
 
-// Register dagre plugin for diagrams created here
 export default {
   name: 'DiagramForm',
   props: ['active'],
@@ -123,19 +99,17 @@ export default {
   data() {
     return {
       id:          null,
-      diagram:     null,    // cytoscape instance
+      diagram:     null,    // GraphModel
       username:    '',
       created:     null,
       name:        'New diagram default name',
       description: 'New diagram default description',
       diagramModal: false,
       update:      null,
-      layoutMode: 'dagre',
-      layoutModeOptions: ['dagre', 'fcose', 'cola'],
-      rankdirOptions: ['TB', 'BT', 'LR', 'RL'],
-      dagreOpts: { rankdir: 'TB', ranksep: 100, nodesep: 80, ranker: 'network-simplex' },
-      fcoseOpts: { idealEdgeLength: 50, nodeRepulsion: 4500, gravity: 0.25, numIter: 2500 },
+      layoutMode: 'cola',
       colaOpts:  { edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 },
+      colaConstraintsText: '[]',
+      colaConstraints: [],
       jsonDiagram: null,
     }
   },
@@ -175,31 +149,30 @@ export default {
       this.$cookies.remove('LastLocallySavedItemId')
 
       const settings = this.$cookies.get('settings') || D3Util.appDefaults()
-      this.layoutMode = settings.defaultLayoutMode || 'dagre'
-      this.dagreOpts = {
-        rankdir: settings.defaultRankDir || 'TB',
-        ranksep: settings.defaultRankSep !== undefined ? Number(settings.defaultRankSep) : 50,
-        nodesep: settings.defaultNodeSep !== undefined ? Number(settings.defaultNodeSep) : 10,
-        ranker:  settings.defaultRanker || 'network-simplex',
+      this.layoutMode = 'cola'
+      this.colaOpts = {
+        edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : 80,
+        nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : 10,
+        flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
+        avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : true,
+        maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
       }
+      this.colaConstraintsText = '[]'
+      this.colaConstraints = []
 
-      const cy = markRaw(cytoscape({
-        headless: true,
-        styleEnabled: true,
-        elements: [
-          { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
-        ]
-      }))
+      const model = markRaw(new GraphModel([
+        { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
+      ]))
+      model.colaConstraints = this.colaConstraints
 
       const d3dInfo = {
         id:          null,
-        diagram:     cy,
+        diagram:     model,
         name:        D3Util.tempInfo().name,
         description: D3Util.tempInfo().description,
         layoutMode:  this.layoutMode,
-        dagreOpts:   { ...this.dagreOpts },
-        fcoseOpts:   { ...this.fcoseOpts },
         colaOpts:    { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
       }
 
       this._newModifier(d3dInfo)
@@ -216,22 +189,33 @@ export default {
       this.created     = newDiagram ? this.created     : info.created
 
       if (this.diagram) {
-        const json       = cytoscapeToGraphlib(this.diagram)
+        const json       = modelToGraphlib(this.diagram)
         this.jsonDiagram = JSON.stringify(json, null, 2)
       }
 
       // Layout options live on the modifier
-      this.layoutMode = mod?.layoutMode || 'dagre'
-      if (mod?.dagreOpts) this.dagreOpts = { ...mod.dagreOpts }
-      if (mod?.fcoseOpts) this.fcoseOpts = { ...mod.fcoseOpts }
+      this.layoutMode = mod?.layoutMode || 'cola'
       if (mod?.colaOpts)  this.colaOpts  = { ...mod.colaOpts }
+      const constraints = mod?.cy?.colaConstraints ?? mod?.colaConstraints ?? []
+      this.colaConstraints = Array.isArray(constraints) ? constraints : []
+      this.colaConstraintsText = JSON.stringify(this.colaConstraints, null, 2)
+    },
+
+    _parseConstraints() {
+      try {
+        const parsed = JSON.parse(this.colaConstraintsText || '[]')
+        return Array.isArray(parsed) ? parsed : []
+      } catch (e) {
+        console.error('Cola constraints JSON parse failed', e)
+        return null
+      }
     },
 
     async create() {
       this.setDiagramInfo(true)
       this._applyLayoutOptions()
 
-      const json    = cytoscapeToGraphlib(this.diagram)
+      const json    = modelToGraphlib(this.diagram)
       const payload = {
         name:        this.name,
         description: this.description,
@@ -264,13 +248,14 @@ export default {
       const mod = this._mod()
       if (mod) {
         mod.layoutMode = this.layoutMode
-        mod.dagreOpts  = { ...this.dagreOpts }
-        mod.fcoseOpts  = { ...this.fcoseOpts }
         mod.colaOpts   = { ...this.colaOpts }
-        // Keep legacy aliases in sync
-        mod.rankdir = this.dagreOpts.rankdir
-        mod.ranksep = Number(this.dagreOpts.ranksep)
-        mod.nodesep = Number(this.dagreOpts.nodesep)
+        const constraints = this._parseConstraints()
+        if (constraints !== null) {
+          this.colaConstraints = constraints
+          this.colaConstraintsText = JSON.stringify(constraints, null, 2)
+        }
+        mod.colaConstraints = this.colaConstraints
+        if (mod.cy) mod.cy.colaConstraints = this.colaConstraints
       }
     },
 
@@ -281,22 +266,14 @@ export default {
         description: this.description,
         created:     this.created,
         layoutMode:  this.layoutMode,
-        dagreOpts:   { ...this.dagreOpts },
-        fcoseOpts:   { ...this.fcoseOpts },
         colaOpts:    { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
       }
 
-      // Parse the edited JSON (may be graphlib or cytoscape format)
-      try {
-        const parsed   = JSON.parse(this.jsonDiagram)
-        const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        this.diagram   = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
-      } catch (e) {
-        console.error('JSON parse failed', e)
-        return
-      }
+      const model = this._modelFromJson()
+      if (!model) return
 
-      d3dInfo.diagram = this.diagram
+      d3dInfo.diagram = model
       this._newModifier(d3dInfo)
 
       D3Util.updateLocalEntry({
@@ -316,24 +293,17 @@ export default {
         description: this.description,
         created:     this.created,
         layoutMode:  this.layoutMode,
-        dagreOpts:   { ...this.dagreOpts },
-        fcoseOpts:   { ...this.fcoseOpts },
         colaOpts:    { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
       }
 
-      try {
-        const parsed   = JSON.parse(this.jsonDiagram)
-        const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        this.diagram   = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
-      } catch (e) {
-        console.error('JSON parse failed', e)
-        return
-      }
+      const model = this._modelFromJson()
+      if (!model) return
 
-      d3dInfo.diagram = this.diagram
+      d3dInfo.diagram = model
       this._newModifier(d3dInfo)
 
-      const json        = cytoscapeToGraphlib(this.diagram)
+      const json        = modelToGraphlib(this.diagram)
       const updatedData = {
         id:          this.id,
         name:        this.name,
@@ -353,9 +323,23 @@ export default {
       this.close()
     },
 
+    // Parse the edited JSON (may be graphlib or cytoscape elements format)
+    _modelFromJson() {
+      try {
+        const parsed = JSON.parse(this.jsonDiagram)
+        const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+        model.colaConstraints = this.colaConstraints
+        this.diagram = model
+        return model
+      } catch (e) {
+        console.error('JSON parse failed', e)
+        return null
+      }
+    },
+
     _newModifier(d3dInfo) {
-      const newMod = markRaw(new CytoscapeGraph(d3dInfo, this.emitter))
-      // ThreeDRenderer will be reconnected automatically by CytoscapeGraphView watcher
+      const newMod = markRaw(new DiagramGraph(d3dInfo, this.emitter))
+      // ThreeDRenderer will be reconnected automatically by DiagramGraphView watcher
       this.emitter.emit('updateModifier', newMod)
     },
 
@@ -363,8 +347,6 @@ export default {
       this.diagramModal = false
       this.emitter.emit('changeActive')
     },
-
-    
   },
 }
 </script>

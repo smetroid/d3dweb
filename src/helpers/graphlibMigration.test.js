@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import cytoscape from 'cytoscape'
 import {
-  graphlibToCytoscape,
-  cytoscapeToGraphlib,
+  graphlibToModel,
+  modelToGraphlib,
   isGraphlibFormat,
 } from '@/helpers/graphlibMigration.js'
 
@@ -46,14 +45,14 @@ describe('isGraphlibFormat', () => {
   })
 })
 
-describe('graphlibToCytoscape', () => {
-  const elements = graphlibToCytoscape(graphlibJson)
-  const nodeData = Object.fromEntries(elements.filter(e => e.group === 'nodes').map(e => [e.data.id, e.data]))
-  const edgeData = Object.fromEntries(elements.filter(e => e.group === 'edges').map(e => [e.data.id, e.data]))
+describe('graphlibToModel', () => {
+  const model = graphlibToModel(graphlibJson)
+  const nodeData = Object.fromEntries(model.nodes().map(n => [n.id(), n.data()]))
+  const edgeData = Object.fromEntries(model.edges().map(e => [e.id(), e.data()]))
 
   it('converts every node and edge', () => {
-    expect(elements.filter(e => e.group === 'nodes')).toHaveLength(6)
-    expect(elements.filter(e => e.group === 'edges')).toHaveLength(5)
+    expect(model.nodes()).toHaveLength(6)
+    expect(model.edges()).toHaveLength(5)
   })
 
   it('preserves node data', () => {
@@ -63,8 +62,9 @@ describe('graphlibToCytoscape', () => {
     expect(nodeData.c1.clusterLabelPos).toBe('top')
   })
 
-  it('maps graphlib parent to cytoscape parent', () => {
+  it('maps graphlib parent to model parent', () => {
     expect(nodeData.n4.parent).toBe('c1')
+    expect(model.getElementById('n4').parent().id()).toBe('c1')
   })
 
   it('preserves explicit edge ids', () => {
@@ -78,21 +78,13 @@ describe('graphlibToCytoscape', () => {
   it('generates stable ids for id-less edges', () => {
     const generated = Object.values(edgeData).filter(e => e.source === 'n2' && e.target === 'n3')
     expect(generated).toHaveLength(1)
-    expect(generated[0].id).toMatch(/^e_/)
-  })
-
-  it('round-trips through a real cytoscape instance', () => {
-    const cy = cytoscape({ headless: true, styleEnabled: true, elements })
-    expect(cy.nodes()).toHaveLength(6)
-    expect(cy.edges()).toHaveLength(5)
-    expect(cy.getElementById('n4').parent().id()).toBe('c1')
+    expect(generated[0].id).toBe('n2->n3')
   })
 })
 
-describe('cytoscapeToGraphlib', () => {
-  const elements = graphlibToCytoscape(graphlibJson)
-  const cy = cytoscape({ headless: true, styleEnabled: true, elements })
-  const roundTrip = cytoscapeToGraphlib(cy)
+describe('modelToGraphlib', () => {
+  const model = graphlibToModel(graphlibJson)
+  const roundTrip = modelToGraphlib(model)
 
   it('serializes all nodes and edges', () => {
     expect(roundTrip.nodes).toHaveLength(6)
@@ -107,7 +99,7 @@ describe('cytoscapeToGraphlib', () => {
     expect(n1.value.id).toBeUndefined()
   })
 
-  it('maps cytoscape parent back to graphlib parent', () => {
+  it('maps model parent back to graphlib parent', () => {
     const n4 = roundTrip.nodes.find(n => n.v === 'n4')
     expect(n4.parent).toBe('c1')
     expect(n4.value.parent).toBeUndefined()
@@ -123,13 +115,27 @@ describe('cytoscapeToGraphlib', () => {
     expect(e1.value.source).toBeUndefined()
     expect(e1.value.target).toBeUndefined()
   })
+
+  it('carries cola constraints through options.constraints', () => {
+    const withConstraints = graphlibToModel(graphlibJson)
+    withConstraints.colaConstraints = [
+      { type: 'alignment', axis: 'y', offsets: [{ node: 'n1', offset: 0 }, { node: 'n2', offset: 0 }] },
+      { axis: 'x', left: 'n1', right: 'n2', gap: 50 },
+    ]
+    const out = modelToGraphlib(withConstraints)
+    expect(out.options.constraints).toEqual(withConstraints.colaConstraints)
+  })
+
+  it('omits options.constraints when empty', () => {
+    const out = modelToGraphlib(model)
+    expect(out.options.constraints).toBeUndefined()
+  })
 })
 
 describe('round-trip stability', () => {
-  it('graphlib → cytoscape → graphlib is idempotent for the full payload', () => {
-    const elements = graphlibToCytoscape(graphlibJson)
-    const cy = cytoscape({ headless: true, styleEnabled: true, elements })
-    const out = cytoscapeToGraphlib(cy)
+  it('graphlib → model → graphlib is idempotent for the full payload', () => {
+    const model = graphlibToModel(graphlibJson)
+    const out = modelToGraphlib(model)
 
     expect(out.nodes.map(n => n.v).sort()).toEqual(graphlibJson.nodes.map(n => n.v).sort())
 
@@ -151,10 +157,9 @@ describe('round-trip stability', () => {
   })
 
   it('handles empty graphs', () => {
-    const empty = graphlibToCytoscape({ nodes: [], edges: [] })
-    expect(empty).toHaveLength(0)
-    const cy = cytoscape({ headless: true, styleEnabled: true, elements: empty })
-    const out = cytoscapeToGraphlib(cy)
+    const empty = graphlibToModel({ nodes: [], edges: [] })
+    expect(empty.nodes()).toHaveLength(0)
+    const out = modelToGraphlib(empty)
     expect(out.nodes).toHaveLength(0)
     expect(out.edges).toHaveLength(0)
   })

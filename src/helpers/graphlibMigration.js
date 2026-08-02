@@ -1,17 +1,19 @@
 /**
- * Converts graphlib JSON format (dagre-d3) to Cytoscape elements array.
- * Handles both formats transparently so old saved diagrams load correctly.
+ * Converts the persisted graphlib JSON format to/from a GraphModel.
+ * The wire format is unchanged from the old dagre-d3 app:
  *
- * graphlib format:
- *   { options: {}, nodes: [{v, value, parent?}], edges: [{v, w, value}] }
+ *   { options: { directed, compound, constraints? }, nodes: [{v, value, parent?}], edges: [{v, w, value}] }
  *
- * cytoscape format:
- *   [{group:'nodes', data:{id,...}}, {group:'edges', data:{id,source,target,...}}]
+ * so old saved diagrams, the server and localStorage payloads all keep
+ * working. Legacy cytoscape elements-array payloads are also accepted on load.
  */
-export function graphlibToCytoscape(graphlibJson) {
-  const elements = []
-  let edgeCounter = 0
+import GraphModel from '@/helpers/GraphModel'
 
+/**
+ * Build a GraphModel from a graphlib JSON object.
+ */
+export function graphlibToModel(graphlibJson) {
+  const elements = []
   for (const node of graphlibJson.nodes || []) {
     const data = { id: node.v, ...node.value }
     if (node.parent != null) {
@@ -19,40 +21,37 @@ export function graphlibToCytoscape(graphlibJson) {
     }
     elements.push({ group: 'nodes', data })
   }
-
   for (const edge of graphlibJson.edges || []) {
-    const id = edge.value?.id || `e_${edge.v}_${edge.w}_${edgeCounter++}`
     elements.push({
       group: 'edges',
       data: {
-        id,
+        id: edge.value?.id || `${edge.v}->${edge.w}`,
         source: edge.v,
         target: edge.w,
-        ...edge.value
-      }
+        ...edge.value,
+      },
     })
   }
-
-  return elements
+  return new GraphModel(elements)
 }
 
 /**
- * Serializes a Cytoscape instance back to the graphlib JSON format
- * so existing server/localStorage payloads remain compatible.
+ * Serialize a GraphModel back to the graphlib JSON format.
+ * Carries cola constraints through in options.constraints.
  */
-export function cytoscapeToGraphlib(cy) {
-  const nodes = cy.nodes().map(n => {
+export function modelToGraphlib(model) {
+  const nodes = model.nodes().map(n => {
     const value = { ...n.data() }
     const entry = { v: n.id(), value }
     delete entry.value.id
-    if (entry.value.parent != null) {
-      entry.parent = entry.value.parent
+    if (value.parent != null) {
+      entry.parent = value.parent
     }
     delete entry.value.parent
     return entry
   })
 
-  const edges = cy.edges().map(e => {
+  const edges = model.edges().map(e => {
     const value = { ...e.data() }
     const entry = { v: e.data('source'), w: e.data('target'), value }
     delete entry.value.source
@@ -60,11 +59,13 @@ export function cytoscapeToGraphlib(cy) {
     return entry
   })
 
-  return {
-    options: { directed: true, multigraph: false, compound: true },
-    nodes,
-    edges
+  const options = { directed: true, multigraph: false, compound: true }
+  const constraints = model.colaConstraints
+  if (Array.isArray(constraints) && constraints.length) {
+    options.constraints = constraints
   }
+
+  return { options, nodes, edges }
 }
 
 /**

@@ -1,10 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
-import cytoscape from 'cytoscape'
-import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import GraphModel from '@/helpers/GraphModel.js'
+import DiagramGraph from '@/helpers/DiagramGraph.js'
+import { runColaLayout } from '@/helpers/colaLayout.js'
 import { SCALE } from '@/helpers/ThreeDRenderer.js'
 
 vi.mock('vue-cookies', () => ({
   default: { get: () => null, set: () => {}, config: () => {} },
+}))
+
+vi.mock('@/helpers/colaLayout.js', () => ({
+  runColaLayout: vi.fn(),
 }))
 
 vi.stubGlobal('localStorage', {
@@ -16,9 +21,10 @@ vi.stubGlobal('localStorage', {
 
 function makeGraph(nodeCount = 6) {
   const elements = Array.from({ length: nodeCount }, (_, i) => ({
+    group: 'nodes',
     data: { id: `n${i}`, label: `Node ${i}` },
   }))
-  const cy = cytoscape({ headless: true, styleEnabled: true, elements })
+  const model = new GraphModel(elements)
   const renderer = {
     updateScene: vi.fn(),
     enable3D: vi.fn(),
@@ -30,9 +36,9 @@ function makeGraph(nodeCount = 6) {
     deselectEdge: vi.fn(),
     getNodeElement: vi.fn(() => ({})),
   }
-  const graph = new CytoscapeGraph({ diagram: cy, name: 'test' }, { emit: vi.fn() })
+  const graph = new DiagramGraph({ diagram: model, name: 'test' }, { emit: vi.fn() })
   graph.renderer = renderer
-  return { cy, renderer, graph }
+  return { model, renderer, graph }
 }
 
 function distances(positions) {
@@ -41,8 +47,8 @@ function distances(positions) {
 
 describe('counts', () => {
   it('reports node and edge counts', () => {
-    const { cy, graph } = makeGraph(3)
-    cy.add({ group: 'edges', data: { id: 'e1', source: 'n0', target: 'n1' } })
+    const { model, graph } = makeGraph(3)
+    model.addEdge({ source: 'n0', target: 'n1' })
     expect(graph.nodeCount()).toBe(3)
     expect(graph.edgeCount()).toBe(1)
   })
@@ -50,9 +56,9 @@ describe('counts', () => {
 
 describe('node CRUD', () => {
   it('adds a node with mapped data', () => {
-    const { cy, graph, renderer } = makeGraph(2)
+    const { model, graph, renderer } = makeGraph(2)
     const id = graph.addNode({ nodeLabel: 'Brand New', nodeShape: 'ellipse' })
-    expect(cy.nodes()).toHaveLength(3)
+    expect(model.nodes()).toHaveLength(3)
     expect(graph.getNodeData(id).nodeLabel).toBe('Brand New')
     expect(renderer.updateScene).toHaveBeenCalled()
   })
@@ -64,19 +70,27 @@ describe('node CRUD', () => {
   })
 
   it('deletes a node by id', () => {
-    const { cy, graph } = makeGraph(2)
+    const { model, graph } = makeGraph(2)
     graph.deleteNode('n0')
-    expect(cy.nodes()).toHaveLength(1)
-    expect(cy.getElementById('n0').empty()).toBe(true)
+    expect(model.nodes()).toHaveLength(1)
+    expect(model.getElementById('n0').empty()).toBe(true)
   })
 
   it('detaches children before deleting a parent', () => {
-    const { cy, graph } = makeGraph(3)
-    cy.getElementById('n2').move({ parent: 'n0' })
+    const { model, graph } = makeGraph(3)
+    model.getElementById('n2').move({ parent: 'n0' })
     graph.deleteNode('n0')
-    expect(cy.getElementById('n0').empty()).toBe(true)
-    expect(cy.getElementById('n2').empty()).toBe(false)
-    expect(cy.getElementById('n2').parent().empty()).toBe(true)
+    expect(model.getElementById('n0').empty()).toBe(true)
+    expect(model.getElementById('n2').empty()).toBe(false)
+    expect(model.getElementById('n2').parent().empty()).toBe(true)
+  })
+
+  it('removes edges touching a deleted node', () => {
+    const { model, graph } = makeGraph(3)
+    model.addEdge({ source: 'n0', target: 'n1' })
+    model.addEdge({ source: 'n1', target: 'n2' })
+    graph.deleteNode('n1')
+    expect(model.edges()).toHaveLength(0)
   })
 
   it('returns false for missing nodes', () => {
@@ -94,10 +108,10 @@ describe('node CRUD', () => {
 
 describe('edge CRUD', () => {
   it('adds an edge between the two selected nodes', () => {
-    const { cy, graph } = makeGraph(3)
+    const { model, graph } = makeGraph(3)
     graph.selectedNodes = [0, 2]
     graph.addEdge({ edgeLabel: 'connects', edgeArrowHead: 'vee' })
-    const edges = cy.edges()
+    const edges = model.edges()
     expect(edges).toHaveLength(1)
     expect(edges[0].source().id()).toBe('n0')
     expect(edges[0].target().id()).toBe('n2')
@@ -105,72 +119,38 @@ describe('edge CRUD', () => {
   })
 
   it('updates edge data', () => {
-    const { cy, graph } = makeGraph(2)
-    cy.add({ group: 'edges', data: { id: 'e1', source: 'n0', target: 'n1', label: 'old' } })
-    graph.updateEdge({ edgeLabel: 'new', edgeArrowHead: 'vee' }, 'e1')
-    expect(cy.getElementById('e1').data('label')).toBe('new')
+    const { model, graph } = makeGraph(2)
+    model.addEdge({ source: 'n0', target: 'n1', label: 'old' })
+    const eid = model.edges()[0].id()
+    graph.updateEdge({ edgeLabel: 'new', edgeArrowHead: 'vee' }, eid)
+    expect(model.getElementById(eid).data('label')).toBe('new')
   })
 
   it('deletes an edge by id or by {v, w}', () => {
-    const { cy, graph } = makeGraph(2)
-    cy.add({ group: 'edges', data: { id: 'e1', source: 'n0', target: 'n1', label: 'x' } })
-    graph.deleteEdge('e1')
-    expect(cy.edges()).toHaveLength(0)
+    const { model, graph } = makeGraph(2)
+    model.addEdge({ source: 'n0', target: 'n1', label: 'x' })
+    graph.deleteEdge({ v: 'n0', w: 'n1' })
+    expect(model.edges()).toHaveLength(0)
   })
 })
 
-describe('_runLayout cluster handling', () => {
-  function spyLayout(cy) {
-    const spy = vi.spyOn(cy, 'layout')
-    spy.mockReturnValue({ run: vi.fn() })
-    return spy
-  }
-
-  it('uses dagre for plain graphs', () => {
-    const { cy, graph } = makeGraph(3)
-    const spy = spyLayout(cy)
-    graph._runLayout()
-    expect(spy).toHaveBeenCalled()
-    expect(spy.mock.calls[0][0].name).toBe('dagre')
+describe('_runLayout', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('uses dagre even when the graph has compound parents', () => {
-    const { cy, graph } = makeGraph(3)
-    cy.getElementById('n1').move({ parent: 'n0' })
-    const spy = spyLayout(cy)
+  it('delegates to runColaLayout with model, opts and constraints', () => {
+    const { model, graph } = makeGraph(3)
+    graph.colaConstraints = [{ axis: 'x', left: 'n0', right: 'n1', gap: 50 }]
     graph._runLayout()
-    expect(spy.mock.calls[0][0].name).toBe('dagre')
+    expect(runColaLayout).toHaveBeenCalledWith(model, graph.colaOpts, graph.colaConstraints)
   })
 
-  it('respects an explicit fcose choice', () => {
-    const { cy, graph } = makeGraph(3)
-    graph.layoutMode = 'fcose'
-    const spy = spyLayout(cy)
+  it('does nothing for an empty graph', () => {
+    const { model, graph } = makeGraph(0)
     graph._runLayout()
-    expect(spy.mock.calls[0][0].name).toBe('fcose')
-  })
-
-  it('respects an explicit cola choice even with clusters', () => {
-    const { cy, graph } = makeGraph(3)
-    cy.getElementById('n1').move({ parent: 'n0' })
-    graph.layoutMode = 'cola'
-    const spy = spyLayout(cy)
-    graph._runLayout()
-    expect(spy.mock.calls[0][0].name).toBe('cola')
-  })
-
-  it('correctly formats and forwards camelCase rankSep and nodeSep layout options to cytoscape-dagre', () => {
-    const { cy, graph } = makeGraph(3)
-    graph.dagreOpts = { rankdir: 'LR', ranksep: 123, nodesep: 45, ranker: 'longest-path' }
-    const spy = spyLayout(cy)
-    graph._runLayout()
-    expect(spy).toHaveBeenCalled()
-    const opts = spy.mock.calls[0][0]
-    expect(opts.name).toBe('dagre')
-    expect(opts.rankDir).toBe('LR')
-    expect(opts.rankSep).toBe(123)
-    expect(opts.nodeSep).toBe(45)
-    expect(opts.ranker).toBe('longest-path')
+    expect(runColaLayout).not.toHaveBeenCalled()
+    expect(model.nodes()).toHaveLength(0)
   })
 })
 
@@ -219,15 +199,24 @@ describe('3D helix layout', () => {
 
 describe('3D hierarchy layout', () => {
   function makeLayeredGraph(nodeCount) {
-    const { cy, graph } = makeGraph(nodeCount)
+    const { model, graph } = makeGraph(nodeCount)
     for (let i = 0; i < nodeCount - 1; i++) {
-      cy.add({ group: 'edges', data: { id: `e${i}`, source: `n${i}`, target: `n${i + 1}` } })
+      model.addEdge({ source: `n${i}`, target: `n${i + 1}` })
     }
-    return { cy, graph }
+    return { model, graph }
+  }
+
+  // Simulate cola laying nodes out with distinct x/y (real run is mocked)
+  function mockColaPositions(model) {
+    runColaLayout.mockImplementation((m) => {
+      m.nodes().forEach((n, i) => m.setPosition(n.id(), 10 + i, 20 + i * 2))
+    })
+    return model
   }
 
   it('flattens nodes into depth layers by rank', () => {
-    const { graph } = makeLayeredGraph(8)
+    const { model, graph } = makeLayeredGraph(8)
+    mockColaPositions(model)
     const positions = graph._hierarchyPositions(graph.cy.nodes())
     expect(positions.size).toBe(8)
     const layers = [...positions.values()].map(p => p.z)
@@ -237,7 +226,8 @@ describe('3D hierarchy layout', () => {
   })
 
   it('scales x/y to world units', () => {
-    const { graph } = makeLayeredGraph(8)
+    const { model, graph } = makeLayeredGraph(8)
+    mockColaPositions(model)
     const positions = graph._hierarchyPositions(graph.cy.nodes())
     for (const p of positions.values()) {
       expect(p.x).not.toBe(0)

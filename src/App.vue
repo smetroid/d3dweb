@@ -1,13 +1,13 @@
 <script setup>
-import CytoscapeGraphView from '@/components/CytoscapeGraphView.vue'
+import DiagramGraphView from '@/components/DiagramGraphView.vue'
 import D3Util from '@/helpers/D3Util.js'
 import MenuKeys from '@/helpers/MenuKeys.js'
 import MenuLinks from '@/helpers/MenuLinks.js'
 import Settings from '@/components/Settings.vue'
 import HelperPane from '@/components/Helper.vue'
-import cytoscape from 'cytoscape'
-import CytoscapeGraph from '@/helpers/CytoscapeGraph.js'
-import { graphlibToCytoscape, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
+import GraphModel from '@/helpers/GraphModel.js'
+import DiagramGraph from '@/helpers/DiagramGraph.js'
+import { graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
 import { migrateDiagramPayload } from '@/helpers/legacyMigration.js'
 import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramList from '@/components/DiagramList.vue'
@@ -70,7 +70,7 @@ function toggleTheme() {
         :d3dInfo="d3dInfo"
       />
       -->
-      <CytoscapeGraphView
+      <DiagramGraphView
         :active="active"
       />
       <DiagramForm
@@ -249,7 +249,7 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {CytoscapeGraphView, Settings, DiagramForm, HelperPane, Login},
+  components: {DiagramGraphView, Settings, DiagramForm, HelperPane, Login},
   data () {
     return {
       active: "Graph", //Default active component
@@ -457,14 +457,15 @@ export default {
       }
 
       const parsed = migrateDiagramPayload(JSON.parse(localDiagramInfo.diagram))
-      const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-      const cy = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
+      const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+      model.colaConstraints = parsed.options?.constraints || []
 
       this.d3dInfo = localDiagramInfo
       this.d3dInfo.id = id
-      this.d3dInfo.diagram = cy
+      this.d3dInfo.diagram = model
+      this.d3dInfo.colaConstraints = model.colaConstraints
 
-      this.modifier = markRaw(new CytoscapeGraph(this.d3dInfo, this.emitter))
+      this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
       console.log(this.modifier)
 
     },
@@ -496,14 +497,15 @@ export default {
 
       try {
         const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
-        const elements = isGraphlibFormat(parsed) ? graphlibToCytoscape(parsed) : parsed
-        const cy = markRaw(cytoscape({ headless: true, styleEnabled: true, elements }))
+        const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+        model.colaConstraints = parsed.options?.constraints || []
 
         this.d3dInfo = serverDiagramInfo
         this.d3dInfo.id = id
-        this.d3dInfo.diagram = cy
+        this.d3dInfo.diagram = model
+        this.d3dInfo.colaConstraints = model.colaConstraints
 
-        this.modifier = markRaw(new CytoscapeGraph(this.d3dInfo, this.emitter))
+        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
         console.log(this.modifier)
 
       } catch (error) {

@@ -1,5 +1,5 @@
 import VueCookies from 'vue-cookies'
-import { cytoscapeToGraphlib } from '@/helpers/graphlibMigration'
+import { modelToGraphlib } from '@/helpers/graphlibMigration'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -126,7 +126,7 @@ export default {
         {'value':'dark', 'label':'Dark Theme'},
       ],
       'zoomFitFactor': 2.8,
-      'defaultLayoutMode': 'dagre',
+      'defaultLayoutMode': 'cola',
       'defaultRankDir': 'TB',
       'defaultRankSep': 100,
       'defaultNodeSep': 80,
@@ -372,7 +372,7 @@ export default {
     try{
       let randomId ='D3D'+this.randomId()
       let created = new Date()
-      let json = cytoscapeToGraphlib(data.diagram)
+      let json = modelToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -407,7 +407,7 @@ export default {
     try{
       console.log(data)
       let updated = new Date()
-      let json = cytoscapeToGraphlib(data.diagram)
+      let json = modelToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -426,7 +426,7 @@ export default {
   },
   saveTempDiagram(cy){
     try {
-      let json = cytoscapeToGraphlib(cy)
+      let json = modelToGraphlib(cy)
       let created = new Date()
       let updatedData = {
         'created': created.toISOString(),

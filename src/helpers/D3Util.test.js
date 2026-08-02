@@ -117,9 +117,9 @@ describe('appDefaults', () => {
     ])
   })
 
-  it('includes default layout options for Dagre, fCoSE, and Cola', () => {
+  it('includes default layout options for Cola (single layout engine)', () => {
     const defaults = D3Util.appDefaults()
-    expect(defaults.defaultLayoutMode).toBe('dagre')
+    expect(defaults.defaultLayoutMode).toBe('cola')
     expect(defaults.defaultRankDir).toBe('TB')
     expect(defaults.defaultRankSep).toBe(100)
     expect(defaults.defaultNodeSep).toBe(80)

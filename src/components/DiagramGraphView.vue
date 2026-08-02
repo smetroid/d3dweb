@@ -72,7 +72,7 @@ import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
 
 export default {
-  name: 'CytoscapeGraphView',
+  name: 'DiagramGraphView',
   props: ['active'],
   inject: ['modifier'],
   components: { D3NodeForm, D3EdgeForm },
@@ -137,7 +137,7 @@ export default {
         this.threeDRenderer.init()
       }
 
-      // Connect to modifier if it is already a CytoscapeGraph
+      // Connect to modifier if it is already a DiagramGraph
       const mod = this.modifier?.value ?? this.modifier
       if (mod && typeof mod.redraw === 'function') {
         mod.renderer = this.threeDRenderer
