@@ -9,7 +9,7 @@ vi.mock('vue-cookies', () => ({
 }))
 
 vi.mock('@/helpers/colaLayout.js', () => ({
-  runColaLayout: vi.fn(),
+  runColaLayout: vi.fn(() => ({ count: 0, edgeRoutes: new Map() })),
 }))
 
 vi.stubGlobal('localStorage', {
@@ -210,6 +210,7 @@ describe('3D hierarchy layout', () => {
   function mockColaPositions(model) {
     runColaLayout.mockImplementation((m) => {
       m.nodes().forEach((n, i) => m.setPosition(n.id(), 10 + i, 20 + i * 2))
+      return { count: m.nodes().length, edgeRoutes: new Map() }
     })
     return model
   }

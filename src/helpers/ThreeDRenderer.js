@@ -255,9 +255,16 @@ export default class ThreeDRenderer {
 
     const srcRadius = this._nodeRadius(srcId)
     const tgtRadius = this._nodeRadius(tgtId)
-    const start = new THREE.Vector3(srcPos.x * SCALE, -srcPos.y * SCALE, -1)
-    const end   = new THREE.Vector3(tgtPos.x * SCALE, -tgtPos.y * SCALE, -1)
-    const { curve, tipPoint, tipDir } = this._computeCurve(srcId, tgtId, start, end, srcRadius)
+
+    const waypoints = cy.edgeRoutes?.get(edge.id())
+    let curve, tipPoint, tipDir
+    if (waypoints && waypoints.length >= 2) {
+      ;({ curve, tipPoint, tipDir } = this._buildWaypointCurve(waypoints))
+    } else {
+      const start = new THREE.Vector3(srcPos.x * SCALE, -srcPos.y * SCALE, -1)
+      const end   = new THREE.Vector3(tgtPos.x * SCALE, -tgtPos.y * SCALE, -1)
+      ;({ curve, tipPoint, tipDir } = this._computeCurve(srcId, tgtId, start, end, srcRadius))
+    }
 
     const group = new THREE.Group()
 
@@ -360,6 +367,16 @@ export default class ThreeDRenderer {
       tipPoint: E,
       tipDir:   E.clone().sub(cp2).normalize(),
     }
+  }
+
+  // Convert model-space {x,y}[] waypoints from webcola's routeEdge into a
+  // CatmullRomCurve3 in THREE.js world space (Y inverted, scaled by SCALE).
+  _buildWaypointCurve(waypoints) {
+    const pts = waypoints.map(p => new THREE.Vector3(p.x * SCALE, -p.y * SCALE, -1))
+    const curve = new THREE.CatmullRomCurve3(pts)
+    const tipPoint = pts[pts.length - 1]
+    const tipDir = tipPoint.clone().sub(pts[pts.length - 2]).normalize()
+    return { curve, tipPoint, tipDir }
   }
 
   // ConeGeometry is centered on its midpoint, so the apex would overshoot the

@@ -27,7 +27,7 @@ describe('buildColaConfig', () => {
       { group: 'edges', data: { id: 'e1', source: 'a', target: 'b' } },
     ])
     const config = buildColaConfig(model, { edgeLength: 150 })
-    expect(config.links).toEqual([{ source: 0, target: 1, length: 150 }])
+    expect(config.links).toMatchObject([{ source: 0, target: 1, length: 150, edgeId: 'e1' }])
   })
 
   it('drops self-loops and dangling endpoints', () => {
@@ -128,7 +128,7 @@ describe('runColaLayout', () => {
       { group: 'edges', data: { id: 'e1', source: 'a', target: 'b' } },
       { group: 'edges', data: { id: 'e2', source: 'b', target: 'c' } },
     ])
-    const count = runColaLayout(model, { maxSimulationTime: 200 })
+    const { count } = runColaLayout(model, { maxSimulationTime: 200 })
     expect(count).toBe(3)
     const positions = model.nodes().map(n => n.position())
     positions.forEach(p => {
@@ -152,7 +152,7 @@ describe('runColaLayout', () => {
       { group: 'nodes', data: { id: 'b' } },
       { group: 'edges', data: { id: 'e1', source: 'a', target: 'b' } },
     ])
-    const count = runColaLayout(model, { flow: 'y', maxSimulationTime: 200 }, [
+    const { count } = runColaLayout(model, { flow: 'y', maxSimulationTime: 200 }, [
       { type: 'alignment', axis: 'x', offsets: [{ node: 'a', offset: 0 }, { node: 'b', offset: 0 }] },
     ])
     expect(count).toBe(2)
@@ -167,7 +167,7 @@ describe('runColaLayout', () => {
       { group: 'nodes', data: { id: 'c1', parent: 'p' } },
       { group: 'nodes', data: { id: 'c2', parent: 'p' } },
     ])
-    const count = runColaLayout(model, { maxSimulationTime: 200 })
+    const { count } = runColaLayout(model, { maxSimulationTime: 200 })
     expect(count).toBe(3)
   })
 
@@ -177,7 +177,7 @@ describe('runColaLayout', () => {
       { group: 'nodes', data: { id: 'b' } },
       { group: 'nodes', data: { id: 'x' } },
     ])
-    const count = runColaLayout(model, { flow: 'x', maxSimulationTime: 400 }, [
+    const { count } = runColaLayout(model, { flow: 'x', maxSimulationTime: 400 }, [
       { axis: 'x', left: 'a', right: 'x', gap: 60 },
     ])
     expect(count).toBe(3)

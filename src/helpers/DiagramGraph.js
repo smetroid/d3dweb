@@ -434,9 +434,12 @@ export default class DiagramGraph {
   _runLayout() {
     if (this.nodeCount() === 0) return
     try {
-      runColaLayout(this.cy, this.colaOpts, this.colaConstraints)
+      const { edgeRoutes } = runColaLayout(this.cy, this.colaOpts, this.colaConstraints)
+      this.cy.edgeRoutes = edgeRoutes
+      console.debug('[_runLayout] positions after layout:', this.cy.nodes().map(n => ({ id: n.id(), ...n.position() })))
+      console.debug('[_runLayout] edgeRoutes size:', edgeRoutes?.size)
     } catch (err) {
-      console.error('Cola layout failed', err)
+      console.error('[_runLayout] Cola layout failed', err)
     }
   }
 

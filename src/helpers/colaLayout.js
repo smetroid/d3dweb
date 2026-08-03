@@ -5,7 +5,7 @@
  * compound "groups" from parent links, optional user constraints) and runs the
  * layout synchronously, writing the resulting x/y back onto the model.
  */
-import { Layout } from 'webcola'
+import { Layout, Rectangle } from 'webcola'
 import { CARD_W, CARD_H } from '@/helpers/GraphModel'
 
 const DEFAULT_EDGE_LENGTH = 80
@@ -21,13 +21,18 @@ export function buildColaConfig(model, colaOpts = {}, constraints = []) {
 
   const colaNodes = nodes.map((n, i) => {
     const pos = n.position() || { x: 0, y: 0 }
+    const x = pos.x || 0
+    const y = pos.y || 0
+    const hw = CARD_W / 2
+    const hh = CARD_H / 2
     return {
       index: i,
       id: n.id(),
-      x: pos.x || 0,
-      y: pos.y || 0,
+      x,
+      y,
       width: CARD_W,
       height: CARD_H,
+      bounds: new Rectangle(x - hw, x + hw, y - hh, y + hh),
     }
   })
 
@@ -38,7 +43,7 @@ export function buildColaConfig(model, colaOpts = {}, constraints = []) {
     // Self-loops and dangling endpoints are skipped — the renderer draws
     // self-loops independently of the layout.
     if (source === undefined || target === undefined || source === target) return
-    links.push({ source, target, length: Number(colaOpts.edgeLength) || DEFAULT_EDGE_LENGTH })
+    links.push({ source, target, length: Number(colaOpts.edgeLength) || DEFAULT_EDGE_LENGTH, edgeId: edge.id() })
   })
 
   const groups = buildGroups(model, colaOpts)
@@ -86,12 +91,40 @@ export function runColaLayout(model, colaOpts = {}, constraints = []) {
 
   config.nodes.forEach(node => {
     model.setPosition(node.id, node.x, node.y)
+    node.bounds.setXCentre(node.x)
+    node.bounds.setYCentre(node.y)
+    node.innerBounds = node.bounds
   })
 
-  return config.nodes.length
+  const edgeRoutes = _routeEdges(layout, config.nodes, config.links)
+  return { count: config.nodes.length, edgeRoutes }
 }
 
 // ─── Internal helpers ──────────────────────────────────────────────────────────
+
+function _routeEdges(layout, nodes, links) {
+  const routes = new Map()
+  if (links.length === 0) return routes
+  try {
+    layout.prepareEdgeRouting(Math.max(CARD_W, CARD_H) * 0.4)
+    links.forEach(link => {
+      if (link.edgeId == null) return
+      const waypoints = layout.routeEdge(
+        { source: nodes[link.source], target: nodes[link.target] }, 0
+      )
+      // Only store routes that actually bend around an obstacle (3+ points);
+      // 2-point routes are straight source→target and offer no benefit over
+      // the existing Bezier arc.
+      if (Array.isArray(waypoints) && waypoints.length >= 3) {
+        routes.set(link.edgeId, waypoints)
+      }
+    })
+  } catch (err) {
+    console.warn('[colaLayout] routeEdges failed, using Bezier fallback:', err.message)
+    routes.clear()
+  }
+  return routes
+}
 
 function buildGroups(model, colaOpts) {
   const nodes = model.nodes().toArray()
