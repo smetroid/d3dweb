@@ -39,7 +39,7 @@
 
         <div class="fx-panel-body">
           <div class="fx-grid">
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Node Shape</span>
               <div class="fx-select">
                 <button
@@ -59,9 +59,9 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
 
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Label H-Align <em class="fx-opt">compound nodes</em></span>
               <div class="fx-select">
                 <button
@@ -77,9 +77,9 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
 
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Label V-Align <em class="fx-opt">compound nodes</em></span>
               <div class="fx-select">
                 <button
@@ -95,9 +95,9 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
 
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Parent <em class="fx-opt">optional</em></span>
               <div class="fx-select">
                 <button
@@ -122,7 +122,7 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
           </div>
 
           <label class="fx-field fx-field-full">

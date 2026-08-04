@@ -95,7 +95,7 @@
                 </div>
 
                 <div class="fx-grid">
-                  <label class="fx-field">
+                  <div class="fx-field">
                     <span class="fx-label">Flow Direction</span>
                     <div class="fx-select">
                       <button
@@ -115,7 +115,7 @@
                         </ul>
                       </transition>
                     </div>
-                  </label>
+                  </div>
                   <label class="fx-field">
                     <span class="fx-label">Max Simulation Time <em class="fx-opt">ms</em></span>
                     <input class="fx-input" type="number" v-model="colaOpts.maxSimulationTime" />

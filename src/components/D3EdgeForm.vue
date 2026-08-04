@@ -39,7 +39,7 @@
 
         <div class="fx-panel-body">
           <div class="fx-grid">
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Edge Arrow Head Style</span>
               <div class="fx-select">
                 <button
@@ -59,9 +59,9 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
 
-            <label class="fx-field">
+            <div class="fx-field">
               <span class="fx-label">Edge Arrow Head</span>
               <div class="fx-select">
                 <button
@@ -81,7 +81,7 @@
                   </ul>
                 </transition>
               </div>
-            </label>
+            </div>
           </div>
 
           <div class="fx-grid fx-grid-2">
