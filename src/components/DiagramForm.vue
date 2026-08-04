@@ -1,87 +1,173 @@
 <template>
-  <v-dialog
-    class="mx-auto text-indigo"
-    @keyup.alt.s="updateNode()"
-    @keyup.meta.s="updateNode()"
-    @keyup.ctrl.c="close()"
-    @keyup.meta.c="close()"
-    @keydown.esc="keyPress($event)"
-    scrollable
-    v-model="diagramModal"
-    max-width="600">
-    <focus-trap v-model:active="diagramModal">
-      <div id="trapDiv" tabindex="0" class="trap is-active">
-        <v-card class="text-primary">
-          <v-card-title class="bg-primary d-flex justify-center">
-            <b v-if="update">Update Diagram</b>
-            <b v-else>Create New Diagram</b>
-          </v-card-title>
-          <v-card-text color="text-primary">
-            <v-form>
-              <v-text-field label="ID" readonly v-model="id" type="textfield" />
-              <v-text-field label="Diagram Name" v-model="name" />
-              <v-textarea
-                label="Diagram Description"
-                v-model="description"
-                hint="Enter a description for the new diagram"
-                rows="2" row-height="10"
-              />
-              <v-text-field label="Layout Engine" readonly :model-value="'Cola'" hint="Cola is the single layout engine" />
-              <v-text-field label="Edge Length" v-model="colaOpts.edgeLength" type="number" />
-              <v-text-field label="Node Spacing" v-model="colaOpts.nodeSpacing" type="number" />
-              <v-select
-                label="Flow Direction"
-                v-model="colaOpts.flow"
-                :items="[{title: 'None', value: null}, {title: 'Horizontal (x)', value: 'x'}, {title: 'Vertical (y)', value: 'y'}]"
-                item-title="title"
-                item-value="value"
-              />
-              <v-text-field label="Max Simulation Time (ms)" v-model="colaOpts.maxSimulationTime" type="number" />
-              <v-textarea
-                label="Cola Constraints (JSON)"
-                v-model="colaConstraintsText"
-                hint='Array of cola constraints: [{"type":"alignment","axis":"y","offsets":[{"node":"id","offset":0}]}, {"axis":"x","left":"id","right":"id","gap":50}]'
-                rows="4"
-                row-height="40"
-              />
-              <v-textarea
-                label="JSON Diagram"
-                v-model="jsonDiagram"
-                hint="JSON Data of the Diagram"
-                rows="5"
-                row-height="50"
-              />
-            </v-form>
-          </v-card-text>
-          <v-divider />
-          <v-card-actions>
-            <v-btn
-              v-if="update"
-              variant="tonal"
-              density="comfortable"
-              @click="updateLocalDiagram()">
-              Update ({{ shortcutLabels.save }})
-            </v-btn>
-            <v-btn
-              v-else
-              variant="outlined"
-              class="text-green"
-              density="comfortable"
-              @click="create()">
-              Create ({{ shortcutLabels.save }})
-            </v-btn>
-            <v-btn
-              variant="outlined"
-              class="text-red"
-              density="comfortable"
-              @click="close()">
-              Cancel ({{ shortcutLabels.close }})
-            </v-btn>
-          </v-card-actions>
-        </v-card>
+  <Teleport to="body">
+    <transition name="fx-scrim">
+      <div
+        v-if="diagramModal"
+        class="fx-scrim"
+        @click="close()"
+      ></div>
+    </transition>
+    <transition name="fx-dialog">
+      <div
+        v-if="diagramModal"
+        class="fx-dialog-stage"
+      >
+        <focus-trap
+          v-model:active="diagramModal"
+          class="trap is-active"
+        >
+          <div
+            tabindex="0"
+            class="fx-dialog"
+            @keydown.esc="close()"
+            @keyup.alt.s="saveAction()"
+            @keyup.meta.s="saveAction()"
+            @keyup.ctrl.c="close()"
+            @keyup.meta.c="close()"
+          >
+            <div class="fx-panel-inner">
+              <header class="fx-panel-header">
+                <div class="fx-panel-title">
+                  <span class="fx-title-chip" :class="update ? 'fx-chip-edit' : 'fx-chip-add'">
+                    {{ update ? 'UPDATE' : 'CREATE' }}
+                  </span>
+                  <h2 class="fx-title">DIAGRAM</h2>
+                </div>
+                <button
+                  type="button"
+                  class="fx-close"
+                  aria-label="Close diagram form"
+                  @click="close()"
+                >✕</button>
+              </header>
+
+              <div class="fx-readout">
+                <span class="fx-readout-kv fx-readout-wide">
+                  <span class="fx-readout-k">ID</span>
+                  <span class="fx-readout-v">{{ id || 'unsaved' }}</span>
+                </span>
+                <span class="fx-readout-kv">
+                  <span class="fx-readout-k">MODE</span>
+                  <span class="fx-readout-v">{{ update ? 'UPDATE' : 'NEW' }}</span>
+                </span>
+                <span class="fx-readout-kv">
+                  <span class="fx-readout-k">ENGINE</span>
+                  <span class="fx-readout-v">COLA</span>
+                </span>
+              </div>
+
+              <div class="fx-panel-body">
+                <div class="fx-grid">
+                  <label class="fx-field">
+                    <span class="fx-label">ID <em class="fx-opt">read-only</em></span>
+                    <input class="fx-input fx-input-static" type="text" readonly :value="id" />
+                  </label>
+                  <label class="fx-field">
+                    <span class="fx-label">Diagram Name</span>
+                    <input class="fx-input" type="text" v-model="name" placeholder="Name this diagram" />
+                  </label>
+                </div>
+
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Diagram Description</span>
+                  <textarea
+                    class="fx-input fx-textarea"
+                    v-model="description"
+                    rows="2"
+                    placeholder="Enter a description for the new diagram"
+                  ></textarea>
+                </label>
+
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Layout Engine <em class="fx-opt">read-only</em></span>
+                  <input class="fx-input fx-input-static" type="text" readonly :value="'Cola'" />
+                </label>
+
+                <div class="fx-grid">
+                  <label class="fx-field">
+                    <span class="fx-label">Edge Length</span>
+                    <input class="fx-input" type="number" v-model="colaOpts.edgeLength" />
+                  </label>
+                  <label class="fx-field">
+                    <span class="fx-label">Node Spacing</span>
+                    <input class="fx-input" type="number" v-model="colaOpts.nodeSpacing" />
+                  </label>
+                </div>
+
+                <div class="fx-grid">
+                  <label class="fx-field">
+                    <span class="fx-label">Flow Direction</span>
+                    <div class="fx-select">
+                      <button
+                        type="button"
+                        class="fx-select-trigger"
+                        @click.stop="toggleSel('flow')"
+                      >{{ flowLabel }}<span class="fx-caret">▾</span></button>
+                      <transition name="fx-drop">
+                        <ul v-if="openSel === 'flow'" class="fx-options">
+                          <li
+                            v-for="opt in flowOptions"
+                            :key="opt.label"
+                            class="fx-option"
+                            :class="{ 'fx-option-active': colaOpts.flow === opt.value }"
+                            @click="pickFlow(opt.value)"
+                          >{{ opt.label }}</li>
+                        </ul>
+                      </transition>
+                    </div>
+                  </label>
+                  <label class="fx-field">
+                    <span class="fx-label">Max Simulation Time <em class="fx-opt">ms</em></span>
+                    <input class="fx-input" type="number" v-model="colaOpts.maxSimulationTime" />
+                  </label>
+                </div>
+
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Cola Constraints <em class="fx-opt">JSON</em></span>
+                  <textarea
+                    class="fx-input fx-textarea"
+                    v-model="colaConstraintsText"
+                    rows="4"
+                    placeholder='Array of cola constraints: [{"type":"alignment","axis":"y","offsets":[{"node":"id","offset":0}]}, {"axis":"x","left":"id","right":"id","gap":50}]'
+                  ></textarea>
+                </label>
+
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">JSON Diagram</span>
+                  <textarea
+                    class="fx-input fx-textarea"
+                    v-model="jsonDiagram"
+                    rows="5"
+                    placeholder="JSON Data of the Diagram"
+                  ></textarea>
+                </label>
+              </div>
+
+              <footer class="fx-panel-actions">
+                <button
+                  v-if="update"
+                  type="button"
+                  class="fx-btn fx-btn-primary"
+                  @click="updateLocalDiagram()"
+                >Update <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+                <button
+                  v-else
+                  type="button"
+                  class="fx-btn fx-btn-primary"
+                  @click="create()"
+                >Create <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-ghost"
+                  @click="close()"
+                >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+              </footer>
+            </div>
+          </div>
+        </focus-trap>
       </div>
-    </focus-trap>
-  </v-dialog>
+    </transition>
+  </Teleport>
 </template>
 
 <script>
@@ -107,18 +193,30 @@ export default {
       diagramModal: false,
       update:      null,
       layoutMode: 'cola',
-      colaOpts:  { edgeLength: 80, nodeSpacing: 10, flow: null, avoidOverlap: true, maxSimulationTime: 1500 },
+      colaOpts:  this.defaultColaOpts(),
       colaConstraintsText: '[]',
       colaConstraints: [],
       jsonDiagram: null,
+      openSel:     null,
+      flowOptions: [
+        { label: 'None',            value: null },
+        { label: 'Horizontal (x)',  value: 'x' },
+        { label: 'Vertical (y)',    value: 'y' },
+      ],
     }
   },
   computed: {
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
+    flowLabel() {
+      const opt = this.flowOptions.find(o => o.value === this.colaOpts.flow)
+      return opt ? opt.label : 'None'
+    },
   },
   mounted() {
+    document.addEventListener('click', this.onDocClick)
+
     this.emitter.on('saveDiagram', () => {
       this.setDiagramInfo()
       const mod = this._mod()
@@ -138,6 +236,9 @@ export default {
 
     this.emitter.on('newDiagram', () => this.newDiagram())
   },
+  beforeUnmount() {
+    document.removeEventListener('click', this.onDocClick)
+  },
 
   methods: {
     _mod() {
@@ -145,17 +246,47 @@ export default {
       return this.modifier?.value ?? this.modifier
     },
 
+    toggleSel(key) {
+      this.openSel = this.openSel === key ? null : key
+    },
+
+    pickFlow(val) {
+      this.colaOpts.flow = val
+      this.openSel = null
+    },
+
+    onDocClick() {
+      this.openSel = null
+    },
+
+    saveAction() {
+      if (this.update) this.updateLocalDiagram()
+      else this.create()
+    },
+
+    defaultColaOpts() {
+      const defaults = D3Util.appDefaults()
+      return {
+        edgeLength:        defaults.defaultColaEdgeLength,
+        nodeSpacing:       defaults.defaultColaNodeSpacing,
+        flow:              defaults.defaultColaFlow,
+        avoidOverlap:      defaults.defaultColaAvoidOverlap,
+        maxSimulationTime: defaults.defaultColaMaxSimulationTime,
+      }
+    },
+
     newDiagram() {
       this.$cookies.remove('LastLocallySavedItemId')
 
       const settings = this.$cookies.get('settings') || D3Util.appDefaults()
+      const defaults = D3Util.appDefaults()
       this.layoutMode = 'cola'
       this.colaOpts = {
-        edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : 80,
-        nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : 10,
-        flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
-        avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : true,
-        maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
+        edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : defaults.defaultColaEdgeLength,
+        nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : defaults.defaultColaNodeSpacing,
+        flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : defaults.defaultColaFlow,
+        avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap,
+        maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime,
       }
       this.colaConstraintsText = '[]'
       this.colaConstraints = []
@@ -339,7 +470,6 @@ export default {
 
     _newModifier(d3dInfo) {
       const newMod = markRaw(new DiagramGraph(d3dInfo, this.emitter))
-      // ThreeDRenderer will be reconnected automatically by DiagramGraphView watcher
       this.emitter.emit('updateModifier', newMod)
     },
 

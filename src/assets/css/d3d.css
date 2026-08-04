@@ -732,6 +732,18 @@ textarea {
   border-style: solid;
 }
 
+/* ── Auto-discovered power-group backdrop ────────────────────────── */
+
+.node-card.power-group {
+  background: rgba(255, 160, 80, 0.08);
+  border: 1.5px solid rgba(255, 160, 80, 0.28);
+  border-radius: 10px;
+  pointer-events: none;
+  cursor: default;
+  display: block;
+  box-shadow: none;
+}
+
 /* ── Keyboard hint badges (f-key hint mode) ─────────────────────── */
 
 .hint-badge {
@@ -1138,6 +1150,73 @@ textarea {
 .fx-panel-leave-to {
   opacity: 0;
   transform: translateX(48px);
+}
+
+/* ── Futuristic centered dialog (login / diagram save-edit / open) ─── */
+
+.fx-dialog-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+/* Dialog-on-top-of-dialog layering (e.g. edit-from-open-list) */
+.fx-scrim-front {
+  z-index: 1019;
+}
+
+.fx-dialog-stage-front {
+  z-index: 1020;
+}
+
+.fx-dialog {
+  position: relative;
+  pointer-events: auto;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(var(--fx-glass-top), 0.98), rgba(var(--fx-glass-bottom), 0.98));
+  border-top: 3px solid rgb(var(--fx-accent));
+  border-radius: 10px;
+  border-left: 1px solid rgba(var(--fx-accent), 0.18);
+  border-right: 1px solid rgba(var(--fx-accent), 0.18);
+  border-bottom: 1px solid rgba(var(--fx-accent), 0.18);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.6),
+    0 0 42px rgba(var(--fx-accent), 0.18);
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.fx-dialog::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgb(var(--fx-accent)), transparent 70%);
+}
+
+.fx-dialog-wide {
+  width: min(780px, 100%);
+}
+
+.fx-dialog-enter-active,
+.fx-dialog-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-dialog-enter-from,
+.fx-dialog-leave-to {
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
 }
 
 .fx-drop-enter-active,
