@@ -1,8 +1,6 @@
-import { runColaLayout } from '@/helpers/colaLayout'
 import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
-import { SCALE } from '@/helpers/ThreeDRenderer'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -10,7 +8,7 @@ export default class DiagramGraph {
     this.emitter = emitter
     this.cy = d3dInfo.diagram          // GraphModel (facade: nodes()/edges()/getElementById())
     this.diagram = d3dInfo.diagram     // alias kept for backward compat
-    this.renderer = null               // ThreeDRenderer, set by DiagramGraphView
+    this.renderer = null               // CytoscapeRenderer, set by DiagramGraphView
     this.selectedNodes = []
     this.doubleSelection = []
     this.selectedEdges = []
@@ -18,25 +16,21 @@ export default class DiagramGraph {
 
     // Layout options — read/written by DiagramForm
     const settings = VueCookies.get('settings') || D3Util.appDefaults()
-    this.layoutMode = 'cola'           // cola is the single layout engine now
+    this.layoutMode = 'cola'
     this.colaOpts = Object.assign({
-      edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : 80,
-      nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : 10,
-      flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
+      edgeLength:        settings.defaultColaEdgeLength   !== undefined ? Number(settings.defaultColaEdgeLength)   : 120,
+      nodeSpacing:       settings.defaultColaNodeSpacing  !== undefined ? Number(settings.defaultColaNodeSpacing)  : 30,
+      flow:              settings.defaultColaFlow         !== undefined ? settings.defaultColaFlow                 : null,
       avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : true,
       maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
+      gravity:           settings.defaultColaGravity           !== undefined ? Number(settings.defaultColaGravity)           : 0,
     }, d3dInfo.colaOpts)
 
-    // User constraints (webcola DSL) — ride on the model so serialization picks
-    // them up, and are mirrored here for DiagramForm.
     this.colaConstraints = d3dInfo.colaConstraints || []
     this.cy.colaConstraints = this.colaConstraints
-
-    this.viewMode = '2D'               // '2D' | '3D'
-    this.threePositions = null         // Map<nodeId, {x,y,z}> when viewMode === '3D'
   }
 
-  // ─── Convenience counts (replaces diagram.nodeCount() / edgeCount()) ─────────
+  // ─── Convenience counts ───────────────────────────────────────────────────────
 
   nodeCount() {
     return this.cy.nodes().length
@@ -65,12 +59,8 @@ export default class DiagramGraph {
   }
 
   updateNode(data, id) {
-    console.log('[DiagramGraph] updateNode called', { id, nodeLabel: data.nodeLabel, shape: data.nodeShape, data })
     const node = this.cy.getElementById(id)
-    if (node.empty()) {
-      console.warn('[DiagramGraph] updateNode target node was empty/not found', id)
-      return
-    }
+    if (node.empty()) return
 
     node.data({
       label:      data.nodeLabel,
@@ -202,7 +192,6 @@ export default class DiagramGraph {
   }
 
   deleteEdge(id) {
-    // Accepts string edge ID or legacy {v, w} object
     const edge = this._resolveEdge(id)
     if (edge && !edge.empty()) {
       edge.remove()
@@ -261,7 +250,7 @@ export default class DiagramGraph {
     }
   }
 
-  // ─── Index-based accessors (j/k navigation) ──────────────────────────────────
+  // ─── Index-based accessors ────────────────────────────────────────────────────
 
   getNodeId(index) {
     const nodes = this.cy.nodes()
@@ -273,7 +262,6 @@ export default class DiagramGraph {
     return (index >= 0 && index < edges.length) ? edges[index].id() : null
   }
 
-  // Returns the HTML element for a node (the CSS3D node card div)
   getNode(index) {
     const id = this.getNodeId(index)
     return id && this.renderer ? this.renderer.getNodeElement(id) : null
@@ -283,16 +271,10 @@ export default class DiagramGraph {
     return this.renderer ? this.renderer.getNodeElement(id) : null
   }
 
-  // Edges are WebGL lines — no DOM element; returns null for compat
-  getEdge() {
-    return null
-  }
+  getEdge()      { return null }
+  getEdgeById()  { return null }
 
-  getEdgeById() {
-    return null
-  }
-
-  // ─── Visual selection (delegates to ThreeDRenderer) ──────────────────────────
+  // ─── Visual selection ─────────────────────────────────────────────────────────
 
   selectNode(index) {
     const id = this.getNodeId(index)
@@ -328,119 +310,12 @@ export default class DiagramGraph {
 
   redraw(options = {}) {
     if (!this.renderer) return
-
-    if (!options.pan && !options.zoom && this.viewMode !== '3D') {
-      this._runLayout()
-    }
-
-    this.renderer.updateScene(this.cy, options)
-
-    // In 3-D mode nodes live outside the 2-D positions — re-apply them
-    if (this.viewMode === '3D' && this.threePositions) {
-      this.renderer.transitionToPositions(this.threePositions)
-    }
-
+    this.renderer.updateScene(this.cy, { ...options, colaOpts: this.colaOpts })
     this._saveTempDiagram()
   }
 
-  // ─── 3-D layout modes ─────────────────────────────────────────────────────────
-
-  /**
-   * Animate nodes into a 3-D arrangement. mode: 'sphere' | 'helix' | 'hierarchy'
-   */
-  apply3DLayout(mode) {
-    if (!this.renderer) return
-    let positions
-    switch (mode) {
-      case 'sphere':    positions = this._spherePositions(this.cy.nodes()); break
-      case 'helix':     positions = this._helixPositions(this.cy.nodes());  break
-      case 'hierarchy': positions = this._hierarchyPositions(this.cy.nodes()); break
-      default: return
-    }
-    this.viewMode = '3D'
-    this.threePositions = positions
-    this.renderer.enable3D()
-    this.renderer.transitionToPositions(positions)
-  }
-
-  backTo2D() {
-    if (!this.renderer) return
-    this.viewMode = '2D'
-    this.threePositions = null
-    this._runLayout()
-    this.renderer.enable2D()
-    this.renderer.updateScene(this.cy)
-  }
-
-  // Nodes spread evenly over a sphere (fibonacci/golden-angle spiral)
-  _spherePositions(nodes) {
-    const n = nodes.length
-    const R = Math.max(n * 55, 300)
-    const positions = new Map()
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5))
-    nodes.forEach((node, i) => {
-      const y      = 1 - (i / Math.max(n - 1, 1)) * 2
-      const radius = Math.sqrt(Math.max(0, 1 - y * y))
-      const theta  = goldenAngle * i
-      positions.set(node.id(), {
-        x: Math.cos(theta) * radius * R,
-        y: y * R,
-        z: Math.sin(theta) * radius * R,
-      })
-    })
-    return positions
-  }
-
-  // Nodes wound around a vertical helix
-  _helixPositions(nodes) {
-    const n = nodes.length
-    const positions = new Map()
-    const radius = Math.max(n * 40, 250)
-    const height = Math.max(n * 80, 500)
-    nodes.forEach((node, i) => {
-      const t     = n > 1 ? i / (n - 1) : 0
-      const angle = t * 3 * Math.PI * 2
-      positions.set(node.id(), {
-        x: Math.cos(angle) * radius,
-        y: (t - 0.5) * height,
-        z: Math.sin(angle) * radius,
-      })
-    })
-    return positions
-  }
-
-  // Reuse the current 2-D layout, then push each rank (by y) deeper on the Z axis
-  _hierarchyPositions(nodes) {
-    this._runLayout()
-    const sorted = nodes
-      .map(node => ({ id: node.id(), y: node.position().y }))
-      .sort((a, b) => a.y - b.y)
-
-    const positions = new Map()
-    let layer = -1
-    let lastY = null
-    sorted.forEach(({ id, y }) => {
-      if (y !== lastY) { layer++; lastY = y }
-      const p = this.cy.getElementById(id).position()
-      positions.set(id, {
-        x: p.x * SCALE,
-        y: -p.y * SCALE,
-        z: -layer * 120,
-      })
-    })
-    return positions
-  }
-
-  _runLayout() {
-    if (this.nodeCount() === 0) return
-    try {
-      const { edgeRoutes } = runColaLayout(this.cy, this.colaOpts, this.colaConstraints)
-      this.cy.edgeRoutes = edgeRoutes
-      console.debug('[_runLayout] positions after layout:', this.cy.nodes().map(n => ({ id: n.id(), ...n.position() })))
-      console.debug('[_runLayout] edgeRoutes size:', edgeRoutes?.size)
-    } catch (err) {
-      console.error('[_runLayout] Cola layout failed', err)
-    }
+  reset() {
+    if (this.renderer) this.renderer.resetCamera()
   }
 
   _saveTempDiagram() {
@@ -460,21 +335,15 @@ export default class DiagramGraph {
     }
   }
 
-  // ─── Misc helpers (kept for backward compat) ─────────────────────────────────
+  // ─── Misc helpers ─────────────────────────────────────────────────────────────
 
   arrayRemove(arr, value) {
     return arr.filter(el => el !== value)
   }
 
-  clearCluster() {
-    // No-op: compound clusters are handled by cola groups + the renderer
-  }
+  clearCluster() {}
 
   listEdges() {
     this.cy.edges().forEach(e => console.log(e.id(), e.data()))
-  }
-
-  reset() {
-    if (this.renderer) this.renderer.resetCamera()
   }
 }

@@ -1460,3 +1460,146 @@ textarea {
 .v-list.fx-nav-list .v-list-item--active .v-icon {
   color: rgb(var(--fx-title-ink));
 }
+
+/* Hint badges overlay (cytoscape canvas has no per-node DOM elements) */
+.cytoscape-hints-layer {
+  pointer-events: none;
+}
+
+.cytoscape-hint-anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.cytoscape-hint-anchor .hint-badge {
+  --fx-hint-link: #fff;
+  --fx-hint-bg: #36004c;
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 30;
+  animation: fx-hint-pop 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cytoscape-hint-anchor .hint-badge a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--fx-hint-link);
+  background: var(--fx-hint-bg);
+  border: 1px solid rgba(var(--fx-accent), 0.55);
+  box-shadow:
+    0 0 0 3px rgba(var(--fx-accent), 0.12),
+    0 0 14px rgba(var(--fx-accent), 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.45);
+  text-decoration: none;
+}
+
+.cytoscape-hint-anchor .hint-badge::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--fx-hint-bg);
+}
+
+@keyframes fx-hint-pop {
+  from {
+    transform: translateX(-50%) scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Selection crosshairs (focused node + Enter-selected nodes).
+   The crosshair element is a 0×0 anchor at the node centre; --w/--h hold the
+   rendered half-extents so the corner brackets frame the node. */
+.cytoscape-selection-layer {
+  pointer-events: none;
+}
+
+.cytoscape-crosshair {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+  animation: fx-crosshair-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cytoscape-crosshair .crosshair-bracket {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.cytoscape-crosshair .crosshair-bracket::before,
+.cytoscape-crosshair .crosshair-bracket::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+
+.cytoscape-crosshair .crosshair-bracket::before {
+  width: 12px;
+  height: 2px;
+}
+
+.cytoscape-crosshair .crosshair-bracket::after {
+  width: 2px;
+  height: 12px;
+}
+
+.cytoscape-crosshair .crosshair-bracket.tl { left: calc(-1 * var(--w) - 2px); top: calc(-1 * var(--h) - 2px); }
+.cytoscape-crosshair .crosshair-bracket.tr { left: calc(var(--w) - 10px);    top: calc(-1 * var(--h) - 2px); }
+.cytoscape-crosshair .crosshair-bracket.bl { left: calc(-1 * var(--w) - 2px); top: calc(var(--h) - 10px); }
+.cytoscape-crosshair .crosshair-bracket.br { left: calc(var(--w) - 10px);    top: calc(var(--h) - 10px); }
+
+.cytoscape-crosshair .crosshair-bracket.tl::before { left: 0;  top: 0; }
+.cytoscape-crosshair .crosshair-bracket.tl::after  { left: 0;  top: 0; }
+.cytoscape-crosshair .crosshair-bracket.tr::before { right: 0; top: 0; }
+.cytoscape-crosshair .crosshair-bracket.tr::after  { right: 0; top: 0; }
+.cytoscape-crosshair .crosshair-bracket.bl::before { left: 0;  bottom: 0; }
+.cytoscape-crosshair .crosshair-bracket.bl::after  { left: 0;  bottom: 0; }
+.cytoscape-crosshair .crosshair-bracket.br::before { right: 0; bottom: 0; }
+.cytoscape-crosshair .crosshair-bracket.br::after  { right: 0; bottom: 0; }
+
+.cytoscape-crosshair[data-kind='focus']    { color: rgb(var(--fx-amber)); }
+.cytoscape-crosshair[data-kind='selected'] { color: rgb(var(--fx-accent)); }
+.cytoscape-crosshair[data-kind='double']   { color: rgb(var(--fx-red)); }
+
+@keyframes fx-crosshair-pop {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}

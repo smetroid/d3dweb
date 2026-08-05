@@ -33,7 +33,7 @@
               <div class="fx-readout">
                 <span class="fx-readout-kv fx-readout-wide">
                   <span class="fx-readout-k">STATUS</span>
-                  <span class="fx-readout-v">Cola · three.js</span>
+                  <span class="fx-readout-v">Cola · Cytoscape.js</span>
                 </span>
                 <span class="fx-readout-kv">
                   <span class="fx-readout-k">RELOAD</span>
@@ -156,13 +156,9 @@
                         <input class="fx-input" type="number" v-model.number="settings.defaultColaMaxSimulationTime" />
                       </label>
                       <label class="fx-field">
-                        <span class="fx-label">Rank Direction</span>
-                        <select class="fx-input" v-model="settings.defaultRankDir">
-                          <option value="TB">Top to Bottom (TB)</option>
-                          <option value="BT">Bottom to Top (BT)</option>
-                          <option value="LR">Left to Right (LR)</option>
-                          <option value="RL">Right to Left (RL)</option>
-                        </select>
+                        <span class="fx-label">Gravity</span>
+                        <input class="fx-input" type="number" min="0" step="0.1" v-model.number="settings.defaultColaGravity" />
+                        <small class="fx-toggle-note">0 = no pull; higher pulls disconnected nodes toward center.</small>
                       </label>
                     </div>
                     <label class="fx-toggle">
@@ -179,17 +175,37 @@
                  <section class="fx-section">
                   <h3 class="fx-section-title">Renderer</h3>
                   <div class="fx-section-body">
+                    <label class="fx-toggle">
+                      <div class="fx-toggle-text">
+                        <span>Fit diagram to viewport on open</span>
+                        <small>Auto-zoom so the whole graph is visible</small>
+                      </div>
+                      <input type="checkbox" v-model="settings.defaultZoomFit" />
+                      <span class="fx-toggle-track"></span>
+                    </label>
                     <label class="fx-field">
-                      <span class="fx-label">Fit Zoom Factor</span>
+                      <span class="fx-label">Fit Padding (px)</span>
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="200"
+                        v-model.number="settings.zoomFitFactor"
+                      />
+                      <small class="fx-toggle-note">Pixel padding around the graph when fitting to the viewport.</small>
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Default Zoom Level</span>
                       <input
                         class="fx-input"
                         type="number"
                         step="0.1"
-                        min="1"
-                        max="10"
-                        v-model.number="settings.zoomFitFactor"
+                        min="0.1"
+                        max="5"
+                        v-model.number="settings.defaultZoomLevel"
                       />
-                      <small class="fx-toggle-note">Larger values zoom further out when centering the graph.</small>
+                      <small class="fx-toggle-note">Zoom applied on open. With fit on: 1 = fit, 2 = twice as close, 0.5 = half. With fit off: absolute level.</small>
                     </label>
                     <div class="fx-grid">
                       <label class="fx-field">
@@ -227,8 +243,9 @@
                         <input
                           class="fx-input"
                           type="number"
-                          min="5"
-                          max="50"
+                          step="0.1"
+                          min="0.1"
+                          max="3"
                           v-model.number="settings.defaultArrowScale"
                         />
                       </label>
@@ -309,24 +326,19 @@ export default {
       merged.d3dInfo = Boolean(stored.d3dInfo)
       merged.showHelpPane = Boolean(stored.showHelpPane)
       merged.zoomFitFactor = Number(stored.zoomFitFactor) || defaults.zoomFitFactor
+      merged.defaultZoomFit = stored.defaultZoomFit !== undefined ? Boolean(stored.defaultZoomFit) : defaults.defaultZoomFit
+      merged.defaultZoomLevel = stored.defaultZoomLevel !== undefined ? Number(stored.defaultZoomLevel) : defaults.defaultZoomLevel
       merged.defaultLayoutMode = stored.defaultLayoutMode || defaults.defaultLayoutMode
-      merged.defaultRankDir = stored.defaultRankDir || defaults.defaultRankDir
-      merged.defaultRankSep = stored.defaultRankSep !== undefined ? Number(stored.defaultRankSep) : defaults.defaultRankSep
-      merged.defaultNodeSep = stored.defaultNodeSep !== undefined ? Number(stored.defaultNodeSep) : defaults.defaultNodeSep
-      merged.defaultRanker = stored.defaultRanker || defaults.defaultRanker
-      merged.defaultFcoseIdealEdgeLength = stored.defaultFcoseIdealEdgeLength !== undefined ? Number(stored.defaultFcoseIdealEdgeLength) : defaults.defaultFcoseIdealEdgeLength
-      merged.defaultFcoseNodeRepulsion = stored.defaultFcoseNodeRepulsion !== undefined ? Number(stored.defaultFcoseNodeRepulsion) : defaults.defaultFcoseNodeRepulsion
-      merged.defaultFcoseGravity = stored.defaultFcoseGravity !== undefined ? Number(stored.defaultFcoseGravity) : defaults.defaultFcoseGravity
-      merged.defaultFcoseNumIter = stored.defaultFcoseNumIter !== undefined ? Number(stored.defaultFcoseNumIter) : defaults.defaultFcoseNumIter
       merged.defaultColaEdgeLength = stored.defaultColaEdgeLength !== undefined ? Number(stored.defaultColaEdgeLength) : defaults.defaultColaEdgeLength
       merged.defaultColaNodeSpacing = stored.defaultColaNodeSpacing !== undefined ? Number(stored.defaultColaNodeSpacing) : defaults.defaultColaNodeSpacing
       merged.defaultColaFlow = stored.defaultColaFlow !== undefined ? stored.defaultColaFlow : defaults.defaultColaFlow
       merged.defaultColaAvoidOverlap = stored.defaultColaAvoidOverlap !== undefined ? Boolean(stored.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap
       merged.defaultColaMaxSimulationTime = stored.defaultColaMaxSimulationTime !== undefined ? Number(stored.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime
+      merged.defaultColaGravity = stored.defaultColaGravity !== undefined ? Number(stored.defaultColaGravity) : defaults.defaultColaGravity
       merged.defaultEdgeStyle = stored.defaultEdgeStyle || defaults.defaultEdgeStyle
       merged.defaultEdgeWidth = stored.defaultEdgeWidth !== undefined ? Number(stored.defaultEdgeWidth) : defaults.defaultEdgeWidth
       merged.defaultEdgeOpacity = stored.defaultEdgeOpacity !== undefined ? Number(stored.defaultEdgeOpacity) : defaults.defaultEdgeOpacity
-      merged.defaultArrowScale = stored.defaultArrowScale !== undefined ? Number(stored.defaultArrowScale) : defaults.defaultArrowScale
+      merged.defaultArrowScale = Math.min(3, Math.max(0.1, stored.defaultArrowScale !== undefined ? Number(stored.defaultArrowScale) : defaults.defaultArrowScale))
       return merged
     },
     close () {

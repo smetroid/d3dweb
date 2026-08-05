@@ -1,5 +1,4 @@
 import D3Util from '@/helpers/D3Util'
-import { gsap } from 'gsap'
 import VueCookies from 'vue-cookies'
 
 export default class OtherKeys {
@@ -134,10 +133,12 @@ export default class OtherKeys {
       const shortcut = availHints[i]
       const el       = elements[i]
 
-      // Append a floating badge div to the node card
+      // Append a floating badge div to the node anchor
       const badge = document.createElement('div')
       badge.className = 'hint-badge'
-      badge.innerHTML = `<a href="#" tabindex="-1"><div style="display:table-caption;color:${hintLinkColor};padding:1px 8px 1px 8px;border-radius:10px;background:${hintBGColor}">${shortcut}</div></a>`
+      badge.style.setProperty('--fx-hint-link', hintLinkColor)
+      badge.style.setProperty('--fx-hint-bg', hintBGColor)
+      badge.innerHTML = `<a href="#" tabindex="-1"><span class="hint-char">${shortcut}</span></a>`
       badge.addEventListener('click', this.hintFunction)
       el.appendChild(badge)
 
@@ -175,23 +176,16 @@ export default class OtherKeys {
   }
 
   activeDeactiveNode(index) {
-    const el = this.modifier.getNode(index)
     const selectionExists = this.selectedNodes.indexOf(index)
 
     if (selectionExists === -1) {
       this.selectedNodes.push(this.focusedIndex)
-      if (el) {
-        gsap.fromTo(el, { scale: 1 }, { scale: 1.2, duration: 0.3, yoyo: true, repeat: 1 })
-        el.classList.add('active_node')
-      }
     } else {
       if (this.doubleSelection.length === 0) {
-        if (el) el.classList.add('d_active_node')
         this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
         this.doubleSelection.push(index)
       } else {
         this.selectedNodes = this.modifier.arrayRemove(this.selectedNodes, index)
-        if (el) el.classList.remove('d_active_node')
       }
     }
 

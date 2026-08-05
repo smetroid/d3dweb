@@ -272,6 +272,7 @@ export default {
         flow:              defaults.defaultColaFlow,
         avoidOverlap:      defaults.defaultColaAvoidOverlap,
         maxSimulationTime: defaults.defaultColaMaxSimulationTime,
+        gravity:           defaults.defaultColaGravity,
       }
     },
 
@@ -287,6 +288,7 @@ export default {
         flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : defaults.defaultColaFlow,
         avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap,
         maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime,
+        gravity:           settings.defaultColaGravity !== undefined ? Number(settings.defaultColaGravity) : defaults.defaultColaGravity,
       }
       this.colaConstraintsText = '[]'
       this.colaConstraints = []

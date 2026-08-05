@@ -27,6 +27,7 @@
           ref="threeContainer"
           tabindex="0"
           class="three-container"
+          @mousedown="$event.currentTarget.focus(); $event.preventDefault()"
         />
 
         <div v-if="graphEmpty" class="graph-empty-hint">
@@ -63,7 +64,7 @@
 
 <script>
 import D3Util from '@/helpers/D3Util'
-import ThreeDRenderer from '@/helpers/ThreeDRenderer'
+import CytoscapeRenderer from '@/helpers/CytoscapeRenderer'
 import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
@@ -131,9 +132,7 @@ export default {
       if (!container) return
 
       if (!this.threeDRenderer) {
-        // markRaw: Vue must never proxy the THREE scene graph (non-configurable
-        // props like Object3D.modelViewMatrix break Proxy get invariants).
-        this.threeDRenderer = markRaw(new ThreeDRenderer(container, this.emitter))
+        this.threeDRenderer = markRaw(new CytoscapeRenderer(container, this.emitter))
         this.threeDRenderer.init()
       }
 
@@ -151,6 +150,7 @@ export default {
       const data = mod.getNodeData(nodeId)
       if (D3Util.debug) console.log('[node-click]', nodeId, data)
       this.d3Data = data
+      this.threeDRenderer?.setFocusedNode(nodeId)
       this.emitter.emit('changeActive', 'Edit Node')
       this.openSheet = true
     },
@@ -270,6 +270,7 @@ export default {
             this.doubleSelection = result.doubleSelection
             mod.selectedNodes    = result.selectedNodes
             mod.doubleSelection  = result.doubleSelection
+            this._syncSelectionCrosshairs()
           } else if (event.key === 'Escape') {
             if (this.escCount >= 2) this.resetValues()
             else this.escCount++
@@ -294,6 +295,7 @@ export default {
         if (this.focusedNodeId) mod.removeNodeSelectionById(this.focusedNodeId)
         if (this.focusedEdgeId) mod.removeEdgeSelectionById(this.focusedEdgeId)
       }
+      this.threeDRenderer?.clearSelectionCrosshairs()
       this.selectedNodes   = []
       this.selectedEdges   = []
       this.doubleSelection = []
@@ -303,6 +305,16 @@ export default {
       this.escCount        = 0
       if (mod) mod.redraw()
       this.emitter.emit('changeActive')
+    },
+
+    // Resolve Enter-selected node indices to ids and tell the renderer to
+    // draw a crosshair over each selected node.
+    _syncSelectionCrosshairs() {
+      const mod = this.modifier?.value ?? this.modifier
+      if (!mod || !this.threeDRenderer) return
+      const ids  = (this.selectedNodes || []).map(i => mod.getNodeId(i)).filter(Boolean)
+      const dIds = (this.doubleSelection || []).map(i => mod.getNodeId(i)).filter(Boolean)
+      this.threeDRenderer.setSelectedNodes(ids, dIds)
     },
   },
   watch: {

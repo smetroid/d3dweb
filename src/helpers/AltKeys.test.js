@@ -48,23 +48,6 @@ describe('AltKeys camera controls', () => {
   })
 })
 
-describe('AltKeys 3D layout modes', () => {
-  it('Alt+1 returns to 2D', () => {
-    const { modifier, alt } = makeSut()
-    alt.key('1')
-    expect(modifier.backTo2D).toHaveBeenCalledOnce()
-  })
-
-  it('Alt+2/3/4 apply sphere/helix/hierarchy', () => {
-    const { modifier, alt } = makeSut()
-    alt.key('2')
-    alt.key('3')
-    alt.key('4')
-    expect(modifier.apply3DLayout).toHaveBeenNthCalledWith(1, 'sphere')
-    expect(modifier.apply3DLayout).toHaveBeenNthCalledWith(2, 'helix')
-    expect(modifier.apply3DLayout).toHaveBeenNthCalledWith(3, 'hierarchy')
-  })
-})
 
 describe('AltKeys misc', () => {
   it('never returns a reset signal', () => {

@@ -417,7 +417,16 @@ export default {
   },
   methods: {
     toggleTheme () {
-      this.$vuetify.theme.global.name = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
+      const next = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
+      this.$vuetify.theme.global.name = next
+      // Persist the choice so it survives a refresh
+      try {
+        const settings = this.$cookies.get('settings') || {}
+        settings.defaultTheme = next
+        this.$cookies.set('settings', settings)
+      } catch (e) { /* settings unavailable — ignore */ }
+      // Sync data-theme before themeChanged so renderers read the new CSS vars
+      this.syncThemeAttr()
       this.emitter.emit('themeChanged')
     },
     syncThemeAttr () {
