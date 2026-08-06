@@ -93,99 +93,21 @@ export function edgeStyleFrom(settings, accent = '#5e74ff') {
 // theme-invariant; node/edge colors come from the palette.
 export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
   return [
+    // ── Edges ────────────────────────────────────────────────────────────────
     {
       selector: 'edge',
       style:    edgeStyleFrom(settings, pal.accent),
     },
     {
-      selector: 'node',
+      selector: 'edge.hovered',
       style: {
-        'width':                      'label',
-        'height':                     'label',
-        'padding':                    '8px 14px',
-        'background-color':                   pal.nodeBottom,
-        'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
-        'background-gradient-stop-positions': '0 100',
-        'background-gradient-direction':      'to-bottom',
-        'border-color':               pal.accent,
-        'border-width':               1.5,
-        'border-opacity':             0.75,
-        'color':                      pal.label,
-        'label':                      'data(label)',
-        'text-valign':                'center',
-        'text-halign':                'center',
-        'text-wrap':                  'wrap',
-        'text-max-width':             '120px',
-        'font-family':                'ui-monospace, "Cascadia Code", Menlo, monospace',
-        'font-size':                  12,
-        'font-weight':                600,
-        'shape':                      'round-rectangle',
-        'underlay-color':             pal.accent,
-        'underlay-padding':           '4px',
-        'underlay-opacity':           0.08,
-        'overlay-color':              pal.accent,
-        'overlay-padding':            '2px',
-        'overlay-opacity':            0.12,
-      },
-    },
-    {
-      selector: 'node:parent',
-      style: {
-        'background-color':                   pal.accentA(0.05),
-        'background-gradient-stop-colors':    `${pal.accentA(0.14)} ${pal.accentA(0.03)}`,
-        'background-gradient-stop-positions': '0 100',
-        'background-gradient-direction':      'to-bottom',
-        'background-opacity':                 1,
-        'border-color':               pal.accentA(0.55),
-        'border-style':               'dashed',
-        'border-width':               1.5,
-        'color':                      pal.labelSoft,
-        'text-valign':                'top',
-        'text-halign':                'left',
-        'text-background-color':      pal.accentA(0.28),
-        'text-background-opacity':    1,
-        'text-background-padding':    '4px',
-        'text-background-shape':      'round-rectangle',
-        'text-margin-x':              8,
-        'text-margin-y':              8,
-        'font-weight':                'bold',
-        'font-size':                  13,
-        'padding':                    '20px',
-        'shape':                      'round-rectangle',
-        'underlay-color':             pal.accent,
-        'underlay-padding':           '8px',
-        'underlay-opacity':           0.06,
-      },
-    },
-    {
-      selector: 'node.focused',
-      style: {
-        'border-color':   '#ffab40',
-        'border-width':   2.5,
-        'border-opacity': 1,
-      },
-    },
-    {
-      selector: 'node.active_node',
-      style: {
-        'border-color':     '#ffab40',
-        'border-width':     2.5,
-        'border-opacity':   1,
-        'background-color': 'rgba(255, 171, 64, 0.12)',
-        'underlay-color':   '#ffab40',
-        'underlay-padding': '6px',
-        'underlay-opacity': 0.22,
-      },
-    },
-    {
-      selector: 'node.d_active_node',
-      style: {
-        'border-color':    '#ff6e40',
-        'border-width':    2.5,
-        'border-opacity':  1,
-        'underlay-color':  '#ff6e40',
-        'underlay-padding': '6px',
-        'underlay-opacity': 0.18,
+        'opacity':            1,
+        'width':              3,
+        'line-color':         pal.accent,
+        'target-arrow-color': pal.accent,
+        'underlay-color':     pal.accent,
+        'underlay-padding':   4,
+        'underlay-opacity':   0.15,
       },
     },
     {
@@ -194,19 +116,168 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
         'line-color':         '#ffab40',
         'target-arrow-color': '#ffab40',
         'opacity':            1,
-        'width':              3,
+        'width':              3.5,
         'underlay-color':     '#ffab40',
-        'underlay-padding':   5,
-        'underlay-opacity':   0.18,
+        'underlay-padding':   6,
+        'underlay-opacity':   0.22,
       },
     },
     {
-      selector: 'edge[arrowhead]',
+      selector: 'edge[?arrowhead]',
       style: { 'target-arrow-shape': 'data(arrowhead)' },
     },
     {
-      selector: 'edge[arrowheadStyle]',
+      selector: 'edge[?arrowheadStyle]',
       style: { 'target-arrow-fill': 'data(arrowheadStyle)' },
+    },
+
+    // ── Nodes (base) ─────────────────────────────────────────────────────────
+    {
+      selector: 'node',
+      style: {
+        'padding':                            '8px 14px',
+        'background-color':                   pal.nodeBottom,
+        'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
+        'background-gradient-stop-positions': '0 100',
+        'background-gradient-direction':      'to-bottom',
+        'background-opacity':                 0.88,
+        'border-color':                       pal.accent,
+        'border-width':                       1.5,
+        'border-opacity':                     0.8,
+        'color':                              pal.label,
+        'label':                              'data(label)',
+        'text-valign':                        'center',
+        'text-halign':                        'center',
+        'text-wrap':                          'wrap',
+        'text-max-width':                     '120px',
+        'font-family':                        'ui-monospace, "Cascadia Code", Menlo, monospace',
+        'font-size':                          12,
+        'font-weight':                        600,
+        'shape':                              'round-rectangle',
+        'underlay-color':                     pal.accent,
+        'underlay-padding':                   '5px',
+        'underlay-opacity':                   0.06,
+        'overlay-color':                      pal.accent,
+        'overlay-padding':                    '2px',
+        'overlay-opacity':                    0.08,
+      },
+    },
+
+    // Per-node shape driven by form data (e.g. hexagon, diamond, star …)
+    {
+      selector: 'node[?nodeShape]',
+      style: { 'shape': 'data(nodeShape)' },
+    },
+
+    // Shape-based accent colors (theme-invariant semantic tints)
+    {
+      selector: 'node[nodeShape="ellipse"]',
+      style: { 'border-color': '#26a69a', 'underlay-color': '#26a69a' },
+    },
+    {
+      selector: 'node[nodeShape="diamond"], node[nodeShape="round-diamond"]',
+      style: { 'border-color': '#ffab40', 'underlay-color': '#ffab40' },
+    },
+    {
+      selector: 'node[nodeShape="hexagon"], node[nodeShape="octagon"]',
+      style: { 'border-color': '#29b6f6', 'underlay-color': '#29b6f6' },
+    },
+    {
+      selector: 'node[nodeShape="star"]',
+      style: { 'border-color': '#ef5350', 'underlay-color': '#ef5350' },
+    },
+    {
+      selector: 'node[nodeShape="tag"], node[nodeShape="barrel"]',
+      style: { 'border-color': '#ab47bc', 'underlay-color': '#ab47bc' },
+    },
+
+    // Custom fill color parsed from the node's "style" field (fill: #hex).
+    // background-gradient-stop-colors does not support data() mappings, so
+    // the gradient override is applied inline via ele.style() in updateScene.
+    {
+      selector: 'node[?fillColor]',
+      style: {
+        'border-color':   'data(fillColor)',
+        'underlay-color': 'data(fillColor)',
+      },
+    },
+
+    // ── Compound nodes ───────────────────────────────────────────────────────
+    {
+      selector: 'node:parent',
+      style: {
+        // accent-tinted header strip at top 18%, then regular node gradient
+        'background-color':                   pal.nodeBottom,
+        'background-gradient-stop-colors':    `${pal.accentA(0.22)} ${pal.nodeTop} ${pal.nodeBottom}`,
+        'background-gradient-stop-positions': '0 18 100',
+        'background-gradient-direction':      'to-bottom',
+        'background-opacity':                 0.6,
+        'border-color':                       pal.labelSoft,
+        'border-style':                       'dashed',
+        'border-width':                       1.5,
+        'border-opacity':                     0.45,
+        'color':                              pal.labelSoft,
+        'text-valign':                        'top',
+        'text-halign':                        'left',
+        'text-background-color':              pal.accentA(0.35),
+        'text-background-opacity':            1,
+        'text-background-padding':            '4px',
+        'text-background-shape':              'round-rectangle',
+        'text-margin-x':                      8,
+        'text-margin-y':                      8,
+        'font-weight':                        'bold',
+        'font-size':                          13,
+        'padding':                            '20px',
+        'shape':                              'round-rectangle',
+        'underlay-color':                     pal.nodeTop,
+        'underlay-padding':                   '8px',
+        'underlay-opacity':                   0.04,
+      },
+    },
+
+    // ── Node interaction states ───────────────────────────────────────────────
+    {
+      selector: 'node.hovered',
+      style: {
+        'border-opacity':   1,
+        'border-width':     2.5,
+        'underlay-opacity': 0.18,
+        'underlay-padding': '7px',
+      },
+    },
+    {
+      selector: 'node.focused',
+      style: {
+        'border-color':     '#ffab40',
+        'border-width':     3,
+        'border-opacity':   1,
+        'underlay-color':   '#ffab40',
+        'underlay-padding': '6px',
+        'underlay-opacity': 0.2,
+      },
+    },
+    {
+      selector: 'node.active_node',
+      style: {
+        'border-color':     '#ffab40',
+        'border-width':     3,
+        'border-opacity':   1,
+        'background-color': 'rgba(255,171,64,0.18)',
+        'underlay-color':   '#ffab40',
+        'underlay-padding': '8px',
+        'underlay-opacity': 0.3,
+      },
+    },
+    {
+      selector: 'node.d_active_node',
+      style: {
+        'border-color':     '#ff6e40',
+        'border-width':     3,
+        'border-opacity':   1,
+        'underlay-color':   '#ff6e40',
+        'underlay-padding': '8px',
+        'underlay-opacity': 0.22,
+      },
     },
   ]
 }
@@ -238,6 +309,11 @@ export default class CytoscapeRenderer {
     this.cy.on('tap', 'node', (evt) => {
       this.emitter?.emit('node-click', evt.target.id())
     })
+
+    this.cy.on('mouseover', 'node', (evt) => { evt.target.addClass('hovered') })
+    this.cy.on('mouseout',  'node', (evt) => { evt.target.removeClass('hovered') })
+    this.cy.on('mouseover', 'edge', (evt) => { evt.target.addClass('hovered') })
+    this.cy.on('mouseout',  'edge', (evt) => { evt.target.removeClass('hovered') })
 
     // Keep hint badges + selection crosshairs glued to their nodes while panning/zooming
     this._viewportEmitPending = false
@@ -364,7 +440,22 @@ export default class CytoscapeRenderer {
         ele.move({ parent: d.parent || null })
       }
       delete d.parent
+      // Derive fillColor from the node's "style" field (e.g. "fill: #5f9488")
+      if (d.style) {
+        const m = String(d.style).match(/\bfill\s*:\s*([^;]+)/i)
+        d.fillColor = m ? m[1].trim() : null
+      }
       ele.data(d)
+      // Apply gradient override inline — gradient stop-colors don't support
+      // data() mappings so we set the background directly on the element.
+      if (d.fillColor) {
+        ele.style({
+          'background-color':                d.fillColor,
+          'background-gradient-stop-colors': `${d.fillColor} ${d.fillColor}`,
+        })
+      } else {
+        ele.removeStyle('background-color background-gradient-stop-colors')
+      }
     })
     graphModel.edges().forEach(edge => {
       const ele = this.cy.getElementById(edge.id())
