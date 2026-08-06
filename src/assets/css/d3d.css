@@ -1589,7 +1589,12 @@ textarea {
 .cytoscape-crosshair .crosshair-bracket.br::before { right: 0; bottom: 0; }
 .cytoscape-crosshair .crosshair-bracket.br::after  { right: 0; bottom: 0; }
 
-.cytoscape-crosshair[data-kind='focus']    { color: rgb(var(--fx-amber)); }
+.cytoscape-crosshair[data-kind='focus'] {
+  color: rgb(var(--fx-amber));
+  animation:
+    fx-crosshair-pop  0.2s  cubic-bezier(0.34, 1.56, 0.64, 1),
+    fx-focus-pulse    1.6s  ease-in-out infinite 0.2s;
+}
 .cytoscape-crosshair[data-kind='selected'] { color: rgb(var(--fx-accent)); }
 .cytoscape-crosshair[data-kind='double']   { color: rgb(var(--fx-red)); }
 
@@ -1602,4 +1607,9 @@ textarea {
     opacity: 1;
     scale: 1;
   }
+}
+
+@keyframes fx-focus-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
 }

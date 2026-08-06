@@ -30,6 +30,23 @@
           @mousedown="$event.currentTarget.focus(); $event.preventDefault()"
         />
 
+        <div v-if="!graphEmpty" class="fx-viewport-hud">
+          <span class="fx-vp-item">
+            <span class="fx-vp-k">ZOOM</span>
+            <span class="fx-vp-v">{{ zoomDisplay }}</span>
+          </span>
+          <span class="fx-vp-sep">·</span>
+          <span class="fx-vp-item">
+            <span class="fx-vp-v">{{ nodeCount }}</span>
+            <span class="fx-vp-k">N</span>
+          </span>
+          <span class="fx-vp-sep">·</span>
+          <span class="fx-vp-item">
+            <span class="fx-vp-v">{{ edgeCount }}</span>
+            <span class="fx-vp-k">E</span>
+          </span>
+        </div>
+
         <div v-if="graphEmpty" class="graph-empty-hint">
           Empty diagram —
           press <span class="kbd">n</span> to create a node
@@ -87,7 +104,7 @@ export default {
       hintKeysReplaced: '',
       hints:           {},
       d3Data:          {},
-      diagramInfo:     true,
+      diagramInfo:     false,
       selectedNodes:   [],
       selectedEdges:   [],
       doubleSelection: [],
@@ -95,6 +112,9 @@ export default {
       escCount:        0,
       threeDRenderer:  null,
       graphEmpty:      false,
+      zoomLevel:       1,
+      nodeCount:       0,
+      edgeCount:       0,
     }
   },
   mounted() {
@@ -110,7 +130,12 @@ export default {
     this.emitter.on('editNode', () => this._openEdit('nodes'))
     this.emitter.on('editEdge', () => this._openEdit('edges'))
     this.emitter.on('d3ResetValues', () => this.resetValues())
-    this.emitter.on('scene-updated', ({ count }) => { this.graphEmpty = count === 0 })
+    this.emitter.on('scene-updated', ({ count, nodes, edges }) => {
+      this.graphEmpty = count === 0
+      this.nodeCount  = nodes || 0
+      this.edgeCount  = edges || 0
+    })
+    this.emitter.on('viewport-changed', ({ zoom }) => { this.zoomLevel = zoom })
 
     this.emitter.on('setSheetToFalse', () => {
       this.openSheet = false
@@ -317,6 +342,11 @@ export default {
       this.threeDRenderer.setSelectedNodes(ids, dIds)
     },
   },
+  computed: {
+    zoomDisplay() {
+      return (this.zoomLevel || 1).toFixed(2) + '×'
+    },
+  },
   watch: {
     // When App.vue replaces the modifier (new diagram opened), reconnect renderer
     modifier: {
@@ -361,6 +391,50 @@ export default {
   width: 100%;
   height: 100%;
   outline: none;
+  background-image: radial-gradient(circle, rgba(var(--fx-muted), 0.22) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: 0 0;
+}
+
+.fx-viewport-hud {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: rgba(var(--fx-glass-bottom), 0.82);
+  border: 1px solid rgba(var(--fx-accent), 0.28);
+  border-radius: 5px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+.fx-vp-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.fx-vp-k {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--fx-ink-dim));
+}
+
+.fx-vp-v {
+  font-size: 11px;
+  color: rgb(var(--fx-ink));
+}
+
+.fx-vp-sep {
+  color: rgb(var(--fx-ink-dim));
+  opacity: 0.5;
 }
 
 .graph-empty-hint {

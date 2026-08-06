@@ -13,7 +13,7 @@ export const DEFAULT_PALETTE = {
   label:       '#c8d0f0',
   labelSoft:   '#a8b4dc',
   accent:      '#5e74ff',
-  accentA:     (a) => `rgba(94, 116, 255, ${a})`,
+  accentA:     (a) => `rgba(94,116,255,${a})`,
 }
 
 // Reads the app's --fx-* CSS variables (RGB triplets) and returns a cytoscape
@@ -31,7 +31,7 @@ export function paletteFromCSSVars(getVar) {
   const glassTop = read('--fx-glass-top')
   const glassBot = read('--fx-glass-bottom')
   if (!accent) return DEFAULT_PALETTE
-  const rgb = (c) => `rgb(${c.r}, ${c.g}, ${c.b})`
+  const rgb = (c) => `rgb(${c.r},${c.g},${c.b})`
   return {
     nodeTop:    glassTop ? rgb(glassTop) : DEFAULT_PALETTE.nodeTop,
     nodeBottom: glassBot ? rgb(glassBot) : DEFAULT_PALETTE.nodeBottom,
@@ -39,7 +39,7 @@ export function paletteFromCSSVars(getVar) {
     label:      ink      ? rgb(ink)      : DEFAULT_PALETTE.label,
     labelSoft:  inkSoft  ? rgb(inkSoft)  : DEFAULT_PALETTE.labelSoft,
     accent:     rgb(accent),
-    accentA:    (a) => `rgba(${accent.r}, ${accent.g}, ${accent.b}, ${a})`,
+    accentA:    (a) => `rgba(${accent.r},${accent.g},${accent.b},${a})`,
   }
 }
 
@@ -82,10 +82,10 @@ export function edgeStyleFrom(settings, accent = '#5e74ff') {
     'width':                Number(settings.defaultEdgeWidth)   || 2,
     'line-color':           accent,
     'target-arrow-color':   accent,
-    'target-arrow-shape':   'triangle',
+    'target-arrow-shape':   settings.defaultArrowShape || 'vee',
     'arrow-scale':          arrowScale,
     'curve-style':          curve,
-    'opacity':              Number(settings.defaultEdgeOpacity)  || 0.7,
+    'opacity':              Number(settings.defaultEdgeOpacity)  || 0.85,
   }
 }
 
@@ -102,27 +102,27 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       style: {
         'width':                      'label',
         'height':                     'label',
-        'padding':                    '6px 12px',
-        'background-color':           pal.nodeBottom,
-        'background-gradient-from':   pal.nodeTop,
-        'background-gradient-to':     pal.nodeBottom,
-        'background-gradient-direction': 'to-bottom-right',
+        'padding':                    '8px 14px',
+        'background-color':                   pal.nodeBottom,
+        'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
+        'background-gradient-stop-positions': '0 100',
+        'background-gradient-direction':      'to-bottom',
         'border-color':               pal.accent,
         'border-width':               1.5,
-        'border-opacity':             0.7,
+        'border-opacity':             0.75,
         'color':                      pal.label,
         'label':                      'data(label)',
         'text-valign':                'center',
         'text-halign':                'center',
         'text-wrap':                  'wrap',
-        'text-max-width':             '90px',
+        'text-max-width':             '120px',
         'font-family':                'ui-monospace, "Cascadia Code", Menlo, monospace',
         'font-size':                  12,
         'font-weight':                600,
         'shape':                      'round-rectangle',
         'underlay-color':             pal.accent,
         'underlay-padding':           '4px',
-        'underlay-opacity':           0.1,
+        'underlay-opacity':           0.08,
         'overlay-color':              pal.accent,
         'overlay-padding':            '2px',
         'overlay-opacity':            0.12,
@@ -131,21 +131,30 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
     {
       selector: 'node:parent',
       style: {
-        'background-color':           pal.accentA(0.05),
-        'background-gradient-from':   pal.accentA(0.14),
-        'background-gradient-to':     pal.accentA(0.03),
-        'background-gradient-direction': 'to-bottom',
-        'background-opacity':         1,
-        'border-color':               pal.accentA(0.45),
+        'background-color':                   pal.accentA(0.05),
+        'background-gradient-stop-colors':    `${pal.accentA(0.14)} ${pal.accentA(0.03)}`,
+        'background-gradient-stop-positions': '0 100',
+        'background-gradient-direction':      'to-bottom',
+        'background-opacity':                 1,
+        'border-color':               pal.accentA(0.55),
         'border-style':               'dashed',
         'border-width':               1.5,
         'color':                      pal.labelSoft,
         'text-valign':                'top',
         'text-halign':                'left',
+        'text-background-color':      pal.accentA(0.28),
+        'text-background-opacity':    1,
+        'text-background-padding':    '4px',
+        'text-background-shape':      'round-rectangle',
+        'text-margin-x':              8,
+        'text-margin-y':              8,
         'font-weight':                'bold',
         'font-size':                  13,
         'padding':                    '20px',
         'shape':                      'round-rectangle',
+        'underlay-color':             pal.accent,
+        'underlay-padding':           '8px',
+        'underlay-opacity':           0.06,
       },
     },
     {
@@ -161,14 +170,22 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       style: {
         'border-color':     '#ffab40',
         'border-width':     2.5,
-        'background-color': '#251800',
+        'border-opacity':   1,
+        'background-color': 'rgba(255, 171, 64, 0.12)',
+        'underlay-color':   '#ffab40',
+        'underlay-padding': '6px',
+        'underlay-opacity': 0.22,
       },
     },
     {
       selector: 'node.d_active_node',
       style: {
-        'border-color': '#ff6e40',
-        'border-width': 2.5,
+        'border-color':    '#ff6e40',
+        'border-width':    2.5,
+        'border-opacity':  1,
+        'underlay-color':  '#ff6e40',
+        'underlay-padding': '6px',
+        'underlay-opacity': 0.18,
       },
     },
     {
@@ -178,7 +195,18 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
         'target-arrow-color': '#ffab40',
         'opacity':            1,
         'width':              3,
+        'underlay-color':     '#ffab40',
+        'underlay-padding':   5,
+        'underlay-opacity':   0.18,
       },
+    },
+    {
+      selector: 'edge[arrowhead]',
+      style: { 'target-arrow-shape': 'data(arrowhead)' },
+    },
+    {
+      selector: 'edge[arrowheadStyle]',
+      style: { 'target-arrow-fill': 'data(arrowheadStyle)' },
     },
   ]
 }
@@ -197,11 +225,10 @@ export default class CytoscapeRenderer {
       styleEnabled:    true,
       minZoom:         0.08,
       maxZoom:         5,
-      // Native gestures are replaced with grab-metaphor handlers (see
-      // _bindCameraControls): wheel-up zooms in and dragging moves the graph
-      // with the cursor, matching the keyboard shortcuts.
+      // Native pan is kept enabled so cytoscape handles drag-to-pan on all
+      // devices. Only wheel zoom is overridden (see _bindCameraControls).
       userZoomingEnabled: false,
-      userPanningEnabled: false,
+      userPanningEnabled: true,
       boxSelectionEnabled: false,
     })
 
@@ -213,9 +240,22 @@ export default class CytoscapeRenderer {
     })
 
     // Keep hint badges + selection crosshairs glued to their nodes while panning/zooming
+    this._viewportEmitPending = false
     this.cy.on('pan zoom resize', () => {
       this._updateHintAnchors()
       this._updateCrosshairs()
+      if (!this._viewportEmitPending) {
+        this._viewportEmitPending = true
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => {
+            this._viewportEmitPending = false
+            if (this.cy) this.emitter?.emit('viewport-changed', { zoom: this.cy.zoom() })
+          })
+        } else {
+          this._viewportEmitPending = false
+          this.emitter?.emit('viewport-changed', { zoom: this.cy.zoom() })
+        }
+      }
     })
 
     this._onThemeChangedBound = () => this._applyTheme()
@@ -227,60 +267,26 @@ export default class CytoscapeRenderer {
   // graph opposite the drag direction — the same convention as the keyboard
   // shortcuts (Alt+j/k/h/l pan, Alt+/- zoom).
   _bindCameraControls() {
-    this._wheelSensitivity = 0.3
-
-    // Mirror cytoscape's own wheel normalization: sample the first few deltas
-    // to detect coarse scroll devices (trackpads / wheel mice report big,
-    // evenly-divisible deltas) and scale those down, so a tiny scroll doesn't
-    // fling the graph.
-    this._wheelDeltas = []
-    this._inaccurateScrollDevice = null
-    this._inaccurateScrollFactor = 100000
-
     this._onWheel = (e) => {
       e.preventDefault()
       const raw = e.deltaY || 0
       if (raw === 0) return
-      let delta = raw
-      let clamp = false
 
-      const n = 4
-      const allDivisibleBy = (list, f) => list.every(v => Math.abs(v) % f === 0)
-      const allSameMagnitude = (list) => {
-        const first = Math.abs(list[0])
-        return first > 5 && list.every(v => Math.abs(v) === first)
-      }
-
-      if (this._inaccurateScrollDevice === null) {
-        if (this._wheelDeltas.length >= n) {
-          const wds = this._wheelDeltas
-          this._inaccurateScrollDevice = allDivisibleBy(wds, 5) || allSameMagnitude(wds)
-          if (this._inaccurateScrollDevice) {
-            this._inaccurateScrollFactor = Math.min(...wds.map(v => Math.abs(v)), this._inaccurateScrollFactor)
-          }
-        } else {
-          this._wheelDeltas.push(raw)
-          clamp = true
-        }
-      } else if (this._inaccurateScrollDevice) {
-        this._inaccurateScrollFactor = Math.min(this._inaccurateScrollFactor, Math.abs(raw))
-      }
-
-      if (clamp && Math.abs(delta) > 5) delta = Math.sign(delta) * 5
-
-      let diff = delta / 250
-      if (this._inaccurateScrollDevice) {
-        diff /= this._inaccurateScrollFactor
-        diff *= 3
-      }
-      diff *= this._wheelSensitivity
+      // Normalize to one "click" equivalent (120 units for a wheel mouse).
+      // Cap at 3× to prevent flinging on high-resolution trackpads.
+      const normalized = Math.sign(raw) * Math.min(Math.abs(raw) / 120, 3)
+      const diff = normalized * 0.2  // ~37% zoom change per mouse click
 
       const rect = this.container ? this.container.getBoundingClientRect() : { left: 0, top: 0 }
-      const level = this.cy.zoom() * Math.pow(10, -diff)
-      this._glide(
-        { zoom: { level, renderedPosition: { x: e.clientX - rect.left, y: e.clientY - rect.top } } },
-        140
+      const pos  = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+
+      // Apply directly instead of animating: rapid scroll ticks would otherwise
+      // interrupt each glide mid-flight, so only a fraction of each step lands.
+      const level = Math.max(
+        this.cy.minZoom(),
+        Math.min(this.cy.maxZoom(), this.cy.zoom() * Math.pow(10, -diff))
       )
+      this.cy.zoom({ level, renderedPosition: pos })
     }
     if (this.container) {
       this.container.addEventListener('wheel', this._onWheel, { passive: false })
@@ -299,27 +305,7 @@ export default class CytoscapeRenderer {
       this.container.addEventListener('gesturechange', this._onGestureChange)
     }
 
-    // Pan on the graph background only (never when grabbing a node), with the
-    // content following the cursor at a fraction of the drag distance —
-    // cytoscape's pan is in rendered pixels (rpos = model * zoom + pan), so a
-    // 10px drag moves the graph 10px * _panSensitivity regardless of zoom.
-    this._panSensitivity = 0.2
-    this._panStart = null
-    this._onPanStart = (e) => {
-      if (e.target !== this.cy) return
-      this._panStart = { x: e.originalEvent.clientX, y: e.originalEvent.clientY }
-      this._panOrigin = this.cy.pan()
-    }
-    this._onPanMove = (e) => {
-      if (!this._panStart) return
-      const dx = (e.originalEvent.clientX - this._panStart.x) * this._panSensitivity
-      const dy = (e.originalEvent.clientY - this._panStart.y) * this._panSensitivity
-      this.cy.pan({ x: this._panOrigin.x + dx, y: this._panOrigin.y + dy })
-    }
-    this._onPanEnd = () => { this._panStart = null }
-    this.cy.on('mousedown', this._onPanStart)
-    this.cy.on('mousemove', this._onPanMove)
-    this.cy.on('mouseup', this._onPanEnd)
+
   }
 
   updateScene(graphModel, options = {}) {
@@ -396,7 +382,11 @@ export default class CytoscapeRenderer {
     const animation = this._runLayout(options.colaOpts || {}, { prevPos, seed, animate })
     animation.then(() => this._renderCrosshairs())
 
-    this.emitter?.emit('scene-updated', { count: graphModel.nodes().length })
+    this.emitter?.emit('scene-updated', {
+      count: graphModel.nodes().length,
+      nodes: graphModel.nodes().length,
+      edges: graphModel.edges().length,
+    })
     return animation
   }
 
@@ -489,7 +479,7 @@ export default class CytoscapeRenderer {
     }))
     const anims = targets.map(({ node, to, from }) => {
       node.position(from)
-      return node.animation({ position: to }, { duration: 650, easing: 'ease-out-cubic' }).play()
+      return node.animation({ position: to, duration: 650, easing: 'ease-out-cubic' }).play()
     })
     const done = Promise.all(anims.map(a => a.promise()))
 
@@ -832,7 +822,9 @@ export default class CytoscapeRenderer {
   _zoom(direction) {
     if (!this.cy) return
     const factor = direction === 'In' ? 1.3 : 0.77
-    return this._glide({ zoom: { level: this.cy.zoom() * factor } }, 220)
+    const cx = this.cy.width()  / 2
+    const cy = this.cy.height() / 2
+    return this._glide({ zoom: { level: this.cy.zoom() * factor, renderedPosition: { x: cx, y: cy } } }, 220)
   }
 
   // Eased viewport movement. Interrupts any in-flight glide so rapid inputs
@@ -857,7 +849,7 @@ export default class CytoscapeRenderer {
     let resolve
     const promise = new Promise(r => { resolve = r })
     this._resolveLastGlide = resolve
-    const anim = this.cy.animation(viewportProps, { duration, easing })
+    const anim = this.cy.animation({ ...viewportProps, duration, easing })
     anim.promise('complete').then(() => {
       if (this._resolveLastGlide === resolve) {
         this._resolveLastGlide = null
@@ -897,9 +889,7 @@ export default class CytoscapeRenderer {
     this.container?.removeEventListener('wheel', this._onWheel)
     this.container?.removeEventListener('gesturestart', this._onGestureStart)
     this.container?.removeEventListener('gesturechange', this._onGestureChange)
-    this.cy?.off('mousedown', this._onPanStart)
-    this.cy?.off('mousemove', this._onPanMove)
-    this.cy?.off('mouseup', this._onPanEnd)
+
     this._hintsLayer?.remove()
     this._hintsLayer = null
     this._selectionLayer?.remove()

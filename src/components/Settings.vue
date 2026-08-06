@@ -238,20 +238,34 @@
                           v-model.number="settings.defaultEdgeOpacity"
                         />
                       </label>
-                      <label class="fx-field">
-                        <span class="fx-label">Arrowhead Size</span>
-                        <input
-                          class="fx-input"
-                          type="number"
-                          step="0.1"
-                          min="0.1"
-                          max="3"
-                          v-model.number="settings.defaultArrowScale"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </section>
+                       <label class="fx-field">
+                         <span class="fx-label">Arrowhead Size</span>
+                         <input
+                           class="fx-input"
+                           type="number"
+                           step="0.1"
+                           min="0.1"
+                           max="3"
+                           v-model.number="settings.defaultArrowScale"
+                         />
+                       </label>
+                     </div>
+                     <label class="fx-field">
+                       <span class="fx-label">Default Arrow Shape</span>
+                       <select class="fx-input" v-model="settings.defaultArrowShape">
+                         <option value="vee">Vee</option>
+                         <option value="triangle">Triangle</option>
+                         <option value="chevron">Chevron</option>
+                         <option value="tee">Tee</option>
+                         <option value="circle">Circle</option>
+                         <option value="diamond">Diamond</option>
+                         <option value="triangle-tee">Triangle Tee</option>
+                         <option value="triangle-cross">Triangle Cross</option>
+                         <option value="none">None (undirected)</option>
+                       </select>
+                     </label>
+                   </div>
+                 </section>
               </div>
               <footer class="fx-panel-actions">
                 <button
@@ -339,6 +353,7 @@ export default {
       merged.defaultEdgeWidth = stored.defaultEdgeWidth !== undefined ? Number(stored.defaultEdgeWidth) : defaults.defaultEdgeWidth
       merged.defaultEdgeOpacity = stored.defaultEdgeOpacity !== undefined ? Number(stored.defaultEdgeOpacity) : defaults.defaultEdgeOpacity
       merged.defaultArrowScale = Math.min(3, Math.max(0.1, stored.defaultArrowScale !== undefined ? Number(stored.defaultArrowScale) : defaults.defaultArrowScale))
+      merged.defaultArrowShape = stored.defaultArrowShape || defaults.defaultArrowShape
       return merged
     },
     close () {

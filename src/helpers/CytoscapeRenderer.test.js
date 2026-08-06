@@ -220,61 +220,29 @@ describe('CytoscapeRenderer', () => {
     expect(renderer._doubleSelectedIds).toEqual([])
   })
 
-  it('zooms in on wheel-up and out on wheel-down', async () => {
-    renderer.cy.stop()
+  it('zooms in on wheel-up and out on wheel-down', () => {
     renderer.cy.zoom(1)
     const before = renderer.cy.zoom()
     renderer._onWheel({ deltaY: -100, clientX: 50, clientY: 50, preventDefault: vi.fn() })
-    await renderer._lastGlide
     expect(renderer.cy.zoom()).toBeGreaterThan(before)
 
     const mid = renderer.cy.zoom()
     renderer._onWheel({ deltaY: 100, clientX: 50, clientY: 50, preventDefault: vi.fn() })
-    await renderer._lastGlide
     expect(renderer.cy.zoom()).toBeLessThan(mid)
   })
 
-  it('normalizes coarse scroll deltas so one wheel notch is a gentle nudge', async () => {
-    renderer.cy.stop()
+  it('produces ~37% zoom change per standard mouse wheel click (deltaY=120)', () => {
     renderer.cy.zoom(1)
-    // Prime the coarse-device detector with a few even, large deltas.
-    renderer._wheelDeltas = [100, 100, 100, 100]
-    renderer._inaccurateScrollDevice = true
-    renderer._inaccurateScrollFactor = 100
 
-    renderer._onWheel({ deltaY: 100, clientX: 50, clientY: 50, preventDefault: vi.fn() })
-    await renderer._lastGlide
+    renderer._onWheel({ deltaY: 120, clientX: 50, clientY: 50, preventDefault: vi.fn() })
     const zoomed = renderer.cy.zoom()
-    // 10^(-100/250/100*3*0.3) = 10^-0.0036 ≈ 0.992 — a ~1% step, not a jump.
-    expect(zoomed).toBeLessThan(1)
-    expect(zoomed).toBeGreaterThan(0.95)
+    // normalized=1, diff=0.2, factor=10^(-0.2)≈0.631 — a responsive ~37% step.
+    expect(zoomed).toBeLessThan(0.7)
+    expect(zoomed).toBeGreaterThan(0.55)
   })
 
-  it('pans the graph with the drag direction on the background', async () => {
-    // Drain any deferred fits still pending from earlier tests so they can't
-    // reset the pan mid-assertion.
-    const nextFrame = () => new Promise(resolve => {
-      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resolve)
-      else resolve()
-    })
-    for (let i = 0; i < 6; i++) await nextFrame()
-
-    renderer.cy.pan({ x: 0, y: 0 })
-    renderer.cy.zoom(2) // must still pan 1:1 in rendered space at any zoom
-    renderer._panStart = null
-
-    renderer._onPanStart({ target: renderer.cy, originalEvent: { clientX: 100, clientY: 100 } })
-    const origin = { ...renderer.cy.pan() }
-
-    // Dragging right + up moves the content right + up (grab metaphor),
-    // scaled by _panSensitivity (20px * 0.2 = 4px) regardless of zoom.
-    renderer._onPanMove({ originalEvent: { clientX: 120, clientY: 80 } })
-    const pan = renderer.cy.pan()
-    expect(pan.x).toBe(origin.x + 4)
-    expect(pan.y).toBe(origin.y - 4)
-
-    renderer._onPanEnd()
-    expect(renderer._panStart).toBeNull()
+  it('leaves native panning enabled so cytoscape handles drag-to-pan', () => {
+    expect(renderer.cy.userPanningEnabled()).toBe(true)
   })
 
   it('pans with vim-style directions for the hjkl shortcuts', async () => {
@@ -308,14 +276,8 @@ describe('CytoscapeRenderer', () => {
     expect(renderer.cy.pan().x).toBeCloseTo(-100, 0)
   })
 
-  it('does not start panning when the drag begins on a node', () => {
-    renderer.updateScene(new GraphModel([
-      { group: 'nodes', data: { id: 'n1', label: 'N' } },
-    ]))
-    renderer._panStart = null
-
-    renderer._onPanStart({ target: renderer.cy.getElementById('n1'), originalEvent: { clientX: 10, clientY: 10 } })
-    expect(renderer._panStart).toBeNull()
+  it('leaves zoom disabled so only custom wheel handler zooms', () => {
+    expect(renderer.cy.userZoomingEnabled()).toBe(false)
   })
 })
 
@@ -358,9 +320,13 @@ describe('edgeStyleFrom', () => {
     const s = edgeStyleFrom({})
     expect(s['curve-style']).toBe('bezier')
     expect(s['width']).toBe(2)
-    expect(s['opacity']).toBe(0.7)
+    expect(s['opacity']).toBe(0.85)
     expect(s['arrow-scale']).toBe(1)
-    expect(s['target-arrow-shape']).toBe('triangle')
+    expect(s['target-arrow-shape']).toBe('vee')
+  })
+
+  it('uses defaultArrowShape from settings when provided', () => {
+    expect(edgeStyleFrom({ defaultArrowShape: 'chevron' })['target-arrow-shape']).toBe('chevron')
   })
 
   it('uses straight curve style when defaultEdgeStyle is "straight"', () => {
@@ -397,13 +363,13 @@ describe('paletteFromCSSVars', () => {
       '--fx-glass-bottom': '7, 12, 28',
     }
     const pal = paletteFromCSSVars(key => vars[key] || null)
-    expect(pal.accent).toBe('rgb(94, 116, 255)')
-    expect(pal.accentA(0.45)).toBe('rgba(94, 116, 255, 0.45)')
-    expect(pal.nodeBg).toBe('rgb(7, 12, 28)')
-    expect(pal.nodeTop).toBe('rgb(14, 21, 44)')
-    expect(pal.nodeBottom).toBe('rgb(7, 12, 28)')
-    expect(pal.label).toBe('rgb(223, 230, 255)')
-    expect(pal.labelSoft).toBe('rgb(185, 194, 236)')
+    expect(pal.accent).toBe('rgb(94,116,255)')
+    expect(pal.accentA(0.45)).toBe('rgba(94,116,255,0.45)')
+    expect(pal.nodeBg).toBe('rgb(7,12,28)')
+    expect(pal.nodeTop).toBe('rgb(14,21,44)')
+    expect(pal.nodeBottom).toBe('rgb(7,12,28)')
+    expect(pal.label).toBe('rgb(223,230,255)')
+    expect(pal.labelSoft).toBe('rgb(185,194,236)')
   })
 
   it('falls back to the default palette when accent is unavailable', () => {
@@ -423,35 +389,34 @@ describe('paletteFromCSSVars', () => {
       '--fx-glass-bottom': '222, 230, 252',
     }
     const pal = paletteFromCSSVars(key => vars[key] || null)
-    expect(pal.nodeBg).toBe('rgb(222, 230, 252)')
-    expect(pal.nodeTop).toBe('rgb(242, 246, 255)')
-    expect(pal.nodeBottom).toBe('rgb(222, 230, 252)')
-    expect(pal.label).toBe('rgb(28, 36, 66)')
+    expect(pal.nodeBg).toBe('rgb(222,230,252)')
+    expect(pal.nodeTop).toBe('rgb(242,246,255)')
+    expect(pal.nodeBottom).toBe('rgb(222,230,252)')
+    expect(pal.label).toBe('rgb(28,36,66)')
   })
 })
 
 describe('themeStyle', () => {
   it('builds the full style with node/edge colors from the palette', () => {
     const pal = {
-      nodeTop:    'rgb(14, 21, 44)',
-      nodeBottom: 'rgb(7, 12, 28)',
-      nodeBg:     'rgb(7, 12, 28)',
-      label:      'rgb(223, 230, 255)',
-      labelSoft:  'rgb(185, 194, 236)',
-      accent:     'rgb(94, 116, 255)',
-      accentA:    (a) => `rgba(94, 116, 255, ${a})`,
+      nodeTop:    'rgb(14,21,44)',
+      nodeBottom: 'rgb(7,12,28)',
+      nodeBg:     'rgb(7,12,28)',
+      label:      'rgb(223,230,255)',
+      labelSoft:  'rgb(185,194,236)',
+      accent:     'rgb(94,116,255)',
+      accentA:    (a) => `rgba(94,116,255,${a})`,
     }
     const style = themeStyle(pal, {})
     const node  = style.find(s => s.selector === 'node')
     const parent = style.find(s => s.selector === 'node:parent')
     const edge  = style.find(s => s.selector === 'edge')
-    expect(node.style['background-gradient-from']).toBe('rgb(14, 21, 44)')
-    expect(node.style['background-gradient-to']).toBe('rgb(7, 12, 28)')
-    expect(node.style['background-color']).toBe('rgb(7, 12, 28)')
-    expect(node.style['color']).toBe('rgb(223, 230, 255)')
+    expect(node.style['background-gradient-stop-colors']).toBe('rgb(14,21,44) rgb(7,12,28)')
+    expect(node.style['background-color']).toBe('rgb(7,12,28)')
+    expect(node.style['color']).toBe('rgb(223,230,255)')
     expect(node.style['width']).toBe('label')
     expect(node.style['height']).toBe('label')
-    expect(parent.style['background-gradient-from']).toBe('rgba(94, 116, 255, 0.14)')
-    expect(edge.style['line-color']).toBe('rgb(94, 116, 255)')
+    expect(parent.style['background-gradient-stop-colors']).toBe('rgba(94,116,255,0.14) rgba(94,116,255,0.03)')
+    expect(edge.style['line-color']).toBe('rgb(94,116,255)')
   })
 })

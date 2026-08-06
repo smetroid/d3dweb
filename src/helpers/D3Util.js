@@ -137,8 +137,9 @@ export default {
       'defaultColaGravity': 0,
       'defaultEdgeStyle': 'curved',
       'defaultEdgeWidth': 2,
-      'defaultEdgeOpacity': 0.7,
-      'defaultArrowScale': 1
+      'defaultEdgeOpacity': 0.85,
+      'defaultArrowScale': 1,
+      'defaultArrowShape': 'vee'
     }
     return defaults
   },
@@ -472,7 +473,7 @@ export default {
     var data = {
       edgeLabel:          'Edge ', /** this needs to be a space else hints won't work */
       edgeArrowHeadStyle: 'filled',
-      edgeArrowHead:      'triangle',
+      edgeArrowHead:      '',
     }
     return data
   },

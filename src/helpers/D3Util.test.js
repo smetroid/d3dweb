@@ -102,7 +102,7 @@ describe('defaultEdgeValues', () => {
   it('returns a complete edge defaults object', () => {
     const defaults = D3Util.defaultEdgeValues()
     expect(defaults.edgeLabel).toBe('Edge ')
-    expect(defaults.edgeArrowHead).toBe('triangle')
+    expect(defaults.edgeArrowHead).toBe('')
     expect(defaults.edgeArrowHeadStyle).toBe('filled')
   })
 })
@@ -130,7 +130,8 @@ describe('appDefaults', () => {
     expect(defaults.defaultZoomLevel).toBe(1)
     expect(defaults.defaultEdgeStyle).toBe('curved')
     expect(defaults.defaultEdgeWidth).toBe(2)
-    expect(defaults.defaultEdgeOpacity).toBe(0.7)
+    expect(defaults.defaultEdgeOpacity).toBe(0.85)
     expect(defaults.defaultArrowScale).toBe(1)
+    expect(defaults.defaultArrowShape).toBe('vee')
   })
 })
