@@ -305,6 +305,7 @@ export default {
         this.showHelpPane = this.$cookies.get('settings')['showHelpPane']
       }
       this.syncThemeAttr()
+      this.emitter.emit('themeChanged')
 
       if (D3Util.auth()) {
         this.loadFromServer()
