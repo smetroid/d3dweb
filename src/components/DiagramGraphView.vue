@@ -175,6 +175,7 @@ export default {
       const data = mod.getNodeData(nodeId)
       if (D3Util.debug) console.log('[node-click]', nodeId, data)
       this.d3Data = data
+      this.focusedNodeId = nodeId
       this.threeDRenderer?.setFocusedNode(nodeId)
       this.emitter.emit('changeActive', 'Edit Node')
       this.openSheet = true

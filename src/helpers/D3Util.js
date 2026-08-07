@@ -139,7 +139,18 @@ export default {
       'defaultEdgeWidth': 2,
       'defaultEdgeOpacity': 0.85,
       'defaultArrowScale': 1,
-      'defaultArrowShape': 'vee'
+      'defaultArrowShape': 'vee',
+      'defaultEdgeArrowHeadStyle': 'filled',
+      'defaultEdgeSourceArrow': '',
+      'defaultEdgeColor': '',
+      'defaultEdgeLineStyle': 'solid',
+      'defaultNodeShape': 'rectangle',
+      'defaultNodeTextHalign': 'center',
+      'defaultNodeTextValign': 'top',
+      'defaultNodeBgColor': '',
+      'defaultNodeBorderColor': '',
+      'defaultNodeBorderWidth': null,
+      'defaultNodeFontSize': null
     }
     return defaults
   },
@@ -461,20 +472,41 @@ export default {
     this.saveTempDiagram(localData)
   },
   defaultNodeValues() {
+    const s = this._readSettings()
     var data = {
       nodeLabel:  'Node',
-      nodeShape:  'rectangle',
-      textHalign: 'center',
-      textValign: 'top',
+      nodeShape:  s.defaultNodeShape       || 'rectangle',
+      textHalign: s.defaultNodeTextHalign  || 'center',
+      textValign: s.defaultNodeTextValign  || 'top',
+      bgColor:    s.defaultNodeBgColor     || '',
+      borderColor: s.defaultNodeBorderColor || '',
+      borderWidth: s.defaultNodeBorderWidth != null ? s.defaultNodeBorderWidth : null,
+      fontSize:   s.defaultNodeFontSize    != null ? s.defaultNodeFontSize : null,
     }
     return data
   },
   defaultEdgeValues() {
+    const s = this._readSettings()
     var data = {
       edgeLabel:          'Edge ', /** this needs to be a space else hints won't work */
-      edgeArrowHeadStyle: 'filled',
-      edgeArrowHead:      '',
+      edgeArrowHeadStyle: s.defaultEdgeArrowHeadStyle || 'filled',
+      edgeArrowHead:      s.defaultArrowShape || 'vee',
+      sourceArrowhead:    s.defaultEdgeSourceArrow || '',
+      edgeWidth:          s.defaultEdgeWidth   != null ? Number(s.defaultEdgeWidth)   : 2,
+      edgeColor:          s.defaultEdgeColor   || '',
+      edgeLineStyle:      s.defaultEdgeLineStyle || 'solid',
+      edgeCurve:          s.defaultEdgeStyle === 'straight' ? 'straight' : 'bezier',
+      edgeOpacity:        s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85,
     }
     return data
+  },
+  // Settings cookie that never throws (vue-cookies reads document.cookie, which
+  // does not exist in headless/test environments).
+  _readSettings() {
+    try {
+      return VueCookies.get('settings') || {}
+    } catch (e) {
+      return {}
+    }
   },
 }

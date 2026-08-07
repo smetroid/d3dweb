@@ -130,11 +130,12 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       selector: 'edge[?arrowheadStyle]',
       style: { 'target-arrow-fill': 'data(arrowheadStyle)' },
     },
-
     // ── Nodes (base) ─────────────────────────────────────────────────────────
     {
       selector: 'node',
       style: {
+        'width':                      'label',
+        'height':                     'label',
         'padding':                            '8px 14px',
         'background-color':                   pal.nodeBottom,
         'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
@@ -278,6 +279,65 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
         'underlay-padding': '8px',
         'underlay-opacity': 0.22,
       },
+    },
+
+    // ─── Per-element data-driven styling (edited via the node/edge forms) ────
+    // Selectors are guarded by [attr] so the theme defaults above apply whenever
+    // an element does not carry the data field. Shape itself is driven by
+    // node[?nodeShape] above (unified with the shape-color tints).
+    {
+      selector: 'node[textHalign]',
+      style:    { 'text-halign': 'data(textHalign)' },
+    },
+    {
+      selector: 'node[textValign]',
+      style:    { 'text-valign': 'data(textValign)' },
+    },
+    {
+      selector: 'node[bgColor]',
+      style: {
+        'background-color': 'data(bgColor)',
+      },
+    },
+    {
+      selector: 'node[borderColor]',
+      style:    { 'border-color': 'data(borderColor)' },
+    },
+    {
+      selector: 'node[borderWidth]',
+      style:    { 'border-width': 'data(borderWidth)' },
+    },
+    {
+      selector: 'node[fontSize]',
+      style:    { 'font-size': 'data(fontSize)' },
+    },
+    {
+      selector: 'edge[sourceArrowhead]',
+      style:    { 'source-arrow-shape': 'data(sourceArrowhead)' },
+    },
+    {
+      selector: 'edge[edgeWidth]',
+      style:    { 'width': 'data(edgeWidth)' },
+    },
+    {
+      selector: 'edge[edgeColor]',
+      style: {
+        'line-color':         'data(edgeColor)',
+        'target-arrow-color': 'data(edgeColor)',
+        'source-arrow-color': 'data(edgeColor)',
+      },
+    },
+    {
+      selector: 'edge[edgeLineStyle]',
+      style:    { 'line-style': 'data(edgeLineStyle)' },
+    },
+    {
+      selector: 'edge[edgeCurve]',
+      style:    { 'curve-style': 'data(edgeCurve)' },
+    },
+    {
+      selector: 'edge[edgeOpacity]',
+      style:    { 'opacity': 'data(edgeOpacity)' },
     },
   ]
 }
@@ -440,18 +500,20 @@ export default class CytoscapeRenderer {
         ele.move({ parent: d.parent || null })
       }
       delete d.parent
-      // Derive fillColor from the node's "style" field (e.g. "fill: #5f9488")
-      if (d.style) {
-        const m = String(d.style).match(/\bfill\s*:\s*([^;]+)/i)
-        d.fillColor = m ? m[1].trim() : null
-      }
+      // Legacy "style: fill: …" drives fillColor (the [attr]-driven border/underlay
+      // tint and the inline solid-fill override). Derive it fresh every pass so
+      // clearing the style also clears a stale fillColor.
+      const legacy = d.style && String(d.style).match(/\bfill\s*:\s*([^;]+)/i)
+      d.fillColor = legacy ? legacy[1].trim() : null
       ele.data(d)
-      // Apply gradient override inline — gradient stop-colors don't support
-      // data() mappings so we set the background directly on the element.
-      if (d.fillColor) {
+      // Custom fills (bgColor from the form, or legacy fillColor) are applied
+      // inline — background-gradient-stop-colors does not take data() mappings.
+      // A same-color gradient renders as a solid override of the theme.
+      const fill = d.bgColor || d.fillColor
+      if (fill) {
         ele.style({
-          'background-color':                d.fillColor,
-          'background-gradient-stop-colors': `${d.fillColor} ${d.fillColor}`,
+          'background-color':                fill,
+          'background-gradient-stop-colors': `${fill} ${fill}`,
         })
       } else {
         ele.removeStyle('background-color background-gradient-stop-colors')
@@ -469,6 +531,18 @@ export default class CytoscapeRenderer {
     this.cy.nodes().forEach(n => {
       if (!prevPos.has(n.id())) n.position(seed)
     })
+
+    // Edit-only redraws refresh data/styles without re-running the layout, so
+    // saving a label/color change does not set the whole graph gliding again.
+    if (options.layout === false) {
+      this._renderCrosshairs()
+      this.emitter?.emit('scene-updated', {
+        count: graphModel.nodes().length,
+        nodes: graphModel.nodes().length,
+        edges: graphModel.edges().length,
+      })
+      return
+    }
 
     const animation = this._runLayout(options.colaOpts || {}, { prevPos, seed, animate })
     animation.then(() => this._renderCrosshairs())

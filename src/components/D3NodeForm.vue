@@ -139,16 +139,77 @@
             ></textarea>
           </label>
 
-          <label class="fx-field fx-field-full">
-            <span class="fx-label">Node Style <em class="fx-opt">optional</em></span>
-            <input
-              class="fx-input"
-              type="text"
-              v-model="style"
-              placeholder="fill: #d3d7e8"
-              @keypress.stop=""
-            />
-          </label>
+          <div class="fx-grid">
+            <label class="fx-field">
+              <span class="fx-label">Background Color <em class="fx-opt">optional</em></span>
+              <div class="fx-color-row">
+                <input
+                  class="fx-input fx-input-color"
+                  type="color"
+                  :value="bgColor || '#5f9488'"
+                  @input="bgColor = $event.target.value"
+                  @keypress.stop=""
+                />
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-mini"
+                  :class="{ 'fx-btn-active': !bgColor }"
+                  @click="bgColor = ''"
+                  @keypress.stop=""
+                  title="Use theme color"
+                >none</button>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Border Color <em class="fx-opt">optional</em></span>
+              <div class="fx-color-row">
+                <input
+                  class="fx-input fx-input-color"
+                  type="color"
+                  :value="borderColor || '#5e74ff'"
+                  @input="borderColor = $event.target.value"
+                  @keypress.stop=""
+                />
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-mini"
+                  :class="{ 'fx-btn-active': !borderColor }"
+                  @click="borderColor = ''"
+                  @keypress.stop=""
+                  title="Use theme color"
+                >none</button>
+              </div>
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Border Width <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="0"
+                max="8"
+                step="0.5"
+                v-model.number="borderWidth"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Font Size <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="8"
+                max="28"
+                step="1"
+                v-model.number="fontSize"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+          </div>
         </div>
 
         <footer class="fx-panel-actions">
@@ -210,7 +271,10 @@ export default {
       parentNode: null,
       textHalign: 'center',
       textValign: 'top',
-      style: 'fill: #5f9488',
+      bgColor: '',
+      borderColor: '',
+      borderWidth: null,
+      fontSize: null,
     }
   },
   mounted () {
@@ -287,13 +351,19 @@ export default {
         d3Data: this.d3Data,
       })
       if (!(this.update && this.d3Data?.id)) {
-        this.nodeLabel  = null
-        this.nodeShape  = 'rectangle'
-        this.nodeId     = null
-        this.parentNode = null
-        this.textHalign = 'center'
-        this.textValign = 'top'
-        this.style      = 'fill: #5f9488'
+        // Create mode: start from the configurable node creation defaults in
+        // Settings so a new node inherits the user's preferred look.
+        const d = D3Util.defaultNodeValues()
+        this.nodeLabel   = null
+        this.nodeShape   = d.nodeShape
+        this.nodeId      = null
+        this.parentNode  = null
+        this.textHalign  = d.textHalign
+        this.textValign  = d.textValign
+        this.bgColor     = d.bgColor     || ''
+        this.borderColor = d.borderColor || ''
+        this.borderWidth = d.borderWidth != null ? d.borderWidth : null
+        this.fontSize    = d.fontSize    != null ? d.fontSize : null
         return
       }
       const mod = this.modifier?.value ?? this.modifier
@@ -304,7 +374,10 @@ export default {
       this.parentNode = parentEl?.length ? parentEl.id() : null
       this.textHalign = this.d3Data.textHalign || 'center'
       this.textValign = this.d3Data.textValign || 'top'
-      this.style      = this.d3Data.style
+      this.bgColor    = this.d3Data.bgColor || ''
+      this.borderColor = this.d3Data.borderColor || ''
+      this.borderWidth = this.d3Data.borderWidth ?? null
+      this.fontSize    = this.d3Data.fontSize ?? null
       if (D3Util.debug) console.log('[D3NodeForm] fields', JSON.stringify({
         nodeLabel:  this.nodeLabel,
         nodeShape:  this.nodeShape,
@@ -312,7 +385,10 @@ export default {
         parentNode: this.parentNode,
         textHalign: this.textHalign,
         textValign: this.textValign,
-        style:      this.style,
+        bgColor:    this.bgColor,
+        borderColor: this.borderColor,
+        borderWidth: this.borderWidth,
+        fontSize:   this.fontSize,
       }))
     },
     _optLabel(list, val, valKey, labelKey, fallback) {
@@ -371,5 +447,31 @@ export default {
 .hints {
   border: 1px solid magenta;
   color: magenta;
+}
+
+.fx-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fx-input-color {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  height: 38px;
+  cursor: pointer;
+}
+
+.fx-btn-mini {
+  flex: none;
+  font-size: 10px;
+  padding: 5px 10px;
+  letter-spacing: 0.1em;
+}
+
+.fx-btn-active {
+  border-color: rgb(var(--fx-accent));
+  color: rgb(var(--fx-accent));
 }
 </style>

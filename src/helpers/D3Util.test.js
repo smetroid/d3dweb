@@ -2,6 +2,10 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import D3Util from '@/helpers/D3Util.js'
 
+vi.mock('vue-cookies', () => ({
+  default: { get: vi.fn(() => null), set: vi.fn() },
+}))
+
 const realNavigator = globalThis.navigator
 
 afterEach(() => {
@@ -95,6 +99,31 @@ describe('defaultNodeValues', () => {
     expect(defaults.nodeShape).toBe('rectangle')
     expect(defaults.textHalign).toBe('center')
     expect(defaults.textValign).toBe('top')
+    expect(defaults.bgColor).toBe('')
+    expect(defaults.borderColor).toBe('')
+    expect(defaults.borderWidth).toBeNull()
+    expect(defaults.fontSize).toBeNull()
+  })
+
+  it('uses the configured node creation defaults from the settings cookie', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    VueCookies.get.mockReturnValue({
+      defaultNodeShape: 'star',
+      defaultNodeTextHalign: 'right',
+      defaultNodeTextValign: 'bottom',
+      defaultNodeBgColor: '#ef5350',
+      defaultNodeBorderColor: '#ffab40',
+      defaultNodeBorderWidth: 3,
+      defaultNodeFontSize: 18,
+    })
+    const defaults = D3Util.defaultNodeValues()
+    expect(defaults.nodeShape).toBe('star')
+    expect(defaults.textHalign).toBe('right')
+    expect(defaults.textValign).toBe('bottom')
+    expect(defaults.bgColor).toBe('#ef5350')
+    expect(defaults.borderColor).toBe('#ffab40')
+    expect(defaults.borderWidth).toBe(3)
+    expect(defaults.fontSize).toBe(18)
   })
 })
 
@@ -102,8 +131,37 @@ describe('defaultEdgeValues', () => {
   it('returns a complete edge defaults object', () => {
     const defaults = D3Util.defaultEdgeValues()
     expect(defaults.edgeLabel).toBe('Edge ')
-    expect(defaults.edgeArrowHead).toBe('')
+    expect(defaults.edgeArrowHead).toBe('vee')
     expect(defaults.edgeArrowHeadStyle).toBe('filled')
+    expect(defaults.sourceArrowhead).toBe('')
+    expect(defaults.edgeWidth).toBe(2)
+    expect(defaults.edgeColor).toBe('')
+    expect(defaults.edgeLineStyle).toBe('solid')
+    expect(defaults.edgeCurve).toBe('bezier')
+    expect(defaults.edgeOpacity).toBe(0.85)
+  })
+
+  it('uses the configured edge creation defaults from the settings cookie', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    VueCookies.get.mockReturnValue({
+      defaultArrowShape: 'triangle',
+      defaultEdgeArrowHeadStyle: 'hollow',
+      defaultEdgeSourceArrow: 'circle',
+      defaultEdgeWidth: 4,
+      defaultEdgeColor: '#ff00aa',
+      defaultEdgeLineStyle: 'dashed',
+      defaultEdgeStyle: 'straight',
+      defaultEdgeOpacity: 0.5,
+    })
+    const defaults = D3Util.defaultEdgeValues()
+    expect(defaults.edgeArrowHead).toBe('triangle')
+    expect(defaults.edgeArrowHeadStyle).toBe('hollow')
+    expect(defaults.sourceArrowhead).toBe('circle')
+    expect(defaults.edgeWidth).toBe(4)
+    expect(defaults.edgeColor).toBe('#ff00aa')
+    expect(defaults.edgeLineStyle).toBe('dashed')
+    expect(defaults.edgeCurve).toBe('straight')
+    expect(defaults.edgeOpacity).toBe(0.5)
   })
 })
 
@@ -133,5 +191,16 @@ describe('appDefaults', () => {
     expect(defaults.defaultEdgeOpacity).toBe(0.85)
     expect(defaults.defaultArrowScale).toBe(1)
     expect(defaults.defaultArrowShape).toBe('vee')
+    expect(defaults.defaultEdgeArrowHeadStyle).toBe('filled')
+    expect(defaults.defaultEdgeSourceArrow).toBe('')
+    expect(defaults.defaultEdgeColor).toBe('')
+    expect(defaults.defaultEdgeLineStyle).toBe('solid')
+    expect(defaults.defaultNodeShape).toBe('rectangle')
+    expect(defaults.defaultNodeTextHalign).toBe('center')
+    expect(defaults.defaultNodeTextValign).toBe('top')
+    expect(defaults.defaultNodeBgColor).toBe('')
+    expect(defaults.defaultNodeBorderColor).toBe('')
+    expect(defaults.defaultNodeBorderWidth).toBeNull()
+    expect(defaults.defaultNodeFontSize).toBeNull()
   })
 })

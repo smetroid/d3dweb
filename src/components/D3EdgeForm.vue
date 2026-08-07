@@ -108,6 +108,128 @@
               @keydown.meta.shift.w="edgeLabel=''"
             ></textarea>
           </label>
+
+          <div class="fx-grid">
+            <div class="fx-field">
+              <span class="fx-label">Source Arrow Head <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('sourceArrowhead')"
+                >{{ sourceArrowLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'sourceArrowhead'" class="fx-options">
+                    <li
+                      class="fx-option"
+                      :class="{ 'fx-option-active': sourceArrowhead === '' }"
+                      @click="pick('sourceArrowhead', '')"
+                    >— none —</li>
+                    <li
+                      v-for="opt in edgeArrowHeadOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': sourceArrowhead === opt.value }"
+                      @click="pick('sourceArrowhead', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Width <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="1"
+                max="12"
+                step="0.5"
+                v-model.number="edgeWidth"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Color <em class="fx-opt">optional</em></span>
+              <div class="fx-color-row">
+                <input
+                  class="fx-input fx-input-color"
+                  type="color"
+                  :value="edgeColor || '#5e74ff'"
+                  @input="edgeColor = $event.target.value"
+                  @keypress.stop=""
+                />
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-mini"
+                  :class="{ 'fx-btn-active': !edgeColor }"
+                  @click="edgeColor = ''"
+                  @keypress.stop=""
+                  title="Use theme color"
+                >none</button>
+              </div>
+            </label>
+
+            <div class="fx-field">
+              <span class="fx-label">Line Style <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('lineStyle')"
+                >{{ lineStyleLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'lineStyle'" class="fx-options">
+                    <li
+                      v-for="opt in edgeLineStyleOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeLineStyle === opt.value }"
+                      @click="pick('edgeLineStyle', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <div class="fx-field">
+              <span class="fx-label">Curve Style <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('curve')"
+                >{{ edgeCurveLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'curve'" class="fx-options">
+                    <li
+                      v-for="opt in edgeCurveOptions"
+                      :key="opt.value"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeCurve === opt.value }"
+                      @click="pick('edgeCurve', opt.value)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <label class="fx-field">
+              <span class="fx-label">Opacity <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="0.1"
+                max="1"
+                step="0.05"
+                v-model.number="edgeOpacity"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+          </div>
         </div>
 
         <footer class="fx-panel-actions">
@@ -149,9 +271,14 @@ export default {
       edgeLabel: '',
       edgeArrowHead: '',
       edgeArrowHeadStyle: '',
+      sourceArrowhead: '',
+      edgeWidth: null,
+      edgeColor: '',
+      edgeLineStyle: '',
+      edgeCurve: '',
+      edgeOpacity: null,
       enableTrap: false,
       hints: {},
-      d3EdgesData: null,
       edgeId: null,
       update: false,
       openSel: null,
@@ -167,8 +294,21 @@ export default {
         { 'value': 'tee',            'label': 'Tee' },
         { 'value': 'circle',         'label': 'Circle' },
         { 'value': 'diamond',        'label': 'Diamond' },
+        { 'value': 'square',         'label': 'Square' },
         { 'value': 'triangle-tee',   'label': 'Triangle Tee' },
         { 'value': 'triangle-cross', 'label': 'Triangle Cross' },
+      ],
+      edgeLineStyleOptions: [
+        { 'value': 'solid',   'label': 'Solid' },
+        { 'value': 'dotted',  'label': 'Dotted' },
+        { 'value': 'dashed',  'label': 'Dashed' },
+      ],
+      edgeCurveOptions: [
+        { 'value': 'bezier',           'label': 'Bezier' },
+        { 'value': 'straight',         'label': 'Straight' },
+        { 'value': 'segmented',        'label': 'Segmented' },
+        { 'value': 'unbundled-bezier', 'label': 'Unbundled Bezier' },
+        { 'value': 'haystack',         'label': 'Haystack' },
       ],
       fromNode: '',
       toNode: ''
@@ -184,6 +324,16 @@ export default {
     arrowLabel() {
       return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Triangle')
     },
+    sourceArrowLabel() {
+      if (!this.sourceArrowhead) return '— none —'
+      return this._optLabel(this.edgeArrowHeadOptions, this.sourceArrowhead, 'value', 'label', this.sourceArrowhead)
+    },
+    lineStyleLabel() {
+      return this._optLabel(this.edgeLineStyleOptions, this.edgeLineStyle, 'value', 'label', '— theme —')
+    },
+    edgeCurveLabel() {
+      return this._optLabel(this.edgeCurveOptions, this.edgeCurve, 'value', 'label', '— theme —')
+    },
     pathText() {
       if (this.fromNode && this.toNode) return `${this.fromNode} → ${this.toNode}`
       if (this.fromNode || this.toNode) return this.fromNode || this.toNode
@@ -195,18 +345,6 @@ export default {
     },
   },
   mounted () {
-    this._showEdgeFormHandler = () => this.showForm()
-    this._edgesD3DataHandler = (data, id) => {
-      this.d3EdgesData = data
-      this.edgeId = id
-      this.edgeLabel = data.label
-      this.edgeArrowHeadStyle = data.arrowheadStyle
-      this.edgeArrowHead = data.arrowhead
-    }
-    this._editEdgeHandler = () => this.editEdge()
-    this.emitter.on('showEdgeForm', this._showEdgeFormHandler)
-    this.emitter.on('edgesD3Data', this._edgesD3DataHandler)
-    this.emitter.on('editEdge', this._editEdgeHandler)
     document.addEventListener('click', this.onDocClick)
 
     if (this.edgeModal) {
@@ -221,9 +359,6 @@ export default {
     }
   },
   beforeUnmount () {
-    this.emitter.off('showEdgeForm', this._showEdgeFormHandler)
-    this.emitter.off('edgesD3Data', this._edgesD3DataHandler)
-    this.emitter.off('editEdge', this._editEdgeHandler)
     document.removeEventListener('click', this.onDocClick)
   },
   methods: {
@@ -244,6 +379,27 @@ export default {
       this.edgeLabel = this.d3Data?.label || ''
       this.edgeArrowHeadStyle = this.d3Data?.arrowheadStyle || ''
       this.edgeArrowHead = this.d3Data?.arrowhead || ''
+      this.sourceArrowhead = this.d3Data?.sourceArrowhead || ''
+      this.edgeWidth = this.d3Data?.edgeWidth ?? null
+      this.edgeColor = this.d3Data?.edgeColor || ''
+      this.edgeLineStyle = this.d3Data?.edgeLineStyle || ''
+      this.edgeCurve = this.d3Data?.edgeCurve || ''
+      this.edgeOpacity = this.d3Data?.edgeOpacity ?? null
+
+      if (!this.update) {
+        // Create mode: start from the configurable edge creation defaults in
+        // Settings so a new line inherits the user's preferred look.
+        const d = D3Util.defaultEdgeValues()
+        this.edgeLabel          = ''
+        this.edgeArrowHeadStyle = d.edgeArrowHeadStyle
+        this.edgeArrowHead      = d.edgeArrowHead
+        this.sourceArrowhead    = d.sourceArrowhead
+        this.edgeWidth          = d.edgeWidth
+        this.edgeColor          = d.edgeColor
+        this.edgeLineStyle      = d.edgeLineStyle
+        this.edgeCurve          = d.edgeCurve
+        this.edgeOpacity        = d.edgeOpacity
+      }
 
       let srcId = null
       let tgtId = null
@@ -264,6 +420,12 @@ export default {
         edgeLabel: this.edgeLabel,
         edgeArrowHeadStyle: this.edgeArrowHeadStyle,
         edgeArrowHead: this.edgeArrowHead,
+        sourceArrowhead: this.sourceArrowhead,
+        edgeWidth: this.edgeWidth,
+        edgeColor: this.edgeColor,
+        edgeLineStyle: this.edgeLineStyle,
+        edgeCurve: this.edgeCurve,
+        edgeOpacity: this.edgeOpacity,
         fromNode:  this.fromNode,
         toNode:    this.toNode,
       })
@@ -287,9 +449,6 @@ export default {
       const mod = this.modifier?.value ?? this.modifier
       mod.updateEdge(this.$data, this.edgeId)
       this.close()
-    },
-    editEdge () {
-      this.enableTrap = true
     },
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
@@ -328,5 +487,31 @@ export default {
 .hints {
   border: 1px solid magenta;
   color: magenta;
+}
+
+.fx-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fx-input-color {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  height: 38px;
+  cursor: pointer;
+}
+
+.fx-btn-mini {
+  flex: none;
+  font-size: 10px;
+  padding: 5px 10px;
+  letter-spacing: 0.1em;
+}
+
+.fx-btn-active {
+  border-color: rgb(var(--fx-accent));
+  color: rgb(var(--fx-accent));
 }
 </style>

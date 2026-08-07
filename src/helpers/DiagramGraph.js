@@ -45,11 +45,16 @@ export default class DiagramGraph {
   addNode(data) {
     const nodeData = {
       label:       data.nodeLabel  || 'Node',
-      shape:       data.nodeShape  || 'rectangle',
+      nodeShape:   data.nodeShape  || 'rectangle',
       textHalign:  data.textHalign || 'center',
       textValign:  data.textValign || 'top',
+      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      borderColor: data.borderColor,
+      borderWidth: data.borderWidth,
+      fontSize:    data.fontSize,
       style:       data.style,
     }
+    this._cleanPatch(nodeData)
     if (data.parentNode) {
       nodeData.parent = data.parentNode
     }
@@ -62,20 +67,31 @@ export default class DiagramGraph {
     const node = this.cy.getElementById(id)
     if (node.empty()) return
 
-    node.data({
-      label:      data.nodeLabel,
-      shape:      data.nodeShape,
-      textHalign: data.textHalign || 'center',
-      textValign: data.textValign || 'top',
-      style:      data.style,
-    })
+    const patch = {
+      label:       data.nodeLabel,
+      nodeShape:   data.nodeShape,
+      textHalign:  data.textHalign || 'center',
+      textValign:  data.textValign || 'top',
+      bgColor:     data.bgColor,
+      borderColor: data.borderColor,
+      borderWidth: data.borderWidth,
+      fontSize:    data.fontSize,
+    }
+    this._cleanPatch(patch)
+
+    // The legacy SVG "style: fill: …" is fully superseded by bgColor on save, so
+    // a stale fill can neither fight a freshly chosen color nor resurrect in
+    // getNodeData's migration on the next read.
+    patch.style = undefined
+
+    node.data(patch)
 
     if (data.parentNode) {
       node.move({ parent: data.parentNode })
     } else if (node.data('parent')) {
       node.move({ parent: null })
     }
-    this.redraw()
+    this.redraw({ layout: false })
   }
 
   _detachChildren(node) {
@@ -114,10 +130,13 @@ export default class DiagramGraph {
   copyNode(data, parentId) {
     const copy = {
       nodeLabel:  data.label,
-      nodeShape:  data.shape,
+      nodeShape:  data.nodeShape,
       textHalign: data.textHalign || 'center',
       textValign: data.textValign || 'top',
-      style:      data.style,
+      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      borderColor: data.borderColor,
+      borderWidth: data.borderWidth,
+      fontSize:    data.fontSize,
     }
     if (parentId) copy.parentNode = parentId
     return this.addNode(copy)
@@ -173,22 +192,36 @@ export default class DiagramGraph {
       source,
       target,
       label,
-      arrowheadStyle: data.edgeArrowHeadStyle,
-      arrowhead:      data.edgeArrowHead,
+      arrowheadStyle:  data.edgeArrowHeadStyle,
+      arrowhead:       data.edgeArrowHead,
+      sourceArrowhead: data.sourceArrowhead,
+      edgeWidth:       data.edgeWidth,
+      edgeColor:       data.edgeColor,
+      edgeLineStyle:   data.edgeLineStyle,
+      edgeCurve:       data.edgeCurve,
+      edgeOpacity:     data.edgeOpacity,
     })
   }
 
   updateEdge(data, id) {
     const edge = this.cy.getElementById(id)
     if (!edge.empty()) {
-      edge.data({
-        label:          data.edgeLabel || ' ',
-        arrowheadStyle: data.edgeArrowHeadStyle,
-        arrowhead:      data.edgeArrowHead,
-      })
+      const patch = {
+        label:           data.edgeLabel || ' ',
+        arrowheadStyle:  data.edgeArrowHeadStyle,
+        arrowhead:       data.edgeArrowHead,
+        sourceArrowhead: data.sourceArrowhead,
+        edgeWidth:       data.edgeWidth,
+        edgeColor:       data.edgeColor,
+        edgeLineStyle:   data.edgeLineStyle,
+        edgeCurve:       data.edgeCurve,
+        edgeOpacity:     data.edgeOpacity,
+      }
+      this._cleanPatch(patch)
+      edge.data(patch)
     }
     this.selectedNodes = []
-    this.redraw()
+    this.redraw({ layout: false })
   }
 
   deleteEdge(id) {
@@ -226,13 +259,17 @@ export default class DiagramGraph {
     if (!node || node.empty()) return null
     const data = node.data()
     const SHAPE_ALIASES = { rect: 'rectangle', circle: 'ellipse' }
-    const shape = SHAPE_ALIASES[data.shape] || data.shape
+    const shape = SHAPE_ALIASES[data.nodeShape] || data.nodeShape
     return {
       ...data,
       nodeLabel:  data.label,
       nodeShape:  shape,
       textHalign: data.textHalign || 'center',
       textValign: data.textValign || 'top',
+      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      borderColor: data.borderColor,
+      borderWidth: data.borderWidth,
+      fontSize:    data.fontSize,
       id,
     }
   }
@@ -246,8 +283,34 @@ export default class DiagramGraph {
       edgeLabel:          data.label,
       edgeArrowHeadStyle: data.arrowheadStyle,
       edgeArrowHead:      data.arrowhead,
+      sourceArrowhead:    data.sourceArrowhead,
+      edgeWidth:          data.edgeWidth,
+      edgeColor:          data.edgeColor,
+      edgeLineStyle:      data.edgeLineStyle,
+      edgeCurve:          data.edgeCurve,
+      edgeOpacity:        data.edgeOpacity,
       id:                 edge.id(),
     }
+  }
+
+  // Empty optional fields are stored as undefined so they override any previous
+  // value while the cytoscape data-driven selectors fall back to the theme
+  // defaults (a bare [attr] selector does not match an undefined value).
+  _cleanPatch(patch) {
+    for (const key of Object.keys(patch)) {
+      if (patch[key] === undefined || patch[key] === null || patch[key] === '') {
+        patch[key] = undefined
+      }
+    }
+    return patch
+  }
+
+  // Legacy diagrams stored node color as SVG/CSS ("fill: #5f9488"); cytoscape
+  // reads background-color, so lift the fill out for the form/stylesheet.
+  _legacyFillColor(style) {
+    if (!style || typeof style !== 'string') return null
+    const m = style.match(/fill\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/)
+    return m ? m[1] : null
   }
 
   // ─── Index-based accessors ────────────────────────────────────────────────────
