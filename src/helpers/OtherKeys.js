@@ -14,6 +14,8 @@ export default class OtherKeys {
 
   defaultActions(eventKey, edgeOrNode, focusedNodeId, focusedEdgeId) {
     let d3Data = null
+    this.focusedNodeId = focusedNodeId
+    this.focusedEdgeId = focusedEdgeId
 
     switch (eventKey) {
       case 'm':
@@ -57,6 +59,10 @@ export default class OtherKeys {
       selectedId = this.J(nodeOrEdge)
     } else if (eventKey === 'k') {
       selectedId = this.K(nodeOrEdge)
+    } else if (eventKey === 'h') {
+      selectedId = this.H(nodeOrEdge)
+    } else if (eventKey === 'l') {
+      selectedId = this.L(nodeOrEdge)
     } else if (eventKey === 'f') {
       this.hints = this.F()
     }
@@ -74,47 +80,67 @@ export default class OtherKeys {
   }
 
   J(nodeOrEdge) {
-    if (nodeOrEdge === 'nodes') {
-      if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
-        this.focusedIndex = 0
-      } else {
-        this.prevFocusedIndex = this.focusedIndex
-        this.focusedIndex = D3Util.mod(this.focusedIndex + 1, this.modifier.nodeCount())
-        this.modifier.removeSelection(this.prevFocusedIndex)
-      }
-      return this.modifier.selectNode(this.focusedIndex)
-    } else {
-      if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
-        this.focusedIndex = 0
-      } else {
-        this.prevFocusedIndex = this.focusedIndex
-        this.focusedIndex = D3Util.mod(this.focusedIndex + 1, this.modifier.edgeCount())
-        this.modifier.removeEdgeSelection(this.prevFocusedIndex)
-      }
-      return this.modifier.selectEdge(this.focusedIndex)
-    }
+    return this._navigate('j', nodeOrEdge)
   }
 
   K(nodeOrEdge) {
+    return this._navigate('k', nodeOrEdge)
+  }
+
+  H(nodeOrEdge) {
+    return this._navigate('h', nodeOrEdge)
+  }
+
+  L(nodeOrEdge) {
+    return this._navigate('l', nodeOrEdge)
+  }
+
+  _navigate(direction, nodeOrEdge) {
+    if (nodeOrEdge === 'nodes') {
+      const prox = this._proximity(direction, 'nodes')
+      if (prox !== undefined) return prox
+      return this._arrayNav(direction, 'nodes')
+    }
+    const prox = this._proximity(direction, 'edges')
+    if (prox !== undefined) return prox
+    return this._arrayNav(direction, 'edges')
+  }
+
+  // Prefers the element geometrically nearest to the focused one in the given
+  // direction (j/k/h/l). Returns the selected id, or undefined to signal the
+  // caller to fall back to array-based navigation.
+  _proximity(direction, which) {
+    const fromId = which === 'nodes' ? this.focusedNodeId : this.focusedEdgeId
+    if (!fromId) return undefined
+    const method = which === 'nodes' ? 'selectNodeProximity' : 'selectEdgeProximity'
+    if (typeof this.modifier[method] !== 'function') return undefined
+
+    const res = this.modifier[method](direction, fromId)
+    if (!res) return undefined
+    this.focusedIndex = res.index
+    return res.id
+  }
+
+  _arrayNav(direction, nodeOrEdge) {
+    const delta = direction === 'k' || direction === 'h' ? -1 : 1
     if (nodeOrEdge === 'nodes') {
       if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
-        this.focusedIndex = this.modifier.nodeCount() - 1
+        this.focusedIndex = delta === -1 ? this.modifier.nodeCount() - 1 : 0
       } else {
         this.prevFocusedIndex = this.focusedIndex
-        this.focusedIndex = D3Util.mod(this.focusedIndex - 1, this.modifier.nodeCount())
+        this.focusedIndex = D3Util.mod(this.focusedIndex + delta, this.modifier.nodeCount())
         this.modifier.removeSelection(this.prevFocusedIndex)
       }
       return this.modifier.selectNode(this.focusedIndex)
-    } else {
-      if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
-        this.focusedIndex = this.modifier.edgeCount() - 1
-      } else {
-        this.prevFocusedIndex = this.focusedIndex
-        this.focusedIndex = D3Util.mod(this.focusedIndex - 1, this.modifier.edgeCount())
-        this.modifier.removeEdgeSelection(this.prevFocusedIndex)
-      }
-      return this.modifier.selectEdge(this.focusedIndex)
     }
+    if (this.focusedIndex === null || isNaN(this.focusedIndex)) {
+      this.focusedIndex = delta === -1 ? this.modifier.edgeCount() - 1 : 0
+    } else {
+      this.prevFocusedIndex = this.focusedIndex
+      this.focusedIndex = D3Util.mod(this.focusedIndex + delta, this.modifier.edgeCount())
+      this.modifier.removeEdgeSelection(this.prevFocusedIndex)
+    }
+    return this.modifier.selectEdge(this.focusedIndex)
   }
 
   F() {

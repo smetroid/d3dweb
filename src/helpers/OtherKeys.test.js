@@ -105,6 +105,57 @@ describe('OtherKeys j/k navigation', () => {
   })
 })
 
+describe('OtherKeys h/l navigation', () => {
+  function makeProxSut() {
+    return makeSut({
+      modifier: {
+        selectNodeProximity: vi.fn((direction, fromId) => ({ id: `prox-${direction}-${fromId}`, index: 1 })),
+        selectEdgeProximity: vi.fn((direction, fromId) => ({ id: `proxE-${direction}-${fromId}`, index: 2 })),
+      },
+    })
+  }
+
+  it('l selects the nearest node to the right of the focused one', () => {
+    const { modifier, keys } = makeProxSut()
+    const r = keys.defaultActions('l', 'nodes', 'n1', null)
+    expect(modifier.selectNodeProximity).toHaveBeenCalledWith('l', 'n1')
+    expect(r).toEqual({ nodesId: 'prox-l-n1', index: 1 })
+  })
+
+  it('h selects the nearest node to the left of the focused one', () => {
+    const { modifier, keys } = makeProxSut()
+    const r = keys.defaultActions('h', 'nodes', 'n1', null)
+    expect(modifier.selectNodeProximity).toHaveBeenCalledWith('h', 'n1')
+    expect(r).toEqual({ nodesId: 'prox-h-n1', index: 1 })
+  })
+
+  it('l selects the nearest edge to the right when edge mode is active', () => {
+    const { modifier, keys } = makeProxSut()
+    const r = keys.defaultActions('l', 'edges', null, 'e5')
+    expect(modifier.selectEdgeProximity).toHaveBeenCalledWith('l', 'e5')
+    expect(r).toEqual({ edgesId: 'proxE-l-e5', index: 2 })
+  })
+
+  it('h/l fall back to array navigation when there is no focused element', () => {
+    const { modifier, keys } = makeProxSut()
+    const r = keys.defaultActions('l', 'nodes', null, null)
+    expect(modifier.selectNodeProximity).not.toHaveBeenCalled()
+    expect(r).toEqual({ nodesId: 'node-0', index: 0 })
+  })
+
+  it('h/l fall back to array navigation when the modifier lacks proximity support', () => {
+    const { keys } = makeSut()
+    const r = keys.defaultActions('l', 'nodes', 'n1', null)
+    expect(r).toEqual({ nodesId: 'node-0', index: 0 })
+  })
+
+  it('keeps j/k on the proximity path when a focused node exists', () => {
+    const { modifier, keys } = makeProxSut()
+    keys.defaultActions('j', 'nodes', 'n1', null)
+    expect(modifier.selectNodeProximity).toHaveBeenCalledWith('j', 'n1')
+  })
+})
+
 describe('OtherKeys buildHints', () => {
   it('assigns sequential hint characters to elements', () => {
     const { keys } = makeSut()

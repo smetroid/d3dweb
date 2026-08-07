@@ -282,6 +282,84 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
   ]
 }
 
+// ─── Proximity navigation (j/k/h/l) ────────────────────────────────────────────
+// Keyboard navigation picks the element geometrically nearest to the focused
+// element in a screen direction. Directions follow vim: j=down, k=up, h=left,
+// l=right. When nothing exists on the target side, we wrap to the element on
+// the opposite side that is farthest along the same axis (mirroring the array
+// wrap of the old index-based navigation).
+
+export const DIRECTION = {
+  k: { axis: 'y', sign: -1 },
+  j: { axis: 'y', sign: 1 },
+  h: { axis: 'x', sign: -1 },
+  l: { axis: 'x', sign: 1 },
+}
+
+function anchorFor(cy, id, kind) {
+  const ele = cy.getElementById(id)
+  if (ele.empty()) return null
+  if (kind === 'edges') {
+    // edge.midpoint() depends on the renderer's curve, so derive the anchor
+    // from the connected nodes' positions — works headless and rendered.
+    const s = ele.source()
+    const t = ele.target()
+    if (!s || s.empty() || !t || t.empty()) return null
+    const sp = s.position()
+    const tp = t.position()
+    if (!sp || !tp) return null
+    return { x: (sp.x + tp.x) / 2, y: (sp.y + tp.y) / 2 }
+  }
+  return ele.position() || null
+}
+
+export function nearestInDirection(cy, fromId, direction, kind = 'nodes') {
+  const dir = DIRECTION[direction]
+  if (!dir || !cy || !fromId) return null
+
+  const from = anchorFor(cy, fromId, kind)
+  if (!from) return null
+
+  const pool   = kind === 'edges' ? cy.edges() : cy.nodes()
+  const anchor = (ele) => (kind === 'edges' ? anchorFor(cy, ele.id(), 'edges') : ele.position())
+  const axis   = dir.axis
+  const sign   = dir.sign
+
+  let onTarget  = null
+  let onOpposite = null
+
+  for (let i = 0; i < pool.length; i++) {
+    const ele = pool[i]
+    if (ele.id() === fromId) continue
+    const p = anchor(ele)
+    if (!p) continue
+    const delta = p[axis] - from[axis]
+    if (delta * sign > 0) {
+      if (!onTarget || isCloser(p, from, onTarget.p, axis)) onTarget = { ele, p }
+    } else if (delta * sign < 0) {
+      // "Farthest along the axis on the opposite side" = largest |delta|
+      if (!onOpposite || Math.abs(p[axis] - from[axis]) > Math.abs(onOpposite.p[axis] - from[axis])) {
+        onOpposite = { ele, p }
+      }
+    }
+  }
+
+  return (onTarget || onOpposite)?.ele.id() || null
+}
+
+// Prefer elements aligned on the perpendicular axis: a slightly farther but
+// better-aligned element beats a closer one that is wildly off-line. Compare
+// along-axis distance first (weighted), then perpendicular distance as a tie
+// break.
+function isCloser(p, from, best, axis) {
+  const score = (pos) => {
+    const along = Math.abs(pos[axis] - from[axis])
+    const perp  = Math.abs(pos[axis === 'x' ? 'y' : 'x'] - from[axis === 'x' ? 'y' : 'x'])
+    return along + perp * 2
+  }
+  return score(p) < score(best)
+}
+
 export default class CytoscapeRenderer {
   constructor(container, emitter) {
     this.container = container
@@ -741,6 +819,13 @@ export default class CytoscapeRenderer {
 
   deselectEdge(id) {
     this.cy?.getElementById(id).removeClass('focused')
+  }
+
+  // Returns the id of the element (node or edge) nearest to `fromId` in the
+  // given screen direction, or null when the graph has no other element.
+  nearestElementId({ direction, fromId, kind }) {
+    if (!this.cy) return null
+    return nearestInDirection(this.cy, fromId, direction, kind)
   }
 
   // Selection crosshair overlay (sits below the hint badges, above the canvas)

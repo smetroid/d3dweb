@@ -306,6 +306,41 @@ export default class DiagramGraph {
     if (this.renderer) this.renderer.deselectEdge(typeof id === 'string' ? id : this._resolveEdge(id)?.id())
   }
 
+  // ─── Proximity selection (j/k/h/l) ───────────────────────────────────────────
+
+  // Selects the element nearest to the currently focused one in a screen
+  // direction (j=down, k=up, h=left, l=right). Falls back to the array-based
+  // selection when no focus exists or the renderer has no positions.
+  _selectProximity(direction, fromId, which) {
+    const renderer = this.renderer
+    if (!fromId || !renderer || typeof renderer.nearestElementId !== 'function') return null
+
+    const kind  = which === 'edges' ? 'edges' : 'nodes'
+    const id    = renderer.nearestElementId({ direction, fromId, kind })
+    if (!id) return null
+
+    const pool  = which === 'edges' ? this.cy.edges() : this.cy.nodes()
+    const index = pool.findIndex(el => el.id() === id)
+    if (index === -1) return null
+
+    if (which === 'edges') {
+      this.removeEdgeSelectionById(fromId)
+      this.selectEdge(index)
+    } else {
+      this.removeNodeSelectionById(fromId)
+      this.selectNode(index)
+    }
+    return { id, index }
+  }
+
+  selectNodeProximity(direction, fromId) {
+    return this._selectProximity(direction, fromId, 'nodes')
+  }
+
+  selectEdgeProximity(direction, fromId) {
+    return this._selectProximity(direction, fromId, 'edges')
+  }
+
   // ─── Layout & render ──────────────────────────────────────────────────────────
 
   redraw(options = {}) {
