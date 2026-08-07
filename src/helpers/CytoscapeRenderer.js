@@ -1,6 +1,11 @@
 import cytoscape from 'cytoscape'
 import cola from 'cytoscape-cola'
 import VueCookies from 'vue-cookies'
+import {
+  normalizeOptionalFields,
+  NODE_OPTIONAL_FIELDS,
+  EDGE_OPTIONAL_FIELDS,
+} from '@/helpers/GraphModel.js'
 
 cytoscape.use(cola)
 
@@ -473,16 +478,20 @@ export default class CytoscapeRenderer {
     // Parent nodes must be added before children
     graphModel.nodes().filter(n => n.isParent()).forEach(node => {
       const d = { ...node.data(), id: node.id() }
+      normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
       delete d.parent
       elements.push({ group: 'nodes', data: d })
     })
     graphModel.nodes().filter(n => !n.isParent()).forEach(node => {
       const d = { ...node.data(), id: node.id() }
+      normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
       elements.push({ group: 'nodes', data: d })
     })
     graphModel.edges().forEach(edge => {
       const d = edge.data()
-      elements.push({ group: 'edges', data: { ...d, id: edge.id(), source: d.source, target: d.target } })
+      const edgeData = { ...d, id: edge.id(), source: d.source, target: d.target }
+      normalizeOptionalFields(edgeData, EDGE_OPTIONAL_FIELDS)
+      elements.push({ group: 'edges', data: edgeData })
     })
 
     this.cy.add(elements)
@@ -495,6 +504,7 @@ export default class CytoscapeRenderer {
       const ele = this.cy.getElementById(node.id())
       if (ele.empty()) return
       const d = { ...node.data() }
+      normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
       delete d.id
       if ((ele.data('parent') || null) !== (d.parent || null)) {
         ele.move({ parent: d.parent || null })
@@ -523,6 +533,7 @@ export default class CytoscapeRenderer {
       const ele = this.cy.getElementById(edge.id())
       if (ele.empty()) return
       const d = { ...edge.data() }
+      normalizeOptionalFields(d, EDGE_OPTIONAL_FIELDS)
       delete d.id
       ele.data(d)
     })

@@ -17,6 +17,32 @@ import D3Util from '@/helpers/D3Util'
 export const CARD_W = 40   // 80px / SCALE
 export const CARD_H = 18   // 36px / SCALE
 
+// Optional styling fields whose empty value means "use the theme default". They
+// are stored as undefined so cytoscape's bare [attr] selectors (which match any
+// value that is not undefined) fall back to the theme instead of mapping an
+// empty string onto a style property.
+export const NODE_OPTIONAL_FIELDS = ['bgColor', 'borderColor', 'borderWidth', 'fontSize']
+
+export const EDGE_OPTIONAL_FIELDS = [
+  'arrowheadStyle',
+  'arrowhead',
+  'sourceArrowhead',
+  'edgeWidth',
+  'edgeColor',
+  'edgeLineStyle',
+  'edgeCurve',
+  'edgeOpacity',
+]
+
+export function normalizeOptionalFields(data, fields) {
+  for (const key of fields) {
+    if (data[key] === undefined || data[key] === null || data[key] === '') {
+      data[key] = undefined
+    }
+  }
+  return data
+}
+
 const EMPTY = Object.freeze({
   empty()      { return true },
   nonempty()   { return false },
@@ -234,11 +260,13 @@ export default class GraphModel {
   _addElement(el) {
     if (el?.group === 'edges') {
       const data = { ...el.data }
+      normalizeOptionalFields(data, EDGE_OPTIONAL_FIELDS)
       const edge = { id: data.id, source: data.source, target: data.target, data }
       this._edges.push(edge)
       this._edgeIndex.set(edge.id, edge)
     } else {
       const data = { id: el?.data?.id || D3Util.randomId(), ...el?.data }
+      normalizeOptionalFields(data, NODE_OPTIONAL_FIELDS)
       const node = { id: data.id, data, x: 0, y: 0, width: CARD_W, height: CARD_H }
       this._nodes.push(node)
       this._nodeIndex.set(node.id, node)

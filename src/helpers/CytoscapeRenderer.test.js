@@ -73,6 +73,29 @@ describe('CytoscapeRenderer', () => {
     expect(renderer.cy.getElementById('st').style('background-color')).toBe('rgb(0,0,255)')
   })
 
+  it('never lets empty optional styling fields reach cytoscape', async () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'a', label: 'A' } },
+      { group: 'nodes', data: { id: 'b', label: 'B' } },
+      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b' } },
+    ])
+
+    // Inject empty values bypassing _addElement to exercise the renderer guard
+    model._nodes[0].data.bgColor = ''
+    model._nodes[0].data.borderWidth = null
+    model._edges[0].data.edgeColor = ''
+    model._edges[0].data.sourceArrowhead = ''
+    model._edges[0].data.edgeWidth = null
+
+    await renderer.updateScene(model)
+
+    expect(renderer.cy.getElementById('a').data('bgColor')).toBeUndefined()
+    expect(renderer.cy.getElementById('a').data('borderWidth')).toBeUndefined()
+    expect(renderer.cy.getElementById('ab').data('edgeColor')).toBeUndefined()
+    expect(renderer.cy.getElementById('ab').data('sourceArrowhead')).toBeUndefined()
+    expect(renderer.cy.getElementById('ab').data('edgeWidth')).toBeUndefined()
+  })
+
   it('derives legacy "style: fill: …" into fillColor and applies it inline', async () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'leg', label: 'Old', style: 'fill: #5f9488' } },

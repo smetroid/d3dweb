@@ -216,6 +216,56 @@ describe('edge CRUD', () => {
   })
 })
 
+describe('empty optional fields', () => {
+  it('stores empty optional edge fields as undefined on add', () => {
+    const { graph } = makeGraph(2)
+    graph.selectedNodes = [0, 1]
+    graph.addEdge({
+      edgeLabel: 'connects',
+      edgeArrowHead: '',
+      edgeArrowHeadStyle: '',
+      sourceArrowhead: '',
+      edgeWidth: null,
+      edgeColor: '',
+      edgeLineStyle: '',
+      edgeCurve: '',
+      edgeOpacity: null,
+    })
+    const eid = graph.cy.edges()[0].id()
+    const data = graph.getEdgeData(eid)
+    expect(data.edgeArrowHead).toBeUndefined()
+    expect(data.edgeArrowHeadStyle).toBeUndefined()
+    expect(data.sourceArrowhead).toBeUndefined()
+    expect(data.edgeWidth).toBeUndefined()
+    expect(data.edgeColor).toBeUndefined()
+    expect(data.edgeLineStyle).toBeUndefined()
+    expect(data.edgeCurve).toBeUndefined()
+    expect(data.edgeOpacity).toBeUndefined()
+    expect(data.edgeLabel).toBe('connects')
+  })
+
+  it('normalizes empty optional fields in loaded model edges', () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'a', label: 'A' } },
+      { group: 'nodes', data: { id: 'b', label: 'B' } },
+      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b', edgeColor: '', sourceArrowhead: '', edgeWidth: null } },
+    ])
+    expect(model.getElementById('ab').data('edgeColor')).toBeUndefined()
+    expect(model.getElementById('ab').data('sourceArrowhead')).toBeUndefined()
+    expect(model.getElementById('ab').data('edgeWidth')).toBeUndefined()
+  })
+
+  it('normalizes empty optional fields in loaded model nodes', () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'n', label: 'N', bgColor: '', borderColor: '', borderWidth: null, fontSize: null } },
+    ])
+    expect(model.getElementById('n').data('bgColor')).toBeUndefined()
+    expect(model.getElementById('n').data('borderColor')).toBeUndefined()
+    expect(model.getElementById('n').data('borderWidth')).toBeUndefined()
+    expect(model.getElementById('n').data('fontSize')).toBeUndefined()
+  })
+})
+
 describe('redraw', () => {
   it('calls renderer.updateScene with the model and colaOpts', () => {
     const { graph, renderer } = makeGraph(3)
