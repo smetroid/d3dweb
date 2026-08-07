@@ -80,7 +80,12 @@ export function hintTransform(x, y) {
 }
 
 export function edgeStyleFrom(settings, accent = '#5e74ff') {
-  const curve = settings.defaultEdgeStyle === 'straight' ? 'straight' : 'bezier'
+  // Legacy settings stored 'curved' ("Curved (Bezier)"); normalize it to the
+  // cytoscape curve-style value 'bezier'. Everything else passes straight
+  // through so all curve options in the node/edge forms are supported.
+  const curve = settings.defaultEdgeStyle === 'curved'
+    ? 'bezier'
+    : settings.defaultEdgeStyle || 'bezier'
   const raw = Number(settings.defaultArrowScale)
   const arrowScale = Number.isFinite(raw) ? Math.min(3, Math.max(0.1, raw)) : 1
   return {

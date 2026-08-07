@@ -163,6 +163,18 @@ describe('defaultEdgeValues', () => {
     expect(defaults.edgeCurve).toBe('straight')
     expect(defaults.edgeOpacity).toBe(0.5)
   })
+
+  it('passes any curve value from settings through to the edge defaults', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    VueCookies.get.mockReturnValue({ defaultEdgeStyle: 'unbundled-bezier' })
+    expect(D3Util.defaultEdgeValues().edgeCurve).toBe('unbundled-bezier')
+  })
+
+  it('maps the legacy "curved" curve value to "bezier"', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    VueCookies.get.mockReturnValue({ defaultEdgeStyle: 'curved' })
+    expect(D3Util.defaultEdgeValues().edgeCurve).toBe('bezier')
+  })
 })
 
 describe('appDefaults', () => {
@@ -186,7 +198,7 @@ describe('appDefaults', () => {
     expect(defaults.defaultColaGravity).toBe(0)
     expect(defaults.defaultZoomFit).toBe(true)
     expect(defaults.defaultZoomLevel).toBe(1)
-    expect(defaults.defaultEdgeStyle).toBe('curved')
+    expect(defaults.defaultEdgeStyle).toBe('bezier')
     expect(defaults.defaultEdgeWidth).toBe(2)
     expect(defaults.defaultEdgeOpacity).toBe(0.85)
     expect(defaults.defaultArrowScale).toBe(1)
@@ -202,5 +214,43 @@ describe('appDefaults', () => {
     expect(defaults.defaultNodeBorderColor).toBe('')
     expect(defaults.defaultNodeBorderWidth).toBeNull()
     expect(defaults.defaultNodeFontSize).toBeNull()
+  })
+})
+
+describe('shared dropdown options', () => {
+  it('node shape options cover every node shape used in the node form', () => {
+    expect(D3Util.nodeShapeOptions()).toEqual([
+      { value: 'rectangle',       label: 'Rectangle' },
+      { value: 'round-rectangle', label: 'Round Rectangle' },
+      { value: 'ellipse',         label: 'Ellipse' },
+      { value: 'diamond',         label: 'Diamond' },
+      { value: 'round-diamond',   label: 'Round Diamond' },
+      { value: 'hexagon',         label: 'Hexagon' },
+      { value: 'octagon',         label: 'Octagon' },
+      { value: 'star',            label: 'Star' },
+      { value: 'tag',             label: 'Tag' },
+      { value: 'barrel',          label: 'Barrel' },
+    ])
+  })
+
+  it('edge arrow head options include square and match the edge form list', () => {
+    const values = D3Util.edgeArrowHeadOptions().map(o => o.value)
+    expect(values).toEqual([
+      'triangle', 'vee', 'none', 'chevron', 'tee',
+      'circle', 'diamond', 'square', 'triangle-tee', 'triangle-cross',
+    ])
+  })
+
+  it('edge curve options match the edge form curve list', () => {
+    expect(D3Util.edgeCurveOptions().map(o => o.value)).toEqual([
+      'bezier', 'straight', 'segmented', 'unbundled-bezier', 'haystack',
+    ])
+  })
+
+  it('edge line style and arrow head style options match the edge form lists', () => {
+    expect(D3Util.edgeLineStyleOptions().map(o => o.value)).toEqual(['solid', 'dotted', 'dashed'])
+    expect(D3Util.edgeArrowHeadStyleOptions().map(o => o.value)).toEqual(['filled', 'hollow'])
+    expect(D3Util.nodeHalignOptions().map(o => o.value)).toEqual(['left', 'center', 'right'])
+    expect(D3Util.nodeValignOptions().map(o => o.value)).toEqual(['top', 'center', 'bottom'])
   })
 })

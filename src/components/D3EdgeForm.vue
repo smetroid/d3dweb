@@ -282,34 +282,6 @@ export default {
       edgeId: null,
       update: false,
       openSel: null,
-      edgeArrowHeadStyleOptions: [
-        { 'value': 'filled', 'label': 'Filled' },
-        { 'value': 'hollow', 'label': 'Hollow' }
-      ],
-      edgeArrowHeadOptions: [
-        { 'value': 'triangle',       'label': 'Triangle' },
-        { 'value': 'vee',            'label': 'Vee' },
-        { 'value': 'none',           'label': 'None (undirected)' },
-        { 'value': 'chevron',        'label': 'Chevron' },
-        { 'value': 'tee',            'label': 'Tee' },
-        { 'value': 'circle',         'label': 'Circle' },
-        { 'value': 'diamond',        'label': 'Diamond' },
-        { 'value': 'square',         'label': 'Square' },
-        { 'value': 'triangle-tee',   'label': 'Triangle Tee' },
-        { 'value': 'triangle-cross', 'label': 'Triangle Cross' },
-      ],
-      edgeLineStyleOptions: [
-        { 'value': 'solid',   'label': 'Solid' },
-        { 'value': 'dotted',  'label': 'Dotted' },
-        { 'value': 'dashed',  'label': 'Dashed' },
-      ],
-      edgeCurveOptions: [
-        { 'value': 'bezier',           'label': 'Bezier' },
-        { 'value': 'straight',         'label': 'Straight' },
-        { 'value': 'segmented',        'label': 'Segmented' },
-        { 'value': 'unbundled-bezier', 'label': 'Unbundled Bezier' },
-        { 'value': 'haystack',         'label': 'Haystack' },
-      ],
       fromNode: '',
       toNode: ''
     }
@@ -317,6 +289,18 @@ export default {
   computed: {
     shortcutLabels() {
       return D3Util.shortcutLabels()
+    },
+    edgeArrowHeadStyleOptions() {
+      return D3Util.edgeArrowHeadStyleOptions()
+    },
+    edgeArrowHeadOptions() {
+      return D3Util.edgeArrowHeadOptions()
+    },
+    edgeLineStyleOptions() {
+      return D3Util.edgeLineStyleOptions()
+    },
+    edgeCurveOptions() {
+      return D3Util.edgeCurveOptions()
     },
     arrowStyleLabel() {
       return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Filled')

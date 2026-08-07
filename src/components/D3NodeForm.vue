@@ -71,9 +71,9 @@
                 >{{ textHalign }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'halign'" class="fx-options">
-                    <li v-for="opt in ['left','center','right']" :key="opt"
-                      class="fx-option" :class="{ 'fx-option-active': textHalign === opt }"
-                      @click="pick('textHalign', opt)">{{ opt }}</li>
+                    <li v-for="opt in halignOptions" :key="opt.value"
+                      class="fx-option" :class="{ 'fx-option-active': textHalign === opt.value }"
+                      @click="pick('textHalign', opt.value)">{{ opt.label }}</li>
                   </ul>
                 </transition>
               </div>
@@ -89,9 +89,9 @@
                 >{{ textValign }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'valign'" class="fx-options">
-                    <li v-for="opt in ['top','center','bottom']" :key="opt"
-                      class="fx-option" :class="{ 'fx-option-active': textValign === opt }"
-                      @click="pick('textValign', opt)">{{ opt }}</li>
+                    <li v-for="opt in valignOptions" :key="opt.value"
+                      class="fx-option" :class="{ 'fx-option-active': textValign === opt.value }"
+                      @click="pick('textValign', opt.value)">{{ opt.label }}</li>
                   </ul>
                 </transition>
               </div>
@@ -256,18 +256,6 @@ export default {
       nodeId: null,
       update: false,
       openSel: null,
-      nodeShapes: [
-        { 'value': 'rectangle',       'label': 'Rectangle' },
-        { 'value': 'round-rectangle', 'label': 'Round Rectangle' },
-        { 'value': 'ellipse',         'label': 'Ellipse' },
-        { 'value': 'diamond',         'label': 'Diamond' },
-        { 'value': 'round-diamond',   'label': 'Round Diamond' },
-        { 'value': 'hexagon',         'label': 'Hexagon' },
-        { 'value': 'octagon',         'label': 'Octagon' },
-        { 'value': 'star',            'label': 'Star' },
-        { 'value': 'tag',             'label': 'Tag' },
-        { 'value': 'barrel',          'label': 'Barrel' },
-      ],
       parentNode: null,
       textHalign: 'center',
       textValign: 'top',
@@ -308,6 +296,15 @@ export default {
   computed: {
     shortcutLabels() {
       return D3Util.shortcutLabels()
+    },
+    nodeShapes() {
+      return D3Util.nodeShapeOptions()
+    },
+    halignOptions() {
+      return D3Util.nodeHalignOptions()
+    },
+    valignOptions() {
+      return D3Util.nodeValignOptions()
     },
     parentOptions() {
       const mod = this.modifier?.value ?? this.modifier

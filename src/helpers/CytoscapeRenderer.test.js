@@ -419,6 +419,14 @@ describe('edgeStyleFrom', () => {
     expect(edgeStyleFrom({ defaultEdgeStyle: 'straight' })['curve-style']).toBe('straight')
   })
 
+  it('maps the legacy "curved" curve style to "bezier"', () => {
+    expect(edgeStyleFrom({ defaultEdgeStyle: 'curved' })['curve-style']).toBe('bezier')
+  })
+
+  it('passes other curve styles straight through', () => {
+    expect(edgeStyleFrom({ defaultEdgeStyle: 'unbundled-bezier' })['curve-style']).toBe('unbundled-bezier')
+  })
+
   it('honours numeric overrides from settings', () => {
     const s = edgeStyleFrom({ defaultEdgeWidth: 4, defaultEdgeOpacity: 0.3, defaultArrowScale: 2 })
     expect(s['width']).toBe(4)

@@ -110,10 +110,76 @@ export default {
   // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
+  // Shared dropdown option lists. Single source of truth so the Settings
+  // dialog and the node/edge forms cannot drift apart.
+  nodeShapeOptions () {
+    return [
+      { value: 'rectangle',       label: 'Rectangle' },
+      { value: 'round-rectangle', label: 'Round Rectangle' },
+      { value: 'ellipse',         label: 'Ellipse' },
+      { value: 'diamond',         label: 'Diamond' },
+      { value: 'round-diamond',   label: 'Round Diamond' },
+      { value: 'hexagon',         label: 'Hexagon' },
+      { value: 'octagon',         label: 'Octagon' },
+      { value: 'star',            label: 'Star' },
+      { value: 'tag',             label: 'Tag' },
+      { value: 'barrel',          label: 'Barrel' },
+    ]
+  },
+  nodeHalignOptions () {
+    return [
+      { value: 'left',   label: 'Left' },
+      { value: 'center', label: 'Center' },
+      { value: 'right',  label: 'Right' },
+    ]
+  },
+  nodeValignOptions () {
+    return [
+      { value: 'top',    label: 'Top' },
+      { value: 'center', label: 'Center' },
+      { value: 'bottom', label: 'Bottom' },
+    ]
+  },
+  edgeArrowHeadStyleOptions () {
+    return [
+      { value: 'filled', label: 'Filled' },
+      { value: 'hollow', label: 'Hollow' },
+    ]
+  },
+  edgeArrowHeadOptions () {
+    return [
+      { value: 'triangle',       label: 'Triangle' },
+      { value: 'vee',            label: 'Vee' },
+      { value: 'none',           label: 'None (undirected)' },
+      { value: 'chevron',        label: 'Chevron' },
+      { value: 'tee',            label: 'Tee' },
+      { value: 'circle',         label: 'Circle' },
+      { value: 'diamond',        label: 'Diamond' },
+      { value: 'square',         label: 'Square' },
+      { value: 'triangle-tee',   label: 'Triangle Tee' },
+      { value: 'triangle-cross', label: 'Triangle Cross' },
+    ]
+  },
+  edgeLineStyleOptions () {
+    return [
+      { value: 'solid',   label: 'Solid' },
+      { value: 'dotted',  label: 'Dotted' },
+      { value: 'dashed',  label: 'Dashed' },
+    ]
+  },
+  edgeCurveOptions () {
+    return [
+      { value: 'bezier',           label: 'Bezier' },
+      { value: 'straight',         label: 'Straight' },
+      { value: 'segmented',        label: 'Segmented' },
+      { value: 'unbundled-bezier', label: 'Unbundled Bezier' },
+      { value: 'haystack',         label: 'Haystack' },
+    ]
+  },
   appDefaults () { 
     var defaults = {
       'hintBGColor': '#36004c',
-      'hintLinkColor': '#fff', 
+      'hintLinkColor': '#ffffff', 
       'debug': false, 
       'hints': 'asdfjklqweruiopzxcvnmgh', 
       'reset': false,
@@ -135,7 +201,7 @@ export default {
       'defaultColaAvoidOverlap': true,
       'defaultColaMaxSimulationTime': 1500,
       'defaultColaGravity': 0,
-      'defaultEdgeStyle': 'curved',
+      'defaultEdgeStyle': 'bezier',
       'defaultEdgeWidth': 2,
       'defaultEdgeOpacity': 0.85,
       'defaultArrowScale': 1,
@@ -495,10 +561,17 @@ export default {
       edgeWidth:          s.defaultEdgeWidth   != null ? Number(s.defaultEdgeWidth)   : 2,
       edgeColor:          s.defaultEdgeColor   || '',
       edgeLineStyle:      s.defaultEdgeLineStyle || 'solid',
-      edgeCurve:          s.defaultEdgeStyle === 'straight' ? 'straight' : 'bezier',
+      edgeCurve:          this._normalizeEdgeCurve(s.defaultEdgeStyle),
       edgeOpacity:        s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85,
     }
     return data
+  },
+  // Map the stored default curve value to a cytoscape curve-style. Legacy
+  // settings saved 'curved' (label "Curved (Bezier)"); normalize it to the
+  // cytoscape value 'bezier'.
+  _normalizeEdgeCurve (val) {
+    if (val === 'curved') return 'bezier'
+    return val || 'bezier'
   },
   // Settings cookie that never throws (vue-cookies reads document.cookie, which
   // does not exist in headless/test environments).

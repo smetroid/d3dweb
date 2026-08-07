@@ -237,32 +237,31 @@
                       <label class="fx-field">
                         <span class="fx-label">Default Node Shape</span>
                         <select class="fx-input" v-model="settings.defaultNodeShape">
-                          <option value="rectangle">Rectangle</option>
-                          <option value="round-rectangle">Round Rectangle</option>
-                          <option value="ellipse">Ellipse</option>
-                          <option value="diamond">Diamond</option>
-                          <option value="round-diamond">Round Diamond</option>
-                          <option value="hexagon">Hexagon</option>
-                          <option value="octagon">Octagon</option>
-                          <option value="star">Star</option>
-                          <option value="tag">Tag</option>
-                          <option value="barrel">Barrel</option>
+                          <option
+                            v-for="opt in nodeShapeOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Label H-Align</span>
                         <select class="fx-input" v-model="settings.defaultNodeTextHalign">
-                          <option value="left">Left</option>
-                          <option value="center">Center</option>
-                          <option value="right">Right</option>
+                          <option
+                            v-for="opt in nodeHalignOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Label V-Align</span>
                         <select class="fx-input" v-model="settings.defaultNodeTextValign">
-                          <option value="top">Top</option>
-                          <option value="center">Center</option>
-                          <option value="bottom">Bottom</option>
+                          <option
+                            v-for="opt in nodeValignOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                     </div>
@@ -340,45 +339,42 @@
                       <label class="fx-field">
                         <span class="fx-label">Edge Arrow Style</span>
                         <select class="fx-input" v-model="settings.defaultEdgeArrowHeadStyle">
-                          <option value="filled">Filled</option>
-                          <option value="hollow">Hollow</option>
+                          <option
+                            v-for="opt in edgeArrowHeadStyleOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Default Arrow Shape</span>
                         <select class="fx-input" v-model="settings.defaultArrowShape">
-                          <option value="vee">Vee</option>
-                          <option value="triangle">Triangle</option>
-                          <option value="chevron">Chevron</option>
-                          <option value="tee">Tee</option>
-                          <option value="circle">Circle</option>
-                          <option value="diamond">Diamond</option>
-                          <option value="triangle-tee">Triangle Tee</option>
-                          <option value="triangle-cross">Triangle Cross</option>
-                          <option value="none">None (undirected)</option>
+                          <option
+                            v-for="opt in edgeArrowHeadOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Source Arrow <em class="fx-opt">empty = none</em></span>
                         <select class="fx-input" v-model="settings.defaultEdgeSourceArrow">
-                          <option value="">None</option>
-                          <option value="vee">Vee</option>
-                          <option value="triangle">Triangle</option>
-                          <option value="chevron">Chevron</option>
-                          <option value="tee">Tee</option>
-                          <option value="circle">Circle</option>
-                          <option value="diamond">Diamond</option>
-                          <option value="square">Square</option>
-                          <option value="triangle-tee">Triangle Tee</option>
-                          <option value="triangle-cross">Triangle Cross</option>
+                          <option value="">— none —</option>
+                          <option
+                            v-for="opt in edgeArrowHeadOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Edge Line Style</span>
                         <select class="fx-input" v-model="settings.defaultEdgeLineStyle">
-                          <option value="solid">Solid</option>
-                          <option value="dotted">Dotted</option>
-                          <option value="dashed">Dashed</option>
+                          <option
+                            v-for="opt in edgeLineStyleOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                     </div>
@@ -386,8 +382,11 @@
                       <label class="fx-field">
                         <span class="fx-label">Curve Style</span>
                         <select class="fx-input" v-model="settings.defaultEdgeStyle">
-                          <option value="curved">Curved (Bezier)</option>
-                          <option value="straight">Straight Line</option>
+                          <option
+                            v-for="opt in edgeCurveOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
                         </select>
                       </label>
                       <label class="fx-field">
@@ -476,6 +475,27 @@ export default {
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
+    nodeShapeOptions() {
+      return D3Util.nodeShapeOptions()
+    },
+    nodeHalignOptions() {
+      return D3Util.nodeHalignOptions()
+    },
+    nodeValignOptions() {
+      return D3Util.nodeValignOptions()
+    },
+    edgeArrowHeadStyleOptions() {
+      return D3Util.edgeArrowHeadStyleOptions()
+    },
+    edgeArrowHeadOptions() {
+      return D3Util.edgeArrowHeadOptions()
+    },
+    edgeLineStyleOptions() {
+      return D3Util.edgeLineStyleOptions()
+    },
+    edgeCurveOptions() {
+      return D3Util.edgeCurveOptions()
+    },
   },
   mounted () {
     const defaults = this.cloneDefaults()
@@ -500,8 +520,8 @@ export default {
       const merged = { ...defaults, ...stored }
       merged.themes = stored.themes || defaults.themes
       merged.hints = stored.hints || defaults.hints
-      merged.hintLinkColor = stored.hintLinkColor || defaults.hintLinkColor
-      merged.hintBGColor = stored.hintBGColor || defaults.hintBGColor
+      merged.hintLinkColor = this.expandHex(stored.hintLinkColor) || defaults.hintLinkColor
+      merged.hintBGColor = this.expandHex(stored.hintBGColor) || defaults.hintBGColor
       merged.defaultTheme = stored.defaultTheme || defaults.defaultTheme
       merged.debug = Boolean(stored.debug)
       merged.d3dInfo = Boolean(stored.d3dInfo)
@@ -516,7 +536,9 @@ export default {
       merged.defaultColaAvoidOverlap = stored.defaultColaAvoidOverlap !== undefined ? Boolean(stored.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap
       merged.defaultColaMaxSimulationTime = stored.defaultColaMaxSimulationTime !== undefined ? Number(stored.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime
       merged.defaultColaGravity = stored.defaultColaGravity !== undefined ? Number(stored.defaultColaGravity) : defaults.defaultColaGravity
-      merged.defaultEdgeStyle = stored.defaultEdgeStyle || defaults.defaultEdgeStyle
+      merged.defaultEdgeStyle = stored.defaultEdgeStyle === 'curved'
+        ? 'bezier'
+        : (stored.defaultEdgeStyle || defaults.defaultEdgeStyle)
       merged.defaultEdgeWidth = stored.defaultEdgeWidth !== undefined ? Number(stored.defaultEdgeWidth) : defaults.defaultEdgeWidth
       merged.defaultEdgeOpacity = stored.defaultEdgeOpacity !== undefined ? Number(stored.defaultEdgeOpacity) : defaults.defaultEdgeOpacity
       merged.defaultArrowScale = Math.min(3, Math.max(0.1, stored.defaultArrowScale !== undefined ? Number(stored.defaultArrowScale) : defaults.defaultArrowScale))
@@ -533,6 +555,13 @@ export default {
       merged.defaultNodeBorderWidth = stored.defaultNodeBorderWidth != null ? Number(stored.defaultNodeBorderWidth) : defaults.defaultNodeBorderWidth
       merged.defaultNodeFontSize = stored.defaultNodeFontSize != null ? Number(stored.defaultNodeFontSize) : defaults.defaultNodeFontSize
       return merged
+    },
+    expandHex (value) {
+      if (typeof value !== 'string') return value
+      const match = /^#([0-9a-fA-F]{3})$/.exec(value.trim())
+      if (!match) return value
+      const hex = match[1]
+      return '#' + hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]
     },
     close () {
       this.common()
