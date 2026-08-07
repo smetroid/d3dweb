@@ -1,5 +1,6 @@
 import cytoscape from 'cytoscape'
 import cola from 'cytoscape-cola'
+import dagre from 'cytoscape-dagre'
 import VueCookies from 'vue-cookies'
 import {
   normalizeOptionalFields,
@@ -8,6 +9,7 @@ import {
 } from '@/helpers/GraphModel.js'
 
 cytoscape.use(cola)
+cytoscape.use(dagre)
 
 // Fallback palette used when the app's CSS variables can't be read (headless
 // tests, style-less pages). Matches the previous hardcoded dark HUD look.
@@ -786,6 +788,12 @@ export default class CytoscapeRenderer {
       opts.minNodeSpacing = Number(s.defaultConcentricMinNodeSpacing) || 30
       opts.clockwise      = s.defaultConcentricClockwise !== false
       opts.equidistant    = Boolean(s.defaultConcentricEquidistant)
+    } else if (name === 'dagre') {
+      opts.rankDir = s.defaultDagreRankDir  || 'TB'
+      opts.nodeSep = Number(s.defaultDagreNodeSep) || 50
+      opts.rankSep = Number(s.defaultDagreRankSep) || 50
+      opts.edgeSep = Number(s.defaultDagreEdgeSep) || 10
+      opts.ranker  = s.defaultDagreRanker   || 'network-simplex'
     }
 
     this.cy.layout(opts).run()

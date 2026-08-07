@@ -325,13 +325,76 @@
                         <span class="fx-toggle-track"></span>
                       </label>
                     </template>
+
+                    <template v-if="settings.defaultLayoutMode === 'dagre'">
+                      <div class="fx-grid">
+                        <div class="fx-field">
+                          <span class="fx-label">Rank Direction</span>
+                          <div class="fx-select">
+                            <button
+                              type="button"
+                              class="fx-select-trigger"
+                              @click.stop="toggleSel('dagreRankDir')"
+                            >{{ dagreRankDirLabel }}<span class="fx-caret">▾</span></button>
+                            <transition name="fx-drop">
+                              <ul v-if="openSel === 'dagreRankDir'" class="fx-options">
+                                <li
+                                  v-for="opt in dagreRankDirOptions"
+                                  :key="opt.value"
+                                  class="fx-option"
+                                  :class="{ 'fx-option-active': settings.defaultDagreRankDir === opt.value }"
+                                  @click="pick('defaultDagreRankDir', opt.value)"
+                                >{{ opt.label }}</li>
+                              </ul>
+                            </transition>
+                          </div>
+                        </div>
+                        <div class="fx-field">
+                          <span class="fx-label">Ranker Algorithm</span>
+                          <div class="fx-select">
+                            <button
+                              type="button"
+                              class="fx-select-trigger"
+                              @click.stop="toggleSel('dagreRanker')"
+                            >{{ dagreRankerLabel }}<span class="fx-caret">▾</span></button>
+                            <transition name="fx-drop">
+                              <ul v-if="openSel === 'dagreRanker'" class="fx-options">
+                                <li
+                                  v-for="opt in dagreRankerOptions"
+                                  :key="opt.value"
+                                  class="fx-option"
+                                  :class="{ 'fx-option-active': settings.defaultDagreRanker === opt.value }"
+                                  @click="pick('defaultDagreRanker', opt.value)"
+                                >{{ opt.label }}</li>
+                              </ul>
+                            </transition>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Node Separation</span>
+                          <input class="fx-input" type="number" min="0" v-model.number="settings.defaultDagreNodeSep" />
+                          <small class="fx-toggle-note">Pixels between nodes in the same rank.</small>
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Rank Separation</span>
+                          <input class="fx-input" type="number" min="0" v-model.number="settings.defaultDagreRankSep" />
+                          <small class="fx-toggle-note">Pixels between ranks (rows/columns).</small>
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Edge Separation</span>
+                          <input class="fx-input" type="number" min="0" v-model.number="settings.defaultDagreEdgeSep" />
+                        </label>
+                      </div>
+                    </template>
                   </div>
                 </section>
                 </div>
 
                 <div class="fx-settings-group">
                  <section class="fx-section">
-                  <h3 class="fx-section-title">Renderer</h3>
+                   <h3 class="fx-section-title">Renderer</h3>
                   <div class="fx-section-body">
                     <label class="fx-toggle">
                       <div class="fx-toggle-text">
@@ -718,6 +781,17 @@ export default {
         { label: 'Horizontal (x)', value: 'x' },
         { label: 'Vertical (y)',   value: 'y' },
       ],
+      dagreRankDirOptions: [
+        { label: 'Top → Bottom', value: 'TB' },
+        { label: 'Bottom → Top', value: 'BT' },
+        { label: 'Left → Right', value: 'LR' },
+        { label: 'Right → Left', value: 'RL' },
+      ],
+      dagreRankerOptions: [
+        { label: 'Network Simplex', value: 'network-simplex' },
+        { label: 'Tight Tree',      value: 'tight-tree' },
+        { label: 'Longest Path',    value: 'longest-path' },
+      ],
     }
   },
   computed: {
@@ -753,6 +827,12 @@ export default {
     },
     flowLabel() {
       return this._optLabel(this.flowOptions, this.settings.defaultColaFlow, 'None')
+    },
+    dagreRankDirLabel() {
+      return this._optLabel(this.dagreRankDirOptions, this.settings.defaultDagreRankDir, 'Top → Bottom')
+    },
+    dagreRankerLabel() {
+      return this._optLabel(this.dagreRankerOptions, this.settings.defaultDagreRanker, 'Network Simplex')
     },
     nodeShapeLabel() {
       return this._optLabel(this.nodeShapeOptions, this.settings.defaultNodeShape, 'Rectangle')
@@ -856,6 +936,11 @@ export default {
       merged.defaultConcentricMinNodeSpacing = stored.defaultConcentricMinNodeSpacing !== undefined ? Number(stored.defaultConcentricMinNodeSpacing) : defaults.defaultConcentricMinNodeSpacing
       merged.defaultConcentricClockwise = stored.defaultConcentricClockwise !== undefined ? Boolean(stored.defaultConcentricClockwise) : defaults.defaultConcentricClockwise
       merged.defaultConcentricEquidistant = stored.defaultConcentricEquidistant !== undefined ? Boolean(stored.defaultConcentricEquidistant) : defaults.defaultConcentricEquidistant
+      merged.defaultDagreRankDir = stored.defaultDagreRankDir || defaults.defaultDagreRankDir
+      merged.defaultDagreNodeSep = stored.defaultDagreNodeSep !== undefined ? Number(stored.defaultDagreNodeSep) : defaults.defaultDagreNodeSep
+      merged.defaultDagreRankSep = stored.defaultDagreRankSep !== undefined ? Number(stored.defaultDagreRankSep) : defaults.defaultDagreRankSep
+      merged.defaultDagreEdgeSep = stored.defaultDagreEdgeSep !== undefined ? Number(stored.defaultDagreEdgeSep) : defaults.defaultDagreEdgeSep
+      merged.defaultDagreRanker = stored.defaultDagreRanker || defaults.defaultDagreRanker
       merged.defaultEdgeStyle = stored.defaultEdgeStyle === 'curved'
         ? 'bezier'
         : (stored.defaultEdgeStyle || defaults.defaultEdgeStyle)
