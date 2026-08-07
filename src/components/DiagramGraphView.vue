@@ -185,6 +185,17 @@ export default {
       }
     },
 
+    _onHintBadgeClick(event) {
+      event.preventDefault()
+      const anchor = event.currentTarget?.parentElement
+      const hints = new Hints()
+      hints.data = this.hints
+      hints.removeHints(this.hints)
+      this.hints = {}
+      this.hintKeysReplaced = ''
+      if (anchor) this.hintSelection(anchor)
+    },
+
     _onNodeClick(nodeId) {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod) return
@@ -281,7 +292,7 @@ export default {
         const reset   = altKeys.key(event.key, this)
         if (reset) this.resetValues()
       } else {
-        const otherKeys = new OtherKeys(this.emitter, mod, this.keyPress)
+        const otherKeys = new OtherKeys(this.emitter, mod, this._onHintBadgeClick)
         const result    = otherKeys.defaultActions(
           event.key, this.edgeOrNode, this.focusedNodeId, this.focusedEdgeId
         )
