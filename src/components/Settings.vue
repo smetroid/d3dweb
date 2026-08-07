@@ -844,6 +844,12 @@ export default {
   border: 1px solid rgba(var(--fx-accent), 0.4);
   background: rgba(var(--fx-ink-faint), 0.2);
   position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.fx-toggle input:checked + .fx-toggle-track {
+  background: rgba(var(--fx-accent), 0.35);
+  border-color: rgba(var(--fx-accent), 0.7);
 }
 
 .fx-toggle-track::after {
@@ -856,11 +862,12 @@ export default {
   height: 14px;
   border-radius: 50%;
   background: rgb(var(--fx-ink));
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .fx-toggle input:checked + .fx-toggle-track::after {
   transform: translate(18px, -50%);
+  background: rgb(var(--fx-accent));
 }
 
 .fx-pill-row {
