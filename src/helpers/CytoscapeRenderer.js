@@ -967,11 +967,19 @@ export default class CytoscapeRenderer {
       const node = this.cy.getElementById(this._focusedNodeId)
       if (!node.empty()) this._appendCrosshair(layer, node, 'focus')
     }
+    const rendered = new Set()
     ;(this._selectedNodeIds || []).forEach(id => {
       const node = this.cy.getElementById(id)
       if (node.empty()) return
       const kind = (this._doubleSelectedIds || []).includes(id) ? 'double' : 'selected'
       this._appendCrosshair(layer, node, kind)
+      rendered.add(id)
+    })
+    ;(this._doubleSelectedIds || []).forEach(id => {
+      if (rendered.has(id)) return
+      const node = this.cy.getElementById(id)
+      if (node.empty()) return
+      this._appendCrosshair(layer, node, 'double')
     })
   }
 

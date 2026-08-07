@@ -141,6 +141,7 @@ export default {
     this.emitter.on('setSheetToFalse', () => {
       this.openSheet = false
       this.threeDRenderer?.zoomOut()
+      this._clearMultiSelection()
       setTimeout(() => this.emitter.emit('changeActive'), 300)
     })
 
@@ -305,6 +306,10 @@ export default {
           this.openSheet = true
         }
 
+        if (event.key === 'd') {
+          this._clearMultiSelection()
+        }
+
         if (result) {
           if (event.key === 'x') {
             if (this.edgeOrNode === 'nodes') {
@@ -335,6 +340,19 @@ export default {
             this.focusedIndex = result.index
           }
         }
+      }
+    },
+
+    _clearMultiSelection() {
+      this.selectedNodes   = []
+      this.selectedEdges   = []
+      this.doubleSelection = []
+      this.threeDRenderer?.clearSelectionCrosshairs()
+      const mod = this.modifier?.value ?? this.modifier
+      if (mod) {
+        mod.selectedNodes    = []
+        mod.doubleSelection  = []
+        mod.selectedEdges    = []
       }
     },
 

@@ -183,7 +183,8 @@ export default class DiagramGraph {
         }
       })
     }
-    this.selectedNodes = []
+    this.selectedNodes   = []
+    this.doubleSelection = []
     this.redraw()
   }
 
