@@ -152,7 +152,7 @@ export default class OtherKeys {
     const availHints    = this.buildHints(elements)
     const hints         = {}
     const settings      = VueCookies.get('settings') || {}
-    const hintLinkColor = settings.hintLinkColor || '#fff'
+    const hintLinkColor = settings.hintLinkColor || '#ffffff'
     const hintBGColor   = settings.hintBGColor   || '#36004c'
 
     for (let i = 0; i < elements.length; i++) {

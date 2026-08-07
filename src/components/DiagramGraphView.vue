@@ -28,6 +28,7 @@
           tabindex="0"
           class="three-container"
           @mousedown="$event.currentTarget.focus(); $event.preventDefault()"
+          @focusout="onContainerFocusOut"
         />
 
         <div v-if="!graphEmpty" class="fx-viewport-hud">
@@ -166,6 +167,21 @@ export default {
       if (mod && typeof mod.redraw === 'function') {
         mod.renderer = this.threeDRenderer
         mod.redraw()
+      }
+    },
+
+    // Cytoscape blurs the container on every mousedown (blurActiveDomElement),
+    // which drops focus to <body> without firing a focusin, so the focus trap
+    // can't pull it back. When focus is lost entirely while the graph is the
+    // active view (and no edit sheet is open), restore it so the keyboard
+    // shortcuts keep working after any mouse/trackpad interaction.
+    onContainerFocusOut() {
+      if (
+        this.active === 'Graph' &&
+        !this.openSheet &&
+        document.activeElement === document.body
+      ) {
+        this.$refs.threeContainer?.focus({ preventScroll: true })
       }
     },
 
