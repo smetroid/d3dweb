@@ -130,20 +130,48 @@
                   <h3 class="fx-section-title">Layout Defaults</h3>
                   <div class="fx-section-body">
                     <div class="fx-grid">
-                      <label class="fx-field">
+                      <div class="fx-field">
                         <span class="fx-label">Default Layout Mode</span>
-                        <select class="fx-input" v-model="settings.defaultLayoutMode">
-                          <option value="cola">Cola (Physics-based)</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('layoutMode')"
+                          >{{ layoutModeLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'layoutMode'" class="fx-options">
+                              <li
+                                v-for="opt in layoutModeOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultLayoutMode === opt.value }"
+                                @click="pick('defaultLayoutMode', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Flow Direction</span>
-                        <select class="fx-input" v-model="settings.defaultColaFlow">
-                          <option :value="null">None</option>
-                          <option value="x">Horizontal (x)</option>
-                          <option value="y">Vertical (y)</option>
-                        </select>
-                      </label>
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('flow')"
+                          >{{ flowLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'flow'" class="fx-options">
+                              <li
+                                v-for="opt in flowOptions"
+                                :key="opt.label"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultColaFlow === opt.value }"
+                                @click="pick('defaultColaFlow', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
                     </div>
                     <div class="fx-grid">
                       <label class="fx-field">
@@ -234,36 +262,69 @@
                   <h3 class="fx-section-title">New Node Defaults</h3>
                   <div class="fx-section-body">
                     <div class="fx-grid">
-                      <label class="fx-field">
+                      <div class="fx-field">
                         <span class="fx-label">Default Node Shape</span>
-                        <select class="fx-input" v-model="settings.defaultNodeShape">
-                          <option
-                            v-for="opt in nodeShapeOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('nodeShape')"
+                          >{{ nodeShapeLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'nodeShape'" class="fx-options">
+                              <li
+                                v-for="opt in nodeShapeOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultNodeShape === opt.value }"
+                                @click="pick('defaultNodeShape', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Label H-Align</span>
-                        <select class="fx-input" v-model="settings.defaultNodeTextHalign">
-                          <option
-                            v-for="opt in nodeHalignOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('halign')"
+                          >{{ halignLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'halign'" class="fx-options">
+                              <li
+                                v-for="opt in nodeHalignOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultNodeTextHalign === opt.value }"
+                                @click="pick('defaultNodeTextHalign', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Label V-Align</span>
-                        <select class="fx-input" v-model="settings.defaultNodeTextValign">
-                          <option
-                            v-for="opt in nodeValignOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('valign')"
+                          >{{ valignLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'valign'" class="fx-options">
+                              <li
+                                v-for="opt in nodeValignOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultNodeTextValign === opt.value }"
+                                @click="pick('defaultNodeTextValign', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
                     </div>
                     <div class="fx-grid">
                       <label class="fx-field">
@@ -336,59 +397,118 @@
                   <h3 class="fx-section-title">New Edge Defaults</h3>
                   <div class="fx-section-body">
                     <div class="fx-grid">
-                      <label class="fx-field">
+                      <div class="fx-field">
                         <span class="fx-label">Edge Arrow Style</span>
-                        <select class="fx-input" v-model="settings.defaultEdgeArrowHeadStyle">
-                          <option
-                            v-for="opt in edgeArrowHeadStyleOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('edgeArrowStyle')"
+                          >{{ edgeArrowHeadStyleLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'edgeArrowStyle'" class="fx-options">
+                              <li
+                                v-for="opt in edgeArrowHeadStyleOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultEdgeArrowHeadStyle === opt.value }"
+                                @click="pick('defaultEdgeArrowHeadStyle', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Default Arrow Shape</span>
-                        <select class="fx-input" v-model="settings.defaultArrowShape">
-                          <option
-                            v-for="opt in edgeArrowHeadOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('arrowShape')"
+                          >{{ arrowShapeLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'arrowShape'" class="fx-options">
+                              <li
+                                v-for="opt in edgeArrowHeadOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultArrowShape === opt.value }"
+                                @click="pick('defaultArrowShape', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Source Arrow <em class="fx-opt">empty = none</em></span>
-                        <select class="fx-input" v-model="settings.defaultEdgeSourceArrow">
-                          <option value="">— none —</option>
-                          <option
-                            v-for="opt in edgeArrowHeadOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
-                      <label class="fx-field">
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('sourceArrow')"
+                          >{{ sourceArrowLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'sourceArrow'" class="fx-options">
+                              <li
+                                class="fx-option"
+                                :class="{ 'fx-option-active': !settings.defaultEdgeSourceArrow }"
+                                @click="pick('defaultEdgeSourceArrow', '')"
+                              >— none —</li>
+                              <li
+                                v-for="opt in edgeArrowHeadOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultEdgeSourceArrow === opt.value }"
+                                @click="pick('defaultEdgeSourceArrow', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
+                      <div class="fx-field">
                         <span class="fx-label">Edge Line Style</span>
-                        <select class="fx-input" v-model="settings.defaultEdgeLineStyle">
-                          <option
-                            v-for="opt in edgeLineStyleOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('lineStyle')"
+                          >{{ lineStyleLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'lineStyle'" class="fx-options">
+                              <li
+                                v-for="opt in edgeLineStyleOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultEdgeLineStyle === opt.value }"
+                                @click="pick('defaultEdgeLineStyle', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
                     </div>
                     <div class="fx-grid">
-                      <label class="fx-field">
+                      <div class="fx-field">
                         <span class="fx-label">Curve Style</span>
-                        <select class="fx-input" v-model="settings.defaultEdgeStyle">
-                          <option
-                            v-for="opt in edgeCurveOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                      </label>
+                        <div class="fx-select">
+                          <button
+                            type="button"
+                            class="fx-select-trigger"
+                            @click.stop="toggleSel('curveStyle')"
+                          >{{ curveStyleLabel }}<span class="fx-caret">▾</span></button>
+                          <transition name="fx-drop">
+                            <ul v-if="openSel === 'curveStyle'" class="fx-options">
+                              <li
+                                v-for="opt in edgeCurveOptions"
+                                :key="opt.value"
+                                class="fx-option"
+                                :class="{ 'fx-option-active': settings.defaultEdgeStyle === opt.value }"
+                                @click="pick('defaultEdgeStyle', opt.value)"
+                              >{{ opt.label }}</li>
+                            </ul>
+                          </transition>
+                        </div>
+                      </div>
                       <label class="fx-field">
                         <span class="fx-label">Edge Color <em class="fx-opt">empty = theme</em></span>
                         <div class="fx-color-row">
@@ -468,7 +588,16 @@ export default {
   data () {
     return {
       settingsModal: false,
+      openSel: null,
       settings: this.cloneDefaults(),
+      layoutModeOptions: [
+        { value: 'cola', label: 'Cola (Physics-based)' },
+      ],
+      flowOptions: [
+        { label: 'None',           value: null },
+        { label: 'Horizontal (x)', value: 'x' },
+        { label: 'Vertical (y)',   value: 'y' },
+      ],
     }
   },
   computed: {
@@ -496,8 +625,41 @@ export default {
     edgeCurveOptions() {
       return D3Util.edgeCurveOptions()
     },
+    layoutModeLabel() {
+      return this._optLabel(this.layoutModeOptions, this.settings.defaultLayoutMode, '—')
+    },
+    flowLabel() {
+      return this._optLabel(this.flowOptions, this.settings.defaultColaFlow, 'None')
+    },
+    nodeShapeLabel() {
+      return this._optLabel(this.nodeShapeOptions, this.settings.defaultNodeShape, 'Rectangle')
+    },
+    halignLabel() {
+      return this._optLabel(this.nodeHalignOptions, this.settings.defaultNodeTextHalign, 'Center')
+    },
+    valignLabel() {
+      return this._optLabel(this.nodeValignOptions, this.settings.defaultNodeTextValign, 'Top')
+    },
+    edgeArrowHeadStyleLabel() {
+      return this._optLabel(this.edgeArrowHeadStyleOptions, this.settings.defaultEdgeArrowHeadStyle, 'Filled')
+    },
+    arrowShapeLabel() {
+      return this._optLabel(this.edgeArrowHeadOptions, this.settings.defaultArrowShape, 'Vee')
+    },
+    sourceArrowLabel() {
+      if (!this.settings.defaultEdgeSourceArrow) return '— none —'
+      return this._optLabel(this.edgeArrowHeadOptions, this.settings.defaultEdgeSourceArrow, this.settings.defaultEdgeSourceArrow)
+    },
+    lineStyleLabel() {
+      return this._optLabel(this.edgeLineStyleOptions, this.settings.defaultEdgeLineStyle, 'Solid')
+    },
+    curveStyleLabel() {
+      return this._optLabel(this.edgeCurveOptions, this.settings.defaultEdgeStyle, 'Bezier')
+    },
   },
   mounted () {
+    document.addEventListener('click', this.onDocClick)
+
     const defaults = this.cloneDefaults()
     const cookie = this.$cookies.get('settings')
     if (cookie) {
@@ -511,7 +673,25 @@ export default {
       this.settingsModal = true
     })
   },
+  beforeUnmount () {
+    document.removeEventListener('click', this.onDocClick)
+  },
   methods: {
+    _optLabel(list, val, fallback) {
+      if (val === null || val === undefined || val === '') return fallback
+      const opt = list.find(o => o.value === val)
+      return opt ? opt.label : fallback
+    },
+    toggleSel(key) {
+      this.openSel = this.openSel === key ? null : key
+    },
+    pick(field, val) {
+      this.settings[field] = val
+      this.openSel = null
+    },
+    onDocClick() {
+      this.openSel = null
+    },
     cloneDefaults() {
       const defaults = D3Util.appDefaults()
       return JSON.parse(JSON.stringify(defaults))
