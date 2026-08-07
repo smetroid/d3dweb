@@ -135,6 +135,20 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       },
     },
     {
+      selector: 'edge[label]',
+      style: {
+        'label':                     'data(label)',
+        'color':                     pal.label,
+        'font-size':                 10,
+        'font-family':               'ui-monospace, "Cascadia Code", Menlo, monospace',
+        'text-rotation':             'autorotate',
+        'text-background-color':     pal.nodeBg,
+        'text-background-opacity':   1,
+        'text-background-padding':   '3px',
+        'text-background-shape':     'round-rectangle',
+      },
+    },
+    {
       selector: 'edge[?arrowhead]',
       style: { 'target-arrow-shape': 'data(arrowhead)' },
     },
