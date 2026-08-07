@@ -33,7 +33,7 @@
               <div class="fx-readout">
                 <span class="fx-readout-kv fx-readout-wide">
                   <span class="fx-readout-k">STATUS</span>
-                  <span class="fx-readout-v">Cola · Cytoscape.js</span>
+                  <span class="fx-readout-v">{{ layoutModeLabel }} · Cytoscape.js</span>
                 </span>
                 <span class="fx-readout-kv">
                   <span class="fx-readout-k">RELOAD</span>
@@ -151,7 +151,7 @@
                           </transition>
                         </div>
                       </div>
-                      <div class="fx-field">
+                      <div v-if="settings.defaultLayoutMode === 'cola'" class="fx-field">
                         <span class="fx-label">Flow Direction</span>
                         <div class="fx-select">
                           <button
@@ -173,7 +173,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="fx-grid">
+                    <div v-if="settings.defaultLayoutMode === 'cola'" class="fx-grid">
                       <label class="fx-field">
                         <span class="fx-label">Default Edge Length</span>
                         <input class="fx-input" type="number" v-model.number="settings.defaultColaEdgeLength" />
@@ -183,7 +183,7 @@
                         <input class="fx-input" type="number" v-model.number="settings.defaultColaNodeSpacing" />
                       </label>
                     </div>
-                    <div class="fx-grid">
+                    <div v-if="settings.defaultLayoutMode === 'cola'" class="fx-grid">
                       <label class="fx-field">
                         <span class="fx-label">Max Simulation Time (ms)</span>
                         <input class="fx-input" type="number" v-model.number="settings.defaultColaMaxSimulationTime" />
@@ -194,7 +194,7 @@
                         <small class="fx-toggle-note">0 = no pull; higher pulls disconnected nodes toward center.</small>
                       </label>
                     </div>
-                    <label class="fx-toggle">
+                    <label v-if="settings.defaultLayoutMode === 'cola'" class="fx-toggle">
                       <div class="fx-toggle-text">
                         <span>Avoid Node Overlap</span>
                         <small>Enforces separation of nodes</small>
@@ -202,6 +202,129 @@
                       <input type="checkbox" v-model="settings.defaultColaAvoidOverlap" />
                       <span class="fx-toggle-track"></span>
                     </label>
+
+                    <template v-if="settings.defaultLayoutMode === 'cose'">
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Node Repulsion</span>
+                          <input class="fx-input" type="number" min="0" step="10000" v-model.number="settings.defaultCoseNodeRepulsion" />
+                          <small class="fx-toggle-note">Higher = nodes push apart more.</small>
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Ideal Edge Length</span>
+                          <input class="fx-input" type="number" min="1" v-model.number="settings.defaultCoseIdealEdgeLength" />
+                        </label>
+                      </div>
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Gravity</span>
+                          <input class="fx-input" type="number" min="0" step="0.1" v-model.number="settings.defaultCoseGravity" />
+                          <small class="fx-toggle-note">Pulls nodes toward center.</small>
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Node Overlap Padding</span>
+                          <input class="fx-input" type="number" min="0" v-model.number="settings.defaultCoseNodeOverlap" />
+                        </label>
+                      </div>
+                    </template>
+
+                    <template v-if="settings.defaultLayoutMode === 'breadthfirst'">
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Spacing Factor</span>
+                          <input class="fx-input" type="number" min="0.1" step="0.1" v-model.number="settings.defaultBreadthfirstSpacingFactor" />
+                        </label>
+                      </div>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Directed</span>
+                          <small>Respect edge direction in the tree</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultBreadthfirstDirected" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Circle</span>
+                          <small>Arrange as a circular tree</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultBreadthfirstCircle" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                    </template>
+
+                    <template v-if="settings.defaultLayoutMode === 'grid'">
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Rows <em class="fx-opt">empty = auto</em></span>
+                          <input class="fx-input" type="number" min="1" v-model.number="settings.defaultGridRows" placeholder="auto" />
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Columns <em class="fx-opt">empty = auto</em></span>
+                          <input class="fx-input" type="number" min="1" v-model.number="settings.defaultGridCols" placeholder="auto" />
+                        </label>
+                      </div>
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Spacing Factor</span>
+                          <input class="fx-input" type="number" min="0.1" step="0.1" v-model.number="settings.defaultGridSpacingFactor" />
+                        </label>
+                      </div>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Avoid Node Overlap</span>
+                          <small>Enforces separation of nodes</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultGridAvoidOverlap" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                    </template>
+
+                    <template v-if="settings.defaultLayoutMode === 'circle'">
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Spacing Factor</span>
+                          <input class="fx-input" type="number" min="0.1" step="0.1" v-model.number="settings.defaultCircleSpacingFactor" />
+                        </label>
+                      </div>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Clockwise</span>
+                          <small>Place nodes clockwise around the circle</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultCircleClockwise" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                    </template>
+
+                    <template v-if="settings.defaultLayoutMode === 'concentric'">
+                      <div class="fx-grid">
+                        <label class="fx-field">
+                          <span class="fx-label">Spacing Factor</span>
+                          <input class="fx-input" type="number" min="0.1" step="0.1" v-model.number="settings.defaultConcentricSpacingFactor" />
+                        </label>
+                        <label class="fx-field">
+                          <span class="fx-label">Min Node Spacing</span>
+                          <input class="fx-input" type="number" min="0" v-model.number="settings.defaultConcentricMinNodeSpacing" />
+                        </label>
+                      </div>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Clockwise</span>
+                          <small>Place nodes clockwise around rings</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultConcentricClockwise" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                      <label class="fx-toggle">
+                        <div class="fx-toggle-text">
+                          <span>Equidistant</span>
+                          <small>Equal distance between concentric rings</small>
+                        </div>
+                        <input type="checkbox" v-model="settings.defaultConcentricEquidistant" />
+                        <span class="fx-toggle-track"></span>
+                      </label>
+                    </template>
                   </div>
                 </section>
                 </div>
@@ -590,9 +713,6 @@ export default {
       settingsModal: false,
       openSel: null,
       settings: this.cloneDefaults(),
-      layoutModeOptions: [
-        { value: 'cola', label: 'Cola (Physics-based)' },
-      ],
       flowOptions: [
         { label: 'None',           value: null },
         { label: 'Horizontal (x)', value: 'x' },
@@ -603,6 +723,9 @@ export default {
   computed: {
     shortcutLabels() {
       return D3Util.shortcutLabels()
+    },
+    layoutModeOptions() {
+      return D3Util.layoutOptions()
     },
     nodeShapeOptions() {
       return D3Util.nodeShapeOptions()
@@ -716,6 +839,23 @@ export default {
       merged.defaultColaAvoidOverlap = stored.defaultColaAvoidOverlap !== undefined ? Boolean(stored.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap
       merged.defaultColaMaxSimulationTime = stored.defaultColaMaxSimulationTime !== undefined ? Number(stored.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime
       merged.defaultColaGravity = stored.defaultColaGravity !== undefined ? Number(stored.defaultColaGravity) : defaults.defaultColaGravity
+      merged.defaultCoseNodeRepulsion = stored.defaultCoseNodeRepulsion !== undefined ? Number(stored.defaultCoseNodeRepulsion) : defaults.defaultCoseNodeRepulsion
+      merged.defaultCoseIdealEdgeLength = stored.defaultCoseIdealEdgeLength !== undefined ? Number(stored.defaultCoseIdealEdgeLength) : defaults.defaultCoseIdealEdgeLength
+      merged.defaultCoseGravity = stored.defaultCoseGravity !== undefined ? Number(stored.defaultCoseGravity) : defaults.defaultCoseGravity
+      merged.defaultCoseNodeOverlap = stored.defaultCoseNodeOverlap !== undefined ? Number(stored.defaultCoseNodeOverlap) : defaults.defaultCoseNodeOverlap
+      merged.defaultBreadthfirstDirected = stored.defaultBreadthfirstDirected !== undefined ? Boolean(stored.defaultBreadthfirstDirected) : defaults.defaultBreadthfirstDirected
+      merged.defaultBreadthfirstCircle = stored.defaultBreadthfirstCircle !== undefined ? Boolean(stored.defaultBreadthfirstCircle) : defaults.defaultBreadthfirstCircle
+      merged.defaultBreadthfirstSpacingFactor = stored.defaultBreadthfirstSpacingFactor !== undefined ? Number(stored.defaultBreadthfirstSpacingFactor) : defaults.defaultBreadthfirstSpacingFactor
+      merged.defaultGridRows = stored.defaultGridRows != null ? Number(stored.defaultGridRows) : defaults.defaultGridRows
+      merged.defaultGridCols = stored.defaultGridCols != null ? Number(stored.defaultGridCols) : defaults.defaultGridCols
+      merged.defaultGridAvoidOverlap = stored.defaultGridAvoidOverlap !== undefined ? Boolean(stored.defaultGridAvoidOverlap) : defaults.defaultGridAvoidOverlap
+      merged.defaultGridSpacingFactor = stored.defaultGridSpacingFactor !== undefined ? Number(stored.defaultGridSpacingFactor) : defaults.defaultGridSpacingFactor
+      merged.defaultCircleSpacingFactor = stored.defaultCircleSpacingFactor !== undefined ? Number(stored.defaultCircleSpacingFactor) : defaults.defaultCircleSpacingFactor
+      merged.defaultCircleClockwise = stored.defaultCircleClockwise !== undefined ? Boolean(stored.defaultCircleClockwise) : defaults.defaultCircleClockwise
+      merged.defaultConcentricSpacingFactor = stored.defaultConcentricSpacingFactor !== undefined ? Number(stored.defaultConcentricSpacingFactor) : defaults.defaultConcentricSpacingFactor
+      merged.defaultConcentricMinNodeSpacing = stored.defaultConcentricMinNodeSpacing !== undefined ? Number(stored.defaultConcentricMinNodeSpacing) : defaults.defaultConcentricMinNodeSpacing
+      merged.defaultConcentricClockwise = stored.defaultConcentricClockwise !== undefined ? Boolean(stored.defaultConcentricClockwise) : defaults.defaultConcentricClockwise
+      merged.defaultConcentricEquidistant = stored.defaultConcentricEquidistant !== undefined ? Boolean(stored.defaultConcentricEquidistant) : defaults.defaultConcentricEquidistant
       merged.defaultEdgeStyle = stored.defaultEdgeStyle === 'curved'
         ? 'bezier'
         : (stored.defaultEdgeStyle || defaults.defaultEdgeStyle)

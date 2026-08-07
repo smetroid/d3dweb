@@ -667,65 +667,16 @@ export default class CytoscapeRenderer {
   }
 
   _runLayout(colaOpts = {}, { prevPos = new Map(), seed, animate = true } = {}) {
-    const settings    = readSettings()
-    const nodeSpacing = Number(colaOpts.nodeSpacing  ?? settings.defaultColaNodeSpacing)  || 30
-    const edgeLength  = Number(colaOpts.edgeLength   ?? settings.defaultColaEdgeLength)   || 120
-    const avoidOverlaps = colaOpts.avoidOverlap !== false &&
-                          settings.defaultColaAvoidOverlap !== false
-    const flow        = colaOpts.flow ?? settings.defaultColaFlow ?? null
-    const maxTime     = Number(colaOpts.maxSimulationTime ?? settings.defaultColaMaxSimulationTime) || 1500
-    const gravity     = Number(colaOpts.gravity ?? settings.defaultColaGravity) || 0
+    const settings = readSettings()
+    const layoutMode = settings.defaultLayoutMode || 'cola'
 
-    const opts = {
-      name:               'cola',
-      nodeSpacing,
-      edgeLength,
-      avoidOverlaps,
-      handleDisconnected: true,
-      animate:            false,
-      infinite:           false,
-      maxSimulationTime:  maxTime,
-      fit:                false,
-      padding:            60,
+    if (layoutMode === 'cola') {
+      this._computeColaLayout(colaOpts, settings)
+    } else {
+      this._computeBuiltinLayout(layoutMode)
     }
-    if (flow) opts.flow = { axis: flow, minSeparation: nodeSpacing }
-    if (gravity) opts.gravity = gravity
 
-    // cytoscape-cola runs out of memory when compound (parent) nodes are
-    // included in the layout, even on tiny graphs. Lay out only leaf nodes,
-    // then center each parent on the centroid of its children.
-    const childless = this.cy.nodes(':childless')
-    if (childless.length) childless.layout(opts).run()
-
-    this.cy.nodes(':parent').forEach(parent => {
-      const children = parent.children()
-      if (!children.length) return
-      const p0 = { ...parent.position() }
-      const sum = children.reduce(
-        (acc, node) => {
-          const p = node.position()
-          acc.x += p.x
-          acc.y += p.y
-          return acc
-        },
-        { x: 0, y: 0 }
-      )
-      const centroid = { x: sum.x / children.length, y: sum.y / children.length }
-      parent.position(centroid)
-      const delta = { x: centroid.x - p0.x, y: centroid.y - p0.y }
-      children.forEach(child => {
-        const p = child.position()
-        child.position({ x: p.x - delta.x, y: p.y - delta.y })
-      })
-    })
-
-    // cola lays leaves out as a flat graph and knows nothing about group boxes,
-    // so unrelated nodes can end up inside a parent. Push them back out.
     this._resolveGroupOverlaps()
-
-    // Stop any still-running glides from a previous rebuild so stale node
-    // animations can't keep yanking nodes around (or back to a prior
-    // startPosition) while this layout settles.
     this.cy.nodes().stop(true)
 
     if (!animate) {
@@ -733,15 +684,11 @@ export default class CytoscapeRenderer {
       return Promise.resolve()
     }
 
-    // The viewport target is derived from the final layout, captured before the
-    // nodes rewind so the fit lands on the destination, not the origin.
     const fitTarget = this._computeFitTarget()
 
-    // Glide every node from where it started to its new layout position. New
-    // nodes come in from the graph centroid. IMPORTANT: capture every `to`
-    // BEFORE rewinding any node — cytoscape moves a compound parent's children
-    // when the parent's position is set, so rewinding a parent first would
-    // corrupt its children's captured `to` and glue them to the rewind point.
+    // IMPORTANT: capture every `to` BEFORE rewinding any node — cytoscape moves
+    // a compound parent's children when the parent's position is set, so
+    // rewinding a parent first would corrupt its children's captured `to`.
     const targets = this.cy.nodes().map(node => ({
       node,
       to:   { ...node.position() },
@@ -756,12 +703,92 @@ export default class CytoscapeRenderer {
     if (fitTarget) {
       this._glide(fitTarget, 500)
     } else {
-      // Container unsized (early mount) or empty graph: fit once the glide has
-      // settled so the viewport lands on the final layout.
       done.then(() => this._fitViewport())
     }
 
     return done
+  }
+
+  _computeColaLayout(colaOpts, settings) {
+    const nodeSpacing   = Number(colaOpts.nodeSpacing        ?? settings.defaultColaNodeSpacing)        || 30
+    const edgeLength    = Number(colaOpts.edgeLength         ?? settings.defaultColaEdgeLength)         || 120
+    const avoidOverlaps = colaOpts.avoidOverlap !== false && settings.defaultColaAvoidOverlap !== false
+    const flow          = colaOpts.flow ?? settings.defaultColaFlow ?? null
+    const maxTime       = Number(colaOpts.maxSimulationTime  ?? settings.defaultColaMaxSimulationTime)  || 1500
+    const gravity       = Number(colaOpts.gravity            ?? settings.defaultColaGravity)            || 0
+
+    const opts = {
+      name:               'cola',
+      nodeSpacing,
+      edgeLength,
+      avoidOverlaps,
+      handleDisconnected: true,
+      animate:            false,
+      infinite:           false,
+      maxSimulationTime:  maxTime,
+      fit:                false,
+      padding:            60,
+    }
+    if (flow)    opts.flow    = { axis: flow, minSeparation: nodeSpacing }
+    if (gravity) opts.gravity = gravity
+
+    // cytoscape-cola runs out of memory when compound (parent) nodes are
+    // included in the layout, even on tiny graphs. Lay out only leaf nodes,
+    // then center each parent on the centroid of its children.
+    const childless = this.cy.nodes(':childless')
+    if (childless.length) childless.layout(opts).run()
+
+    this.cy.nodes(':parent').forEach(parent => {
+      const children = parent.children()
+      if (!children.length) return
+      const p0  = { ...parent.position() }
+      const sum = children.reduce((acc, node) => {
+        const p = node.position()
+        acc.x += p.x
+        acc.y += p.y
+        return acc
+      }, { x: 0, y: 0 })
+      const centroid = { x: sum.x / children.length, y: sum.y / children.length }
+      parent.position(centroid)
+      const delta = { x: centroid.x - p0.x, y: centroid.y - p0.y }
+      children.forEach(child => {
+        const p = child.position()
+        child.position({ x: p.x - delta.x, y: p.y - delta.y })
+      })
+    })
+  }
+
+  _computeBuiltinLayout(name) {
+    const s    = readSettings()
+    const opts = { name, fit: false, padding: 60, animate: false }
+
+    if (name === 'cose') {
+      const repulsion = Number(s.defaultCoseNodeRepulsion)    || 400000
+      const edgeLen   = Number(s.defaultCoseIdealEdgeLength)  || 100
+      opts.nodeRepulsion   = () => repulsion
+      opts.idealEdgeLength = () => edgeLen
+      opts.gravity         = Number(s.defaultCoseGravity)     ?? 1
+      opts.nodeOverlap     = Number(s.defaultCoseNodeOverlap) || 4
+    } else if (name === 'breadthfirst') {
+      opts.directed      = s.defaultBreadthfirstDirected !== false
+      opts.circle        = Boolean(s.defaultBreadthfirstCircle)
+      opts.spacingFactor = Number(s.defaultBreadthfirstSpacingFactor) || 1.5
+    } else if (name === 'grid') {
+      opts.spacingFactor = Number(s.defaultGridSpacingFactor) || 1.5
+      opts.avoidOverlap  = s.defaultGridAvoidOverlap !== false
+      if (s.defaultGridRows != null) opts.rows = Number(s.defaultGridRows)
+      if (s.defaultGridCols != null) opts.cols = Number(s.defaultGridCols)
+    } else if (name === 'circle') {
+      opts.spacingFactor = Number(s.defaultCircleSpacingFactor) || 1.0
+      opts.clockwise     = s.defaultCircleClockwise !== false
+    } else if (name === 'concentric') {
+      opts.spacingFactor  = Number(s.defaultConcentricSpacingFactor)  || 1.5
+      opts.minNodeSpacing = Number(s.defaultConcentricMinNodeSpacing) || 30
+      opts.clockwise      = s.defaultConcentricClockwise !== false
+      opts.equidistant    = Boolean(s.defaultConcentricEquidistant)
+    }
+
+    this.cy.layout(opts).run()
   }
 
   // Viewport to fit the freshly laid-out graph, honoring the "fit on open"

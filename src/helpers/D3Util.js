@@ -176,6 +176,17 @@ export default {
       { value: 'haystack',         label: 'Haystack' },
     ]
   },
+  layoutOptions () {
+    return [
+      { value: 'cola',         label: 'Cola (Physics-based)' },
+      { value: 'cose',         label: 'CoSE (Force-directed)' },
+      { value: 'breadthfirst', label: 'Breadth First (Tree)' },
+      { value: 'grid',         label: 'Grid' },
+      { value: 'circle',       label: 'Circle' },
+      { value: 'concentric',   label: 'Concentric' },
+      { value: 'random',       label: 'Random' },
+    ]
+  },
   appDefaults () { 
     var defaults = {
       'hintBGColor': '#36004c',
@@ -201,6 +212,23 @@ export default {
       'defaultColaAvoidOverlap': true,
       'defaultColaMaxSimulationTime': 1500,
       'defaultColaGravity': 0,
+      'defaultCoseNodeRepulsion': 400000,
+      'defaultCoseIdealEdgeLength': 100,
+      'defaultCoseGravity': 1,
+      'defaultCoseNodeOverlap': 4,
+      'defaultBreadthfirstDirected': true,
+      'defaultBreadthfirstCircle': false,
+      'defaultBreadthfirstSpacingFactor': 1.5,
+      'defaultGridRows': null,
+      'defaultGridCols': null,
+      'defaultGridAvoidOverlap': true,
+      'defaultGridSpacingFactor': 1.5,
+      'defaultCircleSpacingFactor': 1.0,
+      'defaultCircleClockwise': true,
+      'defaultConcentricSpacingFactor': 1.5,
+      'defaultConcentricMinNodeSpacing': 30,
+      'defaultConcentricClockwise': true,
+      'defaultConcentricEquidistant': false,
       'defaultEdgeStyle': 'bezier',
       'defaultEdgeWidth': 2,
       'defaultEdgeOpacity': 0.85,
