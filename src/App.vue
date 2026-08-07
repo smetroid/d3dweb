@@ -14,7 +14,6 @@ import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
 import { computed, markRaw } from 'vue'
 import D3DApi from '@/services/api'
-//import jq from 'jq-web'
 
 /*
 // Theme specific
@@ -84,9 +83,6 @@ function toggleTheme() {
         :active="active"
       />
       <Login
-        :active="active"
-      />
-      <JQ
         :active="active"
       />
     </v-main>
