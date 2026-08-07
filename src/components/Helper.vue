@@ -128,10 +128,14 @@ export default {
     },
     layouts() {
       return [
-        { title: '2D Layout',    shortcut: `${this.mod} + 1` },
-        { title: '3D Sphere',    shortcut: `${this.mod} + 2` },
-        { title: '3D Helix',     shortcut: `${this.mod} + 3` },
-        { title: '3D Hierarchy', shortcut: `${this.mod} + 4` },
+        { title: 'Cola (Physics-based)',  shortcut: `${this.mod} + 1` },
+        { title: 'CoSE (Force-directed)', shortcut: `${this.mod} + 2` },
+        { title: 'Breadth First (Tree)',  shortcut: `${this.mod} + 3` },
+        { title: 'Grid',                  shortcut: `${this.mod} + 4` },
+        { title: 'Circle',                shortcut: `${this.mod} + 5` },
+        { title: 'Concentric',            shortcut: `${this.mod} + 6` },
+        { title: 'Dagre (Hierarchical)',  shortcut: `${this.mod} + 7` },
+        { title: 'Random',                shortcut: `${this.mod} + 8` },
       ]
     },
   },

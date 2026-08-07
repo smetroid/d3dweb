@@ -413,6 +413,13 @@ export default class DiagramGraph {
     this._saveTempDiagram()
   }
 
+  setLayoutMode(mode) {
+    const settings = VueCookies.get('settings') || D3Util.appDefaults()
+    settings.defaultLayoutMode = mode
+    VueCookies.set('settings', settings)
+    this.redraw()
+  }
+
   reset() {
     if (this.renderer) this.renderer.resetCamera()
   }

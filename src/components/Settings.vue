@@ -35,10 +35,7 @@
                   <span class="fx-readout-k">STATUS</span>
                   <span class="fx-readout-v">{{ layoutModeLabel }} · Cytoscape.js</span>
                 </span>
-                <span class="fx-readout-kv">
-                  <span class="fx-readout-k">RELOAD</span>
-                  <span class="fx-readout-v">Required after saving</span>
-                </span>
+
               </div>
               <div class="fx-panel-body">
                 <div class="fx-settings-group">
@@ -973,6 +970,7 @@ export default {
     },
     save () {
       this.$cookies.set('settings', this.settings)
+      this.emitter.emit('settingsChanged')
       this.emitter.emit('appMessage', {status: 'success', message: 'Settings saved'})
       this.common()
     },

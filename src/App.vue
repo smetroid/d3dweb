@@ -33,37 +33,23 @@ function toggleTheme() {
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
     <v-main app>
-      <div class="d-flex justify-center">
-      <v-card-text
-        class="position-absolute"
-        max-width="500"
-        >
-        <v-alert
-          v-model="successMessage"
-          closable
-          variant="outlined"
-          type="success"
-          >
-          <span v-html="alertMessage"></span>
-        </v-alert>
-        <v-alert
-          v-model="errorMessage"
-          closable
-          variant="outlined"
-          type="error"
-          >
-          <span v-html="alertMessage"></span>
-        </v-alert>
-        <v-alert
-          v-model="infoMessage"
-          closable
-          variant="outlined"
-          type="info"
-          >
-          <span v-html="alertMessage"></span>
-        </v-alert>
-      </v-card-text>
-      </div>
+      <Teleport to="body">
+        <div class="fx-toast-stack">
+          <TransitionGroup name="fx-toast">
+            <div
+              v-for="toast in toasts"
+              :key="toast.id"
+              class="fx-toast"
+              :class="`fx-toast-${toast.status}`"
+              @click="dismissToast(toast.id)"
+            >
+              <span class="fx-toast-icon">{{ toast.status === 'success' ? '✓' : toast.status === 'error' ? '✗' : 'i' }}</span>
+              <span class="fx-toast-msg" v-html="toast.message"></span>
+              <button class="fx-toast-close" @click.stop="dismissToast(toast.id)">✕</button>
+            </div>
+          </TransitionGroup>
+        </div>
+      </Teleport>
       <!--
       <DagreOtherKeys
         :d3dInfo="d3dInfo"
@@ -253,12 +239,7 @@ export default {
       showActionsMenu: false,
       showHelpPane: true,
       showDiagramForm: false,
-      successfull: null,
-      alertMessage: null,
-      showSettingsModal: null,
-      successMessage: false,
-      errorMessage: false,
-      infoMessage: false,
+      toasts: [],
       fab: false,
       gNavMenu: null,
       currentMenuLink: null,
@@ -321,31 +302,36 @@ export default {
     /*TODO - Move this to it's own Component, and keep the App.vue cleaner
     */
     this.emitter.on('appMessage', (data) => {
-      if (D3Util.debug) {
-        console.log(data)
-        console.log(data.message)
-        /*NOTE -
-        it appears like the api response has the status attribute in different
-        locations
-        data.result.status is a login api call return
-        data.status is a vue app message and post responses
-        */
-        //console.log(data.result.status)
+      if (D3Util.debug) console.log(data)
+      let status = 'info'
+      if (data.status === 'success') {
+        status = 'success'
+      } else if (data.status === 'error') {
+        status = 'error'
+      } else if (data.status === 'info') {
+        status = 'info'
+      } else if (data.result?.status) {
+        const s = Number(data.result.status)
+        if (s >= 200 && s < 300) status = 'success'
+        else if (s >= 400) status = 'error'
       }
+      const id = Date.now() + Math.random()
+      this.toasts.push({ id, message: data.message, status })
+      const timeout = status === 'error' ? 8000 : status === 'success' ? 4000 : 3000
+      setTimeout(() => this.dismissToast(id), timeout)
+    })
 
-      let common = '<br />Message will be removed in 5 seconds <br />'
-      if (data.status == 'info') {
-        this.infoMessage = true
-      } else if ((data.status == 'success')
-        || (data.status >= '200' && data.status < '300')
-        || (data.result.status >= '200' && data.result.status < '300')) {
-        this.successMessage = true
-      } else if ((data.status == 'error') || (data.result.status != '200')) {
-        this.errorMessage = true
+    this.emitter.on('settingsChanged', () => {
+      const settings = this.$cookies.get('settings')
+      if (settings) {
+        if (settings.defaultTheme) this.$vuetify.theme.global.name = settings.defaultTheme
+        if (settings.showHelpPane !== undefined) this.showHelpPane = Boolean(settings.showHelpPane)
+        this.syncThemeAttr()
       }
-
-      //this.alertMessage = data.message + '<br />Status: ' +data.result.status + common
-      this.alertMessage = data.message + common
+      this.emitter.emit('themeChanged')
+      if (this.modifier && typeof this.modifier.redraw === 'function') {
+        this.modifier.redraw()
+      }
     })
 
     /*NOTE - modifer object from when creating a new diagram */
@@ -413,6 +399,10 @@ export default {
     // console.log(this.d3dInfo)
   },
   methods: {
+    dismissToast(id) {
+      const idx = this.toasts.findIndex(t => t.id === id)
+      if (idx !== -1) this.toasts.splice(idx, 1)
+    },
     toggleTheme () {
       const next = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
       this.$vuetify.theme.global.name = next
@@ -610,21 +600,7 @@ export default {
       this.showMenu = this.active === "Menu"?true:false
       this.showActionsMenu = this.active === "Actions Menu"?true:false
     },
-    successMessage: function () {
-      setTimeout( ()=> {
-        this.successMessage = false
-      },5000)
-    },
-    errorMessage: function () {
-      setTimeout( ()=> {
-        this.errorMessage = false
-      },5000)
-    },
-    infoMessage: function () {
-      setTimeout( ()=> {
-        this.infoMessage = false
-      },3000 )
-    },
+
     '$vuetify.theme.global.name': function () {
       this.syncThemeAttr()
     }
@@ -633,6 +609,78 @@ export default {
 </script>
 
 <style scoped>
+
+.fx-toast-stack {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.fx-toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  min-width: 220px;
+  max-width: 380px;
+  border-radius: 8px;
+  background: rgba(var(--fx-glass-bottom), 0.94);
+  border: 1px solid rgba(var(--fx-accent), 0.3);
+  backdrop-filter: blur(14px);
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  color: rgb(var(--fx-ink));
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+.fx-toast-success { border-color: rgba(38, 166, 154, 0.55); }
+.fx-toast-error   { border-color: rgba(239, 83, 80, 0.55); }
+.fx-toast-info    { border-color: rgba(var(--fx-accent), 0.45); }
+
+.fx-toast-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+}
+
+.fx-toast-success .fx-toast-icon { color: #26a69a; }
+.fx-toast-error   .fx-toast-icon { color: #ef5350; }
+.fx-toast-info    .fx-toast-icon { color: rgb(var(--fx-accent)); }
+
+.fx-toast-msg {
+  flex: 1;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+}
+
+.fx-toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgb(var(--fx-ink-dim));
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.fx-toast-close:hover { opacity: 1; }
+
+.fx-toast-enter-active { transition: transform 0.22s ease-out, opacity 0.22s ease-out; }
+.fx-toast-leave-active { transition: transform 0.18s ease-in, opacity 0.18s ease-in; }
+.fx-toast-enter-from,
+.fx-toast-leave-to     { transform: translateX(115%); opacity: 0; }
 
 /*
 .primary--text {

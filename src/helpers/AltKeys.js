@@ -40,6 +40,15 @@ export default class AltKeys {
       case 'e':
         this.emitter.emit('editDiagram')
         break
+      // Layout shortcuts
+      case '1': this.modifier.setLayoutMode('cola');         break
+      case '2': this.modifier.setLayoutMode('cose');         break
+      case '3': this.modifier.setLayoutMode('breadthfirst'); break
+      case '4': this.modifier.setLayoutMode('grid');         break
+      case '5': this.modifier.setLayoutMode('circle');       break
+      case '6': this.modifier.setLayoutMode('concentric');   break
+      case '7': this.modifier.setLayoutMode('dagre');        break
+      case '8': this.modifier.setLayoutMode('random');       break
       default:
         console.log('AltKey default — no action')
     }
