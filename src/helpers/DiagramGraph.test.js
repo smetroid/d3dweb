@@ -291,3 +291,38 @@ describe('redraw', () => {
     expect(() => graph.redraw()).not.toThrow()
   })
 })
+
+describe('proximity selection', () => {
+  it('selects the nearest node in a direction and returns its id and index', () => {
+    const { renderer, graph } = makeGraph(3)
+    renderer.nearestElementId = vi.fn(() => 'n2')
+    const res = graph.selectNodeProximity('l', 'n0')
+    expect(renderer.nearestElementId).toHaveBeenCalledWith({ direction: 'l', fromId: 'n0', kind: 'nodes' })
+    expect(renderer.deselectNode).toHaveBeenCalledWith('n0')
+    expect(renderer.selectNode).toHaveBeenCalledWith('n2')
+    expect(res).toEqual({ id: 'n2', index: 2 })
+  })
+
+  it('selects the nearest edge in a direction', () => {
+    const { model, renderer, graph } = makeGraph(2)
+    model.addEdge({ source: 'n0', target: 'n1', label: 'a' })
+    model.addEdge({ source: 'n1', target: 'n0', label: 'b' })
+    renderer.nearestElementId = vi.fn(() => model.edges()[1].id())
+    const res = graph.selectEdgeProximity('j', model.edges()[0].id())
+    expect(renderer.deselectEdge).toHaveBeenCalledWith(model.edges()[0].id())
+    expect(res).toEqual({ id: model.edges()[1].id(), index: 1 })
+  })
+
+  it('returns null when there is no focused id or renderer support', () => {
+    const { renderer, graph } = makeGraph(3)
+    expect(graph.selectNodeProximity('l', null)).toBeNull()
+    delete renderer.nearestElementId
+    expect(graph.selectNodeProximity('l', 'n0')).toBeNull()
+  })
+
+  it('returns null when the renderer cannot resolve a neighbor', () => {
+    const { renderer, graph } = makeGraph(3)
+    renderer.nearestElementId = vi.fn(() => null)
+    expect(graph.selectNodeProximity('l', 'n0')).toBeNull()
+  })
+})
