@@ -650,7 +650,18 @@ export default class CytoscapeRenderer {
   }
 
   _centroid(eles) {
-    if (!eles.length) return { x: 0, y: 0 }
+    if (!eles.length) {
+      if (this.cy) {
+        const w = this.cy.width()
+        const h = this.cy.height()
+        if (w && h) {
+          const pan  = this.cy.pan()
+          const zoom = this.cy.zoom()
+          return { x: (w / 2 - pan.x) / zoom, y: (h / 2 - pan.y) / zoom }
+        }
+      }
+      return { x: 0, y: 0 }
+    }
     const bb = eles.boundingBox()
     return { x: (bb.x1 + bb.x2) / 2, y: (bb.y1 + bb.y2) / 2 }
   }
