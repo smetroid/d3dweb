@@ -41,6 +41,7 @@
                 </span>
               </div>
               <div class="fx-panel-body">
+                <div class="fx-settings-group">
                 <section class="fx-section">
                   <h3 class="fx-section-title">General</h3>
                   <div class="fx-section-body">
@@ -87,7 +88,9 @@
                     </div>
                   </div>
                 </section>
+                </div>
 
+                <div class="fx-settings-group">
                 <section class="fx-section">
                   <h3 class="fx-section-title">Hints</h3>
                   <div class="fx-section-body">
@@ -120,7 +123,9 @@
                     </div>
                   </div>
                 </section>
+                </div>
 
+                <div class="fx-settings-group">
                 <section class="fx-section">
                   <h3 class="fx-section-title">Layout Defaults</h3>
                   <div class="fx-section-body">
@@ -171,7 +176,9 @@
                     </label>
                   </div>
                 </section>
+                </div>
 
+                <div class="fx-settings-group">
                  <section class="fx-section">
                   <h3 class="fx-section-title">Renderer</h3>
                   <div class="fx-section-body">
@@ -207,13 +214,199 @@
                       />
                       <small class="fx-toggle-note">Zoom applied on open. With fit on: 1 = fit, 2 = twice as close, 0.5 = half. With fit off: absolute level.</small>
                     </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Arrowhead Size</span>
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        max="3"
+                        v-model.number="settings.defaultArrowScale"
+                      />
+                    </label>
+                  </div>
+                </section>
+                </div>
+
+                <div class="fx-settings-group">
+                <section class="fx-section">
+                  <h3 class="fx-section-title">New Node Defaults</h3>
+                  <div class="fx-section-body">
                     <div class="fx-grid">
                       <label class="fx-field">
-                        <span class="fx-label">Default Edge Style</span>
+                        <span class="fx-label">Default Node Shape</span>
+                        <select class="fx-input" v-model="settings.defaultNodeShape">
+                          <option value="rectangle">Rectangle</option>
+                          <option value="round-rectangle">Round Rectangle</option>
+                          <option value="ellipse">Ellipse</option>
+                          <option value="diamond">Diamond</option>
+                          <option value="round-diamond">Round Diamond</option>
+                          <option value="hexagon">Hexagon</option>
+                          <option value="octagon">Octagon</option>
+                          <option value="star">Star</option>
+                          <option value="tag">Tag</option>
+                          <option value="barrel">Barrel</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Label H-Align</span>
+                        <select class="fx-input" v-model="settings.defaultNodeTextHalign">
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Label V-Align</span>
+                        <select class="fx-input" v-model="settings.defaultNodeTextValign">
+                          <option value="top">Top</option>
+                          <option value="center">Center</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="fx-grid">
+                      <label class="fx-field">
+                        <span class="fx-label">Background Color <em class="fx-opt">empty = theme</em></span>
+                        <div class="fx-color-row">
+                          <input
+                            class="fx-input fx-input-color"
+                            type="color"
+                            :value="settings.defaultNodeBgColor || '#5f9488'"
+                            @input="settings.defaultNodeBgColor = $event.target.value"
+                          />
+                          <button
+                            type="button"
+                            class="fx-btn fx-btn-mini"
+                            :class="{ 'fx-btn-active': !settings.defaultNodeBgColor }"
+                            @click="settings.defaultNodeBgColor = ''"
+                            title="Use theme color"
+                          >none</button>
+                        </div>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Border Color <em class="fx-opt">empty = theme</em></span>
+                        <div class="fx-color-row">
+                          <input
+                            class="fx-input fx-input-color"
+                            type="color"
+                            :value="settings.defaultNodeBorderColor || '#5e74ff'"
+                            @input="settings.defaultNodeBorderColor = $event.target.value"
+                          />
+                          <button
+                            type="button"
+                            class="fx-btn fx-btn-mini"
+                            :class="{ 'fx-btn-active': !settings.defaultNodeBorderColor }"
+                            @click="settings.defaultNodeBorderColor = ''"
+                            title="Use theme color"
+                          >none</button>
+                        </div>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Border Width <em class="fx-opt">empty = theme</em></span>
+                        <input
+                          class="fx-input"
+                          type="number"
+                          min="0"
+                          max="8"
+                          step="0.5"
+                          v-model.number="settings.defaultNodeBorderWidth"
+                          placeholder="theme"
+                        />
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Font Size <em class="fx-opt">empty = theme</em></span>
+                        <input
+                          class="fx-input"
+                          type="number"
+                          min="8"
+                          max="28"
+                          step="1"
+                          v-model.number="settings.defaultNodeFontSize"
+                          placeholder="theme"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </section>
+                </div>
+
+                <div class="fx-settings-group">
+                <section class="fx-section">
+                  <h3 class="fx-section-title">New Edge Defaults</h3>
+                  <div class="fx-section-body">
+                    <div class="fx-grid">
+                      <label class="fx-field">
+                        <span class="fx-label">Edge Arrow Style</span>
+                        <select class="fx-input" v-model="settings.defaultEdgeArrowHeadStyle">
+                          <option value="filled">Filled</option>
+                          <option value="hollow">Hollow</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Default Arrow Shape</span>
+                        <select class="fx-input" v-model="settings.defaultArrowShape">
+                          <option value="vee">Vee</option>
+                          <option value="triangle">Triangle</option>
+                          <option value="chevron">Chevron</option>
+                          <option value="tee">Tee</option>
+                          <option value="circle">Circle</option>
+                          <option value="diamond">Diamond</option>
+                          <option value="triangle-tee">Triangle Tee</option>
+                          <option value="triangle-cross">Triangle Cross</option>
+                          <option value="none">None (undirected)</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Source Arrow <em class="fx-opt">empty = none</em></span>
+                        <select class="fx-input" v-model="settings.defaultEdgeSourceArrow">
+                          <option value="">None</option>
+                          <option value="vee">Vee</option>
+                          <option value="triangle">Triangle</option>
+                          <option value="chevron">Chevron</option>
+                          <option value="tee">Tee</option>
+                          <option value="circle">Circle</option>
+                          <option value="diamond">Diamond</option>
+                          <option value="square">Square</option>
+                          <option value="triangle-tee">Triangle Tee</option>
+                          <option value="triangle-cross">Triangle Cross</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Edge Line Style</span>
+                        <select class="fx-input" v-model="settings.defaultEdgeLineStyle">
+                          <option value="solid">Solid</option>
+                          <option value="dotted">Dotted</option>
+                          <option value="dashed">Dashed</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div class="fx-grid">
+                      <label class="fx-field">
+                        <span class="fx-label">Curve Style</span>
                         <select class="fx-input" v-model="settings.defaultEdgeStyle">
                           <option value="curved">Curved (Bezier)</option>
                           <option value="straight">Straight Line</option>
                         </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-label">Edge Color <em class="fx-opt">empty = theme</em></span>
+                        <div class="fx-color-row">
+                          <input
+                            class="fx-input fx-input-color"
+                            type="color"
+                            :value="settings.defaultEdgeColor || '#5e74ff'"
+                            @input="settings.defaultEdgeColor = $event.target.value"
+                          />
+                          <button
+                            type="button"
+                            class="fx-btn fx-btn-mini"
+                            :class="{ 'fx-btn-active': !settings.defaultEdgeColor }"
+                            @click="settings.defaultEdgeColor = ''"
+                            title="Use theme color"
+                          >none</button>
+                        </div>
                       </label>
                       <label class="fx-field">
                         <span class="fx-label">Edge Thickness</span>
@@ -225,8 +418,6 @@
                           v-model.number="settings.defaultEdgeWidth"
                         />
                       </label>
-                    </div>
-                    <div class="fx-grid">
                       <label class="fx-field">
                         <span class="fx-label">Edge Opacity</span>
                         <input
@@ -238,34 +429,10 @@
                           v-model.number="settings.defaultEdgeOpacity"
                         />
                       </label>
-                       <label class="fx-field">
-                         <span class="fx-label">Arrowhead Size</span>
-                         <input
-                           class="fx-input"
-                           type="number"
-                           step="0.1"
-                           min="0.1"
-                           max="3"
-                           v-model.number="settings.defaultArrowScale"
-                         />
-                       </label>
-                     </div>
-                     <label class="fx-field">
-                       <span class="fx-label">Default Arrow Shape</span>
-                       <select class="fx-input" v-model="settings.defaultArrowShape">
-                         <option value="vee">Vee</option>
-                         <option value="triangle">Triangle</option>
-                         <option value="chevron">Chevron</option>
-                         <option value="tee">Tee</option>
-                         <option value="circle">Circle</option>
-                         <option value="diamond">Diamond</option>
-                         <option value="triangle-tee">Triangle Tee</option>
-                         <option value="triangle-cross">Triangle Cross</option>
-                         <option value="none">None (undirected)</option>
-                       </select>
-                     </label>
-                   </div>
-                 </section>
+                    </div>
+                  </div>
+                </section>
+                </div>
               </div>
               <footer class="fx-panel-actions">
                 <button
@@ -354,6 +521,17 @@ export default {
       merged.defaultEdgeOpacity = stored.defaultEdgeOpacity !== undefined ? Number(stored.defaultEdgeOpacity) : defaults.defaultEdgeOpacity
       merged.defaultArrowScale = Math.min(3, Math.max(0.1, stored.defaultArrowScale !== undefined ? Number(stored.defaultArrowScale) : defaults.defaultArrowScale))
       merged.defaultArrowShape = stored.defaultArrowShape || defaults.defaultArrowShape
+      merged.defaultEdgeArrowHeadStyle = stored.defaultEdgeArrowHeadStyle || defaults.defaultEdgeArrowHeadStyle
+      merged.defaultEdgeSourceArrow = stored.defaultEdgeSourceArrow || defaults.defaultEdgeSourceArrow
+      merged.defaultEdgeColor = stored.defaultEdgeColor || defaults.defaultEdgeColor
+      merged.defaultEdgeLineStyle = stored.defaultEdgeLineStyle || defaults.defaultEdgeLineStyle
+      merged.defaultNodeShape = stored.defaultNodeShape || defaults.defaultNodeShape
+      merged.defaultNodeTextHalign = stored.defaultNodeTextHalign || defaults.defaultNodeTextHalign
+      merged.defaultNodeTextValign = stored.defaultNodeTextValign || defaults.defaultNodeTextValign
+      merged.defaultNodeBgColor = stored.defaultNodeBgColor || defaults.defaultNodeBgColor
+      merged.defaultNodeBorderColor = stored.defaultNodeBorderColor || defaults.defaultNodeBorderColor
+      merged.defaultNodeBorderWidth = stored.defaultNodeBorderWidth != null ? Number(stored.defaultNodeBorderWidth) : defaults.defaultNodeBorderWidth
+      merged.defaultNodeFontSize = stored.defaultNodeFontSize != null ? Number(stored.defaultNodeFontSize) : defaults.defaultNodeFontSize
       return merged
     },
     close () {
@@ -384,8 +562,16 @@ export default {
   text-shadow: none;
 }
 
+.fx-settings-group {
+  border: 1px solid rgba(var(--fx-accent), 0.18);
+  border-radius: 10px;
+  background: rgba(var(--fx-inset), 0.28);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
 .fx-section {
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .fx-section-body {
@@ -398,7 +584,10 @@ export default {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgb(var(--fx-ink-dim));
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid rgba(var(--fx-accent), 0.55);
+  line-height: 1.3;
 }
 
 .fx-toggle {
@@ -489,10 +678,31 @@ export default {
   color: rgb(var(--fx-ink));
 }
 
+.fx-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .fx-input-color {
-  height: 40px;
-  padding: 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  height: 38px;
   border-radius: 8px;
+  cursor: pointer;
+}
+
+.fx-btn-mini {
+  flex: none;
+  font-size: 10px;
+  padding: 5px 10px;
+  letter-spacing: 0.1em;
+}
+
+.fx-btn-active {
+  border-color: rgb(var(--fx-accent));
+  color: rgb(var(--fx-accent));
 }
 
 .fx-field-label {

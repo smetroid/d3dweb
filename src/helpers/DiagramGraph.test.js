@@ -57,6 +57,70 @@ describe('node CRUD', () => {
     expect(graph.getNodeData('n0').label).toBe('Renamed')
   })
 
+  it('adds a node with the cytoscape style data fields', () => {
+    const { graph } = makeGraph(1)
+    const id = graph.addNode({
+      nodeLabel: 'Styled',
+      nodeShape: 'diamond',
+      bgColor: '#ff0000',
+      borderColor: '#00ff00',
+      borderWidth: 3,
+      fontSize: 18,
+    })
+    const data = graph.getNodeData(id)
+    expect(data.nodeShape).toBe('diamond')
+    expect(data.bgColor).toBe('#ff0000')
+    expect(data.borderColor).toBe('#00ff00')
+    expect(data.borderWidth).toBe(3)
+    expect(data.fontSize).toBe(18)
+
+    const cyData = graph.cy.getElementById(id).data()
+    expect(cyData.nodeShape).toBe('diamond')
+    expect(cyData.bgColor).toBe('#ff0000')
+    expect(cyData.borderColor).toBe('#00ff00')
+    expect(cyData.borderWidth).toBe(3)
+    expect(cyData.fontSize).toBe(18)
+  })
+
+  it('migrates a legacy SVG fill style into bgColor and keeps the style field', () => {
+    const { model, graph } = makeGraph(0)
+    const id = model.addNode({ label: 'Old', style: 'fill: #5f9488' })
+    // Direct model writes keep the legacy style (rendered via the renderer's
+    // fillColor path); getNodeData lifts the fill for the form.
+    expect(graph.getNodeData(id).bgColor).toBe('#5f9488')
+    expect(graph.cy.getElementById(id).data('style')).toBe('fill: #5f9488')
+
+    const id2 = graph.addNode({ nodeLabel: 'Old2', style: 'fill: #5f9488' })
+    expect(graph.cy.getElementById(id2).data('bgColor')).toBe('#5f9488')
+    expect(graph.cy.getElementById(id2).data('style')).toBe('fill: #5f9488')
+
+    graph.updateNode({ nodeLabel: 'Edited', bgColor: '#00ff00' }, id)
+    expect(graph.cy.getElementById(id).data('bgColor')).toBe('#00ff00')
+    expect(graph.cy.getElementById(id).data('style')).toBeUndefined()
+  })
+
+  it('updates node style fields and omits emptied optional fields', () => {
+    const { graph } = makeGraph(1)
+    graph.updateNode({ nodeLabel: 'Styled', bgColor: '#123456', borderWidth: 2 }, 'n0')
+    expect(graph.getNodeData('n0').bgColor).toBe('#123456')
+    expect(graph.getNodeData('n0').borderWidth).toBe(2)
+
+    graph.updateNode({ nodeLabel: 'Styled', bgColor: '', borderWidth: null }, 'n0')
+    expect(graph.cy.getElementById('n0').data('bgColor')).toBeUndefined()
+    expect(graph.cy.getElementById('n0').data('borderWidth')).toBeUndefined()
+    expect(graph.getNodeData('n0').bgColor).toBeFalsy()
+    expect(graph.getNodeData('n0').borderWidth).toBeUndefined()
+  })
+
+  it('redraws with layout disabled so edits do not re-run the layout', () => {
+    const { graph, renderer } = makeGraph(1)
+    graph.updateNode({ nodeLabel: 'Renamed' }, 'n0')
+    expect(renderer.updateScene).toHaveBeenCalledWith(
+      graph.cy,
+      expect.objectContaining({ layout: false })
+    )
+  })
+
   it('deletes a node by id', () => {
     const { model, graph } = makeGraph(2)
     graph.deleteNode('n0')
@@ -112,6 +176,36 @@ describe('edge CRUD', () => {
     const eid = model.edges()[0].id()
     graph.updateEdge({ edgeLabel: 'new', edgeArrowHead: 'vee' }, eid)
     expect(model.getElementById(eid).data('label')).toBe('new')
+  })
+
+  it('adds and updates the common cytoscape edge settings', () => {
+    const { graph } = makeGraph(2)
+    graph.selectedNodes = [0, 1]
+    graph.addEdge({
+      edgeLabel: 'connects',
+      edgeArrowHead: 'vee',
+      edgeArrowHeadStyle: 'hollow',
+      sourceArrowhead: 'circle',
+      edgeWidth: 4,
+      edgeColor: '#ff00aa',
+      edgeLineStyle: 'dashed',
+      edgeCurve: 'straight',
+      edgeOpacity: 0.5,
+    })
+    const eid = graph.cy.edges()[0].id()
+    const data = graph.getEdgeData(eid)
+    expect(data.edgeArrowHead).toBe('vee')
+    expect(data.edgeArrowHeadStyle).toBe('hollow')
+    expect(data.sourceArrowhead).toBe('circle')
+    expect(data.edgeWidth).toBe(4)
+    expect(data.edgeColor).toBe('#ff00aa')
+    expect(data.edgeLineStyle).toBe('dashed')
+    expect(data.edgeCurve).toBe('straight')
+    expect(data.edgeOpacity).toBe(0.5)
+
+    graph.updateEdge({ edgeLabel: 'renamed', edgeColor: '' }, eid)
+    expect(graph.getEdgeData(eid).edgeColor).toBeUndefined()
+    expect(graph.getEdgeData(eid).edgeLabel).toBe('renamed')
   })
 
   it('deletes an edge by id or by {v, w}', () => {

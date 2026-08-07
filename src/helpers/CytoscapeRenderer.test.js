@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import CytoscapeRenderer from '@/helpers/CytoscapeRenderer.js'
 import {
+  DEFAULT_PALETTE,
   edgeStyleFrom,
   resolveBoxOverlap,
   hintTransform,
@@ -43,6 +44,50 @@ describe('CytoscapeRenderer', () => {
     await renderer.updateScene(model)
     expect(renderer.cy.getElementById('a').data('label')).toBe('Renamed')
     expect(renderer.cy.nodes().length).toBe(1)
+  })
+
+  it('syncs per-element style data and applies the data-driven styles', async () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'st', label: 'S', nodeShape: 'diamond', bgColor: '#ff0000', borderWidth: 3 } },
+      { group: 'nodes', data: { id: 'st2', label: 'T' } },
+      { group: 'edges', data: { id: 'ste', source: 'st', target: 'st2', edgeWidth: 5, edgeColor: '#00ff00', edgeCurve: 'straight' } },
+    ])
+    await renderer.updateScene(model)
+
+    const node = renderer.cy.getElementById('st')
+    expect(node.data('nodeShape')).toBe('diamond')
+    expect(node.data('bgColor')).toBe('#ff0000')
+    expect(node.data('borderWidth')).toBe(3)
+    expect(renderer.cy.getElementById('ste').data('edgeWidth')).toBe(5)
+    expect(renderer.cy.getElementById('ste').data('edgeColor')).toBe('#00ff00')
+
+    expect(node.style('shape')).toBe('diamond')
+    expect(node.style('background-color')).toBe('rgb(255,0,0)')
+    expect(node.style('border-width')).toBe('3px')
+    expect(renderer.cy.getElementById('ste').style('curve-style')).toBe('straight')
+
+    // A rebuilt scene keeps the latest data
+    model.getElementById('st').data({ bgColor: '#0000ff' })
+    await renderer.updateScene(model)
+    expect(renderer.cy.getElementById('st').data('bgColor')).toBe('#0000ff')
+    expect(renderer.cy.getElementById('st').style('background-color')).toBe('rgb(0,0,255)')
+  })
+
+  it('derives legacy "style: fill: …" into fillColor and applies it inline', async () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'leg', label: 'Old', style: 'fill: #5f9488' } },
+    ])
+    await renderer.updateScene(model)
+
+    const node = renderer.cy.getElementById('leg')
+    expect(node.data('fillColor')).toBe('#5f9488')
+    expect(node.style('background-color')).toBe('rgb(95,148,136)')
+    expect(node.style('border-color')).toBe('rgb(95,148,136)')
+
+    // Clearing the legacy style restores the theme fill
+    model.getElementById('leg').data({ style: undefined })
+    await renderer.updateScene(model)
+    expect(renderer.cy.getElementById('leg').data('fillColor')).toBeNull()
   })
 
   it('lays out nodes instead of leaving them stacked at the origin', async () => {
@@ -93,6 +138,24 @@ describe('CytoscapeRenderer', () => {
     renderer.updateScene(model, { pan: 'Left' })
     renderer.updateScene(model, { zoom: 'In' })
     expect(renderer.cy.nodes().length).toBe(1)
+  })
+
+  it('skips the layout on layout:false so edit saves keep node positions', async () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'a', label: 'A' } },
+      { group: 'nodes', data: { id: 'b', label: 'B' } },
+    ])
+    await renderer.updateScene(model)
+    const posA = renderer.cy.getElementById('a').position()
+
+    const runLayoutSpy = vi.spyOn(renderer, '_runLayout')
+    model.getElementById('a').data({ label: 'A2' })
+    renderer.updateScene(model, { layout: false })
+
+    expect(runLayoutSpy).not.toHaveBeenCalled()
+    expect(renderer.cy.getElementById('a').data('label')).toBe('A2')
+    expect(renderer.cy.getElementById('a').position()).toEqual(posA)
+    runLayoutSpy.mockRestore()
   })
 
   it('fits the viewport after a rebuild (gliding with the layout)', async () => {
@@ -414,9 +477,28 @@ describe('themeStyle', () => {
     expect(node.style['background-gradient-stop-colors']).toBe('rgb(14,21,44) rgb(7,12,28)')
     expect(node.style['background-color']).toBe('rgb(7,12,28)')
     expect(node.style['color']).toBe('rgb(223,230,255)')
-    expect(node.style['width']).toBeUndefined()
-    expect(node.style['height']).toBeUndefined()
+    expect(node.style['width']).toBe('label')
+    expect(node.style['height']).toBe('label')
     expect(parent.style['background-gradient-stop-colors']).toBe('rgba(94,116,255,0.22) rgb(14,21,44) rgb(7,12,28)')
     expect(edge.style['line-color']).toBe('rgb(94,116,255)')
+  })
+
+  it('drives per-element node/edge styles from data fields', () => {
+    const style = themeStyle(DEFAULT_PALETTE, {})
+    const selector = s => style.find(r => r.selector === s)
+    expect(selector('node[?nodeShape]').style['shape']).toBe('data(nodeShape)')
+    expect(selector('node[textHalign]').style['text-halign']).toBe('data(textHalign)')
+    expect(selector('node[textValign]').style['text-valign']).toBe('data(textValign)')
+    expect(selector('node[bgColor]').style['background-color']).toBe('data(bgColor)')
+    expect(selector('node[borderColor]').style['border-color']).toBe('data(borderColor)')
+    expect(selector('node[borderWidth]').style['border-width']).toBe('data(borderWidth)')
+    expect(selector('node[fontSize]').style['font-size']).toBe('data(fontSize)')
+    expect(selector('edge[sourceArrowhead]').style['source-arrow-shape']).toBe('data(sourceArrowhead)')
+    expect(selector('edge[edgeWidth]').style['width']).toBe('data(edgeWidth)')
+    expect(selector('edge[edgeColor]').style['line-color']).toBe('data(edgeColor)')
+    expect(selector('edge[edgeColor]').style['target-arrow-color']).toBe('data(edgeColor)')
+    expect(selector('edge[edgeLineStyle]').style['line-style']).toBe('data(edgeLineStyle)')
+    expect(selector('edge[edgeCurve]').style['curve-style']).toBe('data(edgeCurve)')
+    expect(selector('edge[edgeOpacity]').style['opacity']).toBe('data(edgeOpacity)')
   })
 })
