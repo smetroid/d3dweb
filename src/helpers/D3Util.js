@@ -244,13 +244,15 @@ export default {
       'defaultEdgeSourceArrow': '',
       'defaultEdgeColor': '',
       'defaultEdgeLineStyle': 'solid',
+      'defaultNodeLabel': '',
       'defaultNodeShape': 'rectangle',
       'defaultNodeTextHalign': 'center',
       'defaultNodeTextValign': 'top',
       'defaultNodeBgColor': '',
       'defaultNodeBorderColor': '',
       'defaultNodeBorderWidth': null,
-      'defaultNodeFontSize': null
+      'defaultNodeFontSize': null,
+      'defaultEdgeLabel': ''
     }
     return defaults
   },
@@ -574,7 +576,7 @@ export default {
   defaultNodeValues() {
     const s = this._readSettings()
     var data = {
-      nodeLabel:  'Node',
+      nodeLabel:  s.defaultNodeLabel !== undefined ? s.defaultNodeLabel : '',
       nodeShape:  s.defaultNodeShape       || 'rectangle',
       textHalign: s.defaultNodeTextHalign  || 'center',
       textValign: s.defaultNodeTextValign  || 'top',
@@ -588,7 +590,7 @@ export default {
   defaultEdgeValues() {
     const s = this._readSettings()
     var data = {
-      edgeLabel:          'Edge ', /** this needs to be a space else hints won't work */
+      edgeLabel:          s.defaultEdgeLabel !== undefined ? s.defaultEdgeLabel : '',
       edgeArrowHeadStyle: s.defaultEdgeArrowHeadStyle || 'filled',
       edgeArrowHead:      s.defaultArrowShape || 'vee',
       sourceArrowhead:    s.defaultEdgeSourceArrow || '',

@@ -510,9 +510,20 @@
                       </div>
                     </div>
                     <div class="fx-grid">
-                      <label class="fx-field">
-                        <span class="fx-label">Background Color <em class="fx-opt">empty = theme</em></span>
-                        <div class="fx-color-row">
+                       <label class="fx-field">
+                         <span class="fx-label">Default Node Label <em class="fx-opt">empty = no label</em></span>
+                         <input
+                           class="fx-input"
+                           type="text"
+                           v-model="settings.defaultNodeLabel"
+                           placeholder="empty = no label"
+                         />
+                       </label>
+                     </div>
+                     <div class="fx-grid">
+                       <label class="fx-field">
+                         <span class="fx-label">Background Color <em class="fx-opt">empty = theme</em></span>
+                         <div class="fx-color-row">
                           <input
                             class="fx-input fx-input-color"
                             type="color"
@@ -578,10 +589,21 @@
                 <div class="fx-settings-group">
                 <section class="fx-section">
                   <h3 class="fx-section-title">New Edge Defaults</h3>
-                  <div class="fx-section-body">
-                    <div class="fx-grid">
-                      <div class="fx-field">
-                        <span class="fx-label">Edge Arrow Style</span>
+                   <div class="fx-section-body">
+                     <div class="fx-grid">
+                       <label class="fx-field">
+                         <span class="fx-label">Default Edge Label <em class="fx-opt">empty = no label</em></span>
+                         <input
+                           class="fx-input"
+                           type="text"
+                           v-model="settings.defaultEdgeLabel"
+                           placeholder="empty = no label"
+                         />
+                       </label>
+                     </div>
+                     <div class="fx-grid">
+                       <div class="fx-field">
+                         <span class="fx-label">Edge Arrow Style</span>
                         <div class="fx-select">
                           <button
                             type="button"
@@ -956,6 +978,8 @@ export default {
       merged.defaultNodeBorderColor = stored.defaultNodeBorderColor || defaults.defaultNodeBorderColor
       merged.defaultNodeBorderWidth = stored.defaultNodeBorderWidth != null ? Number(stored.defaultNodeBorderWidth) : defaults.defaultNodeBorderWidth
       merged.defaultNodeFontSize = stored.defaultNodeFontSize != null ? Number(stored.defaultNodeFontSize) : defaults.defaultNodeFontSize
+      merged.defaultNodeLabel = stored.defaultNodeLabel !== undefined ? stored.defaultNodeLabel : defaults.defaultNodeLabel
+      merged.defaultEdgeLabel = stored.defaultEdgeLabel !== undefined ? stored.defaultEdgeLabel : defaults.defaultEdgeLabel
       return merged
     },
     expandHex (value) {
