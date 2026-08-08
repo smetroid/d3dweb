@@ -162,6 +162,8 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       style: {
         'width':                      'label',
         'height':                     'label',
+        'min-width':                          '40px',
+        'min-height':                         '30px',
         'padding':                            '8px 14px',
         'background-color':                   pal.nodeBottom,
         'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
