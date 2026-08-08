@@ -1102,19 +1102,65 @@ export default class CytoscapeRenderer {
     const anchor = document.createElement('div')
     anchor.className = 'cytoscape-hint-anchor'
     anchor.dataset.nodeId = node.id()
-    const pos = node.renderedPosition()
+    anchor.dataset.type = 'node'
+    const bb = node.renderedBoundingBox({ includeLabels: false, includeOverlays: false })
+    const cx = (bb.x1 + bb.x2) / 2
+    const cy = (bb.y1 + bb.y2) / 2
+    anchor.style.transform = hintTransform(cx, cy)
+    anchor.style.setProperty('--w', `${(bb.x2 - bb.x1) / 2}px`)
+    anchor.style.setProperty('--h', `${(bb.y2 - bb.y1) / 2}px`)
+    layer.appendChild(anchor)
+    return anchor
+  }
+
+  _edgeRenderedMidpoint(edge) {
+    const s = edge.source()
+    const t = edge.target()
+    if (!s || s.empty() || !t || t.empty()) return null
+    const sp = s.renderedPosition()
+    const tp = t.renderedPosition()
+    if (!sp || !tp) return null
+    return { x: (sp.x + tp.x) / 2, y: (sp.y + tp.y) / 2 }
+  }
+
+  _positionEdgeHintAnchor(edge) {
+    const layer = this._getHintsLayer()
+    if (!layer) return null
+    const pos = this._edgeRenderedMidpoint(edge)
+    if (!pos) return null
+    const anchor = document.createElement('div')
+    anchor.className = 'cytoscape-hint-anchor'
+    anchor.dataset.edgeId = edge.id()
+    anchor.dataset.type = 'edge'
     anchor.style.transform = hintTransform(pos.x, pos.y)
     layer.appendChild(anchor)
     return anchor
   }
 
+  getAllEdgeElements() {
+    if (!this.cy) return []
+    this._clearHintsLayer()
+    return this.cy.edges()
+      .map(edge => this._positionEdgeHintAnchor(edge))
+      .filter(Boolean)
+  }
+
   _updateHintAnchors() {
     if (!this._hintsLayer || !this.cy) return
     this._hintsLayer.querySelectorAll('.cytoscape-hint-anchor').forEach(anchor => {
-      const node = this.cy.getElementById(anchor.dataset.nodeId)
-      if (node.empty()) { anchor.remove(); return }
-      const pos = node.renderedPosition()
-      anchor.style.transform = hintTransform(pos.x, pos.y)
+      if (anchor.dataset.type === 'edge') {
+        const edge = this.cy.getElementById(anchor.dataset.edgeId)
+        if (edge.empty()) { anchor.remove(); return }
+        const pos = this._edgeRenderedMidpoint(edge)
+        if (pos) anchor.style.transform = hintTransform(pos.x, pos.y)
+      } else {
+        const node = this.cy.getElementById(anchor.dataset.nodeId)
+        if (node.empty()) { anchor.remove(); return }
+        const bb = node.renderedBoundingBox({ includeLabels: false, includeOverlays: false })
+        anchor.style.transform = hintTransform((bb.x1 + bb.x2) / 2, (bb.y1 + bb.y2) / 2)
+        anchor.style.setProperty('--w', `${(bb.x2 - bb.x1) / 2}px`)
+        anchor.style.setProperty('--h', `${(bb.y2 - bb.y1) / 2}px`)
+      }
     })
   }
 

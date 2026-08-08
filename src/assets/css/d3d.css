@@ -1474,64 +1474,123 @@ textarea {
   pointer-events: none;
 }
 
+/* 0×0 container at node/edge centre, same anchor pattern as .cytoscape-crosshair */
 .cytoscape-hint-anchor .hint-badge {
   --fx-hint-link: #fff;
-  --fx-hint-bg: #36004c;
+  --fx-hint-bg: #1a0030;
   position: absolute;
-  top: -38px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 30;
-  animation: fx-hint-pop 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  left: 0;
+  top: 0;
+  pointer-events: none;
 }
 
-.cytoscape-hint-anchor .hint-badge a {
+/* Corner bracket strokes — mirrors .crosshair-bracket */
+.cytoscape-hint-anchor .hint-badge .hint-bracket {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  color: rgb(var(--fx-accent));
+  opacity: 0.9;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.cytoscape-hint-anchor .hint-badge .hint-bracket::before,
+.cytoscape-hint-anchor .hint-badge .hint-bracket::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+
+.cytoscape-hint-anchor .hint-badge .hint-bracket::before { width: 12px; height: 2px; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket::after  { width: 2px;  height: 12px; }
+
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htl { left: calc(-1 * var(--w) - 2px); top: calc(-1 * var(--h) - 2px); }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htr { left: calc(var(--w) - 10px);     top: calc(-1 * var(--h) - 2px); }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbl { left: calc(-1 * var(--w) - 2px); top: calc(var(--h) - 10px); }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbr { left: calc(var(--w) - 10px);     top: calc(var(--h) - 10px); }
+
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htl::before { left: 0;  top: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htl::after  { left: 0;  top: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htr::before { right: 0; top: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.htr::after  { right: 0; top: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbl::before { left: 0;  bottom: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbl::after  { left: 0;  bottom: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbr::before { right: 0; bottom: 0; }
+.cytoscape-hint-anchor .hint-badge .hint-bracket.hbr::after  { right: 0; bottom: 0; }
+
+/* Node hint: letter pinned just above the TL bracket */
+.cytoscape-hint-anchor[data-type='node'] .hint-badge a {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 7px;
+  position: absolute;
+  left: calc(-1 * var(--w) - 2px);
+  top: calc(-1 * var(--h) - 28px);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 5px;
   font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--fx-hint-link);
   background: var(--fx-hint-bg);
-  border: 1px solid rgba(var(--fx-accent), 0.55);
+  border: 1px solid rgba(var(--fx-accent), 0.7);
   box-shadow:
-    0 0 0 3px rgba(var(--fx-accent), 0.12),
-    0 0 14px rgba(var(--fx-accent), 0.35),
-    0 4px 10px rgba(0, 0, 0, 0.45);
+    0 0 0 2px rgba(var(--fx-accent), 0.15),
+    0 0 10px rgba(var(--fx-accent), 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.5);
   text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+  white-space: nowrap;
+  animation: fx-hint-pop-node 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.cytoscape-hint-anchor .hint-badge::after {
-  content: '';
+/* Edge hint: no brackets, letter centred above midpoint */
+.cytoscape-hint-anchor[data-type='edge'] .hint-badge .hint-bracket {
+  display: none;
+}
+
+.cytoscape-hint-anchor[data-type='edge'] .hint-badge a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  left: 50%;
-  bottom: -5px;
+  left: 0;
+  top: -30px;
   transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid var(--fx-hint-bg);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--fx-hint-link);
+  background: var(--fx-hint-bg);
+  border: 1px solid rgba(var(--fx-green), 0.7);
+  box-shadow:
+    0 0 0 2px rgba(var(--fx-green), 0.12),
+    0 0 10px rgba(var(--fx-green), 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+  white-space: nowrap;
+  animation: fx-hint-pop 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes fx-hint-pop-node {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 @keyframes fx-hint-pop {
-  from {
-    transform: translateX(-50%) scale(0.4);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
-  }
+  from { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1);   opacity: 1; }
 }
 
 /* Selection crosshairs (focused node + Enter-selected nodes).

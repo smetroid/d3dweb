@@ -232,18 +232,31 @@ export default {
 
     hintSelection(data) {
       if (D3Util.debug) console.log('hintSelection', data)
+      const mod = this.modifier?.value ?? this.modifier
+      if (!mod) return
 
-      // data is the node-card HTML element; its nodeId is on dataset
+      // Edge hint anchor (cytoscape edge midpoint)
+      if (data.dataset?.type === 'edge') {
+        const edgeId = data.dataset.edgeId
+        if (!edgeId) return
+        this.d3Data        = mod.getEdgeData(edgeId)
+        this.focusedEdgeId = edgeId
+        this.emitter.emit('changeActive', 'Edit Edge')
+        this.openSheet = true
+        return
+      }
+
+      // Node hint anchor
       const nodeId = data?.dataset?.nodeId
       if (!nodeId) return
 
-      const mod = this.modifier?.value ?? this.modifier
-      // If the element stores edge info (v+w) treat as edge, else as node
       if (data.dataset?.edgeSource && data.dataset?.edgeTarget) {
         this.d3Data = mod.getEdgeData(data.id)
         this.emitter.emit('changeActive', 'Edit Edge')
       } else {
-        this.d3Data = mod.getNodeData(nodeId)
+        this.d3Data        = mod.getNodeData(nodeId)
+        this.focusedNodeId = nodeId
+        this.threeDRenderer?.setFocusedNode(nodeId)
         this.emitter.emit('changeActive', 'Edit Node')
       }
       this.openSheet = true
@@ -271,7 +284,7 @@ export default {
 
       if (D3Util.debug) console.log('keyPress', event)
 
-      if (Object.keys(this.hints).length > 1) {
+      if (Object.keys(this.hints).length >= 1) {
         const hints = new Hints()
         hints.data             = this.hints
         hints.hintKeysReplaced = this.hintKeysReplaced
@@ -282,7 +295,8 @@ export default {
           this.hintKeysReplaced = data.hintKeys
         } else {
           if (event.key !== 'Escape') {
-            this.hintSelection(data.hints[data.hintKeys])
+            const target = data.hints[data.hintKeys]
+            if (target) this.hintSelection(target)
           }
           this.hints           = {}
           this.hintKeysReplaced = ''

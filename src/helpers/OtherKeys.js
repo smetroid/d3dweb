@@ -64,7 +64,7 @@ export default class OtherKeys {
     } else if (eventKey === 'l') {
       selectedId = this.L(nodeOrEdge)
     } else if (eventKey === 'f') {
-      this.hints = this.F()
+      this.hints = this.F(nodeOrEdge)
     }
 
     if (eventKey === 'f') {
@@ -143,10 +143,12 @@ export default class OtherKeys {
     return this.modifier.selectEdge(this.focusedIndex)
   }
 
-  F() {
-    // In 3D mode, node cards are real HTML elements — query them directly
-    const elements = this.modifier.renderer
-      ? this.modifier.renderer.getAllNodeElements()
+  F(nodeOrEdge) {
+    const renderer = this.modifier.renderer
+    const elements = renderer
+      ? (nodeOrEdge === 'edges'
+          ? renderer.getAllEdgeElements()
+          : renderer.getAllNodeElements())
       : []
 
     const availHints    = this.buildHints(elements)
@@ -159,12 +161,17 @@ export default class OtherKeys {
       const shortcut = availHints[i]
       const el       = elements[i]
 
-      // Append a floating badge div to the node anchor
       const badge = document.createElement('div')
       badge.className = 'hint-badge'
       badge.style.setProperty('--fx-hint-link', hintLinkColor)
       badge.style.setProperty('--fx-hint-bg', hintBGColor)
-      badge.innerHTML = `<a href="#" tabindex="-1"><span class="hint-char">${shortcut}</span></a>`
+      badge.innerHTML = [
+        '<span class="hint-bracket htl"></span>',
+        '<span class="hint-bracket htr"></span>',
+        '<span class="hint-bracket hbl"></span>',
+        '<span class="hint-bracket hbr"></span>',
+        `<a href="#" tabindex="-1"><span class="hint-char">${shortcut}</span></a>`,
+      ].join('')
       badge.addEventListener('click', this.hintFunction)
       el.appendChild(badge)
 
@@ -175,21 +182,25 @@ export default class OtherKeys {
   }
 
   buildHints(elements) {
-    const hintOptions  = D3Util.hintOptions() || 'asdfjklqweruiopzxcvnmgh'
-    const hintsLength  = hintOptions.length
-    const maxIterator  = Math.floor(elements.length / hintsLength)
-    const hints        = []
-    for (let i = maxIterator; i <= elements.length; i++) {
-      let hint = hintOptions.charAt(D3Util.mod(i, hintsLength))
-      if (i >= hintsLength) {
-        for (let t = 0; t < maxIterator; t++) {
-          hint = hintOptions.charAt(D3Util.mod(t, hintsLength)) + hint
-          hints.push(hint)
+    const hintOptions = D3Util.hintOptions() || 'asdfjklqweruiopzxcvnmgh'
+    const n = elements.length
+    const hints = []
+
+    // Single-char hints first
+    for (let i = 0; i < hintOptions.length && hints.length < n; i++) {
+      hints.push(hintOptions[i])
+    }
+
+    // Two-char hints if more are needed (prefix + suffix)
+    if (hints.length < n) {
+      const singles = hints.slice()
+      for (let p = 0; p < singles.length && hints.length < n; p++) {
+        for (let s = 0; s < hintOptions.length && hints.length < n; s++) {
+          hints.push(singles[p] + hintOptions[s])
         }
-      } else {
-        hints.push(hint)
       }
     }
+
     return hints
   }
 
