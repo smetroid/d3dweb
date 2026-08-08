@@ -451,9 +451,14 @@ export default {
   width: 100%;
   height: 100%;
   outline: none;
+  background-color: rgb(var(--fx-glass-bottom));
   background-image: radial-gradient(circle, rgba(var(--fx-muted), 0.22) 1px, transparent 1px);
   background-size: 28px 28px;
   background-position: 0 0;
+}
+
+:global(.v-theme--light .three-container) {
+  background-image: radial-gradient(circle, rgba(var(--fx-muted), 0.55) 1px, transparent 1px);
 }
 
 .fx-viewport-hud {
