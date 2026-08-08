@@ -192,6 +192,13 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       },
     },
 
+    // Nodes with no label collapse to zero with width:'label' — give them
+    // a fixed minimum rendered size so they remain visible.
+    {
+      selector: 'node[label = ""]',
+      style: { 'width': 40, 'height': 30 },
+    },
+
     // Per-node shape driven by form data (e.g. hexagon, diamond, star …)
     {
       selector: 'node[?nodeShape]',
