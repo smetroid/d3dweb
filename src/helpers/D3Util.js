@@ -252,9 +252,14 @@ export default {
       'defaultNodeBorderColor': '',
       'defaultNodeBorderWidth': null,
       'defaultNodeFontSize': null,
-      'defaultEdgeLabel': ''
+      'defaultEdgeLabel': '',
+      'serverUrl': 'http://localhost:3000',
     }
     return defaults
+  },
+  serverUrl () {
+    const s = VueCookies.get('settings')
+    return (s && s.serverUrl) ? s.serverUrl : 'http://localhost:3000'
   },
   buildHints (elements, hyperLinks=false) {
     var hints = {}

@@ -66,6 +66,16 @@
                       <input type="checkbox" v-model="settings.d3dInfo" />
                       <span class="fx-toggle-track"></span>
                     </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Server URL</span>
+                      <input
+                        class="fx-input"
+                        type="text"
+                        v-model="settings.serverUrl"
+                        placeholder="http://localhost:3000"
+                      />
+                      <small class="fx-toggle-note">Backend API URL. Change if your server runs on a different host or port.</small>
+                    </label>
                     <div>
                       <p class="fx-field-label">Theme</p>
                       <div class="fx-pill-row">
@@ -980,6 +990,7 @@ export default {
       merged.defaultNodeFontSize = stored.defaultNodeFontSize != null ? Number(stored.defaultNodeFontSize) : defaults.defaultNodeFontSize
       merged.defaultNodeLabel = stored.defaultNodeLabel !== undefined ? stored.defaultNodeLabel : defaults.defaultNodeLabel
       merged.defaultEdgeLabel = stored.defaultEdgeLabel !== undefined ? stored.defaultEdgeLabel : defaults.defaultEdgeLabel
+      merged.serverUrl = stored.serverUrl || defaults.serverUrl
       return merged
     },
     expandHex (value) {
