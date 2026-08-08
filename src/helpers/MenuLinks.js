@@ -1,17 +1,13 @@
 import D3Util from '@/helpers/D3Util'
 export default {
   Click: async function(event, app) {
-    console.log(app)
-    console.log(event)
     this.hints = D3Util.removeHints(this.hints)
 
-    /*NOTE - When changing the type of selection the active pane should always 
+    /*NOTE - When changing the type of selection the active pane should always
     * be Graph
     */
     if (( event === 'Edit Node' ) || ( event === 'Edit Edge' )) {
       app.emitter.emit(event === 'Edit Node' ? 'editNode' : 'editEdge')
-      app.showMenu = false
-      app.showActionsMenu = false
       return
     }
 
@@ -20,13 +16,10 @@ export default {
       app.active = 'Graph'
     } else {
       app.active = event
-      app.showMenu = false
     }
-
 
     switch (event) {
       case 'D3D Settings':
-        console.log('d3d settings')
         app.emitter.emit('settings')
         break
       case 'Edit Diagram':
@@ -36,7 +29,6 @@ export default {
         app.emitter.emit('saveDiagram')
         break
       case 'Edit':
-        console.log('edit event')
         break
       case 'Discard Changes':
         app.$root.$emit('discardChanges')

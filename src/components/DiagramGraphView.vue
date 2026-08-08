@@ -110,6 +110,7 @@ export default {
       selectedEdges:   [],
       doubleSelection: [],
       openSheet:       false,
+      paletteOpen:     false,
       escCount:        0,
       threeDRenderer:  null,
       graphEmpty:      false,
@@ -149,6 +150,19 @@ export default {
       if (selection === 'Select Edges')     this.edgeOrNode = 'edges'
       else if (selection === 'Select Node') this.edgeOrNode = 'nodes'
     })
+
+    // The command palette steals focus; release the graph trap so the two
+    // don't fight over focus, then re-arm it on close (only if still Graph).
+    // track paletteOpen so onContainerFocusOut never yanks focus back while
+    // the palette owns it.
+    this.emitter.on('paletteOpen', () => {
+      this.paletteOpen = true
+      this.trapGraph = false
+    })
+    this.emitter.on('paletteClose', () => {
+      this.paletteOpen = false
+      if (this.active === 'Graph') this.trapGraph = true
+    })
   },
   beforeUnmount() {
     if (this.threeDRenderer) this.threeDRenderer.teardown()
@@ -174,16 +188,33 @@ export default {
     // Cytoscape blurs the container on every mousedown (blurActiveDomElement),
     // which drops focus to <body> without firing a focusin, so the focus trap
     // can't pull it back. When focus is lost entirely while the graph is the
-    // active view (and no edit sheet is open), restore it so the keyboard
+    // active view (no edit sheet is open), restore it so the keyboard
     // shortcuts keep working after any mouse/trackpad interaction.
+    //
+    // Two safeguards against focus loops:
+    //  - skip entirely while the command palette is open (it owns focus), and
+    //  - defer the refocus to a macrotask: calling el.focus() synchronously
+    //    inside the el's own focusout handler while focus moved to <body>
+    //    recurses in Chromium and blows the stack.
     onContainerFocusOut() {
       if (
-        this.active === 'Graph' &&
-        !this.openSheet &&
-        document.activeElement === document.body
-      ) {
-        this.$refs.threeContainer?.focus({ preventScroll: true })
-      }
+        this.active !== 'Graph' ||
+        this.openSheet ||
+        this.paletteOpen ||
+        document.activeElement !== document.body
+      ) return
+      const el = this.$refs.threeContainer
+      if (!el) return
+      setTimeout(() => {
+        if (
+          this.active !== 'Graph' ||
+          this.openSheet ||
+          this.paletteOpen ||
+          document.activeElement !== document.body ||
+          document.activeElement === el
+        ) return
+        el.focus({ preventScroll: true })
+      }, 0)
     },
 
     _onHintBadgeClick(event) {
@@ -453,6 +484,7 @@ export default {
   outline: none;
   background-color: rgb(var(--fx-glass-bottom));
   background-image: radial-gradient(circle, rgba(var(--fx-muted), 0.22) 1px, transparent 1px);
+  background-repeat: repeat;
   background-size: 28px 28px;
   background-position: 0 0;
 }

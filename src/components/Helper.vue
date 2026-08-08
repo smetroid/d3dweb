@@ -90,6 +90,7 @@ export default {
         { title: 'Active 2',    shortcut: 'enter enter' },
         { title: 'Hints',       shortcut: 'f' },
         { title: 'Change Focus', shortcut: 'esc' },
+        { title: 'Command Palette', shortcut: '⌘ / Ctrl + k' },
       ],
       actions: [
         { title: 'Delete',      shortcut: 'x' },

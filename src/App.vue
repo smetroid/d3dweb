@@ -1,8 +1,8 @@
 <script setup>
 import DiagramGraphView from '@/components/DiagramGraphView.vue'
 import D3Util from '@/helpers/D3Util.js'
-import MenuKeys from '@/helpers/MenuKeys.js'
 import MenuLinks from '@/helpers/MenuLinks.js'
+import CommandPalette from '@/components/CommandPalette.vue'
 import Settings from '@/components/Settings.vue'
 import HelperPane from '@/components/Helper.vue'
 import GraphModel from '@/helpers/GraphModel.js'
@@ -71,6 +71,12 @@ function toggleTheme() {
       <Login
         :active="active"
       />
+      <CommandPalette
+        v-model:open="showCommandPalette"
+        :commands="commands"
+        :group="commandGroup"
+        @run="runCommand"
+      />
     </v-main>
     <!--
       NOTE: app - in the footer makes the footer to stay at the bottom
@@ -111,113 +117,33 @@ function toggleTheme() {
           </div>
           <div class="fx-nav-readout">
             <span class="fx-nav-key">MENU</span>
-            <div
-              class="fx-nav-menu-wrap"
-              @keydown.stop.prevent="menu($event, $refs.menu)"
-              @keypress.stop.prevent="menu($event, $refs.menu)"
-            >
-              <focus-trap
-                v-model:active="showMenu"
-                :initial-focus="()=>$refs.menuDiv"
-              >
-                <div id="trap" ref="menuDiv" tabindex="0">
-                  <v-menu
-                    ref="speedDial"
-                    v-model="showMenu"
-                  >
-                    <template v-slot:activator="{ props }">
-                      <button
-                        type="button"
-                        class="fx-nav-btn"
-                        v-bind="props"
-                        title="Menu (M)"
-                      >
-                        <span class="fx-nav-letter">{{ showMenu ? '✕' : 'M' }}</span>
-                      </button>
-                    </template>
-                    <v-list
-                      nav
-                      density="compact"
-                      class="fx-nav-list"
-                    >
-                      <v-list-item
-                        ref="menu"
-                        color="secondary"
-                        v-for="(item, i) in menuLinks"
-                        :active="currentMenuLink == item.title ? true : false"
-                        :key="i"
-                        :href="'#'+item.title"
-                        @click="d3Action(item.title)"
-                      >
-                        <template v-slot:prepend>
-                          <v-icon :icon="item.icon"></v-icon>
-                        </template>
-                        <v-list-item-title>
-                          {{ item.title }}
-                        </v-list-item-title>
-                      </v-list-item>
-                    </v-list>
-                  </v-menu>
-                </div>
-              </focus-trap>
-            </div>
+            <button
+              type="button"
+              class="fx-nav-btn"
+              title="Command Palette — Menu (M)"
+              @click="openCommandPalette('Menu')">
+              <span class="fx-nav-letter">M</span>
+            </button>
           </div>
           <div class="fx-nav-readout">
             <span class="fx-nav-key">ACTIONS</span>
-            <div
-              class="fx-nav-menu-wrap"
-              @keydown.stop.prevent="menu($event, $refs.actionsMenu)"
-              @keypress.stop.prevent="menu($event, $refs.actionsMenu)"
-            >
-              <focus-trap
-                v-model:active="showActionsMenu"
-                :initial-focus="()=>$refs.menuActionsDiv"
-              >
-                <div
-                  id="trap"
-                  ref="menuActionsDiv"
-                  tabindex="0"
-                >
-                  <v-menu
-                    ref="speedDial"
-                    v-model="showActionsMenu"
-                  >
-                    <template v-slot:activator="{ props }">
-                      <button
-                        type="button"
-                        class="fx-nav-btn"
-                        v-bind="props"
-                        title="Actions (A)"
-                      >
-                        <span class="fx-nav-letter">{{ showActionsMenu ? '✕' : 'A' }}</span>
-                      </button>
-                    </template>
-                    <v-list
-                      nav
-                      density="compact"
-                      class="fx-nav-list"
-                    >
-                      <v-list-item
-                        ref="actionsMenu"
-                        color="secondary"
-                        v-for="(item, i) in actionLinks"
-                        :active="currentMenuLink == item.title ? true : false"
-                        :key="i"
-                        :href="'#'+item.title"
-                        @click="d3Action(item.title)"
-                      >
-                        <template v-slot:prepend>
-                          <v-icon :icon="item.icon"></v-icon>
-                        </template>
-                        <v-list-item-title>
-                          {{ item.title }}
-                        </v-list-item-title>
-                      </v-list-item>
-                    </v-list>
-                  </v-menu>
-                </div>
-              </focus-trap>
-            </div>
+            <button
+              type="button"
+              class="fx-nav-btn"
+              title="Command Palette — Actions (A)"
+              @click="openCommandPalette('Actions')">
+              <span class="fx-nav-letter">A</span>
+            </button>
+          </div>
+          <div class="fx-nav-readout">
+            <span class="fx-nav-key">COMMAND</span>
+            <button
+              type="button"
+              class="fx-nav-btn"
+              title="Command Palette (⌘K / Ctrl+K)"
+              @click="openCommandPalette()">
+              <span class="fx-nav-letter">⌘K</span>
+            </button>
           </div>
         </div>
 
@@ -233,37 +159,34 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DiagramGraphView, Settings, DiagramForm, HelperPane, Login},
+  components: {DiagramGraphView, Settings, DiagramForm, HelperPane, Login, CommandPalette},
   data () {
     return {
       active: "Graph", //Default active component
-      showMenu: false,
-      showActionsMenu: false,
+      showCommandPalette: false,
+      commandGroup: null,
       showHelpPane: true,
       showDiagramForm: false,
       toasts: [],
-      fab: false,
-      gNavMenu: null,
-      currentMenuLink: null,
       response: 'loading',
       loaded: false,
       actionLinks:[
-        {'icon':'mdi-shape-square-plus','title':'Add Node'},
-        {'icon':'mdi-file-edit-outline','title':'Edit Node'},
-        {'icon':'mdi-selection-ellipse-remove','title':'Delete Node'},
+        {'icon':'mdi-shape-square-plus','title':'Add Node','shortcut':'N'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Node','shortcut':'E'},
+        {'icon':'mdi-selection-ellipse-remove','title':'Delete Node','shortcut':'X'},
         {'icon':'mdi-selection','title':'Select Node'},
-        {'icon':'mdi-shape-oval-plus','title':'Add Edge'},
-        {'icon':'mdi-file-edit-outline','title':'Edit Edge'},
-        {'icon':'mdi-selection-remove','title':'Delete Edge'},
+        {'icon':'mdi-shape-oval-plus','title':'Add Edge','shortcut':'D'},
+        {'icon':'mdi-file-edit-outline','title':'Edit Edge','shortcut':'E'},
+        {'icon':'mdi-selection-remove','title':'Delete Edge','shortcut':'X'},
         {'icon':'mdi-selection','title':'Select Edges'}
       ],
       menuLinks: [
         {'icon':'mdi-login','title':'Login'},
         {'icon':'mdi-cog-outline','title':'D3D Settings'},
-        {'icon':'mdi-open-in-new','title':'New Diagram'},
-        {'icon':'mdi-open-in-app','title':'Open Diagram'},
-        {'icon':'mdi-pencil','title':'Edit Diagram'},
-        {'icon':'mdi-content-save-outline','title':'Save Changes'},
+        {'icon':'mdi-open-in-new','title':'New Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'N'},
+        {'icon':'mdi-open-in-app','title':'Open Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'O'},
+        {'icon':'mdi-pencil','title':'Edit Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'E'},
+        {'icon':'mdi-content-save-outline','title':'Save Changes','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'S'},
       ],
       d3dInfo: {},
       modifier: {},
@@ -357,14 +280,11 @@ export default {
       }
       if (menu === undefined){
         this.active = 'Graph'
+      } else if (menu === 'Menu' || menu === 'Actions Menu') {
+        // M / A open the command palette, scoped to that group
+        this.openCommandPalette(menu === 'Menu' ? 'Menu' : 'Actions')
       } else {
         this.active = menu
-        //this.showMenu = true
-        //  this.$nextTick(function(){
-        //    console.log('next tick')
-        //    this.menuTrap = true
-        //    console.log(this.menuTrap)
-        //  })
       }
     })
 
@@ -395,12 +315,30 @@ export default {
      //   // this.id = id
      //   this.newDiagram()
      // })
+
+    /*NOTE - Global command palette shortcut (⌘K / Ctrl+K).
+    * Capture phase + stopPropagation so the graph's own key handling
+    * (⌘K would otherwise pan the viewport) never sees the event.
+    */
+    window.addEventListener('keydown', this.onGlobalKeydown, true)
+  },
+  beforeUnmount () {
+    window.removeEventListener('keydown', this.onGlobalKeydown, true)
   },
   updated () {
     // console.log('component updated')
     // console.log(this.d3dInfo)
   },
   methods: {
+    onGlobalKeydown (event) {
+      const mod = event.metaKey || event.ctrlKey
+      if (mod && event.key === 'k') {
+        event.preventDefault()
+        event.stopPropagation()
+        if (this.showCommandPalette) this.closeCommandPalette()
+        else this.openCommandPalette()
+      }
+    },
     dismissToast(id) {
       const idx = this.toasts.findIndex(t => t.id === id)
       if (idx !== -1) this.toasts.splice(idx, 1)
@@ -517,90 +455,55 @@ export default {
       }
 
     },
-    openMenu (){
-        console.log(this.active)
-        this.active = "Menu"
-    },
     successToggle () {
       console.log('success toggle')
     },
     loadingComplete () {
       this.$root.$emit('loadingComplete', this.options, this.id)
     },
+    openCommandPalette (group) {
+      this.commandGroup = group || null
+      this.showCommandPalette = true
+    },
+    closeCommandPalette () {
+      this.showCommandPalette = false
+      this.commandGroup = null
+    },
+    runCommand (cmd) {
+      this.closeCommandPalette()
+      this.d3Action(cmd.title)
+    },
     d3Action: async function(event) {
-      // Clear the acions menu
-      //this.$root.$emit('drawerAction')
-      //this.hints = D3Util.removeHints(this.hints)
-      //this.d3ActionsTrap = false
       MenuLinks.Click(event, this)
     },
-    liSelectionK (selectList, liSelected) {
-      var li = liSelected
-      var selectLi = null
-      if (li === null) {
-        selectLi = selectList.length - 1
-      } else {
-        this.prevLiSelected = D3Util.mod(li, selectList.length)
-        li = li - 1
-        selectLi = D3Util.mod(li, selectList.length)
-      }
-      return selectLi
-    },
-    liSelectionJ (selectList, liSelected) {
-      var li = liSelected
-      var selectLi = null
-      if (li === null) {
-        selectLi = 0
-      } else {
-        li = li + 1
-        selectLi = D3Util.mod(li, selectList.length)
-      }
-      return selectLi
-    },
-    menu(event){
-      MenuKeys.menuAction(event.key, this)
-    },
-     selectionBool (index) {
-       console.log(this.menuLinks[index].title)
-       this.currentMenuLink = this.menuLinks[index].title
-     },
-     //saveChanges: async function(){
-     // /*
-     //   1. Open Diagram form
-     //   2. Use the last samus.lastUpdated localStorage as data to save
-     // */
-     // this.emitter.emit('SaveDiagram')
-     //  //let localData = D3Util.getLocal()
-     //  //let id = localData.id // means data has been saved to server
-     //  //let id = this.d3dInfo.id
-     //  //var auth = D3Util.auth()
-     //  //if (id && auth) {
-     //  //  var result = await D3VimApi.updateDiagram(app.d3dInfo, app)
-     //  //  return result
-     //  //} else if (auth){
-     //  //console.log('id is empty')
-     //  //this.active = "New"
-     //  //} else {
-     //     /**
-     //      * broken was causing a lot of confusion
-     //      * need to rethink the approach to saving locally if 
-     //      * not logged in or authenticated
-     //      */
-     //    // var common = D3Util.commonMsg
-     //    this.emitter.emit('appMessage', true, 'Changes are being saved to localStorage, please consider creating an account or login to save remotely to the server', '')
-     //    // this is not needed
-     //    //D3Util.saveLocal(data)
-     //  //}
-     //},
   },
   computed: {
+    commands () {
+      return [
+        ...this.menuLinks.map(l => ({ ...l, group: 'Menu' })),
+        ...this.actionLinks.map(l => ({ ...l, group: 'Actions' })),
+      ]
+    },
   },
   watch: {
+    // Drive the graph trap's release/re-arm from a single source so every
+    // close path (Escape, overlay click, click-outside, run, ⌘K toggle) is
+    // covered, not just the M/A/⌘K buttons.
+    showCommandPalette (open) {
+      if (open) {
+        this.emitter.emit('paletteOpen')
+      } else {
+        // Wait a tick so the palette's focus trap has deactivated (and any
+        // active-state watchers have settled) before the graph re-arms.
+        this.$nextTick(() => this.emitter.emit('paletteClose'))
+      }
+    },
+
     active: function () {
       console.log('app.root.activewindow')
-    //  console.log(this.activeWindow)
-      this.showMenu = this.active === "Menu"?true:false
-      this.showActionsMenu = this.active === "Actions Menu"?true:false
+      if (this.active === 'Menu' || this.active === 'Actions Menu') {
+        this.openCommandPalette(this.active === 'Menu' ? 'Menu' : 'Actions')
+      }
     },
 
     '$vuetify.theme.global.name': function () {
