@@ -42,7 +42,7 @@
               <div class="fx-readout">
                 <span class="fx-readout-kv fx-readout-wide">
                   <span class="fx-readout-k">STORAGE</span>
-                  <span class="fx-readout-v">{{ localStorage.getItem('token') ? 'Server' : 'LocalStorage' }}</span>
+                  <span class="fx-readout-v">{{ storageType }}</span>
                 </span>
                 <span class="fx-readout-kv">
                   <span class="fx-readout-k">COUNT</span>
@@ -239,6 +239,9 @@ export default {
     }
   },
   computed: {
+    storageType() {
+      return localStorage.getItem('token') ? 'Server' : 'LocalStorage'
+    },
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
