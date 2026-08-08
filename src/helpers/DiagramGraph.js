@@ -299,6 +299,7 @@ export default class DiagramGraph {
   // defaults (a bare [attr] selector does not match an undefined value).
   _cleanPatch(patch) {
     for (const key of Object.keys(patch)) {
+      if (key === 'label') continue
       if (patch[key] === undefined || patch[key] === null || patch[key] === '') {
         patch[key] = undefined
       }
