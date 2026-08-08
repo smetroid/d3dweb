@@ -44,7 +44,7 @@ export default class DiagramGraph {
 
   addNode(data) {
     const nodeData = {
-      label:       data.nodeLabel  || 'Node',
+      label:       data.nodeLabel != null ? data.nodeLabel : '',
       nodeShape:   data.nodeShape  || 'rectangle',
       textHalign:  data.textHalign || 'center',
       textValign:  data.textValign || 'top',
@@ -166,7 +166,7 @@ export default class DiagramGraph {
 
   addEdge(data) {
     const nodeIds = this.cy.nodes().map(n => n.id())
-    const label = data.edgeLabel || ' '
+    const label = data.edgeLabel != null ? data.edgeLabel : ''
 
     if (this.doubleSelection.length === 0) {
       const source = nodeIds[this.selectedNodes[0]]
@@ -208,7 +208,7 @@ export default class DiagramGraph {
     const edge = this.cy.getElementById(id)
     if (!edge.empty()) {
       const patch = {
-        label:           data.edgeLabel || ' ',
+        label:           data.edgeLabel != null ? data.edgeLabel : '',
         arrowheadStyle:  data.edgeArrowHeadStyle,
         arrowhead:       data.edgeArrowHead,
         sourceArrowhead: data.sourceArrowhead,

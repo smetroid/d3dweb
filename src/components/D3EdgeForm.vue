@@ -374,7 +374,7 @@ export default {
         // Create mode: start from the configurable edge creation defaults in
         // Settings so a new line inherits the user's preferred look.
         const d = D3Util.defaultEdgeValues()
-        this.edgeLabel          = ''
+        this.edgeLabel          = d.edgeLabel
         this.edgeArrowHeadStyle = d.edgeArrowHeadStyle
         this.edgeArrowHead      = d.edgeArrowHead
         this.sourceArrowhead    = d.sourceArrowhead

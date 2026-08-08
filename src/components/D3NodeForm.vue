@@ -351,7 +351,7 @@ export default {
         // Create mode: start from the configurable node creation defaults in
         // Settings so a new node inherits the user's preferred look.
         const d = D3Util.defaultNodeValues()
-        this.nodeLabel   = null
+        this.nodeLabel   = d.nodeLabel
         this.nodeShape   = d.nodeShape
         this.nodeId      = null
         this.parentNode  = null
