@@ -102,15 +102,25 @@
                         type="button"
                         class="fx-select-trigger"
                         @click.stop="toggleSel('flow')"
+                        @keypress.stop=""
+                        @keydown.down.prevent="openAndFocus('flow', $event)"
                       >{{ flowLabel }}<span class="fx-caret">▾</span></button>
                       <transition name="fx-drop">
                         <ul v-if="openSel === 'flow'" class="fx-options">
                           <li
                             v-for="opt in flowOptions"
                             :key="opt.label"
+                            tabindex="0"
                             class="fx-option"
                             :class="{ 'fx-option-active': colaOpts.flow === opt.value }"
                             @click="pickFlow(opt.value)"
+                            @keydown.enter.prevent="pickFlow(opt.value)"
+                            @keydown.space.prevent="pickFlow(opt.value)"
+                            @keydown.up.prevent="focusPrev($event)"
+                            @keydown.down.prevent="focusNext($event)"
+                            @keydown.k.prevent="focusPrev($event)"
+                            @keydown.j.prevent="focusNext($event)"
+                            @keydown.esc.stop="closeSel($event)"
                           >{{ opt.label }}</li>
                         </ul>
                       </transition>
@@ -248,6 +258,35 @@ export default {
 
     toggleSel(key) {
       this.openSel = this.openSel === key ? null : key
+    },
+
+    openAndFocus(key, event) {
+      if (this.openSel !== key) this.openSel = key
+      this.$nextTick(() => {
+        const container = event.currentTarget.closest('.fx-select')
+        const ul = container?.querySelector('.fx-options')
+        if (ul) {
+          const target = ul.querySelector('.fx-option-active') || ul.querySelector('.fx-option')
+          if (target) target.focus()
+        }
+      })
+    },
+
+    focusPrev(event) {
+      const prev = event.target.previousElementSibling
+      if (prev) prev.focus()
+      else event.target.closest('.fx-options')?.lastElementChild?.focus()
+    },
+
+    focusNext(event) {
+      const next = event.target.nextElementSibling
+      if (next) next.focus()
+      else event.target.closest('.fx-options')?.firstElementChild?.focus()
+    },
+
+    closeSel(event) {
+      this.openSel = null
+      event.target.closest('.fx-select')?.querySelector('.fx-select-trigger')?.focus()
     },
 
     pickFlow(val) {

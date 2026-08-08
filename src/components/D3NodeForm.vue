@@ -46,15 +46,25 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('shape')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('shape', $event)"
                 >{{ shapeLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'shape'" class="fx-options">
                     <li
                       v-for="opt in nodeShapes"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': nodeShape === opt.value }"
                       @click="pick('nodeShape', opt.value)"
+                      @keydown.enter.prevent="pick('nodeShape', opt.value)"
+                      @keydown.space.prevent="pick('nodeShape', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -68,12 +78,23 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('halign')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('halign', $event)"
                 >{{ textHalign }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'halign'" class="fx-options">
                     <li v-for="opt in halignOptions" :key="opt.value"
+                      tabindex="0"
                       class="fx-option" :class="{ 'fx-option-active': textHalign === opt.value }"
-                      @click="pick('textHalign', opt.value)">{{ opt.label }}</li>
+                      @click="pick('textHalign', opt.value)"
+                      @keydown.enter.prevent="pick('textHalign', opt.value)"
+                      @keydown.space.prevent="pick('textHalign', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
                   </ul>
                 </transition>
               </div>
@@ -86,12 +107,23 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('valign')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('valign', $event)"
                 >{{ textValign }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'valign'" class="fx-options">
                     <li v-for="opt in valignOptions" :key="opt.value"
+                      tabindex="0"
                       class="fx-option" :class="{ 'fx-option-active': textValign === opt.value }"
-                      @click="pick('textValign', opt.value)">{{ opt.label }}</li>
+                      @click="pick('textValign', opt.value)"
+                      @keydown.enter.prevent="pick('textValign', opt.value)"
+                      @keydown.space.prevent="pick('textValign', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
                   </ul>
                 </transition>
               </div>
@@ -104,22 +136,56 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('parent')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('parent', $event)"
                 >{{ parentLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
-                  <ul v-if="openSel === 'parent'" class="fx-options">
-                    <li
-                      class="fx-option"
-                      :class="{ 'fx-option-active': parentNode === null }"
-                      @click="pick('parentNode', null)"
-                    >— none —</li>
-                    <li
-                      v-for="opt in parentOptions"
-                      :key="opt.key"
-                      class="fx-option"
-                      :class="{ 'fx-option-active': parentNode === opt.key }"
-                      @click="pick('parentNode', opt.key)"
-                    >{{ opt.value }}</li>
-                  </ul>
+                  <div v-if="openSel === 'parent'" class="fx-options">
+                    <input
+                      ref="parentSearchInput"
+                      class="fx-option-search"
+                      type="text"
+                      v-model="parentSearch"
+                      placeholder="Search..."
+                      autocomplete="off"
+                      @click.stop
+                      @keypress.stop=""
+                      @keydown.esc.stop="closeSel($event)"
+                      @keydown.down.prevent="focusFirstParentOption"
+                      @keydown.enter.prevent="focusFirstParentOption"
+                    />
+                    <ul class="fx-options-list">
+                      <li
+                        v-if="!parentSearch"
+                        tabindex="0"
+                        class="fx-option"
+                        :class="{ 'fx-option-active': parentNode === null }"
+                        @click="pick('parentNode', null)"
+                        @keydown.enter.prevent="pick('parentNode', null)"
+                        @keydown.space.prevent="pick('parentNode', null)"
+                        @keydown.up.prevent="focusPrev($event)"
+                        @keydown.down.prevent="focusNext($event)"
+                        @keydown.k.prevent="focusPrev($event)"
+                        @keydown.j.prevent="focusNext($event)"
+                        @keydown.esc.stop="closeSel($event)"
+                      >— none —</li>
+                      <li
+                        v-for="opt in filteredParentOptions"
+                        :key="opt.key"
+                        tabindex="0"
+                        class="fx-option"
+                        :class="{ 'fx-option-active': parentNode === opt.key }"
+                        @click="pick('parentNode', opt.key)"
+                        @keydown.enter.prevent="pick('parentNode', opt.key)"
+                        @keydown.space.prevent="pick('parentNode', opt.key)"
+                        @keydown.up.prevent="focusPrev($event)"
+                        @keydown.down.prevent="focusNext($event)"
+                        @keydown.k.prevent="focusPrev($event)"
+                        @keydown.j.prevent="focusNext($event)"
+                        @keydown.esc.stop="closeSel($event)"
+                      >{{ opt.value }}</li>
+                    </ul>
+                  </div>
                 </transition>
               </div>
             </div>
@@ -257,6 +323,7 @@ export default {
       update: false,
       openSel: null,
       parentNode: null,
+      parentSearch: '',
       textHalign: 'center',
       textValign: 'top',
       bgColor: '',
@@ -313,6 +380,13 @@ export default {
         key:   n.id(),
         value: n.data('label') || n.id(),
       }))
+    },
+    filteredParentOptions() {
+      if (!this.parentSearch) return this.parentOptions
+      const q = this.parentSearch.toLowerCase()
+      return this.parentOptions.filter(o =>
+        String(o.value || o.key).toLowerCase().startsWith(q)
+      )
     },
     shapeLabel() {
       return this._optLabel(this.nodeShapes, this.nodeShape, 'value', 'label', 'Rectangle')
@@ -396,6 +470,42 @@ export default {
     toggleSel(key) {
       this.openSel = this.openSel === key ? null : key
     },
+    openAndFocus(key, event) {
+      if (this.openSel !== key) this.openSel = key
+      this.$nextTick(() => {
+        const container = event.currentTarget.closest('.fx-select')
+        const searchInput = container?.querySelector('.fx-option-search')
+        if (searchInput) { searchInput.focus(); return }
+        const ul = container?.querySelector('.fx-options')
+        if (ul) {
+          const target = ul.querySelector('.fx-option-active') || ul.querySelector('.fx-option')
+          if (target) target.focus()
+        }
+      })
+    },
+    focusFirstParentOption() {
+      const input = this.$refs.parentSearchInput
+      if (!input) return
+      const first = input.nextElementSibling?.querySelector('.fx-option')
+      if (first) first.focus()
+    },
+    focusPrev(event) {
+      const prev = event.target.previousElementSibling
+      if (prev) { prev.focus(); return }
+      const container = event.target.closest('.fx-select')
+      const searchInput = container?.querySelector('.fx-option-search')
+      if (searchInput) searchInput.focus()
+      else event.target.closest('.fx-options-list, .fx-options')?.lastElementChild?.focus()
+    },
+    focusNext(event) {
+      const next = event.target.nextElementSibling
+      if (next) next.focus()
+      else event.target.closest('.fx-options-list, .fx-options')?.firstElementChild?.focus()
+    },
+    closeSel(event) {
+      this.openSel = null
+      event.target.closest('.fx-select')?.querySelector('.fx-select-trigger')?.focus()
+    },
     pick(field, val) {
       this[field] = val
       this.openSel = null
@@ -426,6 +536,9 @@ export default {
     }
   },
   watch: {
+    openSel(val) {
+      if (val !== 'parent') this.parentSearch = ''
+    },
     active(val) {
       this.update = val == 'Edit Node'
       this._populate()
@@ -470,5 +583,32 @@ export default {
 .fx-btn-active {
   border-color: rgb(var(--fx-accent));
   color: rgb(var(--fx-accent));
+}
+
+.fx-option-search {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-bottom: 1px solid rgba(var(--fx-accent), 0.25);
+  background: transparent;
+  color: rgb(var(--fx-ink));
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.fx-option-search::placeholder {
+  color: rgb(var(--fx-ink-faint));
+}
+
+.fx-option-search:focus {
+  border-bottom-color: rgb(var(--fx-accent));
+}
+
+.fx-options-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 </style>

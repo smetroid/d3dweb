@@ -46,15 +46,25 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('arrowStyle')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('arrowStyle', $event)"
                 >{{ arrowStyleLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'arrowStyle'" class="fx-options">
                     <li
                       v-for="opt in edgeArrowHeadStyleOptions"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': edgeArrowHeadStyle === opt.value }"
                       @click="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.enter.prevent="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.space.prevent="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -68,15 +78,25 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('arrow')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('arrow', $event)"
                 >{{ arrowLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'arrow'" class="fx-options">
                     <li
                       v-for="opt in edgeArrowHeadOptions"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': edgeArrowHead === opt.value }"
                       @click="pick('edgeArrowHead', opt.value)"
+                      @keydown.enter.prevent="pick('edgeArrowHead', opt.value)"
+                      @keydown.space.prevent="pick('edgeArrowHead', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -117,20 +137,38 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('sourceArrowhead')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('sourceArrowhead', $event)"
                 >{{ sourceArrowLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'sourceArrowhead'" class="fx-options">
                     <li
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': sourceArrowhead === '' }"
                       @click="pick('sourceArrowhead', '')"
+                      @keydown.enter.prevent="pick('sourceArrowhead', '')"
+                      @keydown.space.prevent="pick('sourceArrowhead', '')"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >— none —</li>
                     <li
                       v-for="opt in edgeArrowHeadOptions"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': sourceArrowhead === opt.value }"
                       @click="pick('sourceArrowhead', opt.value)"
+                      @keydown.enter.prevent="pick('sourceArrowhead', opt.value)"
+                      @keydown.space.prevent="pick('sourceArrowhead', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -179,15 +217,25 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('lineStyle')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('lineStyle', $event)"
                 >{{ lineStyleLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'lineStyle'" class="fx-options">
                     <li
                       v-for="opt in edgeLineStyleOptions"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': edgeLineStyle === opt.value }"
                       @click="pick('edgeLineStyle', opt.value)"
+                      @keydown.enter.prevent="pick('edgeLineStyle', opt.value)"
+                      @keydown.space.prevent="pick('edgeLineStyle', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -201,15 +249,25 @@
                   type="button"
                   class="fx-select-trigger"
                   @click.stop="toggleSel('curve')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('curve', $event)"
                 >{{ edgeCurveLabel }}<span class="fx-caret">▾</span></button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'curve'" class="fx-options">
                     <li
                       v-for="opt in edgeCurveOptions"
                       :key="opt.value"
+                      tabindex="0"
                       class="fx-option"
                       :class="{ 'fx-option-active': edgeCurve === opt.value }"
                       @click="pick('edgeCurve', opt.value)"
+                      @keydown.enter.prevent="pick('edgeCurve', opt.value)"
+                      @keydown.space.prevent="pick('edgeCurve', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
                     >{{ opt.label }}</li>
                   </ul>
                 </transition>
@@ -421,6 +479,31 @@ export default {
     },
     toggleSel(key) {
       this.openSel = this.openSel === key ? null : key
+    },
+    openAndFocus(key, event) {
+      if (this.openSel !== key) this.openSel = key
+      this.$nextTick(() => {
+        const container = event.currentTarget.closest('.fx-select')
+        const ul = container?.querySelector('.fx-options')
+        if (ul) {
+          const target = ul.querySelector('.fx-option-active') || ul.querySelector('.fx-option')
+          if (target) target.focus()
+        }
+      })
+    },
+    focusPrev(event) {
+      const prev = event.target.previousElementSibling
+      if (prev) prev.focus()
+      else event.target.closest('.fx-options')?.lastElementChild?.focus()
+    },
+    focusNext(event) {
+      const next = event.target.nextElementSibling
+      if (next) next.focus()
+      else event.target.closest('.fx-options')?.firstElementChild?.focus()
+    },
+    closeSel(event) {
+      this.openSel = null
+      event.target.closest('.fx-select')?.querySelector('.fx-select-trigger')?.focus()
     },
     pick(field, val) {
       this[field] = val
