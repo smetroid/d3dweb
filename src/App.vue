@@ -95,7 +95,9 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Toggle Help Pane (/)"
-              @click="emitter.emit('showHelp')">/</button>
+              @click="emitter.emit('showHelp')">
+              <span class="fx-nav-letter">/</span>
+            </button>
           </div>
           <div class="fx-nav-readout">
             <span class="fx-nav-key">THEME</span>
