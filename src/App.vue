@@ -332,11 +332,27 @@ export default {
   methods: {
     onGlobalKeydown (event) {
       const mod = event.metaKey || event.ctrlKey
+
+      // ⌘K / Ctrl+K — toggle the command palette
       if (mod && event.key === 'k') {
         event.preventDefault()
         event.stopPropagation()
         if (this.showCommandPalette) this.closeCommandPalette()
         else this.openCommandPalette()
+        return
+      }
+
+      // Alt/⌥ menu shortcuts — skip when palette is open or a text field has focus
+      if (event.altKey && !mod && !this.showCommandPalette) {
+        const tag = event.target?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return
+        const actionMap = { KeyN: 'New Diagram', KeyO: 'Open Diagram', KeyE: 'Edit Diagram', KeyS: 'Save Changes' }
+        const action = actionMap[event.code]
+        if (action) {
+          event.preventDefault()
+          event.stopPropagation()
+          this.d3Action(action)
+        }
       }
     },
     dismissToast(id) {
