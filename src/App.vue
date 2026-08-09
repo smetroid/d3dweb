@@ -43,7 +43,9 @@ function toggleTheme() {
               :class="`fx-toast-${toast.status}`"
               @click="dismissToast(toast.id)"
             >
-              <span class="fx-toast-icon">{{ toast.status === 'success' ? '✓' : toast.status === 'error' ? '✗' : 'i' }}</span>
+              <span class="fx-toast-icon">{{
+                toast.status === 'success' ? '✓' : toast.status === 'error' ? '✗' : 'i'
+              }}</span>
               <span class="fx-toast-msg" v-html="toast.message"></span>
               <button class="fx-toast-close" @click.stop="dismissToast(toast.id)">✕</button>
             </div>
@@ -55,22 +57,11 @@ function toggleTheme() {
         :d3dInfo="d3dInfo"
       />
       -->
-      <DiagramGraphView
-        :active="active"
-      />
-      <DiagramForm
-        :active="active"
-      />
-      <Settings
-        :active="active"
-        :d3dInfo="d3dInfo"
-      />
-      <DiagramList
-        :active="active"
-      />
-      <Login
-        :active="active"
-      />
+      <DiagramGraphView :active="active" />
+      <DiagramForm :active="active" />
+      <Settings :active="active" :d3dInfo="d3dInfo" />
+      <DiagramList :active="active" />
+      <Login :active="active" />
       <CommandPalette
         v-model:open="showCommandPalette"
         :commands="commands"
@@ -81,10 +72,7 @@ function toggleTheme() {
     <!--
       NOTE: app - in the footer makes the footer to stay at the bottom
     -->
-    <v-footer
-      app
-      class="pa-0"
-      >
+    <v-footer app class="pa-0">
       <div class="fx-nav">
         <div class="fx-nav-bar">
           <div class="fx-nav-readout">
@@ -101,7 +89,8 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Toggle Help Pane (/)"
-              @click="emitter.emit('showHelp')">
+              @click="emitter.emit('showHelp')"
+            >
               <span class="fx-nav-letter">/</span>
             </button>
           </div>
@@ -111,7 +100,8 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Toggle Theme (T)"
-              @click="toggleTheme()">
+              @click="toggleTheme()"
+            >
               <span class="fx-nav-letter">T</span>
             </button>
           </div>
@@ -121,7 +111,8 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Command Palette — Menu (M)"
-              @click="openCommandPalette('Menu')">
+              @click="openCommandPalette('Menu')"
+            >
               <span class="fx-nav-letter">M</span>
             </button>
           </div>
@@ -131,7 +122,8 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Command Palette — Actions (A)"
-              @click="openCommandPalette('Actions')">
+              @click="openCommandPalette('Actions')"
+            >
               <span class="fx-nav-letter">A</span>
             </button>
           </div>
@@ -141,16 +133,14 @@ function toggleTheme() {
               type="button"
               class="fx-nav-btn"
               title="Command Palette (⌘K / Ctrl+K)"
-              @click="openCommandPalette()">
+              @click="openCommandPalette()"
+            >
               <span class="fx-nav-letter">⌘K</span>
             </button>
           </div>
         </div>
 
-        <HelperPane
-          :expand="showHelpPane"
-          :diagramInfo="d3dInfo"
-        />
+        <HelperPane :expand="showHelpPane" :diagramInfo="d3dInfo" />
       </div>
     </v-footer>
   </v-app>
@@ -159,10 +149,10 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: {DiagramGraphView, Settings, DiagramForm, HelperPane, Login, CommandPalette},
-  data () {
+  components: { DiagramGraphView, Settings, DiagramForm, HelperPane, Login, CommandPalette },
+  data() {
     return {
-      active: "Graph", //Default active component
+      active: 'Graph', //Default active component
       showCommandPalette: false,
       commandGroup: null,
       showHelpPane: true,
@@ -170,26 +160,42 @@ export default {
       toasts: [],
       response: 'loading',
       loaded: false,
-      actionLinks:[
-        {'icon':'mdi-shape-square-plus','title':'Add Node','shortcut':'N'},
-        {'icon':'mdi-file-edit-outline','title':'Edit Node','shortcut':'E'},
-        {'icon':'mdi-selection-ellipse-remove','title':'Delete Node','shortcut':'X'},
-        {'icon':'mdi-selection','title':'Select Node'},
-        {'icon':'mdi-shape-oval-plus','title':'Add Edge','shortcut':'D'},
-        {'icon':'mdi-file-edit-outline','title':'Edit Edge','shortcut':'E'},
-        {'icon':'mdi-selection-remove','title':'Delete Edge','shortcut':'X'},
-        {'icon':'mdi-selection','title':'Select Edges'}
+      actionLinks: [
+        { icon: 'mdi-shape-square-plus', title: 'Add Node', shortcut: 'N' },
+        { icon: 'mdi-file-edit-outline', title: 'Edit Node', shortcut: 'E' },
+        { icon: 'mdi-selection-ellipse-remove', title: 'Delete Node', shortcut: 'X' },
+        { icon: 'mdi-selection', title: 'Select Node' },
+        { icon: 'mdi-shape-oval-plus', title: 'Add Edge', shortcut: 'D' },
+        { icon: 'mdi-file-edit-outline', title: 'Edit Edge', shortcut: 'E' },
+        { icon: 'mdi-selection-remove', title: 'Delete Edge', shortcut: 'X' },
+        { icon: 'mdi-selection', title: 'Select Edges' }
       ],
       menuLinks: [
-        {'icon':'mdi-login','title':'Login'},
-        {'icon':'mdi-cog-outline','title':'D3D Settings'},
-        {'icon':'mdi-open-in-new','title':'New Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'N'},
-        {'icon':'mdi-open-in-app','title':'Open Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'O'},
-        {'icon':'mdi-pencil','title':'Edit Diagram','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'E'},
-        {'icon':'mdi-content-save-outline','title':'Save Changes','shortcut':(D3Util.isMac() ? '⌥' : 'Alt+') + 'S'},
+        { icon: 'mdi-login', title: 'Login' },
+        { icon: 'mdi-cog-outline', title: 'D3D Settings' },
+        {
+          icon: 'mdi-open-in-new',
+          title: 'New Diagram',
+          shortcut: (D3Util.isMac() ? '⌥' : 'Alt+') + 'N'
+        },
+        {
+          icon: 'mdi-open-in-app',
+          title: 'Open Diagram',
+          shortcut: (D3Util.isMac() ? '⌥' : 'Alt+') + 'O'
+        },
+        {
+          icon: 'mdi-pencil',
+          title: 'Edit Diagram',
+          shortcut: (D3Util.isMac() ? '⌥' : 'Alt+') + 'E'
+        },
+        {
+          icon: 'mdi-content-save-outline',
+          title: 'Save Changes',
+          shortcut: (D3Util.isMac() ? '⌥' : 'Alt+') + 'S'
+        }
       ],
       d3dInfo: {},
-      modifier: {},
+      modifier: {}
     }
   },
   provide() {
@@ -197,8 +203,8 @@ export default {
       modifier: computed(() => this.modifier)
     }
   },
-  mounted () {
-    try{
+  mounted() {
+    try {
       console.log('App mounted')
 
       /*!SECTION - Setting application defaults based on cookie settings */
@@ -214,15 +220,14 @@ export default {
       } else {
         this.loadDiagram()
       }
-
     } catch (error) {
       console.log(error)
       this.emitter.emit('newDiagram')
     }
 
-    /*!SECTION Emitter section, is a way for child components to 
-    * communicate with their parent
-    */
+    /*!SECTION Emitter section, is a way for child components to
+     * communicate with their parent
+     */
     /*NOTE - Alert messages
     /*TODO - Move this to it's own Component, and keep the App.vue cleaner
     */
@@ -267,18 +272,18 @@ export default {
     })
 
     /*NOTE - Help Pane toggle
-    */
+     */
     this.emitter.on('showHelp', () => {
       this.showHelpPane = !this.showHelpPane
     })
 
     /*NOTE - Handle the default active section/component
-    */
+     */
     this.emitter.on('changeActive', (menu) => {
       if (D3Util.debug) {
         console.log(menu)
       }
-      if (menu === undefined){
+      if (menu === undefined) {
         this.active = 'Graph'
       } else if (menu === 'Menu' || menu === 'Actions Menu') {
         // M / A open the command palette, scoped to that group
@@ -289,11 +294,11 @@ export default {
     })
 
     this.emitter.on('updateDiagramInfo', (payload) => {
-       console.log('Updating Diagram Info')
-       this.d3dInfo.id = payload.id
-       this.d3dInfo.name = payload.name
-       this.d3dInfo.description = payload.description
-     })
+      console.log('Updating Diagram Info')
+      this.d3dInfo.id = payload.id
+      this.d3dInfo.name = payload.name
+      this.d3dInfo.description = payload.description
+    })
 
     this.emitter.on('openDiagram', (id) => {
       console.log('Message to open diagram received')
@@ -310,27 +315,27 @@ export default {
       console.log(this)
       this.toggleTheme()
     })
-     // this.$root.$on('newDiagram', () => {
-     //   console.log('Message to create a new diagram received')
-     //   // this.id = id
-     //   this.newDiagram()
-     // })
+    // this.$root.$on('newDiagram', () => {
+    //   console.log('Message to create a new diagram received')
+    //   // this.id = id
+    //   this.newDiagram()
+    // })
 
     /*NOTE - Global command palette shortcut (⌘K / Ctrl+K).
-    * Capture phase + stopPropagation so the graph's own key handling
-    * (⌘K would otherwise pan the viewport) never sees the event.
-    */
+     * Capture phase + stopPropagation so the graph's own key handling
+     * (⌘K would otherwise pan the viewport) never sees the event.
+     */
     window.addEventListener('keydown', this.onGlobalKeydown, true)
   },
-  beforeUnmount () {
+  beforeUnmount() {
     window.removeEventListener('keydown', this.onGlobalKeydown, true)
   },
-  updated () {
+  updated() {
     // console.log('component updated')
     // console.log(this.d3dInfo)
   },
   methods: {
-    onGlobalKeydown (event) {
+    onGlobalKeydown(event) {
       const mod = event.metaKey || event.ctrlKey
 
       // ⌘K / Ctrl+K — toggle the command palette
@@ -346,7 +351,12 @@ export default {
       if (event.altKey && !mod && !this.showCommandPalette) {
         const tag = event.target?.tagName
         if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return
-        const actionMap = { KeyN: 'New Diagram', KeyO: 'Open Diagram', KeyE: 'Edit Diagram', KeyS: 'Save Changes' }
+        const actionMap = {
+          KeyN: 'New Diagram',
+          KeyO: 'Open Diagram',
+          KeyE: 'Edit Diagram',
+          KeyS: 'Save Changes'
+        }
         const action = actionMap[event.code]
         if (action) {
           event.preventDefault()
@@ -356,10 +366,10 @@ export default {
       }
     },
     dismissToast(id) {
-      const idx = this.toasts.findIndex(t => t.id === id)
+      const idx = this.toasts.findIndex((t) => t.id === id)
       if (idx !== -1) this.toasts.splice(idx, 1)
     },
-    toggleTheme () {
+    toggleTheme() {
       const next = this.$vuetify.theme.global.current.dark ? 'light' : 'dark'
       this.$vuetify.theme.global.name = next
       // Persist the choice so it survives a refresh
@@ -367,23 +377,25 @@ export default {
         const settings = this.$cookies.get('settings') || {}
         settings.defaultTheme = next
         this.$cookies.set('settings', settings)
-      } catch (e) { /* settings unavailable — ignore */ }
+      } catch (e) {
+        /* settings unavailable — ignore */
+      }
       // Sync data-theme before themeChanged so renderers read the new CSS vars
       this.syncThemeAttr()
       this.emitter.emit('themeChanged')
     },
-    syncThemeAttr () {
+    syncThemeAttr() {
       if (typeof document === 'undefined') return
       document.documentElement.setAttribute(
         'data-theme',
         this.$vuetify.theme.global.name === 'dark' ? 'dark' : 'light'
       )
     },
-    loadDiagram (id) {
-      /*!SECTION - Logic to load a previously working diagram, or 
-      * continue to work on a previously temporary item
-      * 1. Load the last working item if it exists
-      */
+    loadDiagram(id) {
+      /*!SECTION - Logic to load a previously working diagram, or
+       * continue to work on a previously temporary item
+       * 1. Load the last working item if it exists
+       */
       let localDiagramInfo = null
       if (id) {
         localDiagramInfo = D3Util.getLocalItem(id)
@@ -408,8 +420,15 @@ export default {
         console.log(id)
       }
 
+      if (!localDiagramInfo) {
+        this.emitter.emit('newDiagram')
+        return
+      }
+
       const parsed = migrateDiagramPayload(JSON.parse(localDiagramInfo.diagram))
-      const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+      const model = markRaw(
+        isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed)
+      )
       model.colaConstraints = parsed.options?.constraints || []
 
       this.d3dInfo = localDiagramInfo
@@ -419,7 +438,6 @@ export default {
 
       this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
       console.log(this.modifier)
-
     },
     loadFromServer: async function (id) {
       let serverDiagramInfo = null
@@ -449,7 +467,9 @@ export default {
 
       try {
         const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
-        const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+        const model = markRaw(
+          isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed)
+        )
         model.colaConstraints = parsed.options?.constraints || []
 
         this.d3dInfo = serverDiagramInfo
@@ -459,53 +479,51 @@ export default {
 
         this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
         console.log(this.modifier)
-
       } catch (error) {
-        this.emitter.emit('appMessage',
-          {
-            message: 'Unable to load saved diagram, resetting last saved id', result: error
-          })
+        this.emitter.emit('appMessage', {
+          message: 'Unable to load saved diagram, resetting last saved id',
+          result: error
+        })
         this.$cookies.remove('LastLocallySavedItemId')
 
         console.log(error)
       }
-
     },
-    successToggle () {
+    successToggle() {
       console.log('success toggle')
     },
-    loadingComplete () {
+    loadingComplete() {
       this.$root.$emit('loadingComplete', this.options, this.id)
     },
-    openCommandPalette (group) {
+    openCommandPalette(group) {
       this.commandGroup = group || null
       this.showCommandPalette = true
     },
-    closeCommandPalette () {
+    closeCommandPalette() {
       this.showCommandPalette = false
       this.commandGroup = null
     },
-    runCommand (cmd) {
+    runCommand(cmd) {
       this.closeCommandPalette()
       this.d3Action(cmd.title)
     },
-    d3Action: async function(event) {
+    d3Action: async function (event) {
       MenuLinks.Click(event, this)
-    },
+    }
   },
   computed: {
-    commands () {
+    commands() {
       return [
-        ...this.menuLinks.map(l => ({ ...l, group: 'Menu' })),
-        ...this.actionLinks.map(l => ({ ...l, group: 'Actions' })),
+        ...this.menuLinks.map((l) => ({ ...l, group: 'Menu' })),
+        ...this.actionLinks.map((l) => ({ ...l, group: 'Actions' }))
       ]
-    },
+    }
   },
   watch: {
     // Drive the graph trap's release/re-arm from a single source so every
     // close path (Escape, overlay click, click-outside, run, ⌘K toggle) is
     // covered, not just the M/A/⌘K buttons.
-    showCommandPalette (open) {
+    showCommandPalette(open) {
       if (open) {
         this.emitter.emit('paletteOpen')
       } else {
@@ -530,7 +548,6 @@ export default {
 </script>
 
 <style scoped>
-
 .fx-toast-stack {
   position: fixed;
   top: 24px;
@@ -562,9 +579,15 @@ export default {
   cursor: pointer;
 }
 
-.fx-toast-success { border-color: rgba(38, 166, 154, 0.55); }
-.fx-toast-error   { border-color: rgba(239, 83, 80, 0.55); }
-.fx-toast-info    { border-color: rgba(var(--fx-accent), 0.45); }
+.fx-toast-success {
+  border-color: rgba(38, 166, 154, 0.55);
+}
+.fx-toast-error {
+  border-color: rgba(239, 83, 80, 0.55);
+}
+.fx-toast-info {
+  border-color: rgba(var(--fx-accent), 0.45);
+}
 
 .fx-toast-icon {
   flex-shrink: 0;
@@ -574,9 +597,15 @@ export default {
   text-align: center;
 }
 
-.fx-toast-success .fx-toast-icon { color: #26a69a; }
-.fx-toast-error   .fx-toast-icon { color: #ef5350; }
-.fx-toast-info    .fx-toast-icon { color: rgb(var(--fx-accent)); }
+.fx-toast-success .fx-toast-icon {
+  color: #26a69a;
+}
+.fx-toast-error .fx-toast-icon {
+  color: #ef5350;
+}
+.fx-toast-info .fx-toast-icon {
+  color: rgb(var(--fx-accent));
+}
 
 .fx-toast-msg {
   flex: 1;
@@ -596,12 +625,25 @@ export default {
   transition: opacity 0.15s;
 }
 
-.fx-toast-close:hover { opacity: 1; }
+.fx-toast-close:hover {
+  opacity: 1;
+}
 
-.fx-toast-enter-active { transition: transform 0.22s ease-out, opacity 0.22s ease-out; }
-.fx-toast-leave-active { transition: transform 0.18s ease-in, opacity 0.18s ease-in; }
+.fx-toast-enter-active {
+  transition:
+    transform 0.22s ease-out,
+    opacity 0.22s ease-out;
+}
+.fx-toast-leave-active {
+  transition:
+    transform 0.18s ease-in,
+    opacity 0.18s ease-in;
+}
 .fx-toast-enter-from,
-.fx-toast-leave-to     { transform: translateX(115%); opacity: 0; }
+.fx-toast-leave-to {
+  transform: translateX(115%);
+  opacity: 0;
+}
 
 /*
 .primary--text {
@@ -620,7 +662,7 @@ export default {
   --aug-border-all: 1px;
 
   --aug-inlay-all: 1px;
-  --aug-border-bg: green ;
+  --aug-border-bg: green;
   /*--aug-inlay-bg: radial-gradient(green, black);*/
   --aug-inlay-opacity: 0.1;
 }
@@ -671,8 +713,6 @@ export default {
 .material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
 .material-icons.orange600 { color: #FB8C00; }
 */
-
-
 </style>
 
 <!--
