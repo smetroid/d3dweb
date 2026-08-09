@@ -1,141 +1,322 @@
 <template>
-  <div id="iform">
-    <v-card
-      ref="formfields"
-      class="mx-auto text-indigo"
-      @keyup.alt.s="updateEdge()"
-      @keyup.meta.s="updateEdge()"
-      @keyup.ctrl.c="close()"
-      @keydown.esc="keyPress($event)"
-      @keypress.stop.prevent="keyPress($event)">
-      <focus-trap
-        v-model:action="enableTrap">
-        <div tabindex="0">
-          <v-card-title class="bg-primary">
-            <v-row class="pa-3" justify="center">
-              <b v-if="update">Update Edge</b>
-              <b v-else>Add Edge</b>
-            </v-row>
-          </v-card-title>
-          <v-divider></v-divider>
-          <v-card-text class="pb-0">
-            <v-container class="pb-0 fluid">
-              <v-row
-              >
-                <v-col 
-                  >
-                  <v-select
-                    v-model="edgeLabelType"
-                    :items="edgeLabelTypeOptions"
-                    label="Edge Label"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                    label-color="green"
-                  ></v-select>
-                </v-col>
-                <v-col
-                  >
-                  <v-select
-                    v-model="edgeArrowHeadStyle"
-                    :items="edgeArrowHeadStyleOptions"
-                    label="Edge Arrow Head Style"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                    label-color="green"
-                  ></v-select>
-                </v-col>
-                <v-col
-                  >
-                  <v-select
-                    v-model="edgeArrowHead"
-                    :items="edgeArrowHeadOptions"
-                    label="Edge Arrow Head"
-                    item-value="value"
-                    item-title="label"
-                    auto-select-first
-                  ></v-select>
-                </v-col>
-              </v-row>
-              <v-row
-                class="mt-n8"
-              >
-                <v-col
-                >
-                  <v-text-field 
-                    v-model="fromNode"
-                    label="From Node"
-                    @keypress.stop="">
-                  </v-text-field>
-                </v-col>
-                <v-col
-                  >
-                  <v-text-field 
-                    v-model="toNode"
-                    label="To Node"
-                    @keypress.stop="">
-                  </v-text-field>
-                </v-col>
-                <v-col
-                >
-                  <v-textarea
-                    autofocus
-                    class=""
-                    label="Edge Label"
-                    v-model="edgeLabel"
-                    placeholder="Add edge label... can be html ... alt+shift+w to clear value"
-                    @keypress.stop=""
-                    @keydown.alt.shift.w="edgeLabel=''"
-                    @keydown.meta.shift.w="edgeLabel=''"
-                    clearable
-                    rows="3"
-                    >
-                  </v-textarea>
-                </v-col>
-              </v-row>
-            </v-container>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions
-            class="text-primary d-flex"
-            >
-            <v-btn v-if="update" 
-              @keyup.enter="updateEdge()"
-              class="text-primary" 
-              variant="tonal"
-              color=""
-              density="comfortable"
-              @click="updateEdge()" 
-              @keypress.stop="">
-              Update Edge (alt+s)
-            </v-btn>
-            <v-btn v-else 
-              class="text-primary" 
-              variant="tonal"
-              color=""
-              density="comfortable"
-              @click="addEdge()" 
-              @keypress.stop="">
-              Add Edge (alt+s)
-            </v-btn>
-            <v-btn 
-              class="text-primary" 
-              variant="tonal"
-              type="submit"
-              density="comfortable"
-              color=""
-              @click="close()" 
-              @keypress.stop=""
-              >
-              Cancel (ctrl+c)
-            </v-btn>
-          </v-card-actions>
+  <div
+    id="iform"
+    ref="formfields"
+    class="fx-panel"
+    @keyup.alt.s="updateEdge()"
+    @keyup.meta.s="updateEdge()"
+    @keyup.ctrl.c="close()"
+    @keyup.meta.c="close()"
+    @keydown.esc="keyPress($event)"
+    @keypress.stop.prevent="keyPress($event)"
+  >
+    <focus-trap v-model:active="enableTrap">
+      <div tabindex="0" class="fx-panel-inner">
+        <header class="fx-panel-header">
+          <div class="fx-panel-title">
+            <span class="fx-title-chip" :class="update ? 'fx-chip-edit' : 'fx-chip-add'">
+              {{ update ? 'EDIT' : 'CREATE' }}
+            </span>
+            <h2 class="fx-title">EDGE</h2>
+          </div>
+          <button type="button" class="fx-close" @click="close()" @keypress.stop="" aria-label="Close">✕</button>
+        </header>
+
+        <div class="fx-readout">
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">ID</span>
+            <span class="fx-readout-v">{{ update ? edgeId : 'auto' }}</span>
+          </span>
+          <span class="fx-readout-kv fx-readout-wide">
+            <span class="fx-readout-k">PATH</span>
+            <span class="fx-readout-v">{{ pathText }}</span>
+          </span>
+          <span class="fx-readout-kv">
+            <span class="fx-readout-k">MODE</span>
+            <span class="fx-readout-v">{{ update ? 'FOCUS' : 'PENDING' }}</span>
+          </span>
         </div>
-      </focus-trap>
-    </v-card>
+
+        <div class="fx-panel-body">
+          <div class="fx-grid">
+            <div class="fx-field">
+              <span class="fx-label">Edge Arrow Head Style</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('arrowStyle')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('arrowStyle', $event)"
+                >{{ arrowStyleLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'arrowStyle'" class="fx-options">
+                    <li
+                      v-for="opt in edgeArrowHeadStyleOptions"
+                      :key="opt.value"
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeArrowHeadStyle === opt.value }"
+                      @click="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.enter.prevent="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.space.prevent="pick('edgeArrowHeadStyle', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <div class="fx-field">
+              <span class="fx-label">Edge Arrow Head</span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('arrow')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('arrow', $event)"
+                >{{ arrowLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'arrow'" class="fx-options">
+                    <li
+                      v-for="opt in edgeArrowHeadOptions"
+                      :key="opt.value"
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeArrowHead === opt.value }"
+                      @click="pick('edgeArrowHead', opt.value)"
+                      @keydown.enter.prevent="pick('edgeArrowHead', opt.value)"
+                      @keydown.space.prevent="pick('edgeArrowHead', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+          </div>
+
+          <div class="fx-grid fx-grid-2">
+            <label class="fx-field">
+              <span class="fx-label">From Node</span>
+              <input class="fx-input fx-input-static" type="text" v-model="fromNode" readonly placeholder="select source" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-label">To Node</span>
+              <input class="fx-input fx-input-static" type="text" v-model="toNode" readonly placeholder="select target" />
+            </label>
+          </div>
+
+          <label class="fx-field fx-field-full">
+            <span class="fx-label">Edge Label</span>
+            <textarea
+              ref="edgeLabelTextField"
+              class="fx-input fx-textarea"
+              v-model="edgeLabel"
+              :rows="edgeRows"
+              placeholder="Add edge label... can be html ... {{ shortcutLabels.clear }} to clear value"
+              @keypress.stop=""
+              @keydown.alt.shift.w="edgeLabel=''"
+              @keydown.meta.shift.w="edgeLabel=''"
+            ></textarea>
+          </label>
+
+          <div class="fx-grid">
+            <div class="fx-field">
+              <span class="fx-label">Source Arrow Head <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('sourceArrowhead')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('sourceArrowhead', $event)"
+                >{{ sourceArrowLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'sourceArrowhead'" class="fx-options">
+                    <li
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': sourceArrowhead === '' }"
+                      @click="pick('sourceArrowhead', '')"
+                      @keydown.enter.prevent="pick('sourceArrowhead', '')"
+                      @keydown.space.prevent="pick('sourceArrowhead', '')"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >— none —</li>
+                    <li
+                      v-for="opt in edgeArrowHeadOptions"
+                      :key="opt.value"
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': sourceArrowhead === opt.value }"
+                      @click="pick('sourceArrowhead', opt.value)"
+                      @keydown.enter.prevent="pick('sourceArrowhead', opt.value)"
+                      @keydown.space.prevent="pick('sourceArrowhead', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Width <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="1"
+                max="12"
+                step="0.5"
+                v-model.number="edgeWidth"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+
+            <label class="fx-field">
+              <span class="fx-label">Edge Color <em class="fx-opt">optional</em></span>
+              <div class="fx-color-row">
+                <input
+                  class="fx-input fx-input-color"
+                  type="color"
+                  :value="edgeColor || '#5e74ff'"
+                  @input="edgeColor = $event.target.value"
+                  @keypress.stop=""
+                />
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-mini"
+                  :class="{ 'fx-btn-active': !edgeColor }"
+                  @click="edgeColor = ''"
+                  @keypress.stop=""
+                  title="Use theme color"
+                >none</button>
+              </div>
+            </label>
+
+            <div class="fx-field">
+              <span class="fx-label">Line Style <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('lineStyle')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('lineStyle', $event)"
+                >{{ lineStyleLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'lineStyle'" class="fx-options">
+                    <li
+                      v-for="opt in edgeLineStyleOptions"
+                      :key="opt.value"
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeLineStyle === opt.value }"
+                      @click="pick('edgeLineStyle', opt.value)"
+                      @keydown.enter.prevent="pick('edgeLineStyle', opt.value)"
+                      @keydown.space.prevent="pick('edgeLineStyle', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <div class="fx-field">
+              <span class="fx-label">Curve Style <em class="fx-opt">optional</em></span>
+              <div class="fx-select">
+                <button
+                  type="button"
+                  class="fx-select-trigger"
+                  @click.stop="toggleSel('curve')"
+                  @keypress.stop=""
+                  @keydown.down.prevent="openAndFocus('curve', $event)"
+                >{{ edgeCurveLabel }}<span class="fx-caret">▾</span></button>
+                <transition name="fx-drop">
+                  <ul v-if="openSel === 'curve'" class="fx-options">
+                    <li
+                      v-for="opt in edgeCurveOptions"
+                      :key="opt.value"
+                      tabindex="0"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': edgeCurve === opt.value }"
+                      @click="pick('edgeCurve', opt.value)"
+                      @keydown.enter.prevent="pick('edgeCurve', opt.value)"
+                      @keydown.space.prevent="pick('edgeCurve', opt.value)"
+                      @keydown.up.prevent="focusPrev($event)"
+                      @keydown.down.prevent="focusNext($event)"
+                      @keydown.k.prevent="focusPrev($event)"
+                      @keydown.j.prevent="focusNext($event)"
+                      @keydown.esc.stop="closeSel($event)"
+                    >{{ opt.label }}</li>
+                  </ul>
+                </transition>
+              </div>
+            </div>
+
+            <label class="fx-field">
+              <span class="fx-label">Opacity <em class="fx-opt">optional</em></span>
+              <input
+                class="fx-input"
+                type="number"
+                min="0.1"
+                max="1"
+                step="0.05"
+                v-model.number="edgeOpacity"
+                placeholder="theme"
+                @keypress.stop=""
+              />
+            </label>
+          </div>
+        </div>
+
+        <footer class="fx-panel-actions">
+          <button
+            v-if="update"
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="updateEdge()"
+            @keypress.stop=""
+          >Update Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          <button
+            v-else
+            type="button"
+            class="fx-btn fx-btn-primary"
+            @click="addEdge()"
+            @keypress.stop=""
+          >Add Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          <button
+            type="button"
+            class="fx-btn fx-btn-ghost"
+            @click="close()"
+            @keypress.stop=""
+          >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+        </footer>
+      </div>
+    </focus-trap>
   </div>
 </template>
+
 <script>
 import D3Util from '@/helpers/D3Util'
 export default {
@@ -145,198 +326,259 @@ export default {
   data () {
     return {
       edgeModal: false,
-      edgeLabelType: '',
       edgeLabel: '',
       edgeArrowHead: '',
       edgeArrowHeadStyle: '',
+      sourceArrowhead: '',
+      edgeWidth: null,
+      edgeColor: '',
+      edgeLineStyle: '',
+      edgeCurve: '',
+      edgeOpacity: null,
       enableTrap: false,
       hints: {},
-      d3EdgesData: null,
       edgeId: null,
       update: false,
-      edgeLabelTypeOptions: [
-        {"value":"text", "label":"Text"},
-        {"value":"html", "label":"HTML"}
-      ],
-      edgeArrowHeadStyleOptions: [
-        {"value":"solid", "label":"Solid"},
-        {"value":"hollow", "label":"Hollow"}
-      ],
-      edgeArrowHeadOptions: [
-        {"value":"normal", "label":"Normal"},
-        {"value": "vee", "label": "Vee"}, 
-        {"value": "undirected", "label": "Undirected"}
-      ],
+      openSel: null,
       fromNode: '',
       toNode: ''
     }
   },
+  computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
+    edgeArrowHeadStyleOptions() {
+      return D3Util.edgeArrowHeadStyleOptions()
+    },
+    edgeArrowHeadOptions() {
+      return D3Util.edgeArrowHeadOptions()
+    },
+    edgeLineStyleOptions() {
+      return D3Util.edgeLineStyleOptions()
+    },
+    edgeCurveOptions() {
+      return D3Util.edgeCurveOptions()
+    },
+    arrowStyleLabel() {
+      return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Filled')
+    },
+    arrowLabel() {
+      return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Triangle')
+    },
+    sourceArrowLabel() {
+      if (!this.sourceArrowhead) return '— none —'
+      return this._optLabel(this.edgeArrowHeadOptions, this.sourceArrowhead, 'value', 'label', this.sourceArrowhead)
+    },
+    lineStyleLabel() {
+      return this._optLabel(this.edgeLineStyleOptions, this.edgeLineStyle, 'value', 'label', '— theme —')
+    },
+    edgeCurveLabel() {
+      return this._optLabel(this.edgeCurveOptions, this.edgeCurve, 'value', 'label', '— theme —')
+    },
+    pathText() {
+      if (this.fromNode && this.toNode) return `${this.fromNode} → ${this.toNode}`
+      if (this.fromNode || this.toNode) return this.fromNode || this.toNode
+      return '—'
+    },
+    edgeRows() {
+      const count = (this.edgeLabel || '').split('\n').length
+      return Math.min(6, Math.max(2, count))
+    },
+  },
   mounted () {
-    console.log('active window d3EdgeForm')
-    this.update = this.active == 'Edit Edge' ? true : false
-    if (this.active == "Edit Edge" || this.active == "Add Edge") {
-      this.edgeModal = true
-    } else {
-      this.edgeModal = false
-    }
+    document.addEventListener('click', this.onDocClick)
 
-    // this.edgeModal = this.active == "Edit Edge"?true:false
-    //this.edgeModal = this.active == "Add Edge"?true:false
-
-    if(this.update || this.edgeModal){
-      console.log(this.d3Data)
-      this.edgeModal = true
-      this.edgeId = this.d3Data.id
-      this.edgeLabelType = this.d3Data.labelType
-      this.edgeLabel = this.d3Data.label
-      this.edgeArrowHeadStyle = this.d3Data.arrowheadStyle
-      this.edgeArrowHead = this.d3Data.arrowhead
-      this.fromNode = this.modifier.getNodeData(this.d3Data.id.v).label
-      this.toNode = this.modifier.getNodeData(this.d3Data.id.w).label
-    } else {
-      this.edgeModal = false
-    }
-
-    if(this.edgeModal){
-      this.$nextTick(function(){
-        console.log('loginTrap active')
-        this.enableTrap = this.edgeModal
+    if (this.edgeModal) {
+      this.$nextTick(() => {
+        const mod2 = this.modifier?.value ?? this.modifier
+        if (this.update && mod2?.renderer) {
+          mod2.renderer.zoomTo(this.edgeId)
+        }
+        this.enableTrap = true
+        if (this.$refs.edgeLabelTextField) this.$refs.edgeLabelTextField.focus()
       })
     }
-
-    this.emitter.on('showEdgeForm', () => {
-      console.log('Message Received From D3Vim')
-      this.showForm()
-    })
-
-    this.emitter.on('edgesD3Data', (data, id) => {
-      console.log('edgesD3Data message received')
-      if (D3Util.debug) {
-        console.log(data.labeltype)
-        console.log(data)
-        console.log(id)
-      }
-      this.d3EdgesData = data
-      this.edgeId = id
-      this.edgeLabelType = data.labelType
-      this.edgeLabel = data.label
-      this.edgeArrowHeadStyle = data.arrowheadStyle
-      this.edgeArrowHead = data.arrowhead
-    })
-
-    this.emitter.on('editEdge', () => {
-      console.log('editEdge message received')
-      this.editEdge()
-    })
+  },
+  beforeUnmount () {
+    document.removeEventListener('click', this.onDocClick)
   },
   methods: {
-    updateEdge () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('updateEdge Function')
-        console.log(this.edgeLabel)
-        console.log(this.edgeArrowHeadStyle)
-        console.log(this.edgeId)
-        console.log(this.$data)
+    _populate() {
+      // Derive from the prop every time: the immediate d3Data watcher runs
+      // before created(), so we can't rely on update/edgeModal being set yet.
+      this.update    = this.active == 'Edit Edge'
+      this.edgeModal = this.active == 'Edit Edge' || this.active == 'Add Edge'
+      if (D3Util.debug) console.log('[D3EdgeForm] _populate', {
+        active:    this.active,
+        update:    this.update,
+        edgeModal: this.edgeModal,
+        d3Data:    this.d3Data,
+      })
+      if (!(this.update || this.edgeModal)) return
+      const mod = this.modifier?.value ?? this.modifier
+      this.edgeId = this.d3Data?.id
+      this.edgeLabel = this.d3Data?.label || ''
+      this.edgeArrowHeadStyle = this.d3Data?.arrowheadStyle || ''
+      this.edgeArrowHead = this.d3Data?.arrowhead || ''
+      this.sourceArrowhead = this.d3Data?.sourceArrowhead || ''
+      this.edgeWidth = this.d3Data?.edgeWidth ?? null
+      this.edgeColor = this.d3Data?.edgeColor || ''
+      this.edgeLineStyle = this.d3Data?.edgeLineStyle || ''
+      this.edgeCurve = this.d3Data?.edgeCurve || ''
+      this.edgeOpacity = this.d3Data?.edgeOpacity ?? null
+
+      if (!this.update) {
+        // Create mode: start from the configurable edge creation defaults in
+        // Settings so a new line inherits the user's preferred look.
+        const d = D3Util.defaultEdgeValues()
+        this.edgeLabel          = d.edgeLabel
+        this.edgeArrowHeadStyle = d.edgeArrowHeadStyle
+        this.edgeArrowHead      = d.edgeArrowHead
+        this.sourceArrowhead    = d.sourceArrowhead
+        this.edgeWidth          = d.edgeWidth
+        this.edgeColor          = d.edgeColor
+        this.edgeLineStyle      = d.edgeLineStyle
+        this.edgeCurve          = d.edgeCurve
+        this.edgeOpacity        = d.edgeOpacity
       }
 
-      this.modifier.updateEdge(this.$data, this.edgeId)
-      this.close()
+      let srcId = null
+      let tgtId = null
+      if (typeof this.edgeId === 'string' && mod?.cy) {
+        const edge = mod.cy.getElementById(this.edgeId)
+        if (edge && edge.nonempty()) {
+          srcId = edge.data('source')
+          tgtId = edge.data('target')
+        }
+      } else if (this.edgeId?.v && this.edgeId?.w) {
+        srcId = this.edgeId.v
+        tgtId = this.edgeId.w
+      }
+      this.fromNode = srcId ? (mod.getNodeData(srcId)?.label || srcId) : ''
+      this.toNode = tgtId ? (mod.getNodeData(tgtId)?.label || tgtId) : ''
+      if (D3Util.debug) console.log('[D3EdgeForm] fields', {
+        edgeId:    this.edgeId,
+        edgeLabel: this.edgeLabel,
+        edgeArrowHeadStyle: this.edgeArrowHeadStyle,
+        edgeArrowHead: this.edgeArrowHead,
+        sourceArrowhead: this.sourceArrowhead,
+        edgeWidth: this.edgeWidth,
+        edgeColor: this.edgeColor,
+        edgeLineStyle: this.edgeLineStyle,
+        edgeCurve: this.edgeCurve,
+        edgeOpacity: this.edgeOpacity,
+        fromNode:  this.fromNode,
+        toNode:    this.toNode,
+      })
     },
-    editEdge () {
-      console.log(this.d3EdgesData)
-      this.buttonUpdate = true
-      this.enableTrap = true
+    _optLabel(list, val, valKey, labelKey, fallback) {
+      if (!val) return fallback
+      const opt = list.find(o => o[valKey] === val)
+      return opt ? opt[labelKey] : fallback
+    },
+    toggleSel(key) {
+      this.openSel = this.openSel === key ? null : key
+    },
+    openAndFocus(key, event) {
+      if (this.openSel !== key) this.openSel = key
+      this.$nextTick(() => {
+        const container = event.currentTarget.closest('.fx-select')
+        const ul = container?.querySelector('.fx-options')
+        if (ul) {
+          const target = ul.querySelector('.fx-option-active') || ul.querySelector('.fx-option')
+          if (target) target.focus()
+        }
+      })
+    },
+    focusPrev(event) {
+      const prev = event.target.previousElementSibling
+      if (prev) prev.focus()
+      else event.target.closest('.fx-options')?.lastElementChild?.focus()
+    },
+    focusNext(event) {
+      const next = event.target.nextElementSibling
+      if (next) next.focus()
+      else event.target.closest('.fx-options')?.firstElementChild?.focus()
+    },
+    closeSel(event) {
+      this.openSel = null
+      event.target.closest('.fx-select')?.querySelector('.fx-select-trigger')?.focus()
+    },
+    pick(field, val) {
+      this[field] = val
+      this.openSel = null
+    },
+    onDocClick() {
+      this.openSel = null
+    },
+    updateEdge () {
+      const mod = this.modifier?.value ?? this.modifier
+      mod.updateEdge(this.$data, this.edgeId)
+      this.close()
     },
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
     },
     addEdge () {
-      if (D3Util.debug) {
-        console.log(this.$el)
-        console.log('addEdge Function')
-        console.log(this.edgeLabel)
-        console.log(this.edgeLabelType)
-        console.log(this.edgeArrowHead)
-        console.log(this.edgeArrowHeadStyle)
-        console.log(this.edgeId)
-        console.log(this.$data)
-        console.log(this.modifier)
-      }
-      this.modifier.addEdge(this.$data)
+      const mod = this.modifier?.value ?? this.modifier
+      mod.addEdge(this.$data)
       this.common()
-      //this.$root.$emit('addDagreEdge', this.$data, false)
     },
     close () {
-      console.log('close method')
       this.common()
     },
-    common(){
-      /*REVIEW - this code is the same for both forms */
-      //this.enableTrap= false
+    common() {
       this.edgeModal = false
       this.hints = D3Util.removeHints(this.hints)
       this.emitter.emit('setSheetToFalse')
-      //this.emitter.emit("changeActive")
-      //this.emitter.emit("d3ResetValues")
     }
   },
-  // watch: {
-  //   active: function() {
-  //   },
-  //   d3Data: function(){
-  //     //this.d3EdgesData = data
-  //     console.log(this.d3Data)
-  //   }
-  // }
+  watch: {
+    active(val) {
+      this.update    = val == 'Edit Edge'
+      this.edgeModal = val == 'Edit Edge' || val == 'Add Edge'
+      this._populate()
+    },
+    d3Data: {
+      handler() {
+        this._populate()
+      },
+      immediate: true,
+    },
+  },
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
-}
-
-.hints{
+.hints {
   border: 1px solid magenta;
   color: magenta;
-  /*# display: table-caption; */
 }
 
-#iform {
-  /*
-  color: #42b983;
-  margin: auto;
-  background: #343a40;
-  border-radius: 15px;
-  width: 40%;
-  padding: 10px 10px 10px 10px;
-  bottom: auto;
-  */
+.fx-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.trap.is-active {
-  brackground: #f3c5f5;
+.fx-input-color {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  height: 38px;
+  cursor: pointer;
 }
 
-.samus__label {
-  color: #42b983;
-  font-weight: 1000;
+.fx-btn-mini {
+  flex: none;
+  font-size: 10px;
+  padding: 5px 10px;
+  letter-spacing: 0.1em;
 }
 
+.fx-btn-active {
+  border-color: rgb(var(--fx-accent));
+  color: rgb(var(--fx-accent));
+}
 </style>

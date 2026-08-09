@@ -52,8 +52,8 @@ export default {
         break;
         // return data
       case 'Escape':  //
-        /*On escape setting activeWindow D3Dagre */
-        component.active = 'D3Dagre'
+        /*On escape setting activeWindow Graph */
+        component.active = 'Graph'
         component.showMenu = false
         break
       case 'j':

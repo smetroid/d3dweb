@@ -1,10 +1,13 @@
 import axios from 'axios'
 import D3Util from '@/helpers/D3Util'
-axios.defaults.baseURL = 'http://localhost:3000'
+
+function api() {
+  return axios.create({ baseURL: D3Util.serverUrl() })
+}
 
 export default {
   async auth (username, password) {
-    return axios.post('/auth/login', {
+    return api().post('/auth/login', {
       username: username,
       password: password,
     })
@@ -17,7 +20,7 @@ export default {
   },
   getOptions () {
     // return axios.get('http://192.168.1.4:3000/menus_options',
-    return axios.get('/menus',
+    return api().get('/menus',
       { headers:
         { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
@@ -27,7 +30,7 @@ export default {
       })
   },
   async getDiagram (id) {
-    return axios.get('/dag/' + id,
+    return api().get('/dag/' + id,
       { headers:
         { Authorization: 'Bearer ' + localStorage.getItem('token')
         }
@@ -43,7 +46,7 @@ export default {
       })
   },
   async getDiagrams () {
-    return axios.get('/dags',
+    return api().get('/dags',
       { headers:
         { Authorization: 'Bearer ' + localStorage.getItem('token')
         }
@@ -56,25 +59,7 @@ export default {
       })
   },
   async postDiagram (payload) {
-    // var json = new dagreD3.graphlib.json.write(data.diagram)
-    if (D3Util.debug){
-      // console.log(json)
-      // console.log(data)
-    }
-    // var created = new Date()
-    // var payload = { 'name': data.name,
-    //   'description': data.description,
-    //   'diagram': JSON.stringify(json),
-    //   'createTime': created.toISOString(),
-    //   'updatedTime': created.toISOString(),
-    // }
-
-    return axios.post('/dag', payload, {
-      /*
-      name: data.name,
-      description: data.description,
-      diagram: data.diagram,
-      */
+    return api().post('/dag', payload, {
       headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then(response => {
@@ -86,7 +71,7 @@ export default {
   },
   async updateDiagram (data) {
 
-    return axios.post('/dag/' + data.id + '/update', data,
+    return api().post('/dag/' + data.id + '/update', data,
       { headers: { Authorization: 'Bearer ' + localStorage.getItem('token')
         }
       })
@@ -101,7 +86,7 @@ export default {
     if (D3Util.debug) {
       console.log(id)
     }
-    return axios.delete('/dag/' + id,
+    return api().delete('/dag/' + id,
       { headers:
         { Authorization: 'Bearer ' + localStorage.getItem('token')
         }
@@ -110,11 +95,4 @@ export default {
         return response.data
       })
   }
-  // addNode (id, update = false, g, nodes) {
-  // if (update) {
-  //   g.setNode(nodes[0], { 'label': inputs[0].value, 'shape': selections[0].value, 'labelType': selections[1].value })
-  // } else {
-  //   g.setNode(this.randomId(), { 'label': inputs[0].value, 'shape': selections[0].value, 'labelType': selections[1].value })
-  // }
-  // }
 }

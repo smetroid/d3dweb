@@ -1,10 +1,17 @@
 import '@/assets/main.css'
 
+import { runLegacyMigrationOnce } from '@/helpers/legacyMigration'
+runLegacyMigrationOnce()
+
 import { createApp } from 'vue'
 import App from '@/App.vue'
 //import router from '@/router'
 // Vuetify
 import 'vuetify/styles'
+// HUD stylesheet — imported after Vuetify so our class rules beat Vuetify's
+// element resets on equal specificity (e.g. `[type=button] { color: inherit }`
+// was overriding the .fx-select-trigger text color).
+import '@/assets/css/d3d.css'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'

@@ -1,70 +1,96 @@
 <template>
-  <div>
-  <v-dialog
-    ref="login"
-    v-model="loginModal"
-    max-width="500"
-    @keydown.esc="common($event)"
-    opacity="0"
-    class="mx-auto"
-    @keyup.alt.l="login()"
-    @keyup.meta.l="login()"
-    @keyup.ctrl.c="close()"
-    >
-    <focus-trap
-      v-model:active="loginModal">
+  <Teleport to="body">
+    <transition name="fx-scrim">
       <div
-        id="trapDiv"
-        tabindex="0"
-        class="trap is-active">
-        <v-card
-          class="">
-          <v-card-title
-            class="bg-primary d-flex justify-center">
-              <b>Login</b>
-          </v-card-title>
-          <v-card-text class="">
-            <v-container>
-              <v-form>
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="username"
-                      label="Username"
-                      placeholder="" />
-                  </v-col>
-                </v-row>
-                <v-row>
-                  <v-col>
-                    <v-text-field
-                      v-model="password"
-                      label="Password"
-                      type="password"
-                      placeholder="" />
-                  </v-col>
-                </v-row>
-              </v-form>
-            </v-container>
-          </v-card-text>
-          <v-divider></v-divider>
-          <v-card-actions
-            class="text-primary"
+        v-if="loginModal"
+        class="fx-scrim"
+        @click="common()"
+      ></div>
+    </transition>
+    <transition name="fx-dialog">
+      <div
+        v-if="loginModal"
+        class="fx-dialog-stage"
+      >
+        <focus-trap
+          v-model:active="loginModal"
+          class="trap is-active"
+        >
+          <div
+            tabindex="0"
+            class="fx-dialog"
+            @keydown.esc="common($event)"
+            @keyup.alt.l="login()"
+            @keyup.meta.l="login()"
+            @keyup.ctrl.c="close()"
+            @keyup.meta.c="close()"
           >
-            <v-btn
-              class=""
-              variant="tonal"
-              @click="login()">Login (alt+l)</v-btn>
-            <v-spacer></v-spacer>
-            <v-btn
-              class=""
-              variant="tonal"
-              @click="close()">Close (ctrl+c)</v-btn>
-          </v-card-actions>
-        </v-card>
+            <div class="fx-panel-inner">
+              <header class="fx-panel-header">
+                <div class="fx-panel-title">
+                  <span class="fx-title-chip fx-chip-edit">AUTH</span>
+                  <h2 class="fx-title">LOGIN</h2>
+                </div>
+                <button
+                  type="button"
+                  class="fx-close"
+                  aria-label="Close login"
+                  @click="close()"
+                >✕</button>
+              </header>
+
+              <div class="fx-readout">
+                <span class="fx-readout-kv fx-readout-wide">
+                  <span class="fx-readout-k">REQUIRED</span>
+                  <span class="fx-readout-v">Server authentication</span>
+                </span>
+                <span class="fx-readout-kv">
+                  <span class="fx-readout-k">HOTKEY</span>
+                  <span class="fx-readout-v">{{ shortcutLabels.login }}</span>
+                </span>
+              </div>
+
+              <div class="fx-panel-body">
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Username</span>
+                  <input
+                    class="fx-input"
+                    type="text"
+                    v-model="username"
+                    placeholder="Enter your username"
+                    @keydown.enter.prevent="login()"
+                  />
+                </label>
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Password</span>
+                  <input
+                    class="fx-input"
+                    type="password"
+                    v-model="password"
+                    placeholder="Enter your password"
+                    @keydown.enter.prevent="login()"
+                  />
+                </label>
+              </div>
+
+              <footer class="fx-panel-actions">
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-primary"
+                  @click="login()"
+                >Login <span class="fx-kbd">{{ shortcutLabels.login }}</span></button>
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-ghost"
+                  @click="close()"
+                >Close <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+              </footer>
+            </div>
+          </div>
+        </focus-trap>
       </div>
-    </focus-trap>
-  </v-dialog>
-  </div>
+    </transition>
+  </Teleport>
 </template>
 <script>
 import D3DApi from '@/services/api'
@@ -80,33 +106,18 @@ export default {
       username: '',
       enableTrap: false,
       password: null,
-      //authInfo: null,
       authError: null,
-      //alertMessage: null,
       loginModal: false
     }
   },
+  computed: {
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
+  },
   mounted () {
-    console.log('active window watch')
-    console.log(this.active)
-    //this.loginModal = this.active == "Login"?true:false
-    //this.$nextTick(function(){
-    //  console.log('loginTrap active')
-    //  this.enableTrap = this.loginModal
-    //})
-    // if (D3Util.debug) {
-    //   localStorage.getItem('token')
-    // }
-
-    // if (localStorage.getItem('token') == null) {
-    //   D3VimApi.auth()
-    //   this.visible = true
-    // } else {
-    //   this.visible = false
-    // }
     this.emitter.on('showLogin', () => {
       this.loginModal = true
-      //this.enableTrap = true
     })
   },
   methods: {
@@ -130,32 +141,15 @@ export default {
       }
     },
     close () {
-      console.log('Close method')
       this.common()
-      //this.authInfo = false
-      //this.alertMessage = false
-      // this.$root.$emit('d3DagreActivate')
-      // this.$root.$emit('showForm', 'node')
     },
     common (){
       this.loginModal = false
-      //this.loginTrapActive = false
       this.emitter.emit('changeActive')
     }
   },
-  watch: {
-    active: function() {
-    //   console.log('active window watch')
-    //   this.loginModal = this.active == "Login"?true:false
-    //   this.$nextTick(function(){
-    //     console.log('loginTrap active')
-    //     this.enableTrap = this.loginModal
-    //   })
-    }
-  }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 </style>

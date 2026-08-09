@@ -1,106 +1,207 @@
 <template>
-  <div>
-    <v-dialog
-      v-model="diagramListModal" 
-      scrollable
-      @keydown.esc="close($event, $refs)"
-      @keydown.stop="keyPress($event, $refs)"
+  <Teleport to="body">
+    <transition name="fx-scrim">
+      <div
+        v-if="diagramListModal"
+        class="fx-scrim"
+        @click="close($event, $refs)"
+      ></div>
+    </transition>
+    <transition name="fx-dialog">
+      <div
+        v-if="diagramListModal"
+        class="fx-dialog-stage"
       >
-      <focus-trap
-        v-model:active="listTrap"
-        :delayInitialFocus="true"
-        :initial-focus="()=>$refs.wrapper"
-      >
-        <div
-          ref="wrapper"
-          id="trapDiv"
-          tabindex="0"
+        <focus-trap
+          v-model:active="listTrap"
+          :delayInitialFocus="true"
+          :initial-focus="()=>$refs.wrapper"
         >
-          <v-data-table
-            tabindex="1"
-            ref="list"
-            :headers="headers"
-            :items="diagrams"
-            item-value="id"
-            :search="search"
-            :items-per-page="itemsPerPage"
-            :page="page"
+          <div
+            ref="wrapper"
+            id="trapDiv"
+            tabindex="0"
+            class="fx-dialog fx-dialog-wide"
+            @keydown.esc="close($event, $refs)"
+            @keydown.stop="keyPress($event, $refs)"
           >
-            <template v-slot:top>
-              <v-text-field
-                @keypress.stop=""
-                v-model="search"
-                label="Search String"
-                class="" />
-            </template>
-            <template 
-              v-slot:item="{ item }">
-              <tr :id=item.id :style="selectedRowId == item.id ? 'background: orange;' : ''" >
-                <td>{{ item.id }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.description }}</td>
-                <td>
-                  <span>{{ new Date(item.created).toLocaleString() }}</span>
-                </td>
-                <td>
-                  <span>{{ new Date(item.updated).toDateString() }}</span>
-                </td>
-                <v-icon
-                  small
-                  class="mr-2"
-                  @click="editItem(item)"
-                >
-                  mdi-pencil
-                </v-icon>
-                <v-icon
-                  small
-                  @click="deleteItem(item)"
-                >
-                  mdi-delete
-                </v-icon>
-              </tr>
-            </template>
-            <template v-slot:no-data>
-              <!--
-                <v-btn color="primary" @click="initialize">Reset</v-btn>
-              -->
-            </template>
-          </v-data-table>
-        </div>
-      </focus-trap>
-    </v-dialog>
-    <v-dialog v-model="smallDialog" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">{{ formTitle}}</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12" sm="6" md="4">
-                <v-text-field v-model="editedItem.name" label="Name"></v-text-field>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" sm="6" md="4">
-                <v-textarea v-model="editedItem.description" label="Description"></v-textarea>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" sm="6" md="4">
-                <v-textarea v-model="editedItem.diagram" label="Diagram"></v-textarea>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="red darken-1" outlined text @click="close">Cancel</v-btn>
-					<v-btn color="green darken-1" outlined text @click="save">Save</v-btn>
-					</v-card-actions>
-      </v-card>
-    </v-dialog>
-  </div>
+            <div class="fx-panel-inner">
+              <header class="fx-panel-header">
+                <div class="fx-panel-title">
+                  <span class="fx-title-chip fx-chip-add">OPEN</span>
+                  <h2 class="fx-title">DIAGRAM</h2>
+                </div>
+                <button
+                  type="button"
+                  class="fx-close"
+                  aria-label="Close diagram list"
+                  @click="close($event, $refs)"
+                >✕</button>
+              </header>
+
+              <div class="fx-readout">
+                <span class="fx-readout-kv fx-readout-wide">
+                  <span class="fx-readout-k">STORAGE</span>
+                  <span class="fx-readout-v">{{ storageType }}</span>
+                </span>
+                <span class="fx-readout-kv">
+                  <span class="fx-readout-k">COUNT</span>
+                  <span class="fx-readout-v">{{ diagrams.length }}</span>
+                </span>
+                <span class="fx-readout-kv">
+                  <span class="fx-readout-k">NAV</span>
+                  <span class="fx-readout-v">j/k · h/l · enter</span>
+                </span>
+              </div>
+
+              <div class="fx-panel-body fx-table-body">
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Search</span>
+                  <input
+                    class="fx-input"
+                    type="text"
+                    v-model="search"
+                    placeholder="Filter diagrams ..."
+                    @keypress.stop=""
+                  />
+                </label>
+
+                <div class="fx-table">
+                  <v-data-table
+                    tabindex="1"
+                    ref="list"
+                    :headers="headers"
+                    :items="diagrams"
+                    item-value="id"
+                    :search="search"
+                    :items-per-page="itemsPerPage"
+                    :page="page"
+                  >
+                    <template v-slot:item="{ item }">
+                      <tr
+                        :id="item.id"
+                        :class="{ 'fx-row-selected': selectedRowId == item.id }"
+                      >
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.name }}</td>
+                        <td class="fx-cell-description">{{ item.description }}</td>
+                        <td>
+                          <span>{{ new Date(item.created).toLocaleString() }}</span>
+                        </td>
+                        <td>
+                          <span>{{ new Date(item.updated).toDateString() }}</span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            class="fx-row-btn"
+                            aria-label="Edit diagram"
+                            @click.stop="editItem(item)"
+                          >
+                            <v-icon>mdi-pencil</v-icon>
+                          </button>
+                          <button
+                            type="button"
+                            class="fx-row-btn fx-row-btn-danger"
+                            aria-label="Delete diagram"
+                            @click.stop="deleteItem(item)"
+                          >
+                            <v-icon>mdi-delete</v-icon>
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
+                    <template v-slot:no-data>
+                      <span class="fx-table-empty">No diagrams found</span>
+                    </template>
+                  </v-data-table>
+                </div>
+              </div>
+
+              <footer class="fx-panel-actions">
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-primary"
+                  @click="openSelected()"
+                >Open <span class="fx-kbd">enter</span></button>
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-ghost"
+                  @click="close($event, $refs)"
+                >Close <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+              </footer>
+            </div>
+          </div>
+        </focus-trap>
+      </div>
+    </transition>
+
+    <transition name="fx-scrim">
+      <div
+        v-if="smallDialog"
+        class="fx-scrim fx-scrim-front"
+        @click="close()"
+      ></div>
+    </transition>
+    <transition name="fx-dialog">
+      <div
+        v-if="smallDialog"
+        class="fx-dialog-stage fx-dialog-stage-front"
+      >
+        <focus-trap
+          v-model:active="smallDialog"
+          class="trap is-active"
+        >
+          <div
+            tabindex="0"
+            class="fx-dialog"
+            @keydown.esc="close()"
+          >
+            <div class="fx-panel-inner">
+              <header class="fx-panel-header">
+                <div class="fx-panel-title">
+                  <span class="fx-title-chip fx-chip-edit">EDIT</span>
+                  <h2 class="fx-title">{{ formTitle }}</h2>
+                </div>
+                <button
+                  type="button"
+                  class="fx-close"
+                  aria-label="Close editor"
+                  @click="close()"
+                >✕</button>
+              </header>
+              <div class="fx-panel-body">
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Name</span>
+                  <input class="fx-input" type="text" v-model="editedItem.name" />
+                </label>
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Description</span>
+                  <textarea class="fx-input fx-textarea" v-model="editedItem.description" rows="3"></textarea>
+                </label>
+                <label class="fx-field fx-field-full">
+                  <span class="fx-label">Diagram <em class="fx-opt">JSON</em></span>
+                  <textarea class="fx-input fx-textarea" v-model="editedItem.diagram" rows="5"></textarea>
+                </label>
+              </div>
+              <footer class="fx-panel-actions">
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-primary"
+                  @click="save()"
+                >Save</button>
+                <button
+                  type="button"
+                  class="fx-btn fx-btn-ghost"
+                  @click="close()"
+                >Cancel</button>
+              </footer>
+            </div>
+          </div>
+        </focus-trap>
+      </div>
+    </transition>
+  </Teleport>
 </template>
 <script>
 import D3Util from '@/helpers/D3Util.js'
@@ -138,6 +239,12 @@ export default {
     }
   },
   computed: {
+    storageType() {
+      return localStorage.getItem('token') ? 'Server' : 'LocalStorage'
+    },
+    shortcutLabels() {
+      return D3Util.shortcutLabels()
+    },
     formTitle () {
       return this.editedIndex === -1 ? 'New Item' : 'Edited Item'
     },
@@ -147,29 +254,9 @@ export default {
     },
   },
   mounted () {
-    //REVIEW - Not sure I need this during mount
-    // this is normaly being called from another component
-    // or link 
-    //if (localStorage.getItem('token')) {
-    //  console.log('Getting diagrams from server')
-    //  this.getDiagrams()
-    //} else {
-    //  console.log('Getting diagrams from LocalStorage')
-    //  this.getLocalDiagrams()
-    //}
-
-    /* this may no longer be needed
-      We need this for the trap else the trap does not work
-      NOTE: we can probably just remove this and use the showDiagramList
-      emitter
-    */
-    //this.$nextTick(function(){
-    //  console.log('DiagramList Trap Active')
-    //  this.listTrap = this.diagramListModal
-    //})
-
     this.emitter.on('showDiagramList', (data) => {
       this.diagramListModal = true
+      this.listTrap = true
       this.diagramId = data.diagramId
       this.name = data.name
       this.description = data.description
@@ -182,7 +269,6 @@ export default {
         console.log('Getting diagrams from LocalStorage')
         this.getLocalDiagrams()
       }
-
     })
   },
   methods: {
@@ -194,7 +280,11 @@ export default {
         }
     },
     keyPress(event){
-      console.log(this)
+      if (D3Util.debug) console.log(this)
+      // Typing in the search field should not trigger table navigation
+      const tag = event.target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
       /** NOTE - the v-data-table is no longer sending back
        * what items are currently being displayed .. this is
        * a workaround to determine what id is being displayed
@@ -213,39 +303,17 @@ export default {
       }
       switch(event.key){
         case '/':
-          // data = {aciveWindow: "Menu", trap: 'd3ActionsTrap'}
-          // console.log(component.activeWindow)
-          //component.active = 'Menu'
-          //component.menuTrap = true
           break;
-          // return data
-        case 'Escape':  //
-          /*On escape setting activeWindow D3Dagre */
-          // component.active = 'D3Dagre'
-          // component.menuTrap = false
-          // component.showMenu = false
+        case 'Escape':
           break
         case 'Enter':
-          if (D3Util.debug){
-            // console.log('enter')
-            // console.log(component.$refs.menu[component.gNavMenu])
-            // console.log(component.gNavMenu)
-            // console.log(component.selectedUrl)
-          }
           break
         case 'f':
-          // var text = document.createTextNode('f')
-          // let node = '<div class="hints"> ff </div>'
-          //component.navActions = !component.navActions
           var hrefs = document.querySelectorAll('a')
           console.log(hrefs)
-          //component.forwardHrefs(hrefs)
-          // this.addFollowLinks()
           break
         default:
-          console.log('App Event Key Default')
-          //data = {aciveWindow: "Main", trap: ''}
-          // return data
+          if (D3Util.debug) console.log('App Event Key Default')
       }
 
       if (event.key == "j" || event.key == "k"){
@@ -254,21 +322,28 @@ export default {
       }
 
       if (event.key == "l" || event.key == "h"){
-        console.log('l or h')
+        if (D3Util.debug) console.log('l or h')
         this.page = D3Util.getPage(this.page, event.key, this.totalPages)
-        console.log(this.page)
+        if (D3Util.debug) console.log(this.page)
       }
 
       if (event.key == "Enter"){
-        console.log("openDiagram")
-        this.diagramListModal = false
-        this.emitter.emit("openDiagram", this.selectedRowId)
-        this.emitter.emit("changeActive")
+        this.openSelected()
       }
 
       if (event.key == "x"){
         this.deleteItem(this.selectedRowId)
       }
+    },
+    openSelected() {
+      if (this.selectedRowId == null) {
+        this.emitter.emit('appMessage', { message: 'Navigate the list with j/k to select a diagram', status: 'info' })
+        return
+      }
+      this.diagramListModal = false
+      this.listTrap = false
+      this.emitter.emit("openDiagram", this.selectedRowId)
+      this.emitter.emit("changeActive")
     },
     save (){
     },
@@ -276,24 +351,20 @@ export default {
       this.editedIndex = this.diagrams.indexOf(item)
       this.editedItem = Object.assign({}, item)
       this.smallDialog = true
-      if(D3Util.debug){
-        console.log(item)
-      }
+      if (D3Util.debug) console.log(item)
     },
     deleteItem (item) {
-      if (D3Util.debug) {
-        console.log(item)
-      }
-      const index= this.diagrams.indexOf(item)
-      console.log(index)
-      this.diagrams.splice(index, 1)
+      const id = (item && item.id) ? item.id : this.selectedRowId
+      if (D3Util.debug) console.log(id)
+      const index = this.diagrams.indexOf(item)
+      if (index > -1) this.diagrams.splice(index, 1)
 
       if (localStorage.getItem('token')) {
-        D3DApi.deleteDiagram(this.selectedRowId)
+        D3DApi.deleteDiagram(id)
         console.log('Getting diagrams from server')
         this.getDiagrams()
       } else {
-        D3Util.deleteLocalEntry(this.selectedRowId)
+        D3Util.deleteLocalEntry(id)
         console.log('Getting diagrams from LocalStorage')
         this.getLocalDiagrams()
       }
@@ -315,41 +386,133 @@ export default {
           items.push(item);
         }
       }
-      console.log(items)
+      if (D3Util.debug) console.log(items)
       this.diagrams = items;
     },
     getDiagrams: async function() {
       var result = await D3DApi.getDiagrams()
-      console.log(result)
+      if (D3Util.debug) console.log(result)
       if (result.data === undefined) {
         let data = {status: 'info', message: 'no data found ... Login to refresh token', result: result.response }
         this.emitter.emit('appMessage', data)
         this.close()
       } else {
-        console.log(new Date(result.data.dags[0].updated).toLocaleString())
+        if (D3Util.debug) console.log(new Date(result.data.dags[0].updated).toLocaleString())
         this.diagrams = result.data.dags
-        //this.listTrap = this.diagramListModal = true
-
-        //this.$nextTick(function(){
-        //  console.log('DiagramList Trap Active')
-        //  this.listTrap = true
-        //})
       }
     },
     close () {
-      console.log('Close method')
-      this.diagramListModal= false
-      this.loginTrapActive = false
+      if (D3Util.debug) console.log('Close method')
+      this.diagramListModal = false
+      this.smallDialog = false
+      this.listTrap = false
       this.emitter.emit('changeActive')
     }
   },
-  watch: {
-    //active: function () {
-    //}
-  }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.fx-table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fx-table {
+  border: 1px solid rgba(var(--fx-accent), 0.28);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fx-table :deep(.v-table) {
+  background: transparent;
+  color: rgb(var(--fx-ink));
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.fx-table :deep(.v-table__wrapper) {
+  max-height: 46vh;
+}
+
+.fx-table :deep(.v-table__wrapper > table > thead > tr > th) {
+  background: rgba(var(--fx-accent), 0.12);
+  color: rgb(var(--fx-ink-dim));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(var(--fx-accent), 0.28);
+}
+
+.fx-table :deep(.v-table__wrapper > table > tbody > tr > td) {
+  color: rgb(var(--fx-ink-soft));
+  border-bottom: 1px solid rgba(var(--fx-accent), 0.12);
+  height: 40px;
+}
+
+.fx-table :deep(.v-table__wrapper > table > tbody > tr:hover > td) {
+  background: rgba(var(--fx-accent), 0.08);
+}
+
+.fx-table :deep(.v-data-table-footer) {
+  background: transparent;
+  color: rgb(var(--fx-ink-soft));
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.fx-table :deep(.v-data-table-footer .v-input__control),
+.fx-table :deep(.v-data-table-footer .v-field) {
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.fx-row-selected > td {
+  background: rgba(var(--fx-amber), 0.18) !important;
+}
+
+.fx-cell-description {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fx-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  background: transparent;
+  border: 1px solid rgba(var(--fx-accent), 0.35);
+  border-radius: 4px;
+  color: rgb(var(--fx-ink-soft));
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fx-row-btn:hover {
+  color: rgb(var(--fx-amber-ink));
+  border-color: rgba(var(--fx-amber), 0.6);
+  box-shadow: 0 0 10px rgba(var(--fx-amber), 0.25);
+}
+
+.fx-row-btn-danger:hover {
+  color: rgb(var(--fx-red));
+  border-color: rgba(var(--fx-red), 0.6);
+  box-shadow: 0 0 10px rgba(var(--fx-red), 0.25);
+}
+
+.fx-table-empty {
+  display: block;
+  padding: 18px;
+  color: rgb(var(--fx-ink-faint));
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 </style>

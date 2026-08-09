@@ -1,10 +1,25 @@
-import Settings from '@/components/Settings.vue'
 import VueCookies from 'vue-cookies'
-import * as DagreD3 from 'dagre-d3'
+import { modelToGraphlib } from '@/helpers/graphlibMigration'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
 export default {
+  isMac () {
+    if (typeof navigator === 'undefined') return false
+    const platform = navigator.platform || navigator.userAgentData?.platform || ''
+    return platform.toLowerCase().includes('mac') ||
+      /Mac|iPhone|iPad/.test(navigator.userAgent)
+  },
+  shortcutLabels () {
+    const saveKey  = this.isMac() ? '⌘' : 'Alt'
+    const closeKey = this.isMac() ? '⌘' : 'Ctrl'
+    return {
+      save:  `${saveKey}+S`,
+      close: `${closeKey}+C`,
+      login: `${saveKey}+L`,
+      clear: `${saveKey}+Shift+W`,
+    }
+  },
   tempInfo () {
     let temp = {
       name: 'D3D Temp Name',
@@ -95,11 +110,88 @@ export default {
   // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
+  // Shared dropdown option lists. Single source of truth so the Settings
+  // dialog and the node/edge forms cannot drift apart.
+  nodeShapeOptions () {
+    return [
+      { value: 'rectangle',       label: 'Rectangle' },
+      { value: 'round-rectangle', label: 'Round Rectangle' },
+      { value: 'ellipse',         label: 'Ellipse' },
+      { value: 'diamond',         label: 'Diamond' },
+      { value: 'round-diamond',   label: 'Round Diamond' },
+      { value: 'hexagon',         label: 'Hexagon' },
+      { value: 'octagon',         label: 'Octagon' },
+      { value: 'star',            label: 'Star' },
+      { value: 'tag',             label: 'Tag' },
+      { value: 'barrel',          label: 'Barrel' },
+    ]
+  },
+  nodeHalignOptions () {
+    return [
+      { value: 'left',   label: 'Left' },
+      { value: 'center', label: 'Center' },
+      { value: 'right',  label: 'Right' },
+    ]
+  },
+  nodeValignOptions () {
+    return [
+      { value: 'top',    label: 'Top' },
+      { value: 'center', label: 'Center' },
+      { value: 'bottom', label: 'Bottom' },
+    ]
+  },
+  edgeArrowHeadStyleOptions () {
+    return [
+      { value: 'filled', label: 'Filled' },
+      { value: 'hollow', label: 'Hollow' },
+    ]
+  },
+  edgeArrowHeadOptions () {
+    return [
+      { value: 'triangle',       label: 'Triangle' },
+      { value: 'vee',            label: 'Vee' },
+      { value: 'none',           label: 'None (undirected)' },
+      { value: 'chevron',        label: 'Chevron' },
+      { value: 'tee',            label: 'Tee' },
+      { value: 'circle',         label: 'Circle' },
+      { value: 'diamond',        label: 'Diamond' },
+      { value: 'square',         label: 'Square' },
+      { value: 'triangle-tee',   label: 'Triangle Tee' },
+      { value: 'triangle-cross', label: 'Triangle Cross' },
+    ]
+  },
+  edgeLineStyleOptions () {
+    return [
+      { value: 'solid',   label: 'Solid' },
+      { value: 'dotted',  label: 'Dotted' },
+      { value: 'dashed',  label: 'Dashed' },
+    ]
+  },
+  edgeCurveOptions () {
+    return [
+      { value: 'bezier',           label: 'Bezier' },
+      { value: 'straight',         label: 'Straight' },
+      { value: 'segmented',        label: 'Segmented' },
+      { value: 'unbundled-bezier', label: 'Unbundled Bezier' },
+      { value: 'haystack',         label: 'Haystack' },
+    ]
+  },
+  layoutOptions () {
+    return [
+      { value: 'cola',         label: 'Cola (Physics-based)' },
+      { value: 'cose',         label: 'CoSE (Force-directed)' },
+      { value: 'breadthfirst', label: 'Breadth First (Tree)' },
+      { value: 'grid',         label: 'Grid' },
+      { value: 'circle',       label: 'Circle' },
+      { value: 'concentric',   label: 'Concentric' },
+      { value: 'dagre',        label: 'Dagre (Hierarchical)' },
+      { value: 'random',       label: 'Random' },
+    ]
+  },
   appDefaults () { 
     var defaults = {
-      'd3Line': 'curveBasis',
       'hintBGColor': '#36004c',
-      'hintLinkColor': '#fff', 
+      'hintLinkColor': '#ffffff', 
       'debug': false, 
       'hints': 'asdfjklqweruiopzxcvnmgh', 
       'reset': false,
@@ -110,9 +202,64 @@ export default {
       'themes': [
         {'value':'light', 'label':'Light Theme'},
         {'value':'dark', 'label':'Dark Theme'},
-      ]
+      ],
+      'zoomFitFactor': 60,
+      'defaultZoomFit': true,
+      'defaultZoomLevel': 1,
+      'defaultLayoutMode': 'cola',
+      'defaultColaEdgeLength': 120,
+      'defaultColaNodeSpacing': 30,
+      'defaultColaFlow': null,
+      'defaultColaAvoidOverlap': true,
+      'defaultColaMaxSimulationTime': 1500,
+      'defaultColaGravity': 0,
+      'defaultCoseNodeRepulsion': 400000,
+      'defaultCoseIdealEdgeLength': 100,
+      'defaultCoseGravity': 1,
+      'defaultCoseNodeOverlap': 4,
+      'defaultBreadthfirstDirected': true,
+      'defaultBreadthfirstCircle': false,
+      'defaultBreadthfirstSpacingFactor': 1.5,
+      'defaultGridRows': null,
+      'defaultGridCols': null,
+      'defaultGridAvoidOverlap': true,
+      'defaultGridSpacingFactor': 1.5,
+      'defaultCircleSpacingFactor': 1.0,
+      'defaultCircleClockwise': true,
+      'defaultConcentricSpacingFactor': 1.5,
+      'defaultConcentricMinNodeSpacing': 30,
+      'defaultConcentricClockwise': true,
+      'defaultConcentricEquidistant': false,
+      'defaultDagreRankDir': 'TB',
+      'defaultDagreNodeSep': 50,
+      'defaultDagreRankSep': 50,
+      'defaultDagreEdgeSep': 10,
+      'defaultDagreRanker': 'network-simplex',
+      'defaultEdgeStyle': 'bezier',
+      'defaultEdgeWidth': 2,
+      'defaultEdgeOpacity': 0.85,
+      'defaultArrowScale': 1,
+      'defaultArrowShape': 'vee',
+      'defaultEdgeArrowHeadStyle': 'filled',
+      'defaultEdgeSourceArrow': '',
+      'defaultEdgeColor': '',
+      'defaultEdgeLineStyle': 'solid',
+      'defaultNodeLabel': '',
+      'defaultNodeShape': 'rectangle',
+      'defaultNodeTextHalign': 'center',
+      'defaultNodeTextValign': 'top',
+      'defaultNodeBgColor': '',
+      'defaultNodeBorderColor': '',
+      'defaultNodeBorderWidth': null,
+      'defaultNodeFontSize': null,
+      'defaultEdgeLabel': '',
+      'serverUrl': 'http://localhost:3000',
     }
     return defaults
+  },
+  serverUrl () {
+    const s = VueCookies.get('settings')
+    return (s && s.serverUrl) ? s.serverUrl : 'http://localhost:3000'
   },
   buildHints (elements, hyperLinks=false) {
     var hints = {}
@@ -339,7 +486,7 @@ export default {
     try{
       let randomId ='D3D'+this.randomId()
       let created = new Date()
-      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let json = modelToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -374,7 +521,7 @@ export default {
     try{
       console.log(data)
       let updated = new Date()
-      let json = new DagreD3.graphlib.json.write(data.diagram)
+      let json = modelToGraphlib(data.diagram)
       let payload = { 
         'name': data.name,
         'description': data.description,
@@ -391,17 +538,21 @@ export default {
       console.log(error)
     }
   },
-  saveTempDiagram(g){
-    this.json = new DagreD3.graphlib.json.write(g)
-    let created = new Date()
-    let updatedData = {
-      'created': created.toISOString(),
-      'updated': created.toISOString(),
-      'name': this.tempInfo().name,
-      'description': this.tempInfo().description,
-      'diagram': JSON.stringify(this.json),
+  saveTempDiagram(cy){
+    try {
+      let json = modelToGraphlib(cy)
+      let created = new Date()
+      let updatedData = {
+        'created': created.toISOString(),
+        'updated': created.toISOString(),
+        'name': this.tempInfo().name,
+        'description': this.tempInfo().description,
+        'diagram': JSON.stringify(json),
+      }
+      localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
+    } catch (error) {
+      console.log('saveTempDiagram failed', error)
     }
-    localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
   },
   getTempDiagram(){
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
@@ -428,21 +579,48 @@ export default {
     this.saveTempDiagram(localData)
   },
   defaultNodeValues() {
+    const s = this._readSettings()
     var data = {
-      nodeLabel: 'Node',
-      nodeShape: 'rect',
-      nodeLabelType: 'text'
+      nodeLabel:  s.defaultNodeLabel !== undefined ? s.defaultNodeLabel : '',
+      nodeShape:  s.defaultNodeShape       || 'rectangle',
+      textHalign: s.defaultNodeTextHalign  || 'center',
+      textValign: s.defaultNodeTextValign  || 'top',
+      bgColor:    s.defaultNodeBgColor     || '',
+      borderColor: s.defaultNodeBorderColor || '',
+      borderWidth: s.defaultNodeBorderWidth != null ? s.defaultNodeBorderWidth : null,
+      fontSize:   s.defaultNodeFontSize    != null ? s.defaultNodeFontSize : null,
     }
     return data
   },
   defaultEdgeValues() {
+    const s = this._readSettings()
     var data = {
-      edgeLabel: 'Edge ', /** this needs to be a space else it hings won't work */
-      edgeLabelType: 'text',
-      edgeArrowHeadStyle: 'solid',
-      edgeArrowHead: 'normal',
-      //d3.curveBasis: 'text'
+      edgeLabel:          s.defaultEdgeLabel !== undefined ? s.defaultEdgeLabel : '',
+      edgeArrowHeadStyle: s.defaultEdgeArrowHeadStyle || 'filled',
+      edgeArrowHead:      s.defaultArrowShape || 'vee',
+      sourceArrowhead:    s.defaultEdgeSourceArrow || '',
+      edgeWidth:          s.defaultEdgeWidth   != null ? Number(s.defaultEdgeWidth)   : 2,
+      edgeColor:          s.defaultEdgeColor   || '',
+      edgeLineStyle:      s.defaultEdgeLineStyle || 'solid',
+      edgeCurve:          this._normalizeEdgeCurve(s.defaultEdgeStyle),
+      edgeOpacity:        s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85,
     }
     return data
+  },
+  // Map the stored default curve value to a cytoscape curve-style. Legacy
+  // settings saved 'curved' (label "Curved (Bezier)"); normalize it to the
+  // cytoscape value 'bezier'.
+  _normalizeEdgeCurve (val) {
+    if (val === 'curved') return 'bezier'
+    return val || 'bezier'
+  },
+  // Settings cookie that never throws (vue-cookies reads document.cookie, which
+  // does not exist in headless/test environments).
+  _readSettings() {
+    try {
+      return VueCookies.get('settings') || {}
+    } catch (e) {
+      return {}
+    }
   },
 }
