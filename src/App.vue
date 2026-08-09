@@ -421,6 +421,17 @@ export default {
       }
 
       if (!localDiagramInfo) {
+        const model = markRaw(new GraphModel([]))
+        model.colaConstraints = []
+        this.d3dInfo = {
+          id: D3Util.randomId(),
+          name: '',
+          description: '',
+          created: new Date().toISOString(),
+          diagram: model,
+          colaConstraints: []
+        }
+        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
         this.emitter.emit('newDiagram')
         return
       }
