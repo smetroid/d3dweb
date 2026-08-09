@@ -14,17 +14,60 @@ export default class DiagramGraph {
     this.selectedEdges = []
     this.focusedIndex = null
 
-    // Layout options — read/written by DiagramForm
+    // Layout options — read/written by DiagramForm.
+    // Each block seeds from settings defaults then merges stored d3dInfo opts,
+    // so new/old diagrams without stored opts still reflect the user's settings.
     const settings = VueCookies.get('settings') || D3Util.appDefaults()
-    this.layoutMode = 'cola'
+    this.layoutMode = d3dInfo.layoutMode || settings.defaultLayoutMode || 'cola'
+
     this.colaOpts = Object.assign({
-      edgeLength:        settings.defaultColaEdgeLength   !== undefined ? Number(settings.defaultColaEdgeLength)   : 120,
-      nodeSpacing:       settings.defaultColaNodeSpacing  !== undefined ? Number(settings.defaultColaNodeSpacing)  : 30,
-      flow:              settings.defaultColaFlow         !== undefined ? settings.defaultColaFlow                 : null,
-      avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : true,
+      edgeLength:        settings.defaultColaEdgeLength        !== undefined ? Number(settings.defaultColaEdgeLength)        : 120,
+      nodeSpacing:       settings.defaultColaNodeSpacing       !== undefined ? Number(settings.defaultColaNodeSpacing)       : 30,
+      flow:              settings.defaultColaFlow              !== undefined ? settings.defaultColaFlow                      : null,
+      avoidOverlap:      settings.defaultColaAvoidOverlap      !== undefined ? Boolean(settings.defaultColaAvoidOverlap)     : true,
       maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
       gravity:           settings.defaultColaGravity           !== undefined ? Number(settings.defaultColaGravity)           : 0,
     }, d3dInfo.colaOpts)
+
+    this.coseOpts = Object.assign({
+      nodeRepulsion:   settings.defaultCoseNodeRepulsion   !== undefined ? Number(settings.defaultCoseNodeRepulsion)   : 400000,
+      idealEdgeLength: settings.defaultCoseIdealEdgeLength !== undefined ? Number(settings.defaultCoseIdealEdgeLength) : 100,
+      gravity:         settings.defaultCoseGravity         !== undefined ? Number(settings.defaultCoseGravity)         : 1,
+      nodeOverlap:     settings.defaultCoseNodeOverlap     !== undefined ? Number(settings.defaultCoseNodeOverlap)     : 4,
+    }, d3dInfo.coseOpts)
+
+    this.breadthfirstOpts = Object.assign({
+      directed:      settings.defaultBreadthfirstDirected      !== undefined ? Boolean(settings.defaultBreadthfirstDirected)      : true,
+      circle:        settings.defaultBreadthfirstCircle        !== undefined ? Boolean(settings.defaultBreadthfirstCircle)        : false,
+      spacingFactor: settings.defaultBreadthfirstSpacingFactor !== undefined ? Number(settings.defaultBreadthfirstSpacingFactor)  : 1.5,
+    }, d3dInfo.breadthfirstOpts)
+
+    this.gridOpts = Object.assign({
+      spacingFactor: settings.defaultGridSpacingFactor !== undefined ? Number(settings.defaultGridSpacingFactor)  : 1.5,
+      avoidOverlap:  settings.defaultGridAvoidOverlap  !== undefined ? Boolean(settings.defaultGridAvoidOverlap) : true,
+      rows:          settings.defaultGridRows  != null ? Number(settings.defaultGridRows)  : null,
+      cols:          settings.defaultGridCols  != null ? Number(settings.defaultGridCols)  : null,
+    }, d3dInfo.gridOpts)
+
+    this.circleOpts = Object.assign({
+      spacingFactor: settings.defaultCircleSpacingFactor !== undefined ? Number(settings.defaultCircleSpacingFactor)  : 1.0,
+      clockwise:     settings.defaultCircleClockwise     !== undefined ? Boolean(settings.defaultCircleClockwise)     : true,
+    }, d3dInfo.circleOpts)
+
+    this.concentricOpts = Object.assign({
+      spacingFactor:  settings.defaultConcentricSpacingFactor  !== undefined ? Number(settings.defaultConcentricSpacingFactor)  : 1.5,
+      minNodeSpacing: settings.defaultConcentricMinNodeSpacing !== undefined ? Number(settings.defaultConcentricMinNodeSpacing) : 30,
+      clockwise:      settings.defaultConcentricClockwise      !== undefined ? Boolean(settings.defaultConcentricClockwise)     : true,
+      equidistant:    settings.defaultConcentricEquidistant    !== undefined ? Boolean(settings.defaultConcentricEquidistant)   : false,
+    }, d3dInfo.concentricOpts)
+
+    this.dagreOpts = Object.assign({
+      rankDir: settings.defaultDagreRankDir || 'TB',
+      nodeSep: settings.defaultDagreNodeSep !== undefined ? Number(settings.defaultDagreNodeSep) : 50,
+      rankSep: settings.defaultDagreRankSep !== undefined ? Number(settings.defaultDagreRankSep) : 50,
+      edgeSep: settings.defaultDagreEdgeSep !== undefined ? Number(settings.defaultDagreEdgeSep) : 10,
+      ranker:  settings.defaultDagreRanker  || 'network-simplex',
+    }, d3dInfo.dagreOpts)
 
     this.colaConstraints = d3dInfo.colaConstraints || []
     this.cy.colaConstraints = this.colaConstraints
@@ -410,11 +453,22 @@ export default class DiagramGraph {
 
   redraw(options = {}) {
     if (!this.renderer) return
-    this.renderer.updateScene(this.cy, { ...options, colaOpts: this.colaOpts })
+    this.renderer.updateScene(this.cy, {
+      ...options,
+      layoutMode:      this.layoutMode,
+      colaOpts:        this.colaOpts,
+      coseOpts:        this.coseOpts,
+      breadthfirstOpts: this.breadthfirstOpts,
+      gridOpts:        this.gridOpts,
+      circleOpts:      this.circleOpts,
+      concentricOpts:  this.concentricOpts,
+      dagreOpts:       this.dagreOpts,
+    })
     this._saveTempDiagram()
   }
 
   setLayoutMode(mode) {
+    this.layoutMode = mode
     const settings = VueCookies.get('settings') || D3Util.appDefaults()
     settings.defaultLayoutMode = mode
     VueCookies.set('settings', settings)

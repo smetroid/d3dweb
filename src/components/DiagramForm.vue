@@ -52,7 +52,7 @@
                 </span>
                 <span class="fx-readout-kv">
                   <span class="fx-readout-k">ENGINE</span>
-                  <span class="fx-readout-v">COLA</span>
+                  <span class="fx-readout-v">{{ layoutMode.toUpperCase() }}</span>
                 </span>
               </div>
 
@@ -78,69 +78,296 @@
                   ></textarea>
                 </label>
 
-                <label class="fx-field fx-field-full">
-                  <span class="fx-label">Layout Engine <em class="fx-opt">read-only</em></span>
-                  <input class="fx-input fx-input-static" type="text" readonly :value="'Cola'" />
-                </label>
-
-                <div class="fx-grid">
-                  <label class="fx-field">
-                    <span class="fx-label">Edge Length</span>
-                    <input class="fx-input" type="number" v-model="colaOpts.edgeLength" />
-                  </label>
-                  <label class="fx-field">
-                    <span class="fx-label">Node Spacing</span>
-                    <input class="fx-input" type="number" v-model="colaOpts.nodeSpacing" />
-                  </label>
+                <div class="fx-field fx-field-full">
+                  <span class="fx-label">Layout Engine</span>
+                  <div class="fx-select">
+                    <button
+                      type="button"
+                      class="fx-select-trigger"
+                      @click.stop="toggleSel('layout')"
+                      @keydown.down.prevent="openAndFocus('layout', $event)"
+                    >{{ layoutLabel }}<span class="fx-caret">▾</span></button>
+                    <transition name="fx-drop">
+                      <ul v-if="openSel === 'layout'" class="fx-options">
+                        <li
+                          v-for="opt in layoutOptions"
+                          :key="opt.value"
+                          tabindex="0"
+                          class="fx-option"
+                          :class="{ 'fx-option-active': layoutMode === opt.value }"
+                          @click="pickLayout(opt.value)"
+                          @keydown.enter.prevent="pickLayout(opt.value)"
+                          @keydown.space.prevent="pickLayout(opt.value)"
+                          @keydown.up.prevent="focusPrev($event)"
+                          @keydown.down.prevent="focusNext($event)"
+                          @keydown.k.prevent="focusPrev($event)"
+                          @keydown.j.prevent="focusNext($event)"
+                          @keydown.esc.stop="closeSel($event)"
+                        >{{ opt.label }}</li>
+                      </ul>
+                    </transition>
+                  </div>
                 </div>
 
-                <div class="fx-grid">
-                  <div class="fx-field">
-                    <span class="fx-label">Flow Direction</span>
-                    <div class="fx-select">
-                      <button
-                        type="button"
-                        class="fx-select-trigger"
-                        @click.stop="toggleSel('flow')"
-                        @keypress.stop=""
-                        @keydown.down.prevent="openAndFocus('flow', $event)"
-                      >{{ flowLabel }}<span class="fx-caret">▾</span></button>
-                      <transition name="fx-drop">
-                        <ul v-if="openSel === 'flow'" class="fx-options">
-                          <li
-                            v-for="opt in flowOptions"
-                            :key="opt.label"
-                            tabindex="0"
-                            class="fx-option"
-                            :class="{ 'fx-option-active': colaOpts.flow === opt.value }"
-                            @click="pickFlow(opt.value)"
-                            @keydown.enter.prevent="pickFlow(opt.value)"
-                            @keydown.space.prevent="pickFlow(opt.value)"
-                            @keydown.up.prevent="focusPrev($event)"
-                            @keydown.down.prevent="focusNext($event)"
-                            @keydown.k.prevent="focusPrev($event)"
-                            @keydown.j.prevent="focusNext($event)"
-                            @keydown.esc.stop="closeSel($event)"
-                          >{{ opt.label }}</li>
-                        </ul>
-                      </transition>
+                <!-- Cola layout options -->
+                <template v-if="layoutMode === 'cola'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Edge Length</span>
+                      <input class="fx-input" type="number" v-model="colaOpts.edgeLength" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Node Spacing</span>
+                      <input class="fx-input" type="number" v-model="colaOpts.nodeSpacing" />
+                    </label>
+                  </div>
+
+                  <div class="fx-grid">
+                    <div class="fx-field">
+                      <span class="fx-label">Flow Direction</span>
+                      <div class="fx-select">
+                        <button
+                          type="button"
+                          class="fx-select-trigger"
+                          @click.stop="toggleSel('flow')"
+                          @keypress.stop=""
+                          @keydown.down.prevent="openAndFocus('flow', $event)"
+                        >{{ flowLabel }}<span class="fx-caret">▾</span></button>
+                        <transition name="fx-drop">
+                          <ul v-if="openSel === 'flow'" class="fx-options">
+                            <li
+                              v-for="opt in flowOptions"
+                              :key="opt.label"
+                              tabindex="0"
+                              class="fx-option"
+                              :class="{ 'fx-option-active': colaOpts.flow === opt.value }"
+                              @click="pickFlow(opt.value)"
+                              @keydown.enter.prevent="pickFlow(opt.value)"
+                              @keydown.space.prevent="pickFlow(opt.value)"
+                              @keydown.up.prevent="focusPrev($event)"
+                              @keydown.down.prevent="focusNext($event)"
+                              @keydown.k.prevent="focusPrev($event)"
+                              @keydown.j.prevent="focusNext($event)"
+                              @keydown.esc.stop="closeSel($event)"
+                            >{{ opt.label }}</li>
+                          </ul>
+                        </transition>
+                      </div>
+                    </div>
+                    <label class="fx-field">
+                      <span class="fx-label">Max Simulation Time <em class="fx-opt">ms</em></span>
+                      <input class="fx-input" type="number" v-model="colaOpts.maxSimulationTime" />
+                    </label>
+                  </div>
+
+                  <label class="fx-field fx-field-full">
+                    <span class="fx-label">Cola Constraints <em class="fx-opt">JSON</em></span>
+                    <textarea
+                      class="fx-input fx-textarea"
+                      v-model="colaConstraintsText"
+                      rows="4"
+                      placeholder='Array of cola constraints: [{"type":"alignment","axis":"y","offsets":[{"node":"id","offset":0}]}, {"axis":"x","left":"id","right":"id","gap":50}]'
+                    ></textarea>
+                  </label>
+                </template>
+
+                <!-- CoSE layout options -->
+                <template v-if="layoutMode === 'cose'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Node Repulsion</span>
+                      <input class="fx-input" type="number" v-model="coseOpts.nodeRepulsion" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Ideal Edge Length</span>
+                      <input class="fx-input" type="number" v-model="coseOpts.idealEdgeLength" />
+                    </label>
+                  </div>
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Gravity</span>
+                      <input class="fx-input" type="number" step="0.1" v-model="coseOpts.gravity" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Node Overlap</span>
+                      <input class="fx-input" type="number" v-model="coseOpts.nodeOverlap" />
+                    </label>
+                  </div>
+                </template>
+
+                <!-- Breadth First layout options -->
+                <template v-if="layoutMode === 'breadthfirst'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Spacing Factor</span>
+                      <input class="fx-input" type="number" step="0.1" v-model="breadthfirstOpts.spacingFactor" />
+                    </label>
+                    <div class="fx-field">
+                      <span class="fx-label">Options</span>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="breadthfirstOpts.directed" />
+                        <span>Directed</span>
+                      </label>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="breadthfirstOpts.circle" />
+                        <span>Circle layout</span>
+                      </label>
                     </div>
                   </div>
-                  <label class="fx-field">
-                    <span class="fx-label">Max Simulation Time <em class="fx-opt">ms</em></span>
-                    <input class="fx-input" type="number" v-model="colaOpts.maxSimulationTime" />
-                  </label>
-                </div>
+                </template>
 
-                <label class="fx-field fx-field-full">
-                  <span class="fx-label">Cola Constraints <em class="fx-opt">JSON</em></span>
-                  <textarea
-                    class="fx-input fx-textarea"
-                    v-model="colaConstraintsText"
-                    rows="4"
-                    placeholder='Array of cola constraints: [{"type":"alignment","axis":"y","offsets":[{"node":"id","offset":0}]}, {"axis":"x","left":"id","right":"id","gap":50}]'
-                  ></textarea>
-                </label>
+                <!-- Grid layout options -->
+                <template v-if="layoutMode === 'grid'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Spacing Factor</span>
+                      <input class="fx-input" type="number" step="0.1" v-model="gridOpts.spacingFactor" />
+                    </label>
+                    <div class="fx-field">
+                      <span class="fx-label">Options</span>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="gridOpts.avoidOverlap" />
+                        <span>Avoid Overlap</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Rows <em class="fx-opt">optional</em></span>
+                      <input class="fx-input" type="number" v-model="gridOpts.rows" placeholder="auto" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Cols <em class="fx-opt">optional</em></span>
+                      <input class="fx-input" type="number" v-model="gridOpts.cols" placeholder="auto" />
+                    </label>
+                  </div>
+                </template>
+
+                <!-- Circle layout options -->
+                <template v-if="layoutMode === 'circle'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Spacing Factor</span>
+                      <input class="fx-input" type="number" step="0.1" v-model="circleOpts.spacingFactor" />
+                    </label>
+                    <div class="fx-field">
+                      <span class="fx-label">Options</span>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="circleOpts.clockwise" />
+                        <span>Clockwise</span>
+                      </label>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Concentric layout options -->
+                <template v-if="layoutMode === 'concentric'">
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Spacing Factor</span>
+                      <input class="fx-input" type="number" step="0.1" v-model="concentricOpts.spacingFactor" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Min Node Spacing</span>
+                      <input class="fx-input" type="number" v-model="concentricOpts.minNodeSpacing" />
+                    </label>
+                  </div>
+                  <div class="fx-grid">
+                    <div class="fx-field">
+                      <span class="fx-label">Options</span>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="concentricOpts.clockwise" />
+                        <span>Clockwise</span>
+                      </label>
+                      <label class="fx-check-row">
+                        <input type="checkbox" v-model="concentricOpts.equidistant" />
+                        <span>Equidistant</span>
+                      </label>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Dagre layout options -->
+                <template v-if="layoutMode === 'dagre'">
+                  <div class="fx-grid">
+                    <div class="fx-field">
+                      <span class="fx-label">Rank Direction</span>
+                      <div class="fx-select">
+                        <button
+                          type="button"
+                          class="fx-select-trigger"
+                          @click.stop="toggleSel('dagreRankDir')"
+                          @keydown.down.prevent="openAndFocus('dagreRankDir', $event)"
+                        >{{ dagreRankDirLabel }}<span class="fx-caret">▾</span></button>
+                        <transition name="fx-drop">
+                          <ul v-if="openSel === 'dagreRankDir'" class="fx-options">
+                            <li
+                              v-for="opt in dagreRankDirOptions"
+                              :key="opt.value"
+                              tabindex="0"
+                              class="fx-option"
+                              :class="{ 'fx-option-active': dagreOpts.rankDir === opt.value }"
+                              @click="pickDagreRankDir(opt.value)"
+                              @keydown.enter.prevent="pickDagreRankDir(opt.value)"
+                              @keydown.space.prevent="pickDagreRankDir(opt.value)"
+                              @keydown.up.prevent="focusPrev($event)"
+                              @keydown.down.prevent="focusNext($event)"
+                              @keydown.k.prevent="focusPrev($event)"
+                              @keydown.j.prevent="focusNext($event)"
+                              @keydown.esc.stop="closeSel($event)"
+                            >{{ opt.label }}</li>
+                          </ul>
+                        </transition>
+                      </div>
+                    </div>
+                    <div class="fx-field">
+                      <span class="fx-label">Ranker</span>
+                      <div class="fx-select">
+                        <button
+                          type="button"
+                          class="fx-select-trigger"
+                          @click.stop="toggleSel('dagreRanker')"
+                          @keydown.down.prevent="openAndFocus('dagreRanker', $event)"
+                        >{{ dagreOpts.ranker }}<span class="fx-caret">▾</span></button>
+                        <transition name="fx-drop">
+                          <ul v-if="openSel === 'dagreRanker'" class="fx-options">
+                            <li
+                              v-for="opt in dagreRankerOptions"
+                              :key="opt.value"
+                              tabindex="0"
+                              class="fx-option"
+                              :class="{ 'fx-option-active': dagreOpts.ranker === opt.value }"
+                              @click="pickDagreRanker(opt.value)"
+                              @keydown.enter.prevent="pickDagreRanker(opt.value)"
+                              @keydown.space.prevent="pickDagreRanker(opt.value)"
+                              @keydown.up.prevent="focusPrev($event)"
+                              @keydown.down.prevent="focusNext($event)"
+                              @keydown.k.prevent="focusPrev($event)"
+                              @keydown.j.prevent="focusNext($event)"
+                              @keydown.esc.stop="closeSel($event)"
+                            >{{ opt.label }}</li>
+                          </ul>
+                        </transition>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Node Sep</span>
+                      <input class="fx-input" type="number" v-model="dagreOpts.nodeSep" />
+                    </label>
+                    <label class="fx-field">
+                      <span class="fx-label">Rank Sep</span>
+                      <input class="fx-input" type="number" v-model="dagreOpts.rankSep" />
+                    </label>
+                  </div>
+                  <div class="fx-grid">
+                    <label class="fx-field">
+                      <span class="fx-label">Edge Sep</span>
+                      <input class="fx-input" type="number" v-model="dagreOpts.edgeSep" />
+                    </label>
+                  </div>
+                </template>
 
                 <label class="fx-field fx-field-full">
                   <span class="fx-label">JSON Diagram</span>
@@ -195,23 +422,40 @@ export default {
   data() {
     return {
       id:          null,
-      diagram:     null,    // GraphModel
+      diagram:     null,
       username:    '',
       created:     null,
       name:        'New diagram default name',
       description: 'New diagram default description',
       diagramModal: false,
       update:      null,
-      layoutMode: 'cola',
-      colaOpts:  this.defaultColaOpts(),
+      layoutMode:       'cola',
+      colaOpts:         this.defaultColaOpts(),
       colaConstraintsText: '[]',
-      colaConstraints: [],
+      colaConstraints:  [],
+      coseOpts:         this.defaultCoseOpts(),
+      breadthfirstOpts: this.defaultBreadthfirstOpts(),
+      gridOpts:         this.defaultGridOpts(),
+      circleOpts:       this.defaultCircleOpts(),
+      concentricOpts:   this.defaultConcentricOpts(),
+      dagreOpts:        this.defaultDagreOpts(),
       jsonDiagram: null,
       openSel:     null,
       flowOptions: [
         { label: 'None',            value: null },
         { label: 'Horizontal (x)',  value: 'x' },
         { label: 'Vertical (y)',    value: 'y' },
+      ],
+      dagreRankDirOptions: [
+        { label: 'Top → Bottom', value: 'TB' },
+        { label: 'Bottom → Top', value: 'BT' },
+        { label: 'Left → Right', value: 'LR' },
+        { label: 'Right → Left', value: 'RL' },
+      ],
+      dagreRankerOptions: [
+        { label: 'Network Simplex', value: 'network-simplex' },
+        { label: 'Tight Tree',      value: 'tight-tree' },
+        { label: 'Longest Path',    value: 'longest-path' },
       ],
     }
   },
@@ -222,6 +466,17 @@ export default {
     flowLabel() {
       const opt = this.flowOptions.find(o => o.value === this.colaOpts.flow)
       return opt ? opt.label : 'None'
+    },
+    layoutOptions() {
+      return D3Util.layoutOptions()
+    },
+    layoutLabel() {
+      const opt = this.layoutOptions.find(o => o.value === this.layoutMode)
+      return opt ? opt.label : this.layoutMode
+    },
+    dagreRankDirLabel() {
+      const opt = this.dagreRankDirOptions.find(o => o.value === this.dagreOpts.rankDir)
+      return opt ? opt.label : this.dagreOpts.rankDir
     },
   },
   mounted() {
@@ -252,7 +507,6 @@ export default {
 
   methods: {
     _mod() {
-      // Handle both raw and ComputedRef injection
       return this.modifier?.value ?? this.modifier
     },
 
@@ -294,6 +548,21 @@ export default {
       this.openSel = null
     },
 
+    pickLayout(val) {
+      this.layoutMode = val
+      this.openSel = null
+    },
+
+    pickDagreRankDir(val) {
+      this.dagreOpts.rankDir = val
+      this.openSel = null
+    },
+
+    pickDagreRanker(val) {
+      this.dagreOpts.ranker = val
+      this.openSel = null
+    },
+
     onDocClick() {
       this.openSel = null
     },
@@ -304,14 +573,72 @@ export default {
     },
 
     defaultColaOpts() {
-      const defaults = D3Util.appDefaults()
+      const d = D3Util.appDefaults()
       return {
-        edgeLength:        defaults.defaultColaEdgeLength,
-        nodeSpacing:       defaults.defaultColaNodeSpacing,
-        flow:              defaults.defaultColaFlow,
-        avoidOverlap:      defaults.defaultColaAvoidOverlap,
-        maxSimulationTime: defaults.defaultColaMaxSimulationTime,
-        gravity:           defaults.defaultColaGravity,
+        edgeLength:        d.defaultColaEdgeLength,
+        nodeSpacing:       d.defaultColaNodeSpacing,
+        flow:              d.defaultColaFlow,
+        avoidOverlap:      d.defaultColaAvoidOverlap,
+        maxSimulationTime: d.defaultColaMaxSimulationTime,
+        gravity:           d.defaultColaGravity,
+      }
+    },
+
+    defaultCoseOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        nodeRepulsion:   d.defaultCoseNodeRepulsion,
+        idealEdgeLength: d.defaultCoseIdealEdgeLength,
+        gravity:         d.defaultCoseGravity,
+        nodeOverlap:     d.defaultCoseNodeOverlap,
+      }
+    },
+
+    defaultBreadthfirstOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        directed:      d.defaultBreadthfirstDirected,
+        circle:        d.defaultBreadthfirstCircle,
+        spacingFactor: d.defaultBreadthfirstSpacingFactor,
+      }
+    },
+
+    defaultGridOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        spacingFactor: d.defaultGridSpacingFactor,
+        avoidOverlap:  d.defaultGridAvoidOverlap,
+        rows:          d.defaultGridRows,
+        cols:          d.defaultGridCols,
+      }
+    },
+
+    defaultCircleOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        spacingFactor: d.defaultCircleSpacingFactor,
+        clockwise:     d.defaultCircleClockwise,
+      }
+    },
+
+    defaultConcentricOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        spacingFactor:  d.defaultConcentricSpacingFactor,
+        minNodeSpacing: d.defaultConcentricMinNodeSpacing,
+        clockwise:      d.defaultConcentricClockwise,
+        equidistant:    d.defaultConcentricEquidistant,
+      }
+    },
+
+    defaultDagreOpts() {
+      const d = D3Util.appDefaults()
+      return {
+        rankDir: d.defaultDagreRankDir,
+        nodeSep: d.defaultDagreNodeSep,
+        rankSep: d.defaultDagreRankSep,
+        edgeSep: d.defaultDagreEdgeSep,
+        ranker:  d.defaultDagreRanker,
       }
     },
 
@@ -320,17 +647,54 @@ export default {
 
       const settings = this.$cookies.get('settings') || D3Util.appDefaults()
       const defaults = D3Util.appDefaults()
-      this.layoutMode = 'cola'
+
+      this.layoutMode = settings.defaultLayoutMode || defaults.defaultLayoutMode
+
       this.colaOpts = {
-        edgeLength:        settings.defaultColaEdgeLength !== undefined ? Number(settings.defaultColaEdgeLength) : defaults.defaultColaEdgeLength,
-        nodeSpacing:       settings.defaultColaNodeSpacing !== undefined ? Number(settings.defaultColaNodeSpacing) : defaults.defaultColaNodeSpacing,
-        flow:              settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : defaults.defaultColaFlow,
-        avoidOverlap:      settings.defaultColaAvoidOverlap !== undefined ? Boolean(settings.defaultColaAvoidOverlap) : defaults.defaultColaAvoidOverlap,
+        edgeLength:        settings.defaultColaEdgeLength        !== undefined ? Number(settings.defaultColaEdgeLength)        : defaults.defaultColaEdgeLength,
+        nodeSpacing:       settings.defaultColaNodeSpacing       !== undefined ? Number(settings.defaultColaNodeSpacing)       : defaults.defaultColaNodeSpacing,
+        flow:              settings.defaultColaFlow              !== undefined ? settings.defaultColaFlow                      : defaults.defaultColaFlow,
+        avoidOverlap:      settings.defaultColaAvoidOverlap      !== undefined ? Boolean(settings.defaultColaAvoidOverlap)     : defaults.defaultColaAvoidOverlap,
         maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime,
-        gravity:           settings.defaultColaGravity !== undefined ? Number(settings.defaultColaGravity) : defaults.defaultColaGravity,
+        gravity:           settings.defaultColaGravity           !== undefined ? Number(settings.defaultColaGravity)           : defaults.defaultColaGravity,
       }
       this.colaConstraintsText = '[]'
       this.colaConstraints = []
+
+      this.coseOpts = {
+        nodeRepulsion:   settings.defaultCoseNodeRepulsion   !== undefined ? Number(settings.defaultCoseNodeRepulsion)   : defaults.defaultCoseNodeRepulsion,
+        idealEdgeLength: settings.defaultCoseIdealEdgeLength !== undefined ? Number(settings.defaultCoseIdealEdgeLength) : defaults.defaultCoseIdealEdgeLength,
+        gravity:         settings.defaultCoseGravity         !== undefined ? Number(settings.defaultCoseGravity)         : defaults.defaultCoseGravity,
+        nodeOverlap:     settings.defaultCoseNodeOverlap     !== undefined ? Number(settings.defaultCoseNodeOverlap)     : defaults.defaultCoseNodeOverlap,
+      }
+      this.breadthfirstOpts = {
+        directed:      settings.defaultBreadthfirstDirected      !== undefined ? Boolean(settings.defaultBreadthfirstDirected)      : defaults.defaultBreadthfirstDirected,
+        circle:        settings.defaultBreadthfirstCircle        !== undefined ? Boolean(settings.defaultBreadthfirstCircle)        : defaults.defaultBreadthfirstCircle,
+        spacingFactor: settings.defaultBreadthfirstSpacingFactor !== undefined ? Number(settings.defaultBreadthfirstSpacingFactor) : defaults.defaultBreadthfirstSpacingFactor,
+      }
+      this.gridOpts = {
+        spacingFactor: settings.defaultGridSpacingFactor !== undefined ? Number(settings.defaultGridSpacingFactor) : defaults.defaultGridSpacingFactor,
+        avoidOverlap:  settings.defaultGridAvoidOverlap  !== undefined ? Boolean(settings.defaultGridAvoidOverlap) : defaults.defaultGridAvoidOverlap,
+        rows:          settings.defaultGridRows          !== undefined ? settings.defaultGridRows                   : defaults.defaultGridRows,
+        cols:          settings.defaultGridCols          !== undefined ? settings.defaultGridCols                   : defaults.defaultGridCols,
+      }
+      this.circleOpts = {
+        spacingFactor: settings.defaultCircleSpacingFactor !== undefined ? Number(settings.defaultCircleSpacingFactor) : defaults.defaultCircleSpacingFactor,
+        clockwise:     settings.defaultCircleClockwise     !== undefined ? Boolean(settings.defaultCircleClockwise)    : defaults.defaultCircleClockwise,
+      }
+      this.concentricOpts = {
+        spacingFactor:  settings.defaultConcentricSpacingFactor  !== undefined ? Number(settings.defaultConcentricSpacingFactor)  : defaults.defaultConcentricSpacingFactor,
+        minNodeSpacing: settings.defaultConcentricMinNodeSpacing !== undefined ? Number(settings.defaultConcentricMinNodeSpacing) : defaults.defaultConcentricMinNodeSpacing,
+        clockwise:      settings.defaultConcentricClockwise      !== undefined ? Boolean(settings.defaultConcentricClockwise)     : defaults.defaultConcentricClockwise,
+        equidistant:    settings.defaultConcentricEquidistant    !== undefined ? Boolean(settings.defaultConcentricEquidistant)   : defaults.defaultConcentricEquidistant,
+      }
+      this.dagreOpts = {
+        rankDir: settings.defaultDagreRankDir !== undefined ? settings.defaultDagreRankDir          : defaults.defaultDagreRankDir,
+        nodeSep: settings.defaultDagreNodeSep !== undefined ? Number(settings.defaultDagreNodeSep)  : defaults.defaultDagreNodeSep,
+        rankSep: settings.defaultDagreRankSep !== undefined ? Number(settings.defaultDagreRankSep)  : defaults.defaultDagreRankSep,
+        edgeSep: settings.defaultDagreEdgeSep !== undefined ? Number(settings.defaultDagreEdgeSep)  : defaults.defaultDagreEdgeSep,
+        ranker:  settings.defaultDagreRanker  !== undefined ? settings.defaultDagreRanker           : defaults.defaultDagreRanker,
+      }
 
       const model = markRaw(new GraphModel([
         { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
@@ -342,9 +706,15 @@ export default {
         diagram:     model,
         name:        D3Util.tempInfo().name,
         description: D3Util.tempInfo().description,
-        layoutMode:  this.layoutMode,
-        colaOpts:    { ...this.colaOpts },
-        colaConstraints: this.colaConstraints,
+        layoutMode:       this.layoutMode,
+        colaOpts:         { ...this.colaOpts },
+        colaConstraints:  this.colaConstraints,
+        coseOpts:         { ...this.coseOpts },
+        breadthfirstOpts: { ...this.breadthfirstOpts },
+        gridOpts:         { ...this.gridOpts },
+        circleOpts:       { ...this.circleOpts },
+        concentricOpts:   { ...this.concentricOpts },
+        dagreOpts:        { ...this.dagreOpts },
       }
 
       this._newModifier(d3dInfo)
@@ -365,9 +735,15 @@ export default {
         this.jsonDiagram = JSON.stringify(json, null, 2)
       }
 
-      // Layout options live on the modifier
       this.layoutMode = mod?.layoutMode || 'cola'
-      if (mod?.colaOpts)  this.colaOpts  = { ...mod.colaOpts }
+      if (mod?.colaOpts)        this.colaOpts        = { ...mod.colaOpts }
+      if (mod?.coseOpts)        this.coseOpts        = { ...mod.coseOpts }
+      if (mod?.breadthfirstOpts) this.breadthfirstOpts = { ...mod.breadthfirstOpts }
+      if (mod?.gridOpts)        this.gridOpts        = { ...mod.gridOpts }
+      if (mod?.circleOpts)      this.circleOpts      = { ...mod.circleOpts }
+      if (mod?.concentricOpts)  this.concentricOpts  = { ...mod.concentricOpts }
+      if (mod?.dagreOpts)       this.dagreOpts       = { ...mod.dagreOpts }
+
       const constraints = mod?.cy?.colaConstraints ?? mod?.colaConstraints ?? []
       this.colaConstraints = Array.isArray(constraints) ? constraints : []
       this.colaConstraintsText = JSON.stringify(this.colaConstraints, null, 2)
@@ -419,8 +795,14 @@ export default {
     _applyLayoutOptions() {
       const mod = this._mod()
       if (mod) {
-        mod.layoutMode = this.layoutMode
-        mod.colaOpts   = { ...this.colaOpts }
+        mod.layoutMode       = this.layoutMode
+        mod.colaOpts         = { ...this.colaOpts }
+        mod.coseOpts         = { ...this.coseOpts }
+        mod.breadthfirstOpts = { ...this.breadthfirstOpts }
+        mod.gridOpts         = { ...this.gridOpts }
+        mod.circleOpts       = { ...this.circleOpts }
+        mod.concentricOpts   = { ...this.concentricOpts }
+        mod.dagreOpts        = { ...this.dagreOpts }
         const constraints = this._parseConstraints()
         if (constraints !== null) {
           this.colaConstraints = constraints
@@ -437,9 +819,15 @@ export default {
         name:        this.name,
         description: this.description,
         created:     this.created,
-        layoutMode:  this.layoutMode,
-        colaOpts:    { ...this.colaOpts },
-        colaConstraints: this.colaConstraints,
+        layoutMode:       this.layoutMode,
+        colaOpts:         { ...this.colaOpts },
+        colaConstraints:  this.colaConstraints,
+        coseOpts:         { ...this.coseOpts },
+        breadthfirstOpts: { ...this.breadthfirstOpts },
+        gridOpts:         { ...this.gridOpts },
+        circleOpts:       { ...this.circleOpts },
+        concentricOpts:   { ...this.concentricOpts },
+        dagreOpts:        { ...this.dagreOpts },
       }
 
       const model = this._modelFromJson()
@@ -464,9 +852,15 @@ export default {
         name:        this.name,
         description: this.description,
         created:     this.created,
-        layoutMode:  this.layoutMode,
-        colaOpts:    { ...this.colaOpts },
-        colaConstraints: this.colaConstraints,
+        layoutMode:       this.layoutMode,
+        colaOpts:         { ...this.colaOpts },
+        colaConstraints:  this.colaConstraints,
+        coseOpts:         { ...this.coseOpts },
+        breadthfirstOpts: { ...this.breadthfirstOpts },
+        gridOpts:         { ...this.gridOpts },
+        circleOpts:       { ...this.circleOpts },
+        concentricOpts:   { ...this.concentricOpts },
+        dagreOpts:        { ...this.dagreOpts },
       }
 
       const model = this._modelFromJson()
@@ -495,7 +889,6 @@ export default {
       this.close()
     },
 
-    // Parse the edited JSON (may be graphlib or cytoscape elements format)
     _modelFromJson() {
       try {
         const parsed = JSON.parse(this.jsonDiagram)
@@ -522,4 +915,20 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.fx-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgb(var(--fx-ink));
+}
+.fx-check-row input[type="checkbox"] {
+  accent-color: rgb(var(--fx-accent));
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+</style>

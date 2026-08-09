@@ -326,3 +326,100 @@ describe('proximity selection', () => {
     expect(graph.selectNodeProximity('l', 'n0')).toBeNull()
   })
 })
+
+describe('layout opts initialization', () => {
+  it('reads layoutMode from d3dInfo when provided', () => {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const graph = new DiagramGraph({ diagram: model, name: 'test', layoutMode: 'dagre' }, { emit: vi.fn() })
+    expect(graph.layoutMode).toBe('dagre')
+  })
+
+  it('defaults layoutMode to cola when not in d3dInfo or settings', () => {
+    const { graph } = makeGraph(1)
+    expect(graph.layoutMode).toBe('cola')
+  })
+
+  it('seeds per-layout opts from app defaults when not stored in d3dInfo', () => {
+    const { graph } = makeGraph(1)
+    expect(graph.coseOpts.nodeRepulsion).toBe(400000)
+    expect(graph.coseOpts.idealEdgeLength).toBe(100)
+    expect(graph.dagreOpts.rankDir).toBe('TB')
+    expect(graph.dagreOpts.ranker).toBe('network-simplex')
+    expect(graph.breadthfirstOpts.directed).toBe(true)
+    expect(graph.gridOpts.spacingFactor).toBe(1.5)
+    expect(graph.circleOpts.clockwise).toBe(true)
+    expect(graph.concentricOpts.equidistant).toBe(false)
+  })
+
+  it('merges stored d3dInfo coseOpts over defaults', () => {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const graph = new DiagramGraph({
+      diagram: model,
+      name: 'test',
+      layoutMode: 'cose',
+      coseOpts: { nodeRepulsion: 999000 },
+    }, { emit: vi.fn() })
+    expect(graph.layoutMode).toBe('cose')
+    expect(graph.coseOpts.nodeRepulsion).toBe(999000)
+    expect(graph.coseOpts.idealEdgeLength).toBe(100)
+  })
+
+  it('merges stored d3dInfo dagreOpts over defaults', () => {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const graph = new DiagramGraph({
+      diagram: model,
+      name: 'test',
+      layoutMode: 'dagre',
+      dagreOpts: { rankDir: 'LR', nodeSep: 80 },
+    }, { emit: vi.fn() })
+    expect(graph.dagreOpts.rankDir).toBe('LR')
+    expect(graph.dagreOpts.nodeSep).toBe(80)
+    expect(graph.dagreOpts.rankSep).toBe(50)
+  })
+})
+
+describe('setLayoutMode', () => {
+  it('updates this.layoutMode so the next redraw uses the new layout', () => {
+    const { graph, renderer } = makeGraph(2)
+    expect(graph.layoutMode).toBe('cola')
+    graph.setLayoutMode('dagre')
+    expect(graph.layoutMode).toBe('dagre')
+    expect(renderer.updateScene).toHaveBeenCalledWith(
+      graph.cy,
+      expect.objectContaining({ layoutMode: 'dagre' })
+    )
+  })
+})
+
+describe('redraw with layout opts', () => {
+  it('passes layoutMode and all per-layout opts to updateScene', () => {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const renderer = {
+      updateScene:    vi.fn(),
+      selectNode:     vi.fn(),
+      deselectNode:   vi.fn(),
+      selectEdge:     vi.fn(),
+      deselectEdge:   vi.fn(),
+      getNodeElement: vi.fn(() => null),
+      resetCamera:    vi.fn(),
+    }
+    const graph = new DiagramGraph(
+      { diagram: model, name: 'test', layoutMode: 'dagre', dagreOpts: { rankDir: 'LR' } },
+      { emit: vi.fn() }
+    )
+    graph.renderer = renderer
+    graph.redraw()
+    expect(renderer.updateScene).toHaveBeenCalledWith(
+      graph.cy,
+      expect.objectContaining({
+        layoutMode:       'dagre',
+        dagreOpts:        expect.objectContaining({ rankDir: 'LR' }),
+        coseOpts:         expect.any(Object),
+        breadthfirstOpts: expect.any(Object),
+        gridOpts:         expect.any(Object),
+        circleOpts:       expect.any(Object),
+        concentricOpts:   expect.any(Object),
+      })
+    )
+  })
+})

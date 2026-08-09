@@ -365,6 +365,138 @@ describe('CytoscapeRenderer', () => {
   it('leaves zoom disabled so only custom wheel handler zooms', () => {
     expect(renderer.cy.userZoomingEnabled()).toBe(false)
   })
+
+  it('uses opts.layoutMode over the settings cookie layout', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    const spy = vi.spyOn(VueCookies, 'get').mockReturnValue({ defaultLayoutMode: 'cola' })
+    const computeSpy = vi.spyOn(renderer, '_computeBuiltinLayout')
+
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'lm1', label: 'A' } },
+      { group: 'nodes', data: { id: 'lm2', label: 'B' } },
+    ])
+    await renderer.updateScene(model, { layoutMode: 'grid' })
+
+    expect(computeSpy).toHaveBeenCalledWith('grid', expect.anything())
+    spy.mockRestore()
+    computeSpy.mockRestore()
+  })
+
+  it('falls back to settings.defaultLayoutMode when opts.layoutMode is absent', async () => {
+    const VueCookies = (await import('vue-cookies')).default
+    const spy = vi.spyOn(VueCookies, 'get').mockReturnValue({ defaultLayoutMode: 'circle' })
+    const computeSpy = vi.spyOn(renderer, '_computeBuiltinLayout')
+
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'fb1', label: 'A' } },
+    ])
+    await renderer.updateScene(model, {})
+
+    expect(computeSpy).toHaveBeenCalledWith('circle', expect.anything())
+    spy.mockRestore()
+    computeSpy.mockRestore()
+  })
+})
+
+describe('_computeBuiltinLayout per-layout opts', () => {
+  let cr
+
+  beforeAll(() => {
+    const emitter = { on: vi.fn(), off: vi.fn(), emit: vi.fn() }
+    cr = new CytoscapeRenderer(undefined, emitter)
+    cr.init()
+  })
+
+  afterAll(() => {
+    cr.teardown()
+  })
+
+  it('applies coseOpts to the cose layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('cose', { coseOpts: { nodeRepulsion: 500000, idealEdgeLength: 200 } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('cose')
+    expect(opts.nodeRepulsion()).toBe(500000)
+    expect(opts.idealEdgeLength()).toBe(200)
+    spy.mockRestore()
+  })
+
+  it('applies dagreOpts to the dagre layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('dagre', { dagreOpts: { rankDir: 'LR', nodeSep: 80, rankSep: 100, edgeSep: 20, ranker: 'tight-tree' } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('dagre')
+    expect(opts.rankDir).toBe('LR')
+    expect(opts.nodeSep).toBe(80)
+    expect(opts.rankSep).toBe(100)
+    expect(opts.ranker).toBe('tight-tree')
+    spy.mockRestore()
+  })
+
+  it('applies gridOpts rows/cols/spacingFactor/avoidOverlap to the grid layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('grid', { gridOpts: { rows: 3, cols: 4, spacingFactor: 2.0, avoidOverlap: false } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('grid')
+    expect(opts.rows).toBe(3)
+    expect(opts.cols).toBe(4)
+    expect(opts.spacingFactor).toBe(2.0)
+    expect(opts.avoidOverlap).toBe(false)
+    spy.mockRestore()
+  })
+
+  it('applies breadthfirstOpts to the breadthfirst layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('breadthfirst', { breadthfirstOpts: { directed: false, circle: true, spacingFactor: 2.5 } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('breadthfirst')
+    expect(opts.directed).toBe(false)
+    expect(opts.circle).toBe(true)
+    expect(opts.spacingFactor).toBe(2.5)
+    spy.mockRestore()
+  })
+
+  it('applies circleOpts to the circle layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('circle', { circleOpts: { spacingFactor: 1.8, clockwise: false } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('circle')
+    expect(opts.spacingFactor).toBe(1.8)
+    expect(opts.clockwise).toBe(false)
+    spy.mockRestore()
+  })
+
+  it('applies concentricOpts to the concentric layout', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('concentric', { concentricOpts: { spacingFactor: 2.0, minNodeSpacing: 50, clockwise: false, equidistant: true } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.name).toBe('concentric')
+    expect(opts.spacingFactor).toBe(2.0)
+    expect(opts.minNodeSpacing).toBe(50)
+    expect(opts.clockwise).toBe(false)
+    expect(opts.equidistant).toBe(true)
+    spy.mockRestore()
+  })
+
+  it('falls back to app defaults when per-layout opts are absent', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('dagre', {})
+    const opts = spy.mock.calls[0][0]
+    expect(opts.rankDir).toBe('TB')
+    expect(opts.nodeSep).toBe(50)
+    expect(opts.rankSep).toBe(50)
+    expect(opts.ranker).toBe('network-simplex')
+    spy.mockRestore()
+  })
+
+  it('omits rows/cols from grid layout when opts are null', () => {
+    const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
+    cr._computeBuiltinLayout('grid', { gridOpts: { rows: null, cols: null } })
+    const opts = spy.mock.calls[0][0]
+    expect(opts.rows).toBeUndefined()
+    expect(opts.cols).toBeUndefined()
+    spy.mockRestore()
+  })
 })
 
 describe('hintTransform', () => {

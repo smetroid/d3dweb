@@ -663,7 +663,7 @@ export default class CytoscapeRenderer {
       return
     }
 
-    const animation = this._runLayout(options.colaOpts || {}, { prevPos, seed, animate })
+    const animation = this._runLayout(options, { prevPos, seed, animate })
     animation.then(() => this._renderCrosshairs())
 
     this.emitter?.emit('scene-updated', {
@@ -691,14 +691,14 @@ export default class CytoscapeRenderer {
     return { x: (bb.x1 + bb.x2) / 2, y: (bb.y1 + bb.y2) / 2 }
   }
 
-  _runLayout(colaOpts = {}, { prevPos = new Map(), seed, animate = true } = {}) {
+  _runLayout(opts = {}, { prevPos = new Map(), seed, animate = true } = {}) {
     const settings = readSettings()
-    const layoutMode = settings.defaultLayoutMode || 'cola'
+    const layoutMode = opts.layoutMode || settings.defaultLayoutMode || 'cola'
 
     if (layoutMode === 'cola') {
-      this._computeColaLayout(colaOpts, settings)
+      this._computeColaLayout(opts.colaOpts || {}, settings)
     } else {
-      this._computeBuiltinLayout(layoutMode)
+      this._computeBuiltinLayout(layoutMode, opts)
     }
 
     this._resolveGroupOverlaps()
@@ -783,43 +783,51 @@ export default class CytoscapeRenderer {
     })
   }
 
-  _computeBuiltinLayout(name) {
-    const s    = readSettings()
-    const opts = { name, fit: false, padding: 60, animate: false }
+  _computeBuiltinLayout(name, passedOpts = {}) {
+    const s      = readSettings()
+    const cyOpts = { name, fit: false, padding: 60, animate: false }
 
     if (name === 'cose') {
-      const repulsion = Number(s.defaultCoseNodeRepulsion)    || 400000
-      const edgeLen   = Number(s.defaultCoseIdealEdgeLength)  || 100
-      opts.nodeRepulsion   = () => repulsion
-      opts.idealEdgeLength = () => edgeLen
-      opts.gravity         = Number(s.defaultCoseGravity)     ?? 1
-      opts.nodeOverlap     = Number(s.defaultCoseNodeOverlap) || 4
+      const o = passedOpts.coseOpts || {}
+      const repulsion = Number(o.nodeRepulsion   ?? s.defaultCoseNodeRepulsion)   || 400000
+      const edgeLen   = Number(o.idealEdgeLength ?? s.defaultCoseIdealEdgeLength) || 100
+      cyOpts.nodeRepulsion   = () => repulsion
+      cyOpts.idealEdgeLength = () => edgeLen
+      cyOpts.gravity         = Number(o.gravity     ?? s.defaultCoseGravity)     ?? 1
+      cyOpts.nodeOverlap     = Number(o.nodeOverlap ?? s.defaultCoseNodeOverlap) || 4
     } else if (name === 'breadthfirst') {
-      opts.directed      = s.defaultBreadthfirstDirected !== false
-      opts.circle        = Boolean(s.defaultBreadthfirstCircle)
-      opts.spacingFactor = Number(s.defaultBreadthfirstSpacingFactor) || 1.5
+      const o = passedOpts.breadthfirstOpts || {}
+      cyOpts.directed      = (o.directed      ?? s.defaultBreadthfirstDirected) !== false
+      cyOpts.circle        = Boolean(o.circle  ?? s.defaultBreadthfirstCircle)
+      cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultBreadthfirstSpacingFactor) || 1.5
     } else if (name === 'grid') {
-      opts.spacingFactor = Number(s.defaultGridSpacingFactor) || 1.5
-      opts.avoidOverlap  = s.defaultGridAvoidOverlap !== false
-      if (s.defaultGridRows != null) opts.rows = Number(s.defaultGridRows)
-      if (s.defaultGridCols != null) opts.cols = Number(s.defaultGridCols)
+      const o = passedOpts.gridOpts || {}
+      cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultGridSpacingFactor) || 1.5
+      cyOpts.avoidOverlap  = (o.avoidOverlap   ?? s.defaultGridAvoidOverlap) !== false
+      const rows = o.rows ?? s.defaultGridRows
+      const cols = o.cols ?? s.defaultGridCols
+      if (rows != null) cyOpts.rows = Number(rows)
+      if (cols != null) cyOpts.cols = Number(cols)
     } else if (name === 'circle') {
-      opts.spacingFactor = Number(s.defaultCircleSpacingFactor) || 1.0
-      opts.clockwise     = s.defaultCircleClockwise !== false
+      const o = passedOpts.circleOpts || {}
+      cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultCircleSpacingFactor) || 1.0
+      cyOpts.clockwise     = (o.clockwise     ?? s.defaultCircleClockwise) !== false
     } else if (name === 'concentric') {
-      opts.spacingFactor  = Number(s.defaultConcentricSpacingFactor)  || 1.5
-      opts.minNodeSpacing = Number(s.defaultConcentricMinNodeSpacing) || 30
-      opts.clockwise      = s.defaultConcentricClockwise !== false
-      opts.equidistant    = Boolean(s.defaultConcentricEquidistant)
+      const o = passedOpts.concentricOpts || {}
+      cyOpts.spacingFactor  = Number(o.spacingFactor  ?? s.defaultConcentricSpacingFactor)  || 1.5
+      cyOpts.minNodeSpacing = Number(o.minNodeSpacing ?? s.defaultConcentricMinNodeSpacing) || 30
+      cyOpts.clockwise      = (o.clockwise    ?? s.defaultConcentricClockwise) !== false
+      cyOpts.equidistant    = Boolean(o.equidistant ?? s.defaultConcentricEquidistant)
     } else if (name === 'dagre') {
-      opts.rankDir = s.defaultDagreRankDir  || 'TB'
-      opts.nodeSep = Number(s.defaultDagreNodeSep) || 50
-      opts.rankSep = Number(s.defaultDagreRankSep) || 50
-      opts.edgeSep = Number(s.defaultDagreEdgeSep) || 10
-      opts.ranker  = s.defaultDagreRanker   || 'network-simplex'
+      const o = passedOpts.dagreOpts || {}
+      cyOpts.rankDir = (o.rankDir ?? s.defaultDagreRankDir)  || 'TB'
+      cyOpts.nodeSep = Number(o.nodeSep ?? s.defaultDagreNodeSep) || 50
+      cyOpts.rankSep = Number(o.rankSep ?? s.defaultDagreRankSep) || 50
+      cyOpts.edgeSep = Number(o.edgeSep ?? s.defaultDagreEdgeSep) || 10
+      cyOpts.ranker  = (o.ranker  ?? s.defaultDagreRanker)   || 'network-simplex'
     }
 
-    this.cy.layout(opts).run()
+    this.cy.layout(cyOpts).run()
   }
 
   // Viewport to fit the freshly laid-out graph, honoring the "fit on open"
