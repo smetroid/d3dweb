@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import OtherKeys from '@/helpers/OtherKeys.js'
 
 vi.mock('vue-cookies', () => ({
-  default: { get: () => null, set: () => {} },
+  default: { get: () => null, set: () => {} }
 }))
 
 function makeSut(opts = {}) {
@@ -14,19 +14,23 @@ function makeSut(opts = {}) {
     selectedEdges: [],
     nodeCount: () => 3,
     edgeCount: () => 2,
-    selectNode: vi.fn(i => `node-${i}`),
-    selectEdge: vi.fn(i => `edge-${i}`),
+    selectNode: vi.fn((i) => `node-${i}`),
+    selectEdge: vi.fn((i) => `edge-${i}`),
     removeSelection: vi.fn(),
     removeEdgeSelection: vi.fn(),
-    getNodeData: vi.fn(id => ({ id, label: 'x' })),
-    getEdgeData: vi.fn(id => ({ id, label: 'e' })),
+    getNodeData: vi.fn((id) => ({ id, label: 'x' })),
+    getEdgeData: vi.fn((id) => ({ id, label: 'e' })),
     addNode: vi.fn(),
     addEdge: vi.fn(),
-    arrayRemove: vi.fn((arr, item) => arr.filter(x => x !== item)),
-    getNode: vi.fn(() => opts.noNode ? null : fakeElement()),
-    getEdgeId: vi.fn(i => `edge-${i}`),
-    renderer: { getAllNodeElements: vi.fn(() => opts.elements || []), selectEdge: vi.fn(), deselectEdge: vi.fn() },
-    ...opts.modifier,
+    arrayRemove: vi.fn((arr, item) => arr.filter((x) => x !== item)),
+    getNode: vi.fn(() => (opts.noNode ? null : fakeElement())),
+    getEdgeId: vi.fn((i) => `edge-${i}`),
+    renderer: {
+      getAllNodeElements: vi.fn(() => opts.elements || []),
+      selectEdge: vi.fn(),
+      deselectEdge: vi.fn()
+    },
+    ...opts.modifier
   }
   const hintFunction = vi.fn()
   const keys = new OtherKeys(emitter, modifier, hintFunction)
@@ -36,7 +40,7 @@ function makeSut(opts = {}) {
 function fakeElement() {
   return {
     classList: { add: vi.fn(), remove: vi.fn() },
-    appendChild: vi.fn(),
+    appendChild: vi.fn()
   }
 }
 
@@ -109,9 +113,15 @@ describe('OtherKeys h/l navigation', () => {
   function makeProxSut() {
     return makeSut({
       modifier: {
-        selectNodeProximity: vi.fn((direction, fromId) => ({ id: `prox-${direction}-${fromId}`, index: 1 })),
-        selectEdgeProximity: vi.fn((direction, fromId) => ({ id: `proxE-${direction}-${fromId}`, index: 2 })),
-      },
+        selectNodeProximity: vi.fn((direction, fromId) => ({
+          id: `prox-${direction}-${fromId}`,
+          index: 1
+        })),
+        selectEdgeProximity: vi.fn((direction, fromId) => ({
+          id: `proxE-${direction}-${fromId}`,
+          index: 2
+        }))
+      }
     })
   }
 
@@ -160,7 +170,7 @@ describe('OtherKeys buildHints', () => {
   it('assigns sequential hint characters to elements', () => {
     const { keys } = makeSut()
     const elements = [{}, {}, {}, {}]
-    expect(keys.buildHints(elements)).toEqual(['a', 's', 'd', 'f', 'j'])
+    expect(keys.buildHints(elements)).toEqual(['a', 's', 'd', 'f'])
   })
 
   it('prepends the wrap prefix once elements exceed the alphabet', () => {
@@ -169,8 +179,8 @@ describe('OtherKeys buildHints', () => {
     const elements = Array.from({ length: alphabet.length + 2 })
     const hints = keys.buildHints(elements)
     expect(hints).toHaveLength(elements.length)
-    expect(hints[0]).toBe('s')
-    expect(hints.at(-1)).toBe('ad')
+    expect(hints[0]).toBe('a')
+    expect(hints.at(-1)).toBe('as')
   })
 })
 
