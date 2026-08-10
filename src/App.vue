@@ -13,7 +13,10 @@ import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
 import { computed, markRaw } from 'vue'
+import { useRoute } from 'vue-router'
 import D3DApi from '@/services/api'
+
+const route = useRoute()
 
 /*
 // Theme specific
@@ -32,7 +35,8 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <v-main app>
+    <RouterView v-if="route.name === 'collab-poc'" />
+    <v-main app v-else>
       <Teleport to="body">
         <div class="fx-toast-stack">
           <TransitionGroup name="fx-toast">

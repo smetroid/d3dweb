@@ -26,7 +26,10 @@
     "vue": "^3.4.15",
     "vue-cookies": "^1.8.3",
     "vue-router": "^4.2.5",
-    "vuetify": "^3.7.4"
+    "vuetify": "^3.7.4",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.1.0",
+    "yjs": "^13.6.32"
   },
   "lint-staged": {
     "*.{vue,js,jsx,cjs,mjs}": "eslint --fix",

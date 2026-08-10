@@ -5,7 +5,7 @@ runLegacyMigrationOnce()
 
 import { createApp } from 'vue'
 import App from '@/App.vue'
-//import router from '@/router'
+import router from '@/router'
 // Vuetify
 import 'vuetify/styles'
 // HUD stylesheet — imported after Vuetify so our class rules beat Vuetify's
@@ -39,7 +39,7 @@ import VueCookies from 'vue-cookies'
 
 const app = createApp(App)
 // fixes the warning in the debugger
-//app.use(router)
+app.use(router)
 app.use(vuetify)
 app.use(VueCookies)
 app.component('FocusTrap', FocusTrap)
