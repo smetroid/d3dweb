@@ -2,6 +2,7 @@ import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import api from '@/services/api'
+import { clientId as collabClientId } from '@/services/collab'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -586,7 +587,8 @@ export default class DiagramGraph {
         id: this.d3dInfo.id,
         name: this.d3dInfo.name || D3Util.tempInfo().name,
         description: this.d3dInfo.description || D3Util.tempInfo().description,
-        diagram: JSON.stringify(json)
+        diagram: JSON.stringify(json),
+        clientId: collabClientId()
       })
     } catch (err) {
       console.error('collab auto-save failed', err)
