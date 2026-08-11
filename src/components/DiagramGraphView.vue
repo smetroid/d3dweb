@@ -25,10 +25,7 @@
           ref="threeContainer"
           tabindex="0"
           class="three-container"
-          @mousedown="
-            $event.currentTarget.focus()
-            $event.preventDefault()
-          "
+          @mousedown="_onContainerMousedown"
           @focusout="onContainerFocusOut"
         />
 
@@ -465,6 +462,11 @@ export default {
           }
         }
       }
+    },
+
+    _onContainerMousedown(event) {
+      event.currentTarget.focus()
+      event.preventDefault()
     },
 
     initials(name) {
