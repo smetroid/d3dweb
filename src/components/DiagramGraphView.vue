@@ -1,7 +1,5 @@
 <template>
-  <div
-    @keydown.prevent="keyPress($event)"
-  >
+  <div @keydown.prevent="keyPress($event)">
     <FocusTrap
       v-model:active="trapGraph"
       :escapeDeactivates="false"
@@ -12,14 +10,14 @@
       <div id="trap" ref="trapDiv" class="trap is-active">
         <div v-if="diagramInfo" class="d3d-info">
           <h1>D3DInfo:</h1>
-          SelectedNodes: {{ selectedNodes }} <br>
-          SelectedEdges: {{ selectedEdges }} <br>
-          DoubleSelection: {{ doubleSelection }} <br>
-          FocusedEdgeID: {{ focusedEdgeId }} <br>
-          FocusedNodeID: {{ focusedNodeId }} <br>
-          Hints: {{ hints }} <br>
-          FocusedIndex: {{ focusedIndex }} <br>
-          EdgesOrNodes: {{ edgeOrNode }} <br>
+          SelectedNodes: {{ selectedNodes }} <br />
+          SelectedEdges: {{ selectedEdges }} <br />
+          DoubleSelection: {{ doubleSelection }} <br />
+          FocusedEdgeID: {{ focusedEdgeId }} <br />
+          FocusedNodeID: {{ focusedNodeId }} <br />
+          Hints: {{ hints }} <br />
+          FocusedIndex: {{ focusedIndex }} <br />
+          EdgesOrNodes: {{ edgeOrNode }} <br />
         </div>
 
         <!-- Three.js mounts its CSS3D + WebGL canvases here -->
@@ -27,7 +25,10 @@
           ref="threeContainer"
           tabindex="0"
           class="three-container"
-          @mousedown="$event.currentTarget.focus(); $event.preventDefault()"
+          @mousedown="
+            $event.currentTarget.focus()
+            $event.preventDefault()
+          "
           @focusout="onContainerFocusOut"
         />
 
@@ -48,9 +49,19 @@
           </span>
         </div>
 
+        <div v-if="hasPeers" class="collab-peers-hud">
+          <span
+            v-for="(peer, cid) in peers"
+            :key="cid"
+            class="peer-avatar"
+            :style="{ background: peer.color }"
+            :title="peer.displayName"
+            >{{ initials(peer.displayName) }}</span
+          >
+        </div>
+
         <div v-if="graphEmpty" class="graph-empty-hint">
-          Empty diagram —
-          press <span class="kbd">n</span> to create a node
+          Empty diagram — press <span class="kbd">n</span> to create a node
           <span class="sep">·</span>
           <span class="kbd">/</span> for help
         </div>
@@ -89,6 +100,23 @@ import D3NodeForm from '@/components/D3NodeForm.vue'
 import Hints from '@/helpers/Hints.js'
 import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
+import * as collab from '@/services/collab'
+
+function _decodeJwt(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return {}
+  }
+}
+
+const _PEER_COLORS = ['#ef5350', '#ab47bc', '#29b6f6', '#26a69a', '#ffb300', '#66bb6a']
+function _sessionColor() {
+  const id = sessionStorage.getItem('d3d_collab_client_id') || ''
+  let h = 0
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff
+  return _PEER_COLORS[Math.abs(h) % _PEER_COLORS.length]
+}
 
 export default {
   name: 'DiagramGraphView',
@@ -97,26 +125,28 @@ export default {
   components: { D3NodeForm, D3EdgeForm },
   data() {
     return {
-      edgeOrNode:      'nodes',
-      focusedIndex:    null,
-      trapGraph:       true,
-      focusedEdgeId:   null,
-      focusedNodeId:   null,
+      edgeOrNode: 'nodes',
+      focusedIndex: null,
+      trapGraph: true,
+      focusedEdgeId: null,
+      focusedNodeId: null,
       hintKeysReplaced: '',
-      hints:           {},
-      d3Data:          {},
-      diagramInfo:     false,
-      selectedNodes:   [],
-      selectedEdges:   [],
+      hints: {},
+      d3Data: {},
+      diagramInfo: false,
+      selectedNodes: [],
+      selectedEdges: [],
       doubleSelection: [],
-      openSheet:       false,
-      paletteOpen:     false,
-      escCount:        0,
-      threeDRenderer:  null,
-      graphEmpty:      false,
-      zoomLevel:       1,
-      nodeCount:       0,
-      edgeCount:       0,
+      openSheet: false,
+      paletteOpen: false,
+      escCount: 0,
+      threeDRenderer: null,
+      graphEmpty: false,
+      zoomLevel: 1,
+      nodeCount: 0,
+      edgeCount: 0,
+      peers: {},
+      collabStatus: 'disconnected'
     }
   },
   mounted() {
@@ -134,10 +164,12 @@ export default {
     this.emitter.on('d3ResetValues', () => this.resetValues())
     this.emitter.on('scene-updated', ({ count, nodes, edges }) => {
       this.graphEmpty = count === 0
-      this.nodeCount  = nodes || 0
-      this.edgeCount  = edges || 0
+      this.nodeCount = nodes || 0
+      this.edgeCount = edges || 0
     })
-    this.emitter.on('viewport-changed', ({ zoom }) => { this.zoomLevel = zoom })
+    this.emitter.on('viewport-changed', ({ zoom }) => {
+      this.zoomLevel = zoom
+    })
 
     this.emitter.on('setSheetToFalse', () => {
       this.openSheet = false
@@ -147,7 +179,7 @@ export default {
     })
 
     this.emitter.on('edgeOrNode', (selection) => {
-      if (selection === 'Select Edges')     this.edgeOrNode = 'edges'
+      if (selection === 'Select Edges') this.edgeOrNode = 'edges'
       else if (selection === 'Select Node') this.edgeOrNode = 'nodes'
     })
 
@@ -163,9 +195,23 @@ export default {
       this.paletteOpen = false
       if (this.active === 'Graph') this.trapGraph = true
     })
+
+    if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
+      collab.onStatusChange((s) => {
+        this.collabStatus = s
+      })
+      collab.onPresence((msg) => {
+        this.peers = { ...this.peers, [msg.clientId]: msg }
+        this.threeDRenderer?.setPeerSelections(this.peers)
+      })
+      collab.onDiagramUpdated((msg) => {
+        this.emitter.emit('diagram:updated-remote', msg)
+      })
+    }
   },
   beforeUnmount() {
     if (this.threeDRenderer) this.threeDRenderer.teardown()
+    if (import.meta.env.VITE_COLLAB_ENABLED === 'true') collab.disconnect()
   },
   methods: {
     _initRenderer() {
@@ -202,7 +248,8 @@ export default {
         this.openSheet ||
         this.paletteOpen ||
         document.activeElement !== document.body
-      ) return
+      )
+        return
       const el = this.$refs.threeContainer
       if (!el) return
       setTimeout(() => {
@@ -212,7 +259,8 @@ export default {
           this.paletteOpen ||
           document.activeElement !== document.body ||
           document.activeElement === el
-        ) return
+        )
+          return
         el.focus({ preventScroll: true })
       }, 0)
     },
@@ -252,7 +300,7 @@ export default {
       if (!data?.id) {
         this.emitter.emit('appMessage', {
           message: `Focus a ${isNode ? 'node' : 'edge'} first (j/k to navigate) to edit it`,
-          status: 'info',
+          status: 'info'
         })
         return
       }
@@ -270,7 +318,7 @@ export default {
       if (data.dataset?.type === 'edge') {
         const edgeId = data.dataset.edgeId
         if (!edgeId) return
-        this.d3Data        = mod.getEdgeData(edgeId)
+        this.d3Data = mod.getEdgeData(edgeId)
         this.focusedEdgeId = edgeId
         this.emitter.emit('changeActive', 'Edit Edge')
         this.openSheet = true
@@ -285,7 +333,7 @@ export default {
         this.d3Data = mod.getEdgeData(data.id)
         this.emitter.emit('changeActive', 'Edit Edge')
       } else {
-        this.d3Data        = mod.getNodeData(nodeId)
+        this.d3Data = mod.getNodeData(nodeId)
         this.focusedNodeId = nodeId
         this.threeDRenderer?.setFocusedNode(nodeId)
         this.emitter.emit('changeActive', 'Edit Node')
@@ -299,55 +347,78 @@ export default {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
       // Ignore modifier-only, navigation and function keys (not shortcuts)
-      const ignored = ['Alt', 'Control', 'Meta', 'Shift', 'CapsLock', 'Tab',
-        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace',
-        'Delete', 'Home', 'End', 'PageUp', 'PageDown', 'ContextMenu',
-        'NumLock', 'ScrollLock', 'PrintScreen', 'Pause', 'Unidentified']
+      const ignored = [
+        'Alt',
+        'Control',
+        'Meta',
+        'Shift',
+        'CapsLock',
+        'Tab',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'Backspace',
+        'Delete',
+        'Home',
+        'End',
+        'PageUp',
+        'PageDown',
+        'ContextMenu',
+        'NumLock',
+        'ScrollLock',
+        'PrintScreen',
+        'Pause',
+        'Unidentified'
+      ]
       if (ignored.includes(event.key) || event.key.startsWith('F')) return
 
       const mod = this.modifier?.value ?? this.modifier
       if (!mod || typeof mod.redraw !== 'function') return
 
-      mod.focusedIndex   = this.focusedIndex
-      mod.selectedNodes  = this.selectedNodes
+      mod.focusedIndex = this.focusedIndex
+      mod.selectedNodes = this.selectedNodes
       mod.doubleSelection = this.doubleSelection
-      mod.selectedEdges  = this.selectedEdges
+      mod.selectedEdges = this.selectedEdges
 
       if (D3Util.debug) console.log('keyPress', event)
 
       if (Object.keys(this.hints).length >= 1) {
         const hints = new Hints()
-        hints.data             = this.hints
+        hints.data = this.hints
         hints.hintKeysReplaced = this.hintKeysReplaced
         const data = hints.followLinks(event)
 
         if (Object.keys(data.hints).length > 1) {
-          this.hints           = data.hints
+          this.hints = data.hints
           this.hintKeysReplaced = data.hintKeys
         } else {
           if (event.key !== 'Escape') {
             const target = data.hints[data.hintKeys]
             if (target) this.hintSelection(target)
           }
-          this.hints           = {}
+          this.hints = {}
           this.hintKeysReplaced = ''
           hints.removeHints(data.hints)
         }
       } else if (event.altKey === true || event.metaKey === true) {
         const altKeys = new AltKeys(this.emitter, mod)
-        const reset   = altKeys.key(event.key, this)
+        const reset = altKeys.key(event.key, this)
         if (reset) this.resetValues()
       } else {
         const otherKeys = new OtherKeys(this.emitter, mod, this._onHintBadgeClick)
-        const result    = otherKeys.defaultActions(
-          event.key, this.edgeOrNode, this.focusedNodeId, this.focusedEdgeId
+        const result = otherKeys.defaultActions(
+          event.key,
+          this.edgeOrNode,
+          this.focusedNodeId,
+          this.focusedEdgeId
         )
 
         if (D3Util.debug) console.log('keyPress result', result)
 
         if (event.key === 'e') {
           if (!result) return
-          this.d3Data    = result
+          this.d3Data = result
           this.openSheet = true
         }
 
@@ -360,19 +431,27 @@ export default {
             if (this.edgeOrNode === 'nodes') {
               const ok = mod.deleteNode(this.focusedNodeId)
               if (ok) this.focusedNodeId = null
-              else this.emitter.emit('appMessage', { message: 'Unable to delete node', status: 'info' })
+              else
+                this.emitter.emit('appMessage', {
+                  message: 'Unable to delete node',
+                  status: 'info'
+                })
             } else {
               const ok = mod.deleteEdge(this.focusedEdgeId)
               if (ok) this.focusedEdgeId = null
-              else this.emitter.emit('appMessage', { message: 'Unable to delete edge', status: 'info' })
+              else
+                this.emitter.emit('appMessage', {
+                  message: 'Unable to delete edge',
+                  status: 'info'
+                })
             }
           } else if (event.key === 'f') {
             this.hints = result.hints
           } else if (event.key === 'Enter') {
-            this.selectedNodes   = result.selectedNodes
+            this.selectedNodes = result.selectedNodes
             this.doubleSelection = result.doubleSelection
-            mod.selectedNodes    = result.selectedNodes
-            mod.doubleSelection  = result.doubleSelection
+            mod.selectedNodes = result.selectedNodes
+            mod.doubleSelection = result.doubleSelection
             this._syncSelectionCrosshairs()
           } else if (event.key === 'Escape') {
             if (this.escCount >= 2) this.resetValues()
@@ -380,7 +459,7 @@ export default {
           } else if (event.key === 'y') {
             mod.createCopyV2(this.focusedNodeId)
           } else {
-            if (this.edgeOrNode === 'nodes')      this.focusedNodeId = result.nodesId
+            if (this.edgeOrNode === 'nodes') this.focusedNodeId = result.nodesId
             else if (this.edgeOrNode === 'edges') this.focusedEdgeId = result.edgesId
             this.focusedIndex = result.index
           }
@@ -388,16 +467,25 @@ export default {
       }
     },
 
+    initials(name) {
+      return (name || '?')
+        .split(/\s+/)
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    },
+
     _clearMultiSelection() {
-      this.selectedNodes   = []
-      this.selectedEdges   = []
+      this.selectedNodes = []
+      this.selectedEdges = []
       this.doubleSelection = []
       this.threeDRenderer?.clearSelectionCrosshairs()
       const mod = this.modifier?.value ?? this.modifier
       if (mod) {
-        mod.selectedNodes    = []
-        mod.doubleSelection  = []
-        mod.selectedEdges    = []
+        mod.selectedNodes = []
+        mod.doubleSelection = []
+        mod.selectedEdges = []
       }
     },
 
@@ -412,13 +500,13 @@ export default {
         if (this.focusedEdgeId) mod.removeEdgeSelectionById(this.focusedEdgeId)
       }
       this.threeDRenderer?.clearSelectionCrosshairs()
-      this.selectedNodes   = []
-      this.selectedEdges   = []
+      this.selectedNodes = []
+      this.selectedEdges = []
       this.doubleSelection = []
-      this.focusedIndex    = null
-      this.focusedEdgeId   = null
-      this.focusedNodeId   = null
-      this.escCount        = 0
+      this.focusedIndex = null
+      this.focusedEdgeId = null
+      this.focusedNodeId = null
+      this.escCount = 0
       if (mod) mod.redraw()
       this.emitter.emit('changeActive')
     },
@@ -428,15 +516,18 @@ export default {
     _syncSelectionCrosshairs() {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod || !this.threeDRenderer) return
-      const ids  = (this.selectedNodes || []).map(i => mod.getNodeId(i)).filter(Boolean)
-      const dIds = (this.doubleSelection || []).map(i => mod.getNodeId(i)).filter(Boolean)
+      const ids = (this.selectedNodes || []).map((i) => mod.getNodeId(i)).filter(Boolean)
+      const dIds = (this.doubleSelection || []).map((i) => mod.getNodeId(i)).filter(Boolean)
       this.threeDRenderer.setSelectedNodes(ids, dIds)
-    },
+    }
   },
   computed: {
     zoomDisplay() {
       return (this.zoomLevel || 1).toFixed(2) + '×'
     },
+    hasPeers() {
+      return Object.keys(this.peers).length > 0
+    }
   },
   watch: {
     // When App.vue replaces the modifier (new diagram opened), reconnect renderer
@@ -447,30 +538,45 @@ export default {
           mod.renderer = this.threeDRenderer
           mod.redraw()
         }
+        if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
+          collab.disconnect()
+          this.peers = {}
+          const id = mod?.d3dInfo?.id
+          if (id) collab.connect(id)
+        }
       },
-      deep: false,
+      deep: false
+    },
+    focusedNodeId(id) {
+      if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
+      const payload = _decodeJwt(localStorage.getItem('token') || '')
+      collab.sendPresence({
+        displayName: payload.username || payload.sub || 'Guest',
+        color: _sessionColor(),
+        selection: id ? [id] : []
+      })
     },
     active(val) {
       if (this.escCount === 3) {
-        this.selectedNodes   = []
-        this.selectedEdges   = []
-        this.focusedIndex    = null
-        this.focusedEdgeId   = null
-        this.focusedNodeId   = null
-        this.escCount        = 0
+        this.selectedNodes = []
+        this.selectedEdges = []
+        this.focusedIndex = null
+        this.focusedEdgeId = null
+        this.focusedNodeId = null
+        this.escCount = 0
       } else {
         this.escCount++
       }
       this.trapGraph = val === 'Graph'
 
-      const isEdit = val === 'Add Node' || val === 'Edit Node' ||
-                     val === 'Add Edge' || val === 'Edit Edge'
+      const isEdit =
+        val === 'Add Node' || val === 'Edit Node' || val === 'Add Edge' || val === 'Edit Edge'
       this.openSheet = isEdit
       if (isEdit) {
         this.$nextTick(() => this.threeDRenderer?.zoomTo(this.d3Data?.id))
       }
-    },
-  },
+    }
+  }
 }
 </script>
 
@@ -570,12 +676,42 @@ export default {
   top: 4px;
   left: 4px;
   z-index: 10;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   padding: 4px 8px;
   font-size: 11px;
   pointer-events: none;
 }
 
-h1, h2 { font-weight: normal; }
+h1,
+h2 {
+  font-weight: normal;
+}
+
+.collab-peers-hud {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.peer-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  cursor: default;
+}
 </style>
