@@ -35,7 +35,7 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <RouterView v-if="route.name === 'collab-poc'" />
+    <RouterView v-if="route.name === 'collab-poc' || route.name === 'collab-cyto-poc'" />
     <v-main app v-else>
       <Teleport to="body">
         <div class="fx-toast-stack">

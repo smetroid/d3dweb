@@ -7,6 +7,11 @@ const router = createRouter({
       path: '/collab-poc',
       name: 'collab-poc',
       component: () => import('@/components/CollabPoc.vue')
+    },
+    {
+      path: '/collab-cyto-poc',
+      name: 'collab-cyto-poc',
+      component: () => import('@/components/CollabCytoPoc.vue')
     }
   ]
 })
