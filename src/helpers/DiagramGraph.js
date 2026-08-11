@@ -1,14 +1,15 @@
 import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
+import api from '@/services/api'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
     this.d3dInfo = d3dInfo
     this.emitter = emitter
-    this.cy = d3dInfo.diagram          // GraphModel (facade: nodes()/edges()/getElementById())
-    this.diagram = d3dInfo.diagram     // alias kept for backward compat
-    this.renderer = null               // CytoscapeRenderer, set by DiagramGraphView
+    this.cy = d3dInfo.diagram // GraphModel (facade: nodes()/edges()/getElementById())
+    this.diagram = d3dInfo.diagram // alias kept for backward compat
+    this.renderer = null // CytoscapeRenderer, set by DiagramGraphView
     this.selectedNodes = []
     this.doubleSelection = []
     this.selectedEdges = []
@@ -20,57 +21,138 @@ export default class DiagramGraph {
     const settings = VueCookies.get('settings') || D3Util.appDefaults()
     this.layoutMode = d3dInfo.layoutMode || settings.defaultLayoutMode || 'cola'
 
-    this.colaOpts = Object.assign({
-      edgeLength:        settings.defaultColaEdgeLength        !== undefined ? Number(settings.defaultColaEdgeLength)        : 120,
-      nodeSpacing:       settings.defaultColaNodeSpacing       !== undefined ? Number(settings.defaultColaNodeSpacing)       : 30,
-      flow:              settings.defaultColaFlow              !== undefined ? settings.defaultColaFlow                      : null,
-      avoidOverlap:      settings.defaultColaAvoidOverlap      !== undefined ? Boolean(settings.defaultColaAvoidOverlap)     : true,
-      maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : 1500,
-      gravity:           settings.defaultColaGravity           !== undefined ? Number(settings.defaultColaGravity)           : 0,
-    }, d3dInfo.colaOpts)
+    this.colaOpts = Object.assign(
+      {
+        edgeLength:
+          settings.defaultColaEdgeLength !== undefined
+            ? Number(settings.defaultColaEdgeLength)
+            : 120,
+        nodeSpacing:
+          settings.defaultColaNodeSpacing !== undefined
+            ? Number(settings.defaultColaNodeSpacing)
+            : 30,
+        flow: settings.defaultColaFlow !== undefined ? settings.defaultColaFlow : null,
+        avoidOverlap:
+          settings.defaultColaAvoidOverlap !== undefined
+            ? Boolean(settings.defaultColaAvoidOverlap)
+            : true,
+        maxSimulationTime:
+          settings.defaultColaMaxSimulationTime !== undefined
+            ? Number(settings.defaultColaMaxSimulationTime)
+            : 1500,
+        gravity: settings.defaultColaGravity !== undefined ? Number(settings.defaultColaGravity) : 0
+      },
+      d3dInfo.colaOpts
+    )
 
-    this.coseOpts = Object.assign({
-      nodeRepulsion:   settings.defaultCoseNodeRepulsion   !== undefined ? Number(settings.defaultCoseNodeRepulsion)   : 400000,
-      idealEdgeLength: settings.defaultCoseIdealEdgeLength !== undefined ? Number(settings.defaultCoseIdealEdgeLength) : 100,
-      gravity:         settings.defaultCoseGravity         !== undefined ? Number(settings.defaultCoseGravity)         : 1,
-      nodeOverlap:     settings.defaultCoseNodeOverlap     !== undefined ? Number(settings.defaultCoseNodeOverlap)     : 4,
-    }, d3dInfo.coseOpts)
+    this.coseOpts = Object.assign(
+      {
+        nodeRepulsion:
+          settings.defaultCoseNodeRepulsion !== undefined
+            ? Number(settings.defaultCoseNodeRepulsion)
+            : 400000,
+        idealEdgeLength:
+          settings.defaultCoseIdealEdgeLength !== undefined
+            ? Number(settings.defaultCoseIdealEdgeLength)
+            : 100,
+        gravity:
+          settings.defaultCoseGravity !== undefined ? Number(settings.defaultCoseGravity) : 1,
+        nodeOverlap:
+          settings.defaultCoseNodeOverlap !== undefined
+            ? Number(settings.defaultCoseNodeOverlap)
+            : 4
+      },
+      d3dInfo.coseOpts
+    )
 
-    this.breadthfirstOpts = Object.assign({
-      directed:      settings.defaultBreadthfirstDirected      !== undefined ? Boolean(settings.defaultBreadthfirstDirected)      : true,
-      circle:        settings.defaultBreadthfirstCircle        !== undefined ? Boolean(settings.defaultBreadthfirstCircle)        : false,
-      spacingFactor: settings.defaultBreadthfirstSpacingFactor !== undefined ? Number(settings.defaultBreadthfirstSpacingFactor)  : 1.5,
-    }, d3dInfo.breadthfirstOpts)
+    this.breadthfirstOpts = Object.assign(
+      {
+        directed:
+          settings.defaultBreadthfirstDirected !== undefined
+            ? Boolean(settings.defaultBreadthfirstDirected)
+            : true,
+        circle:
+          settings.defaultBreadthfirstCircle !== undefined
+            ? Boolean(settings.defaultBreadthfirstCircle)
+            : false,
+        spacingFactor:
+          settings.defaultBreadthfirstSpacingFactor !== undefined
+            ? Number(settings.defaultBreadthfirstSpacingFactor)
+            : 1.5
+      },
+      d3dInfo.breadthfirstOpts
+    )
 
-    this.gridOpts = Object.assign({
-      spacingFactor: settings.defaultGridSpacingFactor !== undefined ? Number(settings.defaultGridSpacingFactor)  : 1.5,
-      avoidOverlap:  settings.defaultGridAvoidOverlap  !== undefined ? Boolean(settings.defaultGridAvoidOverlap) : true,
-      rows:          settings.defaultGridRows  != null ? Number(settings.defaultGridRows)  : null,
-      cols:          settings.defaultGridCols  != null ? Number(settings.defaultGridCols)  : null,
-    }, d3dInfo.gridOpts)
+    this.gridOpts = Object.assign(
+      {
+        spacingFactor:
+          settings.defaultGridSpacingFactor !== undefined
+            ? Number(settings.defaultGridSpacingFactor)
+            : 1.5,
+        avoidOverlap:
+          settings.defaultGridAvoidOverlap !== undefined
+            ? Boolean(settings.defaultGridAvoidOverlap)
+            : true,
+        rows: settings.defaultGridRows != null ? Number(settings.defaultGridRows) : null,
+        cols: settings.defaultGridCols != null ? Number(settings.defaultGridCols) : null
+      },
+      d3dInfo.gridOpts
+    )
 
-    this.circleOpts = Object.assign({
-      spacingFactor: settings.defaultCircleSpacingFactor !== undefined ? Number(settings.defaultCircleSpacingFactor)  : 1.0,
-      clockwise:     settings.defaultCircleClockwise     !== undefined ? Boolean(settings.defaultCircleClockwise)     : true,
-    }, d3dInfo.circleOpts)
+    this.circleOpts = Object.assign(
+      {
+        spacingFactor:
+          settings.defaultCircleSpacingFactor !== undefined
+            ? Number(settings.defaultCircleSpacingFactor)
+            : 1.0,
+        clockwise:
+          settings.defaultCircleClockwise !== undefined
+            ? Boolean(settings.defaultCircleClockwise)
+            : true
+      },
+      d3dInfo.circleOpts
+    )
 
-    this.concentricOpts = Object.assign({
-      spacingFactor:  settings.defaultConcentricSpacingFactor  !== undefined ? Number(settings.defaultConcentricSpacingFactor)  : 1.5,
-      minNodeSpacing: settings.defaultConcentricMinNodeSpacing !== undefined ? Number(settings.defaultConcentricMinNodeSpacing) : 30,
-      clockwise:      settings.defaultConcentricClockwise      !== undefined ? Boolean(settings.defaultConcentricClockwise)     : true,
-      equidistant:    settings.defaultConcentricEquidistant    !== undefined ? Boolean(settings.defaultConcentricEquidistant)   : false,
-    }, d3dInfo.concentricOpts)
+    this.concentricOpts = Object.assign(
+      {
+        spacingFactor:
+          settings.defaultConcentricSpacingFactor !== undefined
+            ? Number(settings.defaultConcentricSpacingFactor)
+            : 1.5,
+        minNodeSpacing:
+          settings.defaultConcentricMinNodeSpacing !== undefined
+            ? Number(settings.defaultConcentricMinNodeSpacing)
+            : 30,
+        clockwise:
+          settings.defaultConcentricClockwise !== undefined
+            ? Boolean(settings.defaultConcentricClockwise)
+            : true,
+        equidistant:
+          settings.defaultConcentricEquidistant !== undefined
+            ? Boolean(settings.defaultConcentricEquidistant)
+            : false
+      },
+      d3dInfo.concentricOpts
+    )
 
-    this.dagreOpts = Object.assign({
-      rankDir: settings.defaultDagreRankDir || 'TB',
-      nodeSep: settings.defaultDagreNodeSep !== undefined ? Number(settings.defaultDagreNodeSep) : 50,
-      rankSep: settings.defaultDagreRankSep !== undefined ? Number(settings.defaultDagreRankSep) : 50,
-      edgeSep: settings.defaultDagreEdgeSep !== undefined ? Number(settings.defaultDagreEdgeSep) : 10,
-      ranker:  settings.defaultDagreRanker  || 'network-simplex',
-    }, d3dInfo.dagreOpts)
+    this.dagreOpts = Object.assign(
+      {
+        rankDir: settings.defaultDagreRankDir || 'TB',
+        nodeSep:
+          settings.defaultDagreNodeSep !== undefined ? Number(settings.defaultDagreNodeSep) : 50,
+        rankSep:
+          settings.defaultDagreRankSep !== undefined ? Number(settings.defaultDagreRankSep) : 50,
+        edgeSep:
+          settings.defaultDagreEdgeSep !== undefined ? Number(settings.defaultDagreEdgeSep) : 10,
+        ranker: settings.defaultDagreRanker || 'network-simplex'
+      },
+      d3dInfo.dagreOpts
+    )
 
     this.colaConstraints = d3dInfo.colaConstraints || []
     this.cy.colaConstraints = this.colaConstraints
+
+    this._saveTimer = null
   }
 
   // ─── Convenience counts ───────────────────────────────────────────────────────
@@ -87,15 +169,15 @@ export default class DiagramGraph {
 
   addNode(data) {
     const nodeData = {
-      label:       data.nodeLabel != null ? data.nodeLabel : '',
-      nodeShape:   data.nodeShape  || 'rectangle',
-      textHalign:  data.textHalign || 'center',
-      textValign:  data.textValign || 'top',
-      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      label: data.nodeLabel != null ? data.nodeLabel : '',
+      nodeShape: data.nodeShape || 'rectangle',
+      textHalign: data.textHalign || 'center',
+      textValign: data.textValign || 'top',
+      bgColor: data.bgColor || this._legacyFillColor(data.style),
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize:    data.fontSize,
-      style:       data.style,
+      fontSize: data.fontSize,
+      style: data.style
     }
     this._cleanPatch(nodeData)
     if (data.parentNode) {
@@ -111,14 +193,14 @@ export default class DiagramGraph {
     if (node.empty()) return
 
     const patch = {
-      label:       data.nodeLabel,
-      nodeShape:   data.nodeShape,
-      textHalign:  data.textHalign || 'center',
-      textValign:  data.textValign || 'top',
-      bgColor:     data.bgColor,
+      label: data.nodeLabel,
+      nodeShape: data.nodeShape,
+      textHalign: data.textHalign || 'center',
+      textValign: data.textValign || 'top',
+      bgColor: data.bgColor,
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize:    data.fontSize,
+      fontSize: data.fontSize
     }
     this._cleanPatch(patch)
 
@@ -158,7 +240,7 @@ export default class DiagramGraph {
   }
 
   deleteNodes(nodeIndices) {
-    nodeIndices.forEach(index => {
+    nodeIndices.forEach((index) => {
       const id = this.getNodeId(index)
       if (id) {
         const node = this.cy.getElementById(id)
@@ -172,14 +254,14 @@ export default class DiagramGraph {
 
   copyNode(data, parentId) {
     const copy = {
-      nodeLabel:  data.label,
-      nodeShape:  data.nodeShape,
+      nodeLabel: data.label,
+      nodeShape: data.nodeShape,
       textHalign: data.textHalign || 'center',
       textValign: data.textValign || 'top',
-      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      bgColor: data.bgColor || this._legacyFillColor(data.style),
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize:    data.fontSize,
+      fontSize: data.fontSize
     }
     if (parentId) copy.parentNode = parentId
     return this.addNode(copy)
@@ -188,17 +270,20 @@ export default class DiagramGraph {
   createCopyV2(id) {
     const node = this.cy.getElementById(id)
     const newId = this.copyNode(node.data())
-    node.children().forEach(child => this.createCopy(child.id(), newId))
+    node.children().forEach((child) => this.createCopy(child.id(), newId))
   }
 
   createCopy(id, parentId) {
     const node = this.cy.getElementById(id)
     const newId = this.copyNode(node.data(), parentId)
-    node.children().forEach(child => this.createCopy(child.id(), newId))
+    node.children().forEach((child) => this.createCopy(child.id(), newId))
   }
 
   getChildren(id) {
-    return this.cy.getElementById(id).children().map(n => n.id())
+    return this.cy
+      .getElementById(id)
+      .children()
+      .map((n) => n.id())
   }
 
   getParent(id) {
@@ -208,7 +293,7 @@ export default class DiagramGraph {
   // ─── Edge CRUD ────────────────────────────────────────────────────────────────
 
   addEdge(data) {
-    const nodeIds = this.cy.nodes().map(n => n.id())
+    const nodeIds = this.cy.nodes().map((n) => n.id())
     const label = data.edgeLabel != null ? data.edgeLabel : ''
 
     if (this.doubleSelection.length === 0) {
@@ -219,14 +304,14 @@ export default class DiagramGraph {
       }
     } else {
       const headId = nodeIds[this.doubleSelection[0]]
-      this.selectedNodes.forEach(nodeIndex => {
+      this.selectedNodes.forEach((nodeIndex) => {
         const targetId = nodeIds[nodeIndex]
         if (headId && targetId) {
           this._addEdgeElement(headId, targetId, data, label)
         }
       })
     }
-    this.selectedNodes   = []
+    this.selectedNodes = []
     this.doubleSelection = []
     this.redraw()
   }
@@ -236,14 +321,14 @@ export default class DiagramGraph {
       source,
       target,
       label,
-      arrowheadStyle:  data.edgeArrowHeadStyle,
-      arrowhead:       data.edgeArrowHead,
+      arrowheadStyle: data.edgeArrowHeadStyle,
+      arrowhead: data.edgeArrowHead,
       sourceArrowhead: data.sourceArrowhead,
-      edgeWidth:       data.edgeWidth,
-      edgeColor:       data.edgeColor,
-      edgeLineStyle:   data.edgeLineStyle,
-      edgeCurve:       data.edgeCurve,
-      edgeOpacity:     data.edgeOpacity,
+      edgeWidth: data.edgeWidth,
+      edgeColor: data.edgeColor,
+      edgeLineStyle: data.edgeLineStyle,
+      edgeCurve: data.edgeCurve,
+      edgeOpacity: data.edgeOpacity
     })
   }
 
@@ -251,15 +336,15 @@ export default class DiagramGraph {
     const edge = this.cy.getElementById(id)
     if (!edge.empty()) {
       const patch = {
-        label:           data.edgeLabel != null ? data.edgeLabel : '',
-        arrowheadStyle:  data.edgeArrowHeadStyle,
-        arrowhead:       data.edgeArrowHead,
+        label: data.edgeLabel != null ? data.edgeLabel : '',
+        arrowheadStyle: data.edgeArrowHeadStyle,
+        arrowhead: data.edgeArrowHead,
         sourceArrowhead: data.sourceArrowhead,
-        edgeWidth:       data.edgeWidth,
-        edgeColor:       data.edgeColor,
-        edgeLineStyle:   data.edgeLineStyle,
-        edgeCurve:       data.edgeCurve,
-        edgeOpacity:     data.edgeOpacity,
+        edgeWidth: data.edgeWidth,
+        edgeColor: data.edgeColor,
+        edgeLineStyle: data.edgeLineStyle,
+        edgeCurve: data.edgeCurve,
+        edgeOpacity: data.edgeOpacity
       }
       this._cleanPatch(patch)
       edge.data(patch)
@@ -277,7 +362,7 @@ export default class DiagramGraph {
   }
 
   deleteEdges(edgeIndices) {
-    edgeIndices.forEach(index => {
+    edgeIndices.forEach((index) => {
       const id = this.getEdgeId(index)
       if (id) this.cy.getElementById(id).remove()
     })
@@ -289,7 +374,9 @@ export default class DiagramGraph {
     if (!id) return null
     if (typeof id === 'string') return this.cy.getElementById(id)
     if (id.v && id.w) {
-      const edge = this.cy.edges().find(e => e.data('source') === id.v && e.data('target') === id.w)
+      const edge = this.cy
+        .edges()
+        .find((e) => e.data('source') === id.v && e.data('target') === id.w)
       return edge || this.cy.getElementById('__none__')
     }
     return null
@@ -306,15 +393,15 @@ export default class DiagramGraph {
     const shape = SHAPE_ALIASES[data.nodeShape] || data.nodeShape
     return {
       ...data,
-      nodeLabel:  data.label,
-      nodeShape:  shape,
+      nodeLabel: data.label,
+      nodeShape: shape,
       textHalign: data.textHalign || 'center',
       textValign: data.textValign || 'top',
-      bgColor:     data.bgColor || this._legacyFillColor(data.style),
+      bgColor: data.bgColor || this._legacyFillColor(data.style),
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize:    data.fontSize,
-      id,
+      fontSize: data.fontSize,
+      id
     }
   }
 
@@ -324,16 +411,16 @@ export default class DiagramGraph {
     const data = edge.data()
     return {
       ...data,
-      edgeLabel:          data.label,
+      edgeLabel: data.label,
       edgeArrowHeadStyle: data.arrowheadStyle,
-      edgeArrowHead:      data.arrowhead,
-      sourceArrowhead:    data.sourceArrowhead,
-      edgeWidth:          data.edgeWidth,
-      edgeColor:          data.edgeColor,
-      edgeLineStyle:      data.edgeLineStyle,
-      edgeCurve:          data.edgeCurve,
-      edgeOpacity:        data.edgeOpacity,
-      id:                 edge.id(),
+      edgeArrowHead: data.arrowhead,
+      sourceArrowhead: data.sourceArrowhead,
+      edgeWidth: data.edgeWidth,
+      edgeColor: data.edgeColor,
+      edgeLineStyle: data.edgeLineStyle,
+      edgeCurve: data.edgeCurve,
+      edgeOpacity: data.edgeOpacity,
+      id: edge.id()
     }
   }
 
@@ -362,12 +449,12 @@ export default class DiagramGraph {
 
   getNodeId(index) {
     const nodes = this.cy.nodes()
-    return (index >= 0 && index < nodes.length) ? nodes[index].id() : null
+    return index >= 0 && index < nodes.length ? nodes[index].id() : null
   }
 
   getEdgeId(index) {
     const edges = this.cy.edges()
-    return (index >= 0 && index < edges.length) ? edges[index].id() : null
+    return index >= 0 && index < edges.length ? edges[index].id() : null
   }
 
   getNode(index) {
@@ -379,8 +466,12 @@ export default class DiagramGraph {
     return this.renderer ? this.renderer.getNodeElement(id) : null
   }
 
-  getEdge()      { return null }
-  getEdgeById()  { return null }
+  getEdge() {
+    return null
+  }
+  getEdgeById() {
+    return null
+  }
 
   // ─── Visual selection ─────────────────────────────────────────────────────────
 
@@ -411,7 +502,8 @@ export default class DiagramGraph {
   }
 
   removeEdgeSelectionById(id) {
-    if (this.renderer) this.renderer.deselectEdge(typeof id === 'string' ? id : this._resolveEdge(id)?.id())
+    if (this.renderer)
+      this.renderer.deselectEdge(typeof id === 'string' ? id : this._resolveEdge(id)?.id())
   }
 
   // ─── Proximity selection (j/k/h/l) ───────────────────────────────────────────
@@ -423,12 +515,12 @@ export default class DiagramGraph {
     const renderer = this.renderer
     if (!fromId || !renderer || typeof renderer.nearestElementId !== 'function') return null
 
-    const kind  = which === 'edges' ? 'edges' : 'nodes'
-    const id    = renderer.nearestElementId({ direction, fromId, kind })
+    const kind = which === 'edges' ? 'edges' : 'nodes'
+    const id = renderer.nearestElementId({ direction, fromId, kind })
     if (!id) return null
 
-    const pool  = which === 'edges' ? this.cy.edges() : this.cy.nodes()
-    const index = pool.findIndex(el => el.id() === id)
+    const pool = which === 'edges' ? this.cy.edges() : this.cy.nodes()
+    const index = pool.findIndex((el) => el.id() === id)
     if (index === -1) return null
 
     if (which === 'edges') {
@@ -455,16 +547,17 @@ export default class DiagramGraph {
     if (!this.renderer) return
     this.renderer.updateScene(this.cy, {
       ...options,
-      layoutMode:      this.layoutMode,
-      colaOpts:        this.colaOpts,
-      coseOpts:        this.coseOpts,
+      layoutMode: this.layoutMode,
+      colaOpts: this.colaOpts,
+      coseOpts: this.coseOpts,
       breadthfirstOpts: this.breadthfirstOpts,
-      gridOpts:        this.gridOpts,
-      circleOpts:      this.circleOpts,
-      concentricOpts:  this.concentricOpts,
-      dagreOpts:       this.dagreOpts,
+      gridOpts: this.gridOpts,
+      circleOpts: this.circleOpts,
+      concentricOpts: this.concentricOpts,
+      dagreOpts: this.dagreOpts
     })
     this._saveTempDiagram()
+    this._scheduleServerSave()
   }
 
   setLayoutMode(mode) {
@@ -479,16 +572,37 @@ export default class DiagramGraph {
     if (this.renderer) this.renderer.resetCamera()
   }
 
+  _scheduleServerSave() {
+    if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
+    if (!this.d3dInfo?.id) return
+    clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(() => this._serverSave(), 500)
+  }
+
+  async _serverSave() {
+    const json = modelToGraphlib(this.cy)
+    try {
+      await api.updateDiagram({
+        id: this.d3dInfo.id,
+        name: this.d3dInfo.name || D3Util.tempInfo().name,
+        description: this.d3dInfo.description || D3Util.tempInfo().description,
+        diagram: JSON.stringify(json)
+      })
+    } catch (err) {
+      console.error('collab auto-save failed', err)
+    }
+  }
+
   _saveTempDiagram() {
     try {
       const json = modelToGraphlib(this.cy)
       const created = new Date()
       const updatedData = {
-        created:     created.toISOString(),
-        updated:     created.toISOString(),
-        name:        this.d3dInfo.name        || D3Util.tempInfo().name,
+        created: created.toISOString(),
+        updated: created.toISOString(),
+        name: this.d3dInfo.name || D3Util.tempInfo().name,
         description: this.d3dInfo.description || D3Util.tempInfo().description,
-        diagram:     JSON.stringify(json),
+        diagram: JSON.stringify(json)
       }
       localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
     } catch (err) {
@@ -499,12 +613,12 @@ export default class DiagramGraph {
   // ─── Misc helpers ─────────────────────────────────────────────────────────────
 
   arrayRemove(arr, value) {
-    return arr.filter(el => el !== value)
+    return arr.filter((el) => el !== value)
   }
 
   clearCluster() {}
 
   listEdges() {
-    this.cy.edges().forEach(e => console.log(e.id(), e.data()))
+    this.cy.edges().forEach((e) => console.log(e.id(), e.data()))
   }
 }
