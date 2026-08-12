@@ -12,6 +12,11 @@ const router = createRouter({
       path: '/collab-cyto-poc',
       name: 'collab-cyto-poc',
       component: () => import('@/components/CollabCytoPoc.vue')
+    },
+    {
+      path: '/join/:token',
+      name: 'join',
+      component: () => import('@/components/JoinView.vue')
     }
   ]
 })

@@ -96,6 +96,17 @@
           />
         </div>
       </transition>
+      <transition name="fx-scrim">
+        <div v-if="showShare" class="fx-scrim" @click="showShare = false"></div>
+      </transition>
+      <transition name="fx-panel">
+        <div v-if="showShare" class="fx-hud-stage">
+          <ShareDialog
+            :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            @close="showShare = false"
+          />
+        </div>
+      </transition>
     </Teleport>
   </div>
 </template>
@@ -107,6 +118,7 @@ import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
 import HistoryPanel from '@/components/HistoryPanel.vue'
+import ShareDialog from '@/components/ShareDialog.vue'
 import Hints from '@/helpers/Hints.js'
 import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
@@ -132,7 +144,7 @@ export default {
   name: 'DiagramGraphView',
   props: ['active'],
   inject: ['modifier'],
-  components: { D3NodeForm, D3EdgeForm, HistoryPanel },
+  components: { D3NodeForm, D3EdgeForm, HistoryPanel, ShareDialog },
   data() {
     return {
       edgeOrNode: 'nodes',
@@ -157,7 +169,8 @@ export default {
       edgeCount: 0,
       peers: {},
       collabStatus: 'disconnected',
-      showHistory: false
+      showHistory: false,
+      showShare: false
     }
   },
   mounted() {
@@ -440,6 +453,11 @@ export default {
         if (event.key === 'H') {
           const mod = this.modifier?.value ?? this.modifier
           if (mod?.d3dInfo?.id) this.showHistory = true
+        }
+
+        if (event.key === 'S') {
+          const mod = this.modifier?.value ?? this.modifier
+          if (mod?.d3dInfo?.id) this.showShare = true
         }
 
         if (result) {

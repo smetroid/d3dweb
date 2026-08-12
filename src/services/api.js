@@ -93,6 +93,24 @@ export default {
       .then((response) => response)
       .catch((error) => error)
   },
+  async createShare(dagId, req) {
+    return api()
+      .post('/dag/' + dagId + '/shares', req, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async revokeShare(dagId, jti) {
+    return api()
+      .post(
+        '/dag/' + dagId + '/shares/' + jti + '/revoke',
+        {},
+        { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
   async deleteDiagram(id) {
     if (D3Util.debug) {
       console.log(id)
