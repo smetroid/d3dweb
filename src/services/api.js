@@ -111,6 +111,12 @@ export default {
       .then((response) => response.data)
       .catch((error) => error)
   },
+  async exchangeShare(token) {
+    return api()
+      .get('/shares/exchange', { params: { token } })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
   async deleteDiagram(id) {
     if (D3Util.debug) {
       console.log(id)

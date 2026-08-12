@@ -11,47 +11,28 @@
 </template>
 
 <script>
-function decodeJwt(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[1]))
-  } catch {
-    return null
-  }
-}
+import api from '@/services/api'
 
 export default {
   name: 'JoinView',
   data() {
     return { error: null }
   },
-  mounted() {
+  async mounted() {
     const token = this.$route.params.token
     if (!token) {
       this.error = 'Invalid share link.'
       return
     }
 
-    const claims = decodeJwt(token)
-    if (!claims || claims.iss !== 'd3d-share') {
-      this.error = 'This link is not a valid share link.'
+    const data = await api.exchangeShare(token)
+    if (!data || data.status !== 'ok') {
+      this.error = data && data.error ? data.error : 'Invalid, expired, or revoked share link.'
       return
     }
 
-    const dagId = claims.dag_id
-    if (!dagId) {
-      this.error = 'Share link is missing diagram information.'
-      return
-    }
-
-    const exp = claims.exp ? claims.exp * 1000 : null
-    if (exp && Date.now() > exp) {
-      this.error = 'This share link has expired.'
-      return
-    }
-
-    // Store share token and target diagram, then redirect to the main app.
     localStorage.setItem('token', token)
-    this.$cookies.set('LastLocallySavedItemId', dagId)
+    this.$cookies.set('LastLocallySavedItemId', data.dagId)
     window.location.href = '/'
   }
 }
