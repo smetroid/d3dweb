@@ -315,6 +315,15 @@ export default {
       }
     })
 
+    this.emitter.on('diagram:reload', (id) => {
+      if (id) this.loadFromServer(id)
+    })
+
+    this.emitter.on('diagram:updated-remote', () => {
+      const id = this.d3dInfo?.id
+      if (id) this.loadFromServer(id)
+    })
+
     this.emitter.on('toggleTheme', () => {
       console.log(this)
       this.toggleTheme()

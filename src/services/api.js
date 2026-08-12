@@ -6,92 +6,102 @@ function api() {
 }
 
 export default {
-  async auth (username, password) {
-    return api().post('/auth/login', {
-      username: username,
-      password: password,
-    })
-      .then(response => {
+  async auth(username, password) {
+    return api()
+      .post('/auth/login', {
+        username: username,
+        password: password
+      })
+      .then((response) => {
         return response
       })
-      .catch(error => {
+      .catch((error) => {
         return error
       })
   },
-  getOptions () {
+  getOptions() {
     // return axios.get('http://192.168.1.4:3000/menus_options',
-    return api().get('/menus',
-      { headers:
-        { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
-      .then(response => {
+    return api()
+      .get('/menus', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .then((response) => {
         console.log(response)
         return response.data
       })
   },
-  async getDiagram (id) {
-    return api().get('/dag/' + id,
-      { headers:
-        { Authorization: 'Bearer ' + localStorage.getItem('token')
-        }
-      })
-      .then(response => {
+  async getDiagram(id) {
+    return api()
+      .get('/dag/' + id, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .then((response) => {
         return response.data
       })
-      .catch(error => {
+      .catch((error) => {
         return error
       })
       .finally(() => {
         console.log('getDiagram finished')
       })
   },
-  async getDiagrams () {
-    return api().get('/dags',
-      { headers:
-        { Authorization: 'Bearer ' + localStorage.getItem('token')
-        }
-      })
-      .then(response => {
+  async getDiagrams() {
+    return api()
+      .get('/dags', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .then((response) => {
         return response
       })
-      .catch(error => {
+      .catch((error) => {
         return error
       })
   },
-  async postDiagram (payload) {
-    return api().post('/dag', payload, {
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+  async postDiagram(payload) {
+    return api()
+      .post('/dag', payload, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
-      .then(response => {
+      .then((response) => {
         return response
       })
-      .catch(error => {
+      .catch((error) => {
         return error
       })
   },
-  async updateDiagram (data) {
-
-    return api().post('/dag/' + data.id + '/update', data,
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token')
-        }
+  async updateDiagram(data) {
+    return api()
+      .post('/dag/' + data.id + '/update', data, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
-      .then(response => {
+      .then((response) => {
         return response
       })
-      .catch(error => {
+      .catch((error) => {
         return error
       })
   },
-  async deleteDiagram (id) {
+  async getHistory(dagId) {
+    return api()
+      .get('/dag/' + dagId + '/history', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async restoreHistory(dagId, historyId) {
+    return api()
+      .post(
+        '/dag/' + dagId + '/history/' + historyId + '/restore',
+        {},
+        { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+      )
+      .then((response) => response)
+      .catch((error) => error)
+  },
+  async deleteDiagram(id) {
     if (D3Util.debug) {
       console.log(id)
     }
-    return api().delete('/dag/' + id,
-      { headers:
-        { Authorization: 'Bearer ' + localStorage.getItem('token')
-        }
+    return api()
+      .delete('/dag/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
-      .then(response => {
+      .then((response) => {
         return response.data
       })
   }

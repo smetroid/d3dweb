@@ -84,6 +84,18 @@
           />
         </div>
       </transition>
+      <transition name="fx-scrim">
+        <div v-if="showHistory" class="fx-scrim" @click="showHistory = false"></div>
+      </transition>
+      <transition name="fx-panel">
+        <div v-if="showHistory" class="fx-hud-stage">
+          <HistoryPanel
+            :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            @close="showHistory = false"
+            @restored="onHistoryRestored"
+          />
+        </div>
+      </transition>
     </Teleport>
   </div>
 </template>
@@ -94,6 +106,7 @@ import CytoscapeRenderer from '@/helpers/CytoscapeRenderer'
 import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
+import HistoryPanel from '@/components/HistoryPanel.vue'
 import Hints from '@/helpers/Hints.js'
 import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
@@ -119,7 +132,7 @@ export default {
   name: 'DiagramGraphView',
   props: ['active'],
   inject: ['modifier'],
-  components: { D3NodeForm, D3EdgeForm },
+  components: { D3NodeForm, D3EdgeForm, HistoryPanel },
   data() {
     return {
       edgeOrNode: 'nodes',
@@ -143,7 +156,8 @@ export default {
       nodeCount: 0,
       edgeCount: 0,
       peers: {},
-      collabStatus: 'disconnected'
+      collabStatus: 'disconnected',
+      showHistory: false
     }
   },
   mounted() {
@@ -423,6 +437,11 @@ export default {
           this._clearMultiSelection()
         }
 
+        if (event.key === 'H') {
+          const mod = this.modifier?.value ?? this.modifier
+          if (mod?.d3dInfo?.id) this.showHistory = true
+        }
+
         if (result) {
           if (event.key === 'x') {
             if (this.edgeOrNode === 'nodes') {
@@ -476,6 +495,13 @@ export default {
         .join('')
         .slice(0, 2)
         .toUpperCase()
+    },
+
+    onHistoryRestored() {
+      this.showHistory = false
+      const mod = this.modifier?.value ?? this.modifier
+      const id = mod?.d3dInfo?.id
+      if (id) this.emitter.emit('diagram:reload', id)
     },
 
     _clearMultiSelection() {
