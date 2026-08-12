@@ -1,6 +1,6 @@
 <template>
   <div class="fx-panel" @keydown.esc="$emit('close')">
-    <focus-trap v-model:active="enableTrap">
+    <focus-trap v-model:active="enableTrap" :escape-deactivates="false">
       <div tabindex="0" class="fx-panel-inner">
         <header class="fx-panel-header">
           <div class="fx-panel-title">
