@@ -597,7 +597,8 @@ export default {
       if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
       const payload = _decodeJwt(localStorage.getItem('token') || '')
       collab.sendPresence({
-        displayName: payload.username || payload.sub || 'Guest',
+        displayName:
+          localStorage.getItem('d3d_anon_name') || payload.username || payload.sub || 'Guest',
         color: _sessionColor(),
         selection: id ? [id] : []
       })

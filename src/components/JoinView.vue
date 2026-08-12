@@ -32,6 +32,7 @@ export default {
     }
 
     localStorage.setItem('token', token)
+    if (data.anonName) localStorage.setItem('d3d_anon_name', data.anonName)
     this.$cookies.set('LastLocallySavedItemId', data.dagId)
     window.location.href = '/'
   }
