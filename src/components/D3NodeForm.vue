@@ -3,11 +3,8 @@
     id="iform"
     ref="formfields"
     class="fx-panel"
-    @keyup.alt.s="updateNode()"
-    @keyup.meta.s="updateNode()"
-    @keyup.ctrl.c="close()"
-    @keyup.meta.c="close()"
-    @keydown.esc="keyPress($event)"
+    @keyup="onKeyup($event)"
+    @keydown="onKeydown($event)"
     @keypress.stop.prevent="keyPress($event)"
   >
     <focus-trap v-model:active="enableTrap">
@@ -19,7 +16,15 @@
             </span>
             <h2 class="fx-title">NODE</h2>
           </div>
-          <button type="button" class="fx-close" @click="close()" @keypress.stop="" aria-label="Close">✕</button>
+          <button
+            type="button"
+            class="fx-close"
+            @click="close()"
+            @keypress.stop=""
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </header>
 
         <div class="fx-readout">
@@ -48,7 +53,9 @@
                   @click.stop="toggleSel('shape')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('shape', $event)"
-                >{{ shapeLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ shapeLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'shape'" class="fx-options">
                     <li
@@ -65,7 +72,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -80,12 +89,17 @@
                   @click.stop="toggleSel('halign')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('halign', $event)"
-                >{{ textHalign }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ textHalign }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'halign'" class="fx-options">
-                    <li v-for="opt in halignOptions" :key="opt.value"
+                    <li
+                      v-for="opt in halignOptions"
+                      :key="opt.value"
                       tabindex="0"
-                      class="fx-option" :class="{ 'fx-option-active': textHalign === opt.value }"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': textHalign === opt.value }"
                       @click="pick('textHalign', opt.value)"
                       @keydown.enter.prevent="pick('textHalign', opt.value)"
                       @keydown.space.prevent="pick('textHalign', opt.value)"
@@ -94,7 +108,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -109,12 +125,17 @@
                   @click.stop="toggleSel('valign')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('valign', $event)"
-                >{{ textValign }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ textValign }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'valign'" class="fx-options">
-                    <li v-for="opt in valignOptions" :key="opt.value"
+                    <li
+                      v-for="opt in valignOptions"
+                      :key="opt.value"
                       tabindex="0"
-                      class="fx-option" :class="{ 'fx-option-active': textValign === opt.value }"
+                      class="fx-option"
+                      :class="{ 'fx-option-active': textValign === opt.value }"
                       @click="pick('textValign', opt.value)"
                       @keydown.enter.prevent="pick('textValign', opt.value)"
                       @keydown.space.prevent="pick('textValign', opt.value)"
@@ -123,7 +144,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -138,7 +161,9 @@
                   @click.stop="toggleSel('parent')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('parent', $event)"
-                >{{ parentLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ parentLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <div v-if="openSel === 'parent'" class="fx-options">
                     <input
@@ -168,7 +193,9 @@
                         @keydown.k.prevent="focusPrev($event)"
                         @keydown.j.prevent="focusNext($event)"
                         @keydown.esc.stop="closeSel($event)"
-                      >— none —</li>
+                      >
+                        — none —
+                      </li>
                       <li
                         v-for="opt in filteredParentOptions"
                         :key="opt.key"
@@ -183,7 +210,9 @@
                         @keydown.k.prevent="focusPrev($event)"
                         @keydown.j.prevent="focusNext($event)"
                         @keydown.esc.stop="closeSel($event)"
-                      >{{ opt.value }}</li>
+                      >
+                        {{ opt.value }}
+                      </li>
                     </ul>
                   </div>
                 </transition>
@@ -200,8 +229,6 @@
               :rows="labelRows"
               placeholder="Add a node label ... if label contains HTML then Label Type must be Html ... {{ shortcutLabels.clear }} to clear value"
               @keypress.stop=""
-              @keydown.alt.shift.w="nodeLabel=''"
-              @keydown.meta.shift.w="nodeLabel=''"
             ></textarea>
           </label>
 
@@ -223,7 +250,9 @@
                   @click="bgColor = ''"
                   @keypress.stop=""
                   title="Use theme color"
-                >none</button>
+                >
+                  none
+                </button>
               </div>
             </label>
 
@@ -244,7 +273,9 @@
                   @click="borderColor = ''"
                   @keypress.stop=""
                   title="Use theme color"
-                >none</button>
+                >
+                  none
+                </button>
               </div>
             </label>
 
@@ -285,20 +316,21 @@
             class="fx-btn fx-btn-primary"
             @click="updateNode()"
             @keypress.stop=""
-          >Update Node <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          >
+            Update Node <span class="fx-kbd">{{ shortcutLabels.save }}</span>
+          </button>
           <button
             v-else
             type="button"
             class="fx-btn fx-btn-primary"
             @click="addNode()"
             @keypress.stop=""
-          >Add Node</button>
-          <button
-            type="button"
-            class="fx-btn fx-btn-ghost"
-            @click="close()"
-            @keypress.stop=""
-          >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+          >
+            Add Node
+          </button>
+          <button type="button" class="fx-btn fx-btn-ghost" @click="close()" @keypress.stop="">
+            Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span>
+          </button>
         </footer>
       </div>
     </focus-trap>
@@ -307,11 +339,12 @@
 
 <script>
 import D3Util from '@/helpers/D3Util'
+import Shortcuts from '@/helpers/Shortcuts.js'
 export default {
   name: 'D3Node',
   props: ['active', 'd3Data'],
   inject: ['modifier'],
-  data () {
+  data() {
     return {
       enableTrap: false,
       errorClass: true,
@@ -329,10 +362,10 @@ export default {
       bgColor: '',
       borderColor: '',
       borderWidth: null,
-      fontSize: null,
+      fontSize: null
     }
   },
-  mounted () {
+  mounted() {
     document.addEventListener('click', this.onDocClick)
 
     this.$nextTick(() => {
@@ -343,21 +376,24 @@ export default {
       this.enableTrap = true
       if (this.$refs.nodeLabelTextField) this.$refs.nodeLabelTextField.focus()
       if (D3Util.debug) {
-        const root  = this.$refs.formfields
-        const trig  = root ? [...root.querySelectorAll('.fx-select-trigger')] : []
+        const root = this.$refs.formfields
+        const trig = root ? [...root.querySelectorAll('.fx-select-trigger')] : []
         const style = root ? root.querySelector('input.fx-input') : null
-        console.log('[D3NodeForm] dom', JSON.stringify({
-          triggers: trig.map(b => b.textContent),
-          triggerColors: trig.map(b => getComputedStyle(b).color),
-          triggerBg: trig.map(b => getComputedStyle(b).backgroundColor),
-          styleInput: style ? style.value : null,
-          styleInputColor: style ? getComputedStyle(style).color : null,
-          panelBg: root ? getComputedStyle(root).backgroundColor : null,
-        }))
+        console.log(
+          '[D3NodeForm] dom',
+          JSON.stringify({
+            triggers: trig.map((b) => b.textContent),
+            triggerColors: trig.map((b) => getComputedStyle(b).color),
+            triggerBg: trig.map((b) => getComputedStyle(b).backgroundColor),
+            styleInput: style ? style.value : null,
+            styleInputColor: style ? getComputedStyle(style).color : null,
+            panelBg: root ? getComputedStyle(root).backgroundColor : null
+          })
+        )
       }
     })
   },
-  beforeUnmount () {
+  beforeUnmount() {
     document.removeEventListener('click', this.onDocClick)
   },
   computed: {
@@ -377,15 +413,17 @@ export default {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod || !mod.cy) return []
       return mod.cy.nodes().map((n) => ({
-        key:   n.id(),
-        value: n.data('label') || n.id(),
+        key: n.id(),
+        value: n.data('label') || n.id()
       }))
     },
     filteredParentOptions() {
       if (!this.parentSearch) return this.parentOptions
       const q = this.parentSearch.toLowerCase()
-      return this.parentOptions.filter(o =>
-        String(o.value || o.key).toLowerCase().startsWith(q)
+      return this.parentOptions.filter((o) =>
+        String(o.value || o.key)
+          .toLowerCase()
+          .startsWith(q)
       )
     },
     shapeLabel() {
@@ -393,7 +431,7 @@ export default {
     },
     parentLabel() {
       if (!this.parentNode) return '— none —'
-      const opt = this.parentOptions.find(o => o.key === this.parentNode)
+      const opt = this.parentOptions.find((o) => o.key === this.parentNode)
       return opt ? opt.value : this.parentNode
     },
     posText() {
@@ -408,63 +446,68 @@ export default {
     labelRows() {
       const count = (this.nodeLabel || '').split('\n').length
       return Math.min(8, Math.max(3, count))
-    },
+    }
   },
   methods: {
     _populate() {
       // Derive from the prop every time: the immediate d3Data watcher runs
       // before created(), so we can't rely on this.update being set yet.
       this.update = this.active == 'Edit Node'
-      if (D3Util.debug) console.log('[D3NodeForm] _populate', {
-        active: this.active,
-        update: this.update,
-        hasId:  !!this.d3Data?.id,
-        d3Data: this.d3Data,
-      })
+      if (D3Util.debug)
+        console.log('[D3NodeForm] _populate', {
+          active: this.active,
+          update: this.update,
+          hasId: !!this.d3Data?.id,
+          d3Data: this.d3Data
+        })
       if (!(this.update && this.d3Data?.id)) {
         // Create mode: start from the configurable node creation defaults in
         // Settings so a new node inherits the user's preferred look.
         const d = D3Util.defaultNodeValues()
-        this.nodeLabel   = d.nodeLabel
-        this.nodeShape   = d.nodeShape
-        this.nodeId      = null
-        this.parentNode  = null
-        this.textHalign  = d.textHalign
-        this.textValign  = d.textValign
-        this.bgColor     = d.bgColor     || ''
+        this.nodeLabel = d.nodeLabel
+        this.nodeShape = d.nodeShape
+        this.nodeId = null
+        this.parentNode = null
+        this.textHalign = d.textHalign
+        this.textValign = d.textValign
+        this.bgColor = d.bgColor || ''
         this.borderColor = d.borderColor || ''
         this.borderWidth = d.borderWidth != null ? d.borderWidth : null
-        this.fontSize    = d.fontSize    != null ? d.fontSize : null
+        this.fontSize = d.fontSize != null ? d.fontSize : null
         return
       }
       const mod = this.modifier?.value ?? this.modifier
-      this.nodeLabel  = this.d3Data.label
-      this.nodeShape  = this.d3Data.nodeShape || this.d3Data.shape
-      this.nodeId     = this.d3Data.id
-      const parentEl  = mod?.cy?.getElementById(this.d3Data.id)?.parent()?.first()
+      this.nodeLabel = this.d3Data.label
+      this.nodeShape = this.d3Data.nodeShape || this.d3Data.shape
+      this.nodeId = this.d3Data.id
+      const parentEl = mod?.cy?.getElementById(this.d3Data.id)?.parent()?.first()
       this.parentNode = parentEl?.length ? parentEl.id() : null
       this.textHalign = this.d3Data.textHalign || 'center'
       this.textValign = this.d3Data.textValign || 'top'
-      this.bgColor    = this.d3Data.bgColor || ''
+      this.bgColor = this.d3Data.bgColor || ''
       this.borderColor = this.d3Data.borderColor || ''
       this.borderWidth = this.d3Data.borderWidth ?? null
-      this.fontSize    = this.d3Data.fontSize ?? null
-      if (D3Util.debug) console.log('[D3NodeForm] fields', JSON.stringify({
-        nodeLabel:  this.nodeLabel,
-        nodeShape:  this.nodeShape,
-        nodeId:     this.nodeId,
-        parentNode: this.parentNode,
-        textHalign: this.textHalign,
-        textValign: this.textValign,
-        bgColor:    this.bgColor,
-        borderColor: this.borderColor,
-        borderWidth: this.borderWidth,
-        fontSize:   this.fontSize,
-      }))
+      this.fontSize = this.d3Data.fontSize ?? null
+      if (D3Util.debug)
+        console.log(
+          '[D3NodeForm] fields',
+          JSON.stringify({
+            nodeLabel: this.nodeLabel,
+            nodeShape: this.nodeShape,
+            nodeId: this.nodeId,
+            parentNode: this.parentNode,
+            textHalign: this.textHalign,
+            textValign: this.textValign,
+            bgColor: this.bgColor,
+            borderColor: this.borderColor,
+            borderWidth: this.borderWidth,
+            fontSize: this.fontSize
+          })
+        )
     },
     _optLabel(list, val, valKey, labelKey, fallback) {
       if (!val) return fallback
-      const opt = list.find(o => o[valKey] === val)
+      const opt = list.find((o) => o[valKey] === val)
       return opt ? opt[labelKey] : fallback
     },
     toggleSel(key) {
@@ -475,7 +518,10 @@ export default {
       this.$nextTick(() => {
         const container = event.currentTarget.closest('.fx-select')
         const searchInput = container?.querySelector('.fx-option-search')
-        if (searchInput) { searchInput.focus(); return }
+        if (searchInput) {
+          searchInput.focus()
+          return
+        }
         const ul = container?.querySelector('.fx-options')
         if (ul) {
           const target = ul.querySelector('.fx-option-active') || ul.querySelector('.fx-option')
@@ -491,7 +537,10 @@ export default {
     },
     focusPrev(event) {
       const prev = event.target.previousElementSibling
-      if (prev) { prev.focus(); return }
+      if (prev) {
+        prev.focus()
+        return
+      }
       const container = event.target.closest('.fx-select')
       const searchInput = container?.querySelector('.fx-option-search')
       if (searchInput) searchInput.focus()
@@ -513,21 +562,43 @@ export default {
     onDocClick() {
       this.openSel = null
     },
-    updateNode () {
+    updateNode() {
       const mod = this.modifier?.value ?? this.modifier
-      console.log('[D3NodeForm] updateNode clicked', { nodeId: this.nodeId, nodeLabel: this.nodeLabel, data: this.$data })
+      console.log('[D3NodeForm] updateNode clicked', {
+        nodeId: this.nodeId,
+        nodeLabel: this.nodeLabel,
+        data: this.$data
+      })
       mod.updateNode(this.$data, this.nodeId)
       this.close()
     },
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
     },
-    addNode () {
+    onKeydown(event) {
+      if (Shortcuts.matches(event, 'close')) {
+        event.preventDefault()
+        this.close()
+        return
+      }
+      if (Shortcuts.matches(event, 'clear')) {
+        event.preventDefault()
+        this.nodeLabel = ''
+      }
+    },
+    onKeyup(event) {
+      if (event.repeat) return
+      if (Shortcuts.matches(event, 'save')) {
+        event.preventDefault()
+        this.updateNode()
+      }
+    },
+    addNode() {
       const mod = this.modifier?.value ?? this.modifier
       mod.addNode(this.$data)
       this.common()
     },
-    close () {
+    close() {
       this.common()
     },
     common() {
@@ -547,9 +618,9 @@ export default {
       handler() {
         this._populate()
       },
-      immediate: true,
-    },
-  },
+      immediate: true
+    }
+  }
 }
 </script>
 

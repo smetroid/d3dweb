@@ -44,44 +44,6 @@ function fakeElement() {
   }
 }
 
-describe('OtherKeys emitter routes', () => {
-  it('m / / / a / t emit their events', () => {
-    const { emitter, keys } = makeSut()
-    keys.defaultActions('m')
-    keys.defaultActions('/')
-    keys.defaultActions('a')
-    keys.defaultActions('t')
-    expect(emitter.emit).toHaveBeenNthCalledWith(1, 'changeActive', 'Menu')
-    expect(emitter.emit).toHaveBeenNthCalledWith(2, 'showHelp')
-    expect(emitter.emit).toHaveBeenNthCalledWith(3, 'changeActive', 'Actions Menu')
-    expect(emitter.emit).toHaveBeenNthCalledWith(4, 'toggleTheme')
-  })
-
-  it('n / d add a node / edge', () => {
-    const { modifier, keys } = makeSut()
-    keys.defaultActions('n')
-    keys.defaultActions('d')
-    expect(modifier.addNode).toHaveBeenCalledOnce()
-    expect(modifier.addEdge).toHaveBeenCalledOnce()
-  })
-
-  it('e edits the focused node and returns its data', () => {
-    const { emitter, modifier, keys } = makeSut()
-    const result = keys.defaultActions('e', 'nodes', 'n1', null)
-    expect(modifier.getNodeData).toHaveBeenCalledWith('n1')
-    expect(emitter.emit).toHaveBeenCalledWith('changeActive', 'Edit Node')
-    expect(result.id).toBe('n1')
-  })
-
-  it('e edits the focused edge', () => {
-    const { emitter, modifier, keys } = makeSut()
-    const result = keys.defaultActions('e', 'edges', null, 'e5')
-    expect(modifier.getEdgeData).toHaveBeenCalledWith('e5')
-    expect(emitter.emit).toHaveBeenCalledWith('changeActive', 'Edit Edge')
-    expect(result.id).toBe('e5')
-  })
-})
-
 describe('OtherKeys j/k navigation', () => {
   it('j moves to the next node, wrapping around', () => {
     const { keys } = makeSut()

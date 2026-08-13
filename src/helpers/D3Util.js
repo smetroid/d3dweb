@@ -1,26 +1,23 @@
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
+import Shortcuts from '@/helpers/Shortcuts.js'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
 export default {
-  isMac () {
-    if (typeof navigator === 'undefined') return false
-    const platform = navigator.platform || navigator.userAgentData?.platform || ''
-    return platform.toLowerCase().includes('mac') ||
-      /Mac|iPhone|iPad/.test(navigator.userAgent)
+  isMac() {
+    return Shortcuts.isMac()
   },
-  shortcutLabels () {
-    const saveKey  = this.isMac() ? '⌘' : 'Alt'
-    const closeKey = this.isMac() ? '⌘' : 'Ctrl'
+  shortcutLabels() {
+    // Live labels from the user-rebindable shortcut registry.
     return {
-      save:  `${saveKey}+S`,
-      close: `${closeKey}+C`,
-      login: `${saveKey}+L`,
-      clear: `${saveKey}+Shift+W`,
+      save: Shortcuts.label('save'),
+      close: Shortcuts.label('close'),
+      login: Shortcuts.label('login'),
+      clear: Shortcuts.label('clear')
     }
   },
-  tempInfo () {
+  tempInfo() {
     let temp = {
       name: 'D3D Temp Name',
       description: 'My Awesome Diagram'
@@ -29,14 +26,14 @@ export default {
   },
   //getDiagram(diagramId) {
   //},
-  getLiElements () {
+  getLiElements() {
     var lis = document.getElementsByTagName('li')
     return lis
   },
-  mod (n, m) {
+  mod(n, m) {
     return ((n % m) + m) % m
   },
-  filteredKeys (hints, filter) {
+  filteredKeys(hints, filter) {
     var hintsCopy = hints
     var key = []
     var keys = {}
@@ -65,7 +62,7 @@ export default {
 
     return filterData
   },
-  liSelectionK (selectList, liSelected) {
+  liSelectionK(selectList, liSelected) {
     var li = liSelected
     var selectLi = null
     if (li === null) {
@@ -77,7 +74,7 @@ export default {
     }
     return selectLi
   },
-  liSelectionJ (selectList, liSelected) {
+  liSelectionJ(selectList, liSelected) {
     var li = liSelected
     var selectLi = null
     if (li === null) {
@@ -88,180 +85,183 @@ export default {
     }
     return selectLi
   },
-  debug () {
+  debug() {
     //how the hell was this working, if it was working?
     //I think we need to pull if from settings cookie
     //var debug = Settings.debug
     let debug = true
     return debug
   },
-  hintOptions () {
+  hintOptions() {
     // Need to get from database or a cookie
     var hintOptions = VueCookies.get('settings')
-    if ( hintOptions ) {
+    if (hintOptions) {
       return hintOptions['hints']
     } else {
       console.log('cookie settings is missing')
     }
   },
-  randomId () {
-  // Math.random should be unique because of its seeding algorithm.
-  // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-  // after the decimal.
+  randomId() {
+    // Math.random should be unique because of its seeding algorithm.
+    // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+    // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9)
   },
   // Shared dropdown option lists. Single source of truth so the Settings
   // dialog and the node/edge forms cannot drift apart.
-  nodeShapeOptions () {
+  nodeShapeOptions() {
     return [
-      { value: 'rectangle',       label: 'Rectangle' },
+      { value: 'rectangle', label: 'Rectangle' },
       { value: 'round-rectangle', label: 'Round Rectangle' },
-      { value: 'ellipse',         label: 'Ellipse' },
-      { value: 'diamond',         label: 'Diamond' },
-      { value: 'round-diamond',   label: 'Round Diamond' },
-      { value: 'hexagon',         label: 'Hexagon' },
-      { value: 'octagon',         label: 'Octagon' },
-      { value: 'star',            label: 'Star' },
-      { value: 'tag',             label: 'Tag' },
-      { value: 'barrel',          label: 'Barrel' },
+      { value: 'ellipse', label: 'Ellipse' },
+      { value: 'diamond', label: 'Diamond' },
+      { value: 'round-diamond', label: 'Round Diamond' },
+      { value: 'hexagon', label: 'Hexagon' },
+      { value: 'octagon', label: 'Octagon' },
+      { value: 'star', label: 'Star' },
+      { value: 'tag', label: 'Tag' },
+      { value: 'barrel', label: 'Barrel' }
     ]
   },
-  nodeHalignOptions () {
+  nodeHalignOptions() {
     return [
-      { value: 'left',   label: 'Left' },
+      { value: 'left', label: 'Left' },
       { value: 'center', label: 'Center' },
-      { value: 'right',  label: 'Right' },
+      { value: 'right', label: 'Right' }
     ]
   },
-  nodeValignOptions () {
+  nodeValignOptions() {
     return [
-      { value: 'top',    label: 'Top' },
+      { value: 'top', label: 'Top' },
       { value: 'center', label: 'Center' },
-      { value: 'bottom', label: 'Bottom' },
+      { value: 'bottom', label: 'Bottom' }
     ]
   },
-  edgeArrowHeadStyleOptions () {
+  edgeArrowHeadStyleOptions() {
     return [
       { value: 'filled', label: 'Filled' },
-      { value: 'hollow', label: 'Hollow' },
+      { value: 'hollow', label: 'Hollow' }
     ]
   },
-  edgeArrowHeadOptions () {
+  edgeArrowHeadOptions() {
     return [
-      { value: 'triangle',       label: 'Triangle' },
-      { value: 'vee',            label: 'Vee' },
-      { value: 'none',           label: 'None (undirected)' },
-      { value: 'chevron',        label: 'Chevron' },
-      { value: 'tee',            label: 'Tee' },
-      { value: 'circle',         label: 'Circle' },
-      { value: 'diamond',        label: 'Diamond' },
-      { value: 'square',         label: 'Square' },
-      { value: 'triangle-tee',   label: 'Triangle Tee' },
-      { value: 'triangle-cross', label: 'Triangle Cross' },
+      { value: 'triangle', label: 'Triangle' },
+      { value: 'vee', label: 'Vee' },
+      { value: 'none', label: 'None (undirected)' },
+      { value: 'chevron', label: 'Chevron' },
+      { value: 'tee', label: 'Tee' },
+      { value: 'circle', label: 'Circle' },
+      { value: 'diamond', label: 'Diamond' },
+      { value: 'square', label: 'Square' },
+      { value: 'triangle-tee', label: 'Triangle Tee' },
+      { value: 'triangle-cross', label: 'Triangle Cross' }
     ]
   },
-  edgeLineStyleOptions () {
+  edgeLineStyleOptions() {
     return [
-      { value: 'solid',   label: 'Solid' },
-      { value: 'dotted',  label: 'Dotted' },
-      { value: 'dashed',  label: 'Dashed' },
+      { value: 'solid', label: 'Solid' },
+      { value: 'dotted', label: 'Dotted' },
+      { value: 'dashed', label: 'Dashed' }
     ]
   },
-  edgeCurveOptions () {
+  edgeCurveOptions() {
     return [
-      { value: 'bezier',           label: 'Bezier' },
-      { value: 'straight',         label: 'Straight' },
-      { value: 'segmented',        label: 'Segmented' },
+      { value: 'bezier', label: 'Bezier' },
+      { value: 'straight', label: 'Straight' },
+      { value: 'segmented', label: 'Segmented' },
       { value: 'unbundled-bezier', label: 'Unbundled Bezier' },
-      { value: 'haystack',         label: 'Haystack' },
+      { value: 'haystack', label: 'Haystack' }
     ]
   },
-  layoutOptions () {
+  layoutOptions() {
     return [
-      { value: 'cola',         label: 'Cola (Physics-based)' },
-      { value: 'cose',         label: 'CoSE (Force-directed)' },
+      { value: 'cola', label: 'Cola (Physics-based)' },
+      { value: 'cose', label: 'CoSE (Force-directed)' },
       { value: 'breadthfirst', label: 'Breadth First (Tree)' },
-      { value: 'grid',         label: 'Grid' },
-      { value: 'circle',       label: 'Circle' },
-      { value: 'concentric',   label: 'Concentric' },
-      { value: 'dagre',        label: 'Dagre (Hierarchical)' },
-      { value: 'random',       label: 'Random' },
+      { value: 'grid', label: 'Grid' },
+      { value: 'circle', label: 'Circle' },
+      { value: 'concentric', label: 'Concentric' },
+      { value: 'dagre', label: 'Dagre (Hierarchical)' },
+      { value: 'random', label: 'Random' }
     ]
   },
-  appDefaults () { 
+  appDefaults() {
     var defaults = {
-      'hintBGColor': '#36004c',
-      'hintLinkColor': '#ffffff', 
-      'debug': false, 
-      'hints': 'asdfjklqweruiopzxcvnmgh', 
-      'reset': false,
-      'showHelpPane': true,
-      'd3dInfo': false,
-      'hintAction': 'Edit Object',
-      'defaultTheme': 'light',
-      'themes': [
-        {'value':'light', 'label':'Light Theme'},
-        {'value':'dark', 'label':'Dark Theme'},
+      hintBGColor: '#36004c',
+      hintLinkColor: '#ffffff',
+      debug: false,
+      hints: 'asdfjklqweruiopzxcvnmgh',
+      reset: false,
+      showHelpPane: true,
+      d3dInfo: false,
+      hintAction: 'Edit Object',
+      defaultTheme: 'light',
+      themes: [
+        { value: 'light', label: 'Light Theme' },
+        { value: 'dark', label: 'Dark Theme' }
       ],
-      'zoomFitFactor': 60,
-      'defaultZoomFit': true,
-      'defaultZoomLevel': 1,
-      'defaultLayoutMode': 'cola',
-      'defaultColaEdgeLength': 120,
-      'defaultColaNodeSpacing': 30,
-      'defaultColaFlow': null,
-      'defaultColaAvoidOverlap': true,
-      'defaultColaMaxSimulationTime': 1500,
-      'defaultColaGravity': 0,
-      'defaultCoseNodeRepulsion': 400000,
-      'defaultCoseIdealEdgeLength': 100,
-      'defaultCoseGravity': 1,
-      'defaultCoseNodeOverlap': 4,
-      'defaultBreadthfirstDirected': true,
-      'defaultBreadthfirstCircle': false,
-      'defaultBreadthfirstSpacingFactor': 1.5,
-      'defaultGridRows': null,
-      'defaultGridCols': null,
-      'defaultGridAvoidOverlap': true,
-      'defaultGridSpacingFactor': 1.5,
-      'defaultCircleSpacingFactor': 1.0,
-      'defaultCircleClockwise': true,
-      'defaultConcentricSpacingFactor': 1.5,
-      'defaultConcentricMinNodeSpacing': 30,
-      'defaultConcentricClockwise': true,
-      'defaultConcentricEquidistant': false,
-      'defaultDagreRankDir': 'TB',
-      'defaultDagreNodeSep': 50,
-      'defaultDagreRankSep': 50,
-      'defaultDagreEdgeSep': 10,
-      'defaultDagreRanker': 'network-simplex',
-      'defaultEdgeStyle': 'bezier',
-      'defaultEdgeWidth': 2,
-      'defaultEdgeOpacity': 0.85,
-      'defaultArrowScale': 1,
-      'defaultArrowShape': 'vee',
-      'defaultEdgeArrowHeadStyle': 'filled',
-      'defaultEdgeSourceArrow': '',
-      'defaultEdgeColor': '',
-      'defaultEdgeLineStyle': 'solid',
-      'defaultNodeLabel': '',
-      'defaultNodeShape': 'rectangle',
-      'defaultNodeTextHalign': 'center',
-      'defaultNodeTextValign': 'top',
-      'defaultNodeBgColor': '',
-      'defaultNodeBorderColor': '',
-      'defaultNodeBorderWidth': null,
-      'defaultNodeFontSize': null,
-      'defaultEdgeLabel': '',
-      'serverUrl': 'http://localhost:3000',
+      zoomFitFactor: 60,
+      defaultZoomFit: true,
+      defaultZoomLevel: 1,
+      defaultLayoutMode: 'cola',
+      defaultColaEdgeLength: 120,
+      defaultColaNodeSpacing: 30,
+      defaultColaFlow: null,
+      defaultColaAvoidOverlap: true,
+      defaultColaMaxSimulationTime: 1500,
+      defaultColaGravity: 0,
+      defaultCoseNodeRepulsion: 400000,
+      defaultCoseIdealEdgeLength: 100,
+      defaultCoseGravity: 1,
+      defaultCoseNodeOverlap: 4,
+      defaultBreadthfirstDirected: true,
+      defaultBreadthfirstCircle: false,
+      defaultBreadthfirstSpacingFactor: 1.5,
+      defaultGridRows: null,
+      defaultGridCols: null,
+      defaultGridAvoidOverlap: true,
+      defaultGridSpacingFactor: 1.5,
+      defaultCircleSpacingFactor: 1.0,
+      defaultCircleClockwise: true,
+      defaultConcentricSpacingFactor: 1.5,
+      defaultConcentricMinNodeSpacing: 30,
+      defaultConcentricClockwise: true,
+      defaultConcentricEquidistant: false,
+      defaultDagreRankDir: 'TB',
+      defaultDagreNodeSep: 50,
+      defaultDagreRankSep: 50,
+      defaultDagreEdgeSep: 10,
+      defaultDagreRanker: 'network-simplex',
+      defaultEdgeStyle: 'bezier',
+      defaultEdgeWidth: 2,
+      defaultEdgeOpacity: 0.85,
+      defaultArrowScale: 1,
+      defaultArrowShape: 'vee',
+      defaultEdgeArrowHeadStyle: 'filled',
+      defaultEdgeSourceArrow: '',
+      defaultEdgeColor: '',
+      defaultEdgeLineStyle: 'solid',
+      defaultNodeLabel: '',
+      defaultNodeShape: 'rectangle',
+      defaultNodeTextHalign: 'center',
+      defaultNodeTextValign: 'top',
+      defaultNodeBgColor: '',
+      defaultNodeBorderColor: '',
+      defaultNodeBorderWidth: null,
+      defaultNodeFontSize: null,
+      defaultEdgeLabel: '',
+      serverUrl: 'http://localhost:3000',
+      // User-rebindable shortcut overrides (id → combo). Defaults live in
+      // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
+      shortcuts: {}
     }
     return defaults
   },
-  serverUrl () {
+  serverUrl() {
     const s = VueCookies.get('settings')
-    return (s && s.serverUrl) ? s.serverUrl : 'http://localhost:3000'
+    return s && s.serverUrl ? s.serverUrl : 'http://localhost:3000'
   },
-  buildHints (elements, hyperLinks=false) {
+  buildHints(elements, hyperLinks = false) {
     var hints = {}
     var shortcutOptions = this.hintOptions()
     var shortcutLength = shortcutOptions.length
@@ -288,11 +288,21 @@ export default {
       div.innerHTML = shortcut
       if (elements[i].type === 'text') {
         console.log('am i here type text')
-        div.style.cssText = 'display: table-caption; color: '+hintLinkColor+'; border: 1px solid #36004c; padding: 1px 8px 1px 8px; border-radius: 10px; background: '+hintBGColor+'; z-index: 1; position: absolute'
+        div.style.cssText =
+          'display: table-caption; color: ' +
+          hintLinkColor +
+          '; border: 1px solid #36004c; padding: 1px 8px 1px 8px; border-radius: 10px; background: ' +
+          hintBGColor +
+          '; z-index: 1; position: absolute'
         elements[i].parentNode.append(div)
       } else {
         console.log('am i here type text else')
-        div.style.cssText = 'display: table-caption; color: '+hintLinkColor+'; border: 1px solid #36004c; padding: 1px 8px 1px 8px; border-radius: 10px; background: '+hintBGColor+'; z-index: 1; position: absolute'
+        div.style.cssText =
+          'display: table-caption; color: ' +
+          hintLinkColor +
+          '; border: 1px solid #36004c; padding: 1px 8px 1px 8px; border-radius: 10px; background: ' +
+          hintBGColor +
+          '; z-index: 1; position: absolute'
         /*Depending on what we are hinting on the parent is differnt*/
         if (hyperLinks) {
           elements[i].append(div)
@@ -310,11 +320,11 @@ export default {
 
     return hints
   },
-  selectionBool (index) {
+  selectionBool(index) {
     console.log(this.menuLinks[index].title)
     this.currentMenuLink = this.menuLinks[index].title
   },
-  d3FilterKeys (hints, filter, eventKey) {
+  d3FilterKeys(hints, filter, eventKey) {
     // var key = []
     var keys = {}
     var newHints = {}
@@ -353,18 +363,21 @@ export default {
 
     return filterData
   },
-  formHints (event, form){
-    if (this.debug){
+  formHints(event, form) {
+    if (this.debug) {
       console.log(event.key)
       console.log('form hints')
     }
 
     if (event.key === 'Escape') {
       console.log('escape')
-      this.removeHints(form.hints)
-      form.common()
-    } else if ((Object.keys(form.hints).length > 0) && (Object.prototype.hasOwnProperty.call(form.hints, event.key))) {
-
+      // Closing the form is handled by the form's own keydown handler via the
+      // user's configured 'close' shortcut — never assume Esc here.
+      return form.hints
+    } else if (
+      Object.keys(form.hints).length > 0 &&
+      Object.prototype.hasOwnProperty.call(form.hints, event.key)
+    ) {
       if (this.debug) {
         //console.log(form.hints[event.key])
       }
@@ -384,13 +397,13 @@ export default {
       if (Object.keys(form.hints).length === 1) {
         form.hints = {}
       }
-    } else if (event.key == "f" ){
+    } else if (event.key == 'f') {
       if (Object.keys(form.hints).length > 0) {
         console.log('hints already being displayed')
         this.removeHint(form.hints, event.key)
       } else {
         var inputs = form.$refs.formfields.$el.querySelectorAll('submit,input,textarea')
-        return form.hints = this.buildHints(inputs)
+        return (form.hints = this.buildHints(inputs))
         // this.addFollowLinks()
       }
       //  break
@@ -400,16 +413,16 @@ export default {
       //   break
       // default:
       //   console.log('default')
-    } 
+    }
     // This delete helps cleanup the remaining hints, without removing the form radio
     // object
     delete form.hints[event.key]
     return form.hints
   },
-  removeHint (hints, eventKey) {
+  removeHint(hints, eventKey) {
     hints[eventKey].parentElement.removeChild(hints[eventKey].parentElement.lastChild)
   },
-  removeHints (hints) {
+  removeHints(hints) {
     try {
       if (this.debug) {
         console.log(hints)
@@ -439,8 +452,7 @@ export default {
    * @param {integer} max number of items
    * @return {integer} a number
    **/
-  getIndex(index, key, items){
-
+  getIndex(index, key, items) {
     console.log(index)
     console.log(key)
     console.log(items)
@@ -448,21 +460,21 @@ export default {
     if (index === null || isNaN(index)) {
       id = 0
     } else {
-      switch(key){
+      switch (key) {
         case 'j':
           id = this.add(index)
           break
         case 'k':
-          id= this.remove(index)
+          id = this.remove(index)
       }
-        id = this.mod(id, items)
+      id = this.mod(id, items)
     }
 
     return id
   },
-  getPage(index, key, pages){
+  getPage(index, key, pages) {
     var id = null
-    switch(key){
+    switch (key) {
       case 'l':
         id = this.add(index)
         break
@@ -476,23 +488,23 @@ export default {
     }
     return id
   },
-  add(item){
+  add(item) {
     return item + 1
   },
-  remove(item){
+  remove(item) {
     return item - 1
   },
-  createLocalEntry(data){
-    try{
-      let randomId ='D3D'+this.randomId()
+  createLocalEntry(data) {
+    try {
+      let randomId = 'D3D' + this.randomId()
       let created = new Date()
       let json = modelToGraphlib(data.diagram)
-      let payload = { 
-        'name': data.name,
-        'description': data.description,
-        'diagram': JSON.stringify(json),
-        'created': created.toISOString(),
-        'updated': created.toISOString()
+      let payload = {
+        name: data.name,
+        description: data.description,
+        diagram: JSON.stringify(json),
+        created: created.toISOString(),
+        updated: created.toISOString()
       }
 
       localStorage.setItem(randomId, JSON.stringify(payload))
@@ -506,28 +518,27 @@ export default {
     try {
       // Check if the item with the given ID exists in localStorage
       if (localStorage.getItem(id) !== null) {
-          // Remove the item from localStorage
-          localStorage.removeItem(id);
-          console.log("Item with ID " + id + " has been removed from localStorage.");
+        // Remove the item from localStorage
+        localStorage.removeItem(id)
+        console.log('Item with ID ' + id + ' has been removed from localStorage.')
       } else {
-          console.log("Item with ID " + id + " does not exist in localStorage.");
+        console.log('Item with ID ' + id + ' does not exist in localStorage.')
       }
-
     } catch (error) {
       console.log(error)
     }
   },
-  updateLocalEntry(data){
-    try{
+  updateLocalEntry(data) {
+    try {
       console.log(data)
       let updated = new Date()
       let json = modelToGraphlib(data.diagram)
-      let payload = { 
-        'name': data.name,
-        'description': data.description,
-        'diagram': JSON.stringify(json),
-        'created': data.created,
-        'updated': updated.toISOString(),
+      let payload = {
+        name: data.name,
+        description: data.description,
+        diagram: JSON.stringify(json),
+        created: data.created,
+        updated: updated.toISOString()
       }
 
       localStorage.setItem(data.id, JSON.stringify(payload))
@@ -538,40 +549,39 @@ export default {
       console.log(error)
     }
   },
-  saveTempDiagram(cy){
+  saveTempDiagram(cy) {
     try {
       let json = modelToGraphlib(cy)
       let created = new Date()
       let updatedData = {
-        'created': created.toISOString(),
-        'updated': created.toISOString(),
-        'name': this.tempInfo().name,
-        'description': this.tempInfo().description,
-        'diagram': JSON.stringify(json),
+        created: created.toISOString(),
+        updated: created.toISOString(),
+        name: this.tempInfo().name,
+        description: this.tempInfo().description,
+        diagram: JSON.stringify(json)
       }
       localStorage.setItem('samus.lastUpdated', JSON.stringify(updatedData))
     } catch (error) {
       console.log('saveTempDiagram failed', error)
     }
   },
-  getTempDiagram(){
+  getTempDiagram() {
     var localData = JSON.parse(localStorage.getItem('samus.lastUpdated'))
     return localData
   },
-  getLocalItem(id){
+  getLocalItem(id) {
     let localItem = JSON.parse(localStorage.getItem(id))
     return localItem
-
   },
   //Need to check if token is valid
-  auth(){
-    if (localStorage.getItem('token')){
+  auth() {
+    if (localStorage.getItem('token')) {
       return true
     } else {
       return false
     }
   },
-  updateId(id){
+  updateId(id) {
     var localData = this.getLocal()
     console.log(localData)
     localData.id = id
@@ -581,36 +591,36 @@ export default {
   defaultNodeValues() {
     const s = this._readSettings()
     var data = {
-      nodeLabel:  s.defaultNodeLabel !== undefined ? s.defaultNodeLabel : '',
-      nodeShape:  s.defaultNodeShape       || 'rectangle',
-      textHalign: s.defaultNodeTextHalign  || 'center',
-      textValign: s.defaultNodeTextValign  || 'top',
-      bgColor:    s.defaultNodeBgColor     || '',
+      nodeLabel: s.defaultNodeLabel !== undefined ? s.defaultNodeLabel : '',
+      nodeShape: s.defaultNodeShape || 'rectangle',
+      textHalign: s.defaultNodeTextHalign || 'center',
+      textValign: s.defaultNodeTextValign || 'top',
+      bgColor: s.defaultNodeBgColor || '',
       borderColor: s.defaultNodeBorderColor || '',
       borderWidth: s.defaultNodeBorderWidth != null ? s.defaultNodeBorderWidth : null,
-      fontSize:   s.defaultNodeFontSize    != null ? s.defaultNodeFontSize : null,
+      fontSize: s.defaultNodeFontSize != null ? s.defaultNodeFontSize : null
     }
     return data
   },
   defaultEdgeValues() {
     const s = this._readSettings()
     var data = {
-      edgeLabel:          s.defaultEdgeLabel !== undefined ? s.defaultEdgeLabel : '',
+      edgeLabel: s.defaultEdgeLabel !== undefined ? s.defaultEdgeLabel : '',
       edgeArrowHeadStyle: s.defaultEdgeArrowHeadStyle || 'filled',
-      edgeArrowHead:      s.defaultArrowShape || 'vee',
-      sourceArrowhead:    s.defaultEdgeSourceArrow || '',
-      edgeWidth:          s.defaultEdgeWidth   != null ? Number(s.defaultEdgeWidth)   : 2,
-      edgeColor:          s.defaultEdgeColor   || '',
-      edgeLineStyle:      s.defaultEdgeLineStyle || 'solid',
-      edgeCurve:          this._normalizeEdgeCurve(s.defaultEdgeStyle),
-      edgeOpacity:        s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85,
+      edgeArrowHead: s.defaultArrowShape || 'vee',
+      sourceArrowhead: s.defaultEdgeSourceArrow || '',
+      edgeWidth: s.defaultEdgeWidth != null ? Number(s.defaultEdgeWidth) : 2,
+      edgeColor: s.defaultEdgeColor || '',
+      edgeLineStyle: s.defaultEdgeLineStyle || 'solid',
+      edgeCurve: this._normalizeEdgeCurve(s.defaultEdgeStyle),
+      edgeOpacity: s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85
     }
     return data
   },
   // Map the stored default curve value to a cytoscape curve-style. Legacy
   // settings saved 'curved' (label "Curved (Bezier)"); normalize it to the
   // cytoscape value 'bezier'.
-  _normalizeEdgeCurve (val) {
+  _normalizeEdgeCurve(val) {
     if (val === 'curved') return 'bezier'
     return val || 'bezier'
   },
@@ -622,5 +632,5 @@ export default {
     } catch (e) {
       return {}
     }
-  },
+  }
 }

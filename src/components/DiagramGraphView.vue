@@ -110,6 +110,7 @@ import HistoryPanel from '@/components/HistoryPanel.vue'
 import Hints from '@/helpers/Hints.js'
 import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
+import { resolveGraphKey } from '@/helpers/GraphKeys.js'
 import * as collab from '@/services/collab'
 
 function _decodeJwt(token) {
@@ -412,38 +413,51 @@ export default {
           this.hintKeysReplaced = ''
           hints.removeHints(data.hints)
         }
-      } else if (event.altKey === true || event.metaKey === true) {
-        const altKeys = new AltKeys(this.emitter, mod)
-        const reset = altKeys.key(event.key, this)
-        if (reset) this.resetValues()
       } else {
-        const otherKeys = new OtherKeys(this.emitter, mod, this._onHintBadgeClick)
-        const result = otherKeys.defaultActions(
-          event.key,
-          this.edgeOrNode,
-          this.focusedNodeId,
-          this.focusedEdgeId
-        )
+        const graph = resolveGraphKey(event, {
+          modifier: mod,
+          edgeOrNode: this.edgeOrNode,
+          focusedNodeId: this.focusedNodeId,
+          focusedEdgeId: this.focusedEdgeId
+        })
 
-        if (D3Util.debug) console.log('keyPress result', result)
+        if (D3Util.debug) console.log('keyPress result', graph)
 
-        if (event.key === 'e') {
-          if (!result) return
-          this.d3Data = result
-          this.openSheet = true
+        if (!graph) {
+          if (event.altKey === true || event.metaKey === true) {
+            const altKeys = new AltKeys(this.emitter, mod)
+            const reset = altKeys.key(event.key, this)
+            if (reset) this.resetValues()
+          }
+          return
         }
 
-        if (event.key === 'd') {
-          this._clearMultiSelection()
-        }
-
-        if (event.key === 'H') {
-          const mod = this.modifier?.value ?? this.modifier
-          if (mod?.d3dInfo?.id) this.showHistory = true
-        }
-
-        if (result) {
-          if (event.key === 'x') {
+        switch (graph.action) {
+          case 'menu':
+            this.emitter.emit('changeActive', 'Menu')
+            break
+          case 'help':
+            this.emitter.emit('showHelp')
+            break
+          case 'actionsMenu':
+            this.emitter.emit('changeActive', 'Actions Menu')
+            break
+          case 'toggleTheme':
+            this.emitter.emit('toggleTheme')
+            break
+          case 'addNode':
+            mod.addNode(D3Util.defaultNodeValues())
+            break
+          case 'addEdge':
+            mod.addEdge(D3Util.defaultEdgeValues())
+            this._clearMultiSelection()
+            break
+          case 'edit':
+            this.d3Data = graph.data
+            this.emitter.emit('changeActive', graph.mode)
+            this.openSheet = true
+            break
+          case 'delete':
             if (this.edgeOrNode === 'nodes') {
               const ok = mod.deleteNode(this.focusedNodeId)
               if (ok) this.focusedNodeId = null
@@ -461,23 +475,43 @@ export default {
                   status: 'info'
                 })
             }
-          } else if (event.key === 'f') {
-            this.hints = result.hints
-          } else if (event.key === 'Enter') {
-            this.selectedNodes = result.selectedNodes
-            this.doubleSelection = result.doubleSelection
-            mod.selectedNodes = result.selectedNodes
-            mod.doubleSelection = result.doubleSelection
+            break
+          case 'copy':
+            mod.createCopyV2(this.focusedNodeId)
+            break
+          case 'showHints':
+            this.hints = new OtherKeys(this.emitter, mod, this._onHintBadgeClick).F(this.edgeOrNode)
+            break
+          case 'select': {
+            const sel = new OtherKeys(this.emitter, mod, this._onHintBadgeClick)
+            sel.focusedIndex = this.focusedIndex
+            sel.focusedNodeId = this.focusedNodeId
+            sel.focusedEdgeId = this.focusedEdgeId
+            const selection = sel.enter(this.edgeOrNode)
+            this.selectedNodes = selection.selectedNodes
+            this.doubleSelection = selection.doubleSelection
+            mod.selectedNodes = selection.selectedNodes
+            mod.doubleSelection = selection.doubleSelection
             this._syncSelectionCrosshairs()
-          } else if (event.key === 'Escape') {
+            break
+          }
+          case 'history':
+            if (mod?.d3dInfo?.id) this.showHistory = true
+            break
+          case 'close':
             if (this.escCount >= 2) this.resetValues()
             else this.escCount++
-          } else if (event.key === 'y') {
-            mod.createCopyV2(this.focusedNodeId)
-          } else {
-            if (this.edgeOrNode === 'nodes') this.focusedNodeId = result.nodesId
-            else if (this.edgeOrNode === 'edges') this.focusedEdgeId = result.edgesId
-            this.focusedIndex = result.index
+            break
+          case 'nav': {
+            const nav = new OtherKeys(this.emitter, mod, this._onHintBadgeClick)
+            nav.focusedIndex = this.focusedIndex
+            nav.focusedNodeId = this.focusedNodeId
+            nav.focusedEdgeId = this.focusedEdgeId
+            const selectedId = nav._navigate(graph.direction, this.edgeOrNode)
+            if (this.edgeOrNode === 'nodes') this.focusedNodeId = selectedId
+            else this.focusedEdgeId = selectedId
+            this.focusedIndex = nav.focusedIndex
+            break
           }
         }
       }

@@ -78,70 +78,78 @@
 </template>
 <script>
 import D3Util from '@/helpers/D3Util.js'
+import Shortcuts from '@/helpers/Shortcuts.js'
 
 export default {
   name: 'D3DHelper',
   props: ['expand', 'diagramInfo'],
-  data () {
-    return {
-      selectionOptions: [
-        { title: 'Focus Node',  shortcut: 'j or k' },
-        { title: 'Active 1',    shortcut: 'enter' },
-        { title: 'Active 2',    shortcut: 'enter enter' },
-        { title: 'Hints',       shortcut: 'f' },
-        { title: 'Change Focus', shortcut: 'esc' },
-        { title: 'Command Palette', shortcut: '⌘ / Ctrl + k' },
-      ],
-      actions: [
-        { title: 'Delete',      shortcut: 'x' },
-        { title: 'Read Only',   shortcut: 'r' },
-        { title: 'Edit',        shortcut: 'e' },
-        { title: 'Create Node', shortcut: 'n' },
-        { title: 'Create Edge', shortcut: 'd' },
-      ],
-      other: [
-        { title: 'Settings',    shortcut: 'Ctrl + t' },
-        { title: 'Hints',       shortcut: 'f' },
-      ],
-    }
-  },
   computed: {
     mod() {
       return D3Util.isMac() ? '⌘' : 'Alt'
     },
+    other() {
+      return [
+        { title: 'Settings', shortcut: 'Ctrl + t' },
+        { title: 'Hints', shortcut: Shortcuts.label('showHints') }
+      ]
+    },
+    selectionOptions() {
+      return [
+        {
+          title: 'Focus Node',
+          shortcut: `${Shortcuts.label('navDown')} or ${Shortcuts.label('navUp')}`
+        },
+        { title: 'Active 1', shortcut: Shortcuts.label('select') },
+        {
+          title: 'Active 2',
+          shortcut: `${Shortcuts.label('select')} ${Shortcuts.label('select')}`
+        },
+        { title: 'Hints', shortcut: Shortcuts.label('showHints') },
+        { title: 'Change Focus', shortcut: Shortcuts.label('close') },
+        { title: 'Command Palette', shortcut: '⌘ / Ctrl + k' }
+      ]
+    },
+    actions() {
+      return [
+        { title: 'Delete', shortcut: Shortcuts.label('deleteElement') },
+        { title: 'Read Only', shortcut: 'r' },
+        { title: 'Edit', shortcut: Shortcuts.label('editElement') },
+        { title: 'Create Node', shortcut: Shortcuts.label('addNode') },
+        { title: 'Create Edge', shortcut: Shortcuts.label('addEdge') }
+      ]
+    },
     zoom() {
       return [
-        { title: 'Zoom In',   shortcut: `${this.mod} + =` },
-        { title: 'Zoom Out',  shortcut: `${this.mod} + -` },
+        { title: 'Zoom In', shortcut: `${this.mod} + =` },
+        { title: 'Zoom Out', shortcut: `${this.mod} + -` },
         { title: 'Pan Right', shortcut: `${this.mod} + l` },
-        { title: 'Pan Left',  shortcut: `${this.mod} + h` },
-        { title: 'Pan Up',    shortcut: `${this.mod} + k` },
-        { title: 'Pan Down',  shortcut: `${this.mod} + j` },
+        { title: 'Pan Left', shortcut: `${this.mod} + h` },
+        { title: 'Pan Up', shortcut: `${this.mod} + k` },
+        { title: 'Pan Down', shortcut: `${this.mod} + j` }
       ]
     },
     samus() {
       return [
-        { title: 'New Diagram',  shortcut: `${this.mod} + n` },
+        { title: 'New Diagram', shortcut: `${this.mod} + n` },
         { title: 'Open Diagram', shortcut: `${this.mod} + o` },
         { title: 'Edit Diagram', shortcut: `${this.mod} + e` },
-        { title: 'Save Diagram', shortcut: `${this.mod} + s` },
+        { title: 'Save Diagram', shortcut: `${this.mod} + s` }
       ]
     },
     layouts() {
       return [
-        { title: 'Cola (Physics-based)',  shortcut: `${this.mod} + 1` },
+        { title: 'Cola (Physics-based)', shortcut: `${this.mod} + 1` },
         { title: 'CoSE (Force-directed)', shortcut: `${this.mod} + 2` },
-        { title: 'Breadth First (Tree)',  shortcut: `${this.mod} + 3` },
-        { title: 'Grid',                  shortcut: `${this.mod} + 4` },
-        { title: 'Circle',                shortcut: `${this.mod} + 5` },
-        { title: 'Concentric',            shortcut: `${this.mod} + 6` },
-        { title: 'Dagre (Hierarchical)',  shortcut: `${this.mod} + 7` },
-        { title: 'Random',                shortcut: `${this.mod} + 8` },
+        { title: 'Breadth First (Tree)', shortcut: `${this.mod} + 3` },
+        { title: 'Grid', shortcut: `${this.mod} + 4` },
+        { title: 'Circle', shortcut: `${this.mod} + 5` },
+        { title: 'Concentric', shortcut: `${this.mod} + 6` },
+        { title: 'Dagre (Hierarchical)', shortcut: `${this.mod} + 7` },
+        { title: 'Random', shortcut: `${this.mod} + 8` }
       ]
-    },
-  },
+    }
+  }
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
