@@ -3,53 +3,23 @@ import VueCookies from 'vue-cookies'
 
 export default class OtherKeys {
   constructor(emitter, modifier, hintFunction) {
-    this.emitter       = emitter
-    this.modifier      = modifier
-    this.focusedIndex  = modifier.focusedIndex
+    this.emitter = emitter
+    this.modifier = modifier
+    this.focusedIndex = modifier.focusedIndex
     this.selectedNodes = modifier.selectedNodes
     this.doubleSelection = modifier.doubleSelection
     this.selectedEdges = modifier.selectedEdges || []
-    this.hintFunction  = hintFunction
+    this.hintFunction = hintFunction
   }
 
+  // Movement fallback for the graph view: navigation (j/k/h/l), hints (f)
+  // and selection (Enter). Emitter-based actions (menu, help, add, edit, ...)
+  // are resolved by GraphKeys + DiagramGraphView, not here.
   defaultActions(eventKey, edgeOrNode, focusedNodeId, focusedEdgeId) {
-    let d3Data = null
     this.focusedNodeId = focusedNodeId
     this.focusedEdgeId = focusedEdgeId
 
-    switch (eventKey) {
-      case 'm':
-        this.emitter.emit('changeActive', 'Menu')
-        break
-      case '/':
-        this.emitter.emit('showHelp')
-        break
-      case 'a':
-        this.emitter.emit('changeActive', 'Actions Menu')
-        break
-      case 't':
-        this.emitter.emit('toggleTheme')
-        break
-      case 'n':
-        this.modifier.addNode(D3Util.defaultNodeValues())
-        break
-      case 'd':
-        this.modifier.addEdge(D3Util.defaultEdgeValues())
-        break
-      case 'e':
-        if (edgeOrNode === 'edges') {
-          d3Data = this.modifier.getEdgeData(focusedEdgeId)
-          this.emitter.emit('changeActive', 'Edit Edge')
-        } else if (edgeOrNode === 'nodes') {
-          d3Data = this.modifier.getNodeData(focusedNodeId)
-          this.emitter.emit('changeActive', 'Edit Node')
-        }
-        break
-      default:
-        return this.Animate(eventKey, edgeOrNode)
-    }
-
-    return d3Data
+    return this.Animate(eventKey, edgeOrNode)
   }
 
   Animate(eventKey, nodeOrEdge) {
@@ -146,20 +116,20 @@ export default class OtherKeys {
   F(nodeOrEdge) {
     const renderer = this.modifier.renderer
     const elements = renderer
-      ? (nodeOrEdge === 'edges'
-          ? renderer.getAllEdgeElements()
-          : renderer.getAllNodeElements())
+      ? nodeOrEdge === 'edges'
+        ? renderer.getAllEdgeElements()
+        : renderer.getAllNodeElements()
       : []
 
-    const availHints    = this.buildHints(elements)
-    const hints         = {}
-    const settings      = VueCookies.get('settings') || {}
+    const availHints = this.buildHints(elements)
+    const hints = {}
+    const settings = VueCookies.get('settings') || {}
     const hintLinkColor = settings.hintLinkColor || '#ffffff'
-    const hintBGColor   = settings.hintBGColor   || '#36004c'
+    const hintBGColor = settings.hintBGColor || '#36004c'
 
     for (let i = 0; i < elements.length; i++) {
       const shortcut = availHints[i]
-      const el       = elements[i]
+      const el = elements[i]
 
       const badge = document.createElement('div')
       badge.className = 'hint-badge'
@@ -170,7 +140,7 @@ export default class OtherKeys {
         '<span class="hint-bracket htr"></span>',
         '<span class="hint-bracket hbl"></span>',
         '<span class="hint-bracket hbr"></span>',
-        `<a href="#" tabindex="-1"><span class="hint-char">${shortcut}</span></a>`,
+        `<a href="#" tabindex="-1"><span class="hint-char">${shortcut}</span></a>`
       ].join('')
       badge.addEventListener('click', this.hintFunction)
       el.appendChild(badge)

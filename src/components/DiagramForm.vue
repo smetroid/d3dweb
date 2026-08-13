@@ -1,30 +1,12 @@
 <template>
   <Teleport to="body">
     <transition name="fx-scrim">
-      <div
-        v-if="diagramModal"
-        class="fx-scrim"
-        @click="close()"
-      ></div>
+      <div v-if="diagramModal" class="fx-scrim" @click="close()"></div>
     </transition>
     <transition name="fx-dialog">
-      <div
-        v-if="diagramModal"
-        class="fx-dialog-stage"
-      >
-        <focus-trap
-          v-model:active="diagramModal"
-          class="trap is-active"
-        >
-          <div
-            tabindex="0"
-            class="fx-dialog"
-            @keydown.esc="close()"
-            @keyup.alt.s="saveAction()"
-            @keyup.meta.s="saveAction()"
-            @keyup.ctrl.c="close()"
-            @keyup.meta.c="close()"
-          >
+      <div v-if="diagramModal" class="fx-dialog-stage">
+        <focus-trap v-model:active="diagramModal" class="trap is-active">
+          <div tabindex="0" class="fx-dialog" @keydown="onKeydown($event)" @keyup="onKeyup($event)">
             <div class="fx-panel-inner">
               <header class="fx-panel-header">
                 <div class="fx-panel-title">
@@ -38,7 +20,9 @@
                   class="fx-close"
                   aria-label="Close diagram form"
                   @click="close()"
-                >✕</button>
+                >
+                  ✕
+                </button>
               </header>
 
               <div class="fx-readout">
@@ -64,7 +48,12 @@
                   </label>
                   <label class="fx-field">
                     <span class="fx-label">Diagram Name</span>
-                    <input class="fx-input" type="text" v-model="name" placeholder="Name this diagram" />
+                    <input
+                      class="fx-input"
+                      type="text"
+                      v-model="name"
+                      placeholder="Name this diagram"
+                    />
                   </label>
                 </div>
 
@@ -86,7 +75,9 @@
                       class="fx-select-trigger"
                       @click.stop="toggleSel('layout')"
                       @keydown.down.prevent="openAndFocus('layout', $event)"
-                    >{{ layoutLabel }}<span class="fx-caret">▾</span></button>
+                    >
+                      {{ layoutLabel }}<span class="fx-caret">▾</span>
+                    </button>
                     <transition name="fx-drop">
                       <ul v-if="openSel === 'layout'" class="fx-options">
                         <li
@@ -103,7 +94,9 @@
                           @keydown.k.prevent="focusPrev($event)"
                           @keydown.j.prevent="focusNext($event)"
                           @keydown.esc.stop="closeSel($event)"
-                        >{{ opt.label }}</li>
+                        >
+                          {{ opt.label }}
+                        </li>
                       </ul>
                     </transition>
                   </div>
@@ -132,7 +125,9 @@
                           @click.stop="toggleSel('flow')"
                           @keypress.stop=""
                           @keydown.down.prevent="openAndFocus('flow', $event)"
-                        >{{ flowLabel }}<span class="fx-caret">▾</span></button>
+                        >
+                          {{ flowLabel }}<span class="fx-caret">▾</span>
+                        </button>
                         <transition name="fx-drop">
                           <ul v-if="openSel === 'flow'" class="fx-options">
                             <li
@@ -149,7 +144,9 @@
                               @keydown.k.prevent="focusPrev($event)"
                               @keydown.j.prevent="focusNext($event)"
                               @keydown.esc.stop="closeSel($event)"
-                            >{{ opt.label }}</li>
+                            >
+                              {{ opt.label }}
+                            </li>
                           </ul>
                         </transition>
                       </div>
@@ -200,7 +197,12 @@
                   <div class="fx-grid">
                     <label class="fx-field">
                       <span class="fx-label">Spacing Factor</span>
-                      <input class="fx-input" type="number" step="0.1" v-model="breadthfirstOpts.spacingFactor" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="0.1"
+                        v-model="breadthfirstOpts.spacingFactor"
+                      />
                     </label>
                     <div class="fx-field">
                       <span class="fx-label">Options</span>
@@ -221,7 +223,12 @@
                   <div class="fx-grid">
                     <label class="fx-field">
                       <span class="fx-label">Spacing Factor</span>
-                      <input class="fx-input" type="number" step="0.1" v-model="gridOpts.spacingFactor" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="0.1"
+                        v-model="gridOpts.spacingFactor"
+                      />
                     </label>
                     <div class="fx-field">
                       <span class="fx-label">Options</span>
@@ -234,11 +241,21 @@
                   <div class="fx-grid">
                     <label class="fx-field">
                       <span class="fx-label">Rows <em class="fx-opt">optional</em></span>
-                      <input class="fx-input" type="number" v-model="gridOpts.rows" placeholder="auto" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        v-model="gridOpts.rows"
+                        placeholder="auto"
+                      />
                     </label>
                     <label class="fx-field">
                       <span class="fx-label">Cols <em class="fx-opt">optional</em></span>
-                      <input class="fx-input" type="number" v-model="gridOpts.cols" placeholder="auto" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        v-model="gridOpts.cols"
+                        placeholder="auto"
+                      />
                     </label>
                   </div>
                 </template>
@@ -248,7 +265,12 @@
                   <div class="fx-grid">
                     <label class="fx-field">
                       <span class="fx-label">Spacing Factor</span>
-                      <input class="fx-input" type="number" step="0.1" v-model="circleOpts.spacingFactor" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="0.1"
+                        v-model="circleOpts.spacingFactor"
+                      />
                     </label>
                     <div class="fx-field">
                       <span class="fx-label">Options</span>
@@ -265,11 +287,20 @@
                   <div class="fx-grid">
                     <label class="fx-field">
                       <span class="fx-label">Spacing Factor</span>
-                      <input class="fx-input" type="number" step="0.1" v-model="concentricOpts.spacingFactor" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        step="0.1"
+                        v-model="concentricOpts.spacingFactor"
+                      />
                     </label>
                     <label class="fx-field">
                       <span class="fx-label">Min Node Spacing</span>
-                      <input class="fx-input" type="number" v-model="concentricOpts.minNodeSpacing" />
+                      <input
+                        class="fx-input"
+                        type="number"
+                        v-model="concentricOpts.minNodeSpacing"
+                      />
                     </label>
                   </div>
                   <div class="fx-grid">
@@ -298,7 +329,9 @@
                           class="fx-select-trigger"
                           @click.stop="toggleSel('dagreRankDir')"
                           @keydown.down.prevent="openAndFocus('dagreRankDir', $event)"
-                        >{{ dagreRankDirLabel }}<span class="fx-caret">▾</span></button>
+                        >
+                          {{ dagreRankDirLabel }}<span class="fx-caret">▾</span>
+                        </button>
                         <transition name="fx-drop">
                           <ul v-if="openSel === 'dagreRankDir'" class="fx-options">
                             <li
@@ -315,7 +348,9 @@
                               @keydown.k.prevent="focusPrev($event)"
                               @keydown.j.prevent="focusNext($event)"
                               @keydown.esc.stop="closeSel($event)"
-                            >{{ opt.label }}</li>
+                            >
+                              {{ opt.label }}
+                            </li>
                           </ul>
                         </transition>
                       </div>
@@ -328,7 +363,9 @@
                           class="fx-select-trigger"
                           @click.stop="toggleSel('dagreRanker')"
                           @keydown.down.prevent="openAndFocus('dagreRanker', $event)"
-                        >{{ dagreOpts.ranker }}<span class="fx-caret">▾</span></button>
+                        >
+                          {{ dagreOpts.ranker }}<span class="fx-caret">▾</span>
+                        </button>
                         <transition name="fx-drop">
                           <ul v-if="openSel === 'dagreRanker'" class="fx-options">
                             <li
@@ -345,7 +382,9 @@
                               @keydown.k.prevent="focusPrev($event)"
                               @keydown.j.prevent="focusNext($event)"
                               @keydown.esc.stop="closeSel($event)"
-                            >{{ opt.label }}</li>
+                            >
+                              {{ opt.label }}
+                            </li>
                           </ul>
                         </transition>
                       </div>
@@ -386,18 +425,15 @@
                   type="button"
                   class="fx-btn fx-btn-primary"
                   @click="updateLocalDiagram()"
-                >Update <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
-                <button
-                  v-else
-                  type="button"
-                  class="fx-btn fx-btn-primary"
-                  @click="create()"
-                >Create <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
-                <button
-                  type="button"
-                  class="fx-btn fx-btn-ghost"
-                  @click="close()"
-                >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+                >
+                  Update <span class="fx-kbd">{{ shortcutLabels.save }}</span>
+                </button>
+                <button v-else type="button" class="fx-btn fx-btn-primary" @click="create()">
+                  Create <span class="fx-kbd">{{ shortcutLabels.save }}</span>
+                </button>
+                <button type="button" class="fx-btn fx-btn-ghost" @click="close()">
+                  Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span>
+                </button>
               </footer>
             </div>
           </div>
@@ -410,6 +446,7 @@
 <script>
 import { markRaw } from 'vue'
 import D3Util from '@/helpers/D3Util.js'
+import Shortcuts from '@/helpers/Shortcuts.js'
 import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
 import { modelToGraphlib, graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
@@ -421,42 +458,42 @@ export default {
   inject: ['modifier'],
   data() {
     return {
-      id:          null,
-      diagram:     null,
-      username:    '',
-      created:     null,
-      name:        'New diagram default name',
+      id: null,
+      diagram: null,
+      username: '',
+      created: null,
+      name: 'New diagram default name',
       description: 'New diagram default description',
       diagramModal: false,
-      update:      null,
-      layoutMode:       'cola',
-      colaOpts:         this.defaultColaOpts(),
+      update: null,
+      layoutMode: 'cola',
+      colaOpts: this.defaultColaOpts(),
       colaConstraintsText: '[]',
-      colaConstraints:  [],
-      coseOpts:         this.defaultCoseOpts(),
+      colaConstraints: [],
+      coseOpts: this.defaultCoseOpts(),
       breadthfirstOpts: this.defaultBreadthfirstOpts(),
-      gridOpts:         this.defaultGridOpts(),
-      circleOpts:       this.defaultCircleOpts(),
-      concentricOpts:   this.defaultConcentricOpts(),
-      dagreOpts:        this.defaultDagreOpts(),
+      gridOpts: this.defaultGridOpts(),
+      circleOpts: this.defaultCircleOpts(),
+      concentricOpts: this.defaultConcentricOpts(),
+      dagreOpts: this.defaultDagreOpts(),
       jsonDiagram: null,
-      openSel:     null,
+      openSel: null,
       flowOptions: [
-        { label: 'None',            value: null },
-        { label: 'Horizontal (x)',  value: 'x' },
-        { label: 'Vertical (y)',    value: 'y' },
+        { label: 'None', value: null },
+        { label: 'Horizontal (x)', value: 'x' },
+        { label: 'Vertical (y)', value: 'y' }
       ],
       dagreRankDirOptions: [
         { label: 'Top → Bottom', value: 'TB' },
         { label: 'Bottom → Top', value: 'BT' },
         { label: 'Left → Right', value: 'LR' },
-        { label: 'Right → Left', value: 'RL' },
+        { label: 'Right → Left', value: 'RL' }
       ],
       dagreRankerOptions: [
         { label: 'Network Simplex', value: 'network-simplex' },
-        { label: 'Tight Tree',      value: 'tight-tree' },
-        { label: 'Longest Path',    value: 'longest-path' },
-      ],
+        { label: 'Tight Tree', value: 'tight-tree' },
+        { label: 'Longest Path', value: 'longest-path' }
+      ]
     }
   },
   computed: {
@@ -464,20 +501,20 @@ export default {
       return D3Util.shortcutLabels()
     },
     flowLabel() {
-      const opt = this.flowOptions.find(o => o.value === this.colaOpts.flow)
+      const opt = this.flowOptions.find((o) => o.value === this.colaOpts.flow)
       return opt ? opt.label : 'None'
     },
     layoutOptions() {
       return D3Util.layoutOptions()
     },
     layoutLabel() {
-      const opt = this.layoutOptions.find(o => o.value === this.layoutMode)
+      const opt = this.layoutOptions.find((o) => o.value === this.layoutMode)
       return opt ? opt.label : this.layoutMode
     },
     dagreRankDirLabel() {
-      const opt = this.dagreRankDirOptions.find(o => o.value === this.dagreOpts.rankDir)
+      const opt = this.dagreRankDirOptions.find((o) => o.value === this.dagreOpts.rankDir)
       return opt ? opt.label : this.dagreOpts.rankDir
-    },
+    }
   },
   mounted() {
     document.addEventListener('click', this.onDocClick)
@@ -487,7 +524,7 @@ export default {
       const mod = this._mod()
       if (mod?.d3dInfo?.id) {
         if (D3Util.auth()) this.updateServerDiagram()
-        else               this.updateLocalDiagram()
+        else this.updateLocalDiagram()
       } else {
         this.diagramModal = true
       }
@@ -495,7 +532,7 @@ export default {
 
     this.emitter.on('editDiagram', () => {
       this.diagramModal = true
-      this.update       = this.diagramModal
+      this.update = this.diagramModal
       this.setDiagramInfo()
     })
 
@@ -508,6 +545,21 @@ export default {
   methods: {
     _mod() {
       return this.modifier?.value ?? this.modifier
+    },
+
+    onKeydown(event) {
+      if (Shortcuts.matches(event, 'close')) {
+        event.preventDefault()
+        this.close()
+      }
+    },
+
+    onKeyup(event) {
+      if (event.repeat) return
+      if (Shortcuts.matches(event, 'save')) {
+        event.preventDefault()
+        this.saveAction()
+      }
     },
 
     toggleSel(key) {
@@ -575,31 +627,31 @@ export default {
     defaultColaOpts() {
       const d = D3Util.appDefaults()
       return {
-        edgeLength:        d.defaultColaEdgeLength,
-        nodeSpacing:       d.defaultColaNodeSpacing,
-        flow:              d.defaultColaFlow,
-        avoidOverlap:      d.defaultColaAvoidOverlap,
+        edgeLength: d.defaultColaEdgeLength,
+        nodeSpacing: d.defaultColaNodeSpacing,
+        flow: d.defaultColaFlow,
+        avoidOverlap: d.defaultColaAvoidOverlap,
         maxSimulationTime: d.defaultColaMaxSimulationTime,
-        gravity:           d.defaultColaGravity,
+        gravity: d.defaultColaGravity
       }
     },
 
     defaultCoseOpts() {
       const d = D3Util.appDefaults()
       return {
-        nodeRepulsion:   d.defaultCoseNodeRepulsion,
+        nodeRepulsion: d.defaultCoseNodeRepulsion,
         idealEdgeLength: d.defaultCoseIdealEdgeLength,
-        gravity:         d.defaultCoseGravity,
-        nodeOverlap:     d.defaultCoseNodeOverlap,
+        gravity: d.defaultCoseGravity,
+        nodeOverlap: d.defaultCoseNodeOverlap
       }
     },
 
     defaultBreadthfirstOpts() {
       const d = D3Util.appDefaults()
       return {
-        directed:      d.defaultBreadthfirstDirected,
-        circle:        d.defaultBreadthfirstCircle,
-        spacingFactor: d.defaultBreadthfirstSpacingFactor,
+        directed: d.defaultBreadthfirstDirected,
+        circle: d.defaultBreadthfirstCircle,
+        spacingFactor: d.defaultBreadthfirstSpacingFactor
       }
     },
 
@@ -607,9 +659,9 @@ export default {
       const d = D3Util.appDefaults()
       return {
         spacingFactor: d.defaultGridSpacingFactor,
-        avoidOverlap:  d.defaultGridAvoidOverlap,
-        rows:          d.defaultGridRows,
-        cols:          d.defaultGridCols,
+        avoidOverlap: d.defaultGridAvoidOverlap,
+        rows: d.defaultGridRows,
+        cols: d.defaultGridCols
       }
     },
 
@@ -617,17 +669,17 @@ export default {
       const d = D3Util.appDefaults()
       return {
         spacingFactor: d.defaultCircleSpacingFactor,
-        clockwise:     d.defaultCircleClockwise,
+        clockwise: d.defaultCircleClockwise
       }
     },
 
     defaultConcentricOpts() {
       const d = D3Util.appDefaults()
       return {
-        spacingFactor:  d.defaultConcentricSpacingFactor,
+        spacingFactor: d.defaultConcentricSpacingFactor,
         minNodeSpacing: d.defaultConcentricMinNodeSpacing,
-        clockwise:      d.defaultConcentricClockwise,
-        equidistant:    d.defaultConcentricEquidistant,
+        clockwise: d.defaultConcentricClockwise,
+        equidistant: d.defaultConcentricEquidistant
       }
     },
 
@@ -638,7 +690,7 @@ export default {
         nodeSep: d.defaultDagreNodeSep,
         rankSep: d.defaultDagreRankSep,
         edgeSep: d.defaultDagreEdgeSep,
-        ranker:  d.defaultDagreRanker,
+        ranker: d.defaultDagreRanker
       }
     },
 
@@ -651,98 +703,184 @@ export default {
       this.layoutMode = settings.defaultLayoutMode || defaults.defaultLayoutMode
 
       this.colaOpts = {
-        edgeLength:        settings.defaultColaEdgeLength        !== undefined ? Number(settings.defaultColaEdgeLength)        : defaults.defaultColaEdgeLength,
-        nodeSpacing:       settings.defaultColaNodeSpacing       !== undefined ? Number(settings.defaultColaNodeSpacing)       : defaults.defaultColaNodeSpacing,
-        flow:              settings.defaultColaFlow              !== undefined ? settings.defaultColaFlow                      : defaults.defaultColaFlow,
-        avoidOverlap:      settings.defaultColaAvoidOverlap      !== undefined ? Boolean(settings.defaultColaAvoidOverlap)     : defaults.defaultColaAvoidOverlap,
-        maxSimulationTime: settings.defaultColaMaxSimulationTime !== undefined ? Number(settings.defaultColaMaxSimulationTime) : defaults.defaultColaMaxSimulationTime,
-        gravity:           settings.defaultColaGravity           !== undefined ? Number(settings.defaultColaGravity)           : defaults.defaultColaGravity,
+        edgeLength:
+          settings.defaultColaEdgeLength !== undefined
+            ? Number(settings.defaultColaEdgeLength)
+            : defaults.defaultColaEdgeLength,
+        nodeSpacing:
+          settings.defaultColaNodeSpacing !== undefined
+            ? Number(settings.defaultColaNodeSpacing)
+            : defaults.defaultColaNodeSpacing,
+        flow:
+          settings.defaultColaFlow !== undefined
+            ? settings.defaultColaFlow
+            : defaults.defaultColaFlow,
+        avoidOverlap:
+          settings.defaultColaAvoidOverlap !== undefined
+            ? Boolean(settings.defaultColaAvoidOverlap)
+            : defaults.defaultColaAvoidOverlap,
+        maxSimulationTime:
+          settings.defaultColaMaxSimulationTime !== undefined
+            ? Number(settings.defaultColaMaxSimulationTime)
+            : defaults.defaultColaMaxSimulationTime,
+        gravity:
+          settings.defaultColaGravity !== undefined
+            ? Number(settings.defaultColaGravity)
+            : defaults.defaultColaGravity
       }
       this.colaConstraintsText = '[]'
       this.colaConstraints = []
 
       this.coseOpts = {
-        nodeRepulsion:   settings.defaultCoseNodeRepulsion   !== undefined ? Number(settings.defaultCoseNodeRepulsion)   : defaults.defaultCoseNodeRepulsion,
-        idealEdgeLength: settings.defaultCoseIdealEdgeLength !== undefined ? Number(settings.defaultCoseIdealEdgeLength) : defaults.defaultCoseIdealEdgeLength,
-        gravity:         settings.defaultCoseGravity         !== undefined ? Number(settings.defaultCoseGravity)         : defaults.defaultCoseGravity,
-        nodeOverlap:     settings.defaultCoseNodeOverlap     !== undefined ? Number(settings.defaultCoseNodeOverlap)     : defaults.defaultCoseNodeOverlap,
+        nodeRepulsion:
+          settings.defaultCoseNodeRepulsion !== undefined
+            ? Number(settings.defaultCoseNodeRepulsion)
+            : defaults.defaultCoseNodeRepulsion,
+        idealEdgeLength:
+          settings.defaultCoseIdealEdgeLength !== undefined
+            ? Number(settings.defaultCoseIdealEdgeLength)
+            : defaults.defaultCoseIdealEdgeLength,
+        gravity:
+          settings.defaultCoseGravity !== undefined
+            ? Number(settings.defaultCoseGravity)
+            : defaults.defaultCoseGravity,
+        nodeOverlap:
+          settings.defaultCoseNodeOverlap !== undefined
+            ? Number(settings.defaultCoseNodeOverlap)
+            : defaults.defaultCoseNodeOverlap
       }
       this.breadthfirstOpts = {
-        directed:      settings.defaultBreadthfirstDirected      !== undefined ? Boolean(settings.defaultBreadthfirstDirected)      : defaults.defaultBreadthfirstDirected,
-        circle:        settings.defaultBreadthfirstCircle        !== undefined ? Boolean(settings.defaultBreadthfirstCircle)        : defaults.defaultBreadthfirstCircle,
-        spacingFactor: settings.defaultBreadthfirstSpacingFactor !== undefined ? Number(settings.defaultBreadthfirstSpacingFactor) : defaults.defaultBreadthfirstSpacingFactor,
+        directed:
+          settings.defaultBreadthfirstDirected !== undefined
+            ? Boolean(settings.defaultBreadthfirstDirected)
+            : defaults.defaultBreadthfirstDirected,
+        circle:
+          settings.defaultBreadthfirstCircle !== undefined
+            ? Boolean(settings.defaultBreadthfirstCircle)
+            : defaults.defaultBreadthfirstCircle,
+        spacingFactor:
+          settings.defaultBreadthfirstSpacingFactor !== undefined
+            ? Number(settings.defaultBreadthfirstSpacingFactor)
+            : defaults.defaultBreadthfirstSpacingFactor
       }
       this.gridOpts = {
-        spacingFactor: settings.defaultGridSpacingFactor !== undefined ? Number(settings.defaultGridSpacingFactor) : defaults.defaultGridSpacingFactor,
-        avoidOverlap:  settings.defaultGridAvoidOverlap  !== undefined ? Boolean(settings.defaultGridAvoidOverlap) : defaults.defaultGridAvoidOverlap,
-        rows:          settings.defaultGridRows          !== undefined ? settings.defaultGridRows                   : defaults.defaultGridRows,
-        cols:          settings.defaultGridCols          !== undefined ? settings.defaultGridCols                   : defaults.defaultGridCols,
+        spacingFactor:
+          settings.defaultGridSpacingFactor !== undefined
+            ? Number(settings.defaultGridSpacingFactor)
+            : defaults.defaultGridSpacingFactor,
+        avoidOverlap:
+          settings.defaultGridAvoidOverlap !== undefined
+            ? Boolean(settings.defaultGridAvoidOverlap)
+            : defaults.defaultGridAvoidOverlap,
+        rows:
+          settings.defaultGridRows !== undefined
+            ? settings.defaultGridRows
+            : defaults.defaultGridRows,
+        cols:
+          settings.defaultGridCols !== undefined
+            ? settings.defaultGridCols
+            : defaults.defaultGridCols
       }
       this.circleOpts = {
-        spacingFactor: settings.defaultCircleSpacingFactor !== undefined ? Number(settings.defaultCircleSpacingFactor) : defaults.defaultCircleSpacingFactor,
-        clockwise:     settings.defaultCircleClockwise     !== undefined ? Boolean(settings.defaultCircleClockwise)    : defaults.defaultCircleClockwise,
+        spacingFactor:
+          settings.defaultCircleSpacingFactor !== undefined
+            ? Number(settings.defaultCircleSpacingFactor)
+            : defaults.defaultCircleSpacingFactor,
+        clockwise:
+          settings.defaultCircleClockwise !== undefined
+            ? Boolean(settings.defaultCircleClockwise)
+            : defaults.defaultCircleClockwise
       }
       this.concentricOpts = {
-        spacingFactor:  settings.defaultConcentricSpacingFactor  !== undefined ? Number(settings.defaultConcentricSpacingFactor)  : defaults.defaultConcentricSpacingFactor,
-        minNodeSpacing: settings.defaultConcentricMinNodeSpacing !== undefined ? Number(settings.defaultConcentricMinNodeSpacing) : defaults.defaultConcentricMinNodeSpacing,
-        clockwise:      settings.defaultConcentricClockwise      !== undefined ? Boolean(settings.defaultConcentricClockwise)     : defaults.defaultConcentricClockwise,
-        equidistant:    settings.defaultConcentricEquidistant    !== undefined ? Boolean(settings.defaultConcentricEquidistant)   : defaults.defaultConcentricEquidistant,
+        spacingFactor:
+          settings.defaultConcentricSpacingFactor !== undefined
+            ? Number(settings.defaultConcentricSpacingFactor)
+            : defaults.defaultConcentricSpacingFactor,
+        minNodeSpacing:
+          settings.defaultConcentricMinNodeSpacing !== undefined
+            ? Number(settings.defaultConcentricMinNodeSpacing)
+            : defaults.defaultConcentricMinNodeSpacing,
+        clockwise:
+          settings.defaultConcentricClockwise !== undefined
+            ? Boolean(settings.defaultConcentricClockwise)
+            : defaults.defaultConcentricClockwise,
+        equidistant:
+          settings.defaultConcentricEquidistant !== undefined
+            ? Boolean(settings.defaultConcentricEquidistant)
+            : defaults.defaultConcentricEquidistant
       }
       this.dagreOpts = {
-        rankDir: settings.defaultDagreRankDir !== undefined ? settings.defaultDagreRankDir          : defaults.defaultDagreRankDir,
-        nodeSep: settings.defaultDagreNodeSep !== undefined ? Number(settings.defaultDagreNodeSep)  : defaults.defaultDagreNodeSep,
-        rankSep: settings.defaultDagreRankSep !== undefined ? Number(settings.defaultDagreRankSep)  : defaults.defaultDagreRankSep,
-        edgeSep: settings.defaultDagreEdgeSep !== undefined ? Number(settings.defaultDagreEdgeSep)  : defaults.defaultDagreEdgeSep,
-        ranker:  settings.defaultDagreRanker  !== undefined ? settings.defaultDagreRanker           : defaults.defaultDagreRanker,
+        rankDir:
+          settings.defaultDagreRankDir !== undefined
+            ? settings.defaultDagreRankDir
+            : defaults.defaultDagreRankDir,
+        nodeSep:
+          settings.defaultDagreNodeSep !== undefined
+            ? Number(settings.defaultDagreNodeSep)
+            : defaults.defaultDagreNodeSep,
+        rankSep:
+          settings.defaultDagreRankSep !== undefined
+            ? Number(settings.defaultDagreRankSep)
+            : defaults.defaultDagreRankSep,
+        edgeSep:
+          settings.defaultDagreEdgeSep !== undefined
+            ? Number(settings.defaultDagreEdgeSep)
+            : defaults.defaultDagreEdgeSep,
+        ranker:
+          settings.defaultDagreRanker !== undefined
+            ? settings.defaultDagreRanker
+            : defaults.defaultDagreRanker
       }
 
-      const model = markRaw(new GraphModel([
-        { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
-      ]))
+      const model = markRaw(
+        new GraphModel([
+          { group: 'nodes', data: { id: 'first', label: 'first node', shape: 'rectangle' } }
+        ])
+      )
       model.colaConstraints = this.colaConstraints
 
       const d3dInfo = {
-        id:          null,
-        diagram:     model,
-        name:        D3Util.tempInfo().name,
+        id: null,
+        diagram: model,
+        name: D3Util.tempInfo().name,
         description: D3Util.tempInfo().description,
-        layoutMode:       this.layoutMode,
-        colaOpts:         { ...this.colaOpts },
-        colaConstraints:  this.colaConstraints,
-        coseOpts:         { ...this.coseOpts },
+        layoutMode: this.layoutMode,
+        colaOpts: { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
+        coseOpts: { ...this.coseOpts },
         breadthfirstOpts: { ...this.breadthfirstOpts },
-        gridOpts:         { ...this.gridOpts },
-        circleOpts:       { ...this.circleOpts },
-        concentricOpts:   { ...this.concentricOpts },
-        dagreOpts:        { ...this.dagreOpts },
+        gridOpts: { ...this.gridOpts },
+        circleOpts: { ...this.circleOpts },
+        concentricOpts: { ...this.concentricOpts },
+        dagreOpts: { ...this.dagreOpts }
       }
 
       this._newModifier(d3dInfo)
     },
 
     setDiagramInfo(newDiagram) {
-      const mod  = this._mod()
+      const mod = this._mod()
       const info = mod?.d3dInfo || {}
 
-      this.id          = newDiagram ? this.id          : info.id
-      this.name        = newDiagram ? this.name        : info.name
+      this.id = newDiagram ? this.id : info.id
+      this.name = newDiagram ? this.name : info.name
       this.description = newDiagram ? this.description : info.description
-      this.diagram     = newDiagram ? this.diagram     : info.diagram
-      this.created     = newDiagram ? this.created     : info.created
+      this.diagram = newDiagram ? this.diagram : info.diagram
+      this.created = newDiagram ? this.created : info.created
 
       if (this.diagram) {
-        const json       = modelToGraphlib(this.diagram)
+        const json = modelToGraphlib(this.diagram)
         this.jsonDiagram = JSON.stringify(json, null, 2)
       }
 
       this.layoutMode = mod?.layoutMode || 'cola'
-      if (mod?.colaOpts)        this.colaOpts        = { ...mod.colaOpts }
-      if (mod?.coseOpts)        this.coseOpts        = { ...mod.coseOpts }
+      if (mod?.colaOpts) this.colaOpts = { ...mod.colaOpts }
+      if (mod?.coseOpts) this.coseOpts = { ...mod.coseOpts }
       if (mod?.breadthfirstOpts) this.breadthfirstOpts = { ...mod.breadthfirstOpts }
-      if (mod?.gridOpts)        this.gridOpts        = { ...mod.gridOpts }
-      if (mod?.circleOpts)      this.circleOpts      = { ...mod.circleOpts }
-      if (mod?.concentricOpts)  this.concentricOpts  = { ...mod.concentricOpts }
-      if (mod?.dagreOpts)       this.dagreOpts       = { ...mod.dagreOpts }
+      if (mod?.gridOpts) this.gridOpts = { ...mod.gridOpts }
+      if (mod?.circleOpts) this.circleOpts = { ...mod.circleOpts }
+      if (mod?.concentricOpts) this.concentricOpts = { ...mod.concentricOpts }
+      if (mod?.dagreOpts) this.dagreOpts = { ...mod.dagreOpts }
 
       const constraints = mod?.cy?.colaConstraints ?? mod?.colaConstraints ?? []
       this.colaConstraints = Array.isArray(constraints) ? constraints : []
@@ -763,13 +901,13 @@ export default {
       this.setDiagramInfo(true)
       this._applyLayoutOptions()
 
-      const json    = modelToGraphlib(this.diagram)
+      const json = modelToGraphlib(this.diagram)
       const payload = {
-        name:        this.name,
+        name: this.name,
         description: this.description,
-        diagram:     JSON.stringify(json),
-        created:     this.created,
-        updated:     new Date().toISOString(),
+        diagram: JSON.stringify(json),
+        created: this.created,
+        updated: new Date().toISOString()
       }
 
       if (D3Util.auth()) {
@@ -783,9 +921,16 @@ export default {
           this.emitter.emit('appMessage', { message: 'Failed to create diagram', result })
         }
       } else {
-        const id = D3Util.createLocalEntry({ name: this.name, description: this.description, diagram: this.diagram })
-        this.id  = id
-        this.emitter.emit('appMessage', { message: 'Changes saved to local storage', status: 'info' })
+        const id = D3Util.createLocalEntry({
+          name: this.name,
+          description: this.description,
+          diagram: this.diagram
+        })
+        this.id = id
+        this.emitter.emit('appMessage', {
+          message: 'Changes saved to local storage',
+          status: 'info'
+        })
         this.emitter.emit('updateDiagramInfo', this)
       }
 
@@ -795,14 +940,14 @@ export default {
     _applyLayoutOptions() {
       const mod = this._mod()
       if (mod) {
-        mod.layoutMode       = this.layoutMode
-        mod.colaOpts         = { ...this.colaOpts }
-        mod.coseOpts         = { ...this.coseOpts }
+        mod.layoutMode = this.layoutMode
+        mod.colaOpts = { ...this.colaOpts }
+        mod.coseOpts = { ...this.coseOpts }
         mod.breadthfirstOpts = { ...this.breadthfirstOpts }
-        mod.gridOpts         = { ...this.gridOpts }
-        mod.circleOpts       = { ...this.circleOpts }
-        mod.concentricOpts   = { ...this.concentricOpts }
-        mod.dagreOpts        = { ...this.dagreOpts }
+        mod.gridOpts = { ...this.gridOpts }
+        mod.circleOpts = { ...this.circleOpts }
+        mod.concentricOpts = { ...this.concentricOpts }
+        mod.dagreOpts = { ...this.dagreOpts }
         const constraints = this._parseConstraints()
         if (constraints !== null) {
           this.colaConstraints = constraints
@@ -815,19 +960,19 @@ export default {
 
     updateLocalDiagram() {
       const d3dInfo = {
-        id:          this.id,
-        name:        this.name,
+        id: this.id,
+        name: this.name,
         description: this.description,
-        created:     this.created,
-        layoutMode:       this.layoutMode,
-        colaOpts:         { ...this.colaOpts },
-        colaConstraints:  this.colaConstraints,
-        coseOpts:         { ...this.coseOpts },
+        created: this.created,
+        layoutMode: this.layoutMode,
+        colaOpts: { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
+        coseOpts: { ...this.coseOpts },
         breadthfirstOpts: { ...this.breadthfirstOpts },
-        gridOpts:         { ...this.gridOpts },
-        circleOpts:       { ...this.circleOpts },
-        concentricOpts:   { ...this.concentricOpts },
-        dagreOpts:        { ...this.dagreOpts },
+        gridOpts: { ...this.gridOpts },
+        circleOpts: { ...this.circleOpts },
+        concentricOpts: { ...this.concentricOpts },
+        dagreOpts: { ...this.dagreOpts }
       }
 
       const model = this._modelFromJson()
@@ -837,30 +982,30 @@ export default {
       this._newModifier(d3dInfo)
 
       D3Util.updateLocalEntry({
-        id:          this.id,
-        name:        this.name,
+        id: this.id,
+        name: this.name,
         description: this.description,
-        diagram:     this.diagram,
-        created:     this.created,
+        diagram: this.diagram,
+        created: this.created
       })
       this.close()
     },
 
     async updateServerDiagram() {
       const d3dInfo = {
-        id:          this.id,
-        name:        this.name,
+        id: this.id,
+        name: this.name,
         description: this.description,
-        created:     this.created,
-        layoutMode:       this.layoutMode,
-        colaOpts:         { ...this.colaOpts },
-        colaConstraints:  this.colaConstraints,
-        coseOpts:         { ...this.coseOpts },
+        created: this.created,
+        layoutMode: this.layoutMode,
+        colaOpts: { ...this.colaOpts },
+        colaConstraints: this.colaConstraints,
+        coseOpts: { ...this.coseOpts },
         breadthfirstOpts: { ...this.breadthfirstOpts },
-        gridOpts:         { ...this.gridOpts },
-        circleOpts:       { ...this.circleOpts },
-        concentricOpts:   { ...this.concentricOpts },
-        dagreOpts:        { ...this.dagreOpts },
+        gridOpts: { ...this.gridOpts },
+        circleOpts: { ...this.circleOpts },
+        concentricOpts: { ...this.concentricOpts },
+        dagreOpts: { ...this.dagreOpts }
       }
 
       const model = this._modelFromJson()
@@ -869,14 +1014,14 @@ export default {
       d3dInfo.diagram = model
       this._newModifier(d3dInfo)
 
-      const json        = modelToGraphlib(this.diagram)
+      const json = modelToGraphlib(this.diagram)
       const updatedData = {
-        id:          this.id,
-        name:        this.name,
+        id: this.id,
+        name: this.name,
         description: this.description,
-        diagram:     JSON.stringify(json),
-        updated:     new Date().toISOString(),
-        created:     this.created,
+        diagram: JSON.stringify(json),
+        updated: new Date().toISOString(),
+        created: this.created
       }
 
       const response = await D3DApi.updateDiagram(updatedData)
@@ -892,7 +1037,9 @@ export default {
     _modelFromJson() {
       try {
         const parsed = JSON.parse(this.jsonDiagram)
-        const model = markRaw(isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed))
+        const model = markRaw(
+          isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed)
+        )
         model.colaConstraints = this.colaConstraints
         this.diagram = model
         return model
@@ -910,8 +1057,8 @@ export default {
     close() {
       this.diagramModal = false
       this.emitter.emit('changeActive')
-    },
-  },
+    }
+  }
 }
 </script>
 
@@ -925,7 +1072,7 @@ export default {
   font-size: 13px;
   color: rgb(var(--fx-ink));
 }
-.fx-check-row input[type="checkbox"] {
+.fx-check-row input[type='checkbox'] {
   accent-color: rgb(var(--fx-accent));
   width: 14px;
   height: 14px;
