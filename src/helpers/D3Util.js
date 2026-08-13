@@ -279,7 +279,13 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    return s && s.serverUrl ? s.serverUrl : 'http://localhost:3000'
+    if (s && s.serverUrl) return s.serverUrl
+    const envBase = import.meta.env.VITE_API_BASE_URL
+    if (envBase) {
+      if (/^https?:\/\//.test(envBase)) return envBase
+      return window.location.origin + envBase
+    }
+    return 'http://localhost:3000'
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
