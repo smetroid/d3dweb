@@ -576,6 +576,12 @@ export default class DiagramGraph {
   _scheduleServerSave() {
     if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
     if (!this.d3dInfo?.id) return
+    try {
+      const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
+      if (claims.iss === 'd3d-share' && claims.role !== 'edit') return
+    } catch {
+      /* not a JWT — proceed */
+    }
     clearTimeout(this._saveTimer)
     this._saveTimer = setTimeout(() => this._serverSave(), 500)
   }

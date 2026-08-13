@@ -57,6 +57,8 @@
           >
         </div>
 
+        <div v-if="isViewOnly" class="view-only-badge">VIEW ONLY</div>
+
         <div v-if="graphEmpty" class="graph-empty-hint">
           Empty diagram — press <span class="kbd">n</span> to create a node
           <span class="sep">·</span>
@@ -130,6 +132,11 @@ function _decodeJwt(token) {
   } catch {
     return {}
   }
+}
+
+function _isViewOnly() {
+  const claims = _decodeJwt(localStorage.getItem('token') || '')
+  return claims.iss === 'd3d-share' && claims.role !== 'edit'
 }
 
 const _PEER_COLORS = ['#ef5350', '#ab47bc', '#29b6f6', '#26a69a', '#ffb300', '#66bb6a']
@@ -316,6 +323,7 @@ export default {
     // populate from the currently focused element and only open the form when
     // there is something to edit.
     _openEdit(which) {
+      if (_isViewOnly()) return
       const mod = this.modifier?.value ?? this.modifier
       if (!mod) return
       const isNode = which === 'nodes'
@@ -334,6 +342,7 @@ export default {
     },
 
     hintSelection(data) {
+      if (_isViewOnly()) return
       if (D3Util.debug) console.log('hintSelection', data)
       const mod = this.modifier?.value ?? this.modifier
       if (!mod) return
@@ -369,6 +378,12 @@ export default {
       // Ignore keystrokes typed into form fields (forms handle their own keys)
       const tag = event.target?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+      // View-only share links: block all mutating operations
+      if (_isViewOnly()) {
+        const mutatingKeys = ['e', 'x', 'S', 'a', 'n']
+        if (event.altKey || event.metaKey || mutatingKeys.includes(event.key)) return
+      }
 
       // Ignore modifier-only, navigation and function keys (not shortcuts)
       const ignored = [
@@ -573,6 +588,9 @@ export default {
     },
     hasPeers() {
       return Object.keys(this.peers).length > 0
+    },
+    isViewOnly() {
+      return _isViewOnly()
     }
   },
   watch: {
@@ -760,5 +778,21 @@ h2 {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   pointer-events: auto;
   cursor: default;
+}
+
+.view-only-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  letter-spacing: 0.08em;
+  pointer-events: none;
 }
 </style>
