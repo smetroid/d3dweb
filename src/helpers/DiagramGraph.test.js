@@ -1,9 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
 
 vi.mock('vue-cookies', () => ({
   default: { get: () => null, set: () => {}, config: () => {} }
+}))
+
+vi.mock('@/services/api', () => ({
+  default: { updateDiagram: vi.fn().mockResolvedValue({}) }
 }))
 
 vi.stubGlobal('localStorage', {
@@ -552,5 +556,97 @@ describe('icon round-trip on edges', () => {
     expect(d.iconSet).toBe('material-symbols')
     expect(d.iconName).toBe('bolt')
     expect(d.iconPosition).toBe('only')
+  })
+})
+
+describe('autosave persistence', () => {
+  let api
+
+  beforeEach(async () => {
+    localStorage.store.clear()
+    localStorage.removeItem('token')
+    vi.useFakeTimers()
+    api = (await import('@/services/api')).default
+    api.updateDiagram.mockClear()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
+
+  function savedGraph() {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const graph = new DiagramGraph(
+      { diagram: model, name: 'D', description: 'desc', id: 'dag-1', created: '2026-01-01T00:00:00Z' },
+      { emit: vi.fn() }
+    )
+    graph.renderer = { updateScene: vi.fn(), selectNode: vi.fn(), deselectNode: vi.fn() }
+    return graph
+  }
+
+  it('writes the id-keyed localStorage entry and a history snapshot on change', () => {
+    const graph = savedGraph()
+    graph.redraw()
+
+    const entry = JSON.parse(localStorage.getItem('dag-1'))
+    expect(entry.name).toBe('D')
+    expect(entry.diagram).toContain('"label":"N"')
+
+    const history = JSON.parse(localStorage.getItem('d3d.history.dag-1'))
+    expect(history).toHaveLength(1)
+    expect(history[0].diagram).toContain('"label":"N"')
+  })
+
+  it('writes only the temp slot for an unsaved (no id) diagram', () => {
+    const { graph } = makeGraph(1)
+    graph.redraw()
+
+    expect(localStorage.getItem('dag-1')).toBeNull()
+    expect(localStorage.getItem('samus.lastUpdated')).not.toBeNull()
+    const history = JSON.parse(localStorage.getItem('d3d.history.unsaved'))
+    expect(history).toHaveLength(1)
+  })
+
+  it('skips persistence for pan/zoom redraws', () => {
+    const graph = savedGraph()
+    graph.redraw({ pan: 'Down' })
+
+    expect(localStorage.getItem('dag-1')).toBeNull()
+    expect(localStorage.getItem('d3d.history.dag-1')).toBeNull()
+  })
+
+  it('skips persistence for view-only share tokens', () => {
+    const graph = savedGraph()
+    const payload = btoa(JSON.stringify({ iss: 'd3d-share', role: 'view' }))
+    localStorage.setItem('token', `header.${payload}.sig`)
+    graph.redraw()
+
+    expect(localStorage.getItem('dag-1')).toBeNull()
+    expect(localStorage.getItem('d3d.history.dag-1')).toBeNull()
+  })
+
+  it('posts to the server (debounced) when logged in with a saved id', async () => {
+    vi.stubEnv('VITE_COLLAB_ENABLED', 'false')
+    const graph = savedGraph()
+    localStorage.setItem('token', 'a.b.c')
+
+    graph.redraw()
+    expect(api.updateDiagram).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(800)
+    expect(api.updateDiagram).toHaveBeenCalledTimes(1)
+    const payload = api.updateDiagram.mock.calls[0][0]
+    expect(payload.id).toBe('dag-1')
+    expect(payload.name).toBe('D')
+    expect(payload.diagram).toContain('"label":"N"')
+  })
+
+  it('does not post to the server without a token', async () => {
+    vi.stubEnv('VITE_COLLAB_ENABLED', 'false')
+    const graph = savedGraph()
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+    expect(api.updateDiagram).not.toHaveBeenCalled()
   })
 })
