@@ -1,0 +1,31 @@
+d3d-stack {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}".
+
+Next steps:
+
+1. Make sure your /etc/hosts contains:
+     $(minikube ip)  {{ .Values.ingress.host }}
+
+2. Watch pods roll out:
+     kubectl -n {{ .Release.Namespace }} get pods -w
+
+3. Open the app:
+     http://{{ .Values.ingress.host }}
+
+{{- if .Values.ingress.rethinkUI }}
+
+4. RethinkDB web UI:
+     http://{{ .Values.ingress.host }}/rethinkdb/
+{{- end }}
+
+{{- if not .Values.api.bootstrapUser.enabled }}
+
+5. Create a login user (localauth):
+     kubectl -n {{ .Release.Namespace }} exec deploy/{{ .Release.Name }}-api -- \
+       ./main createUser <username> <password> --config /etc/samus/samus.toml
+
+   Or re-install with:
+     helm upgrade {{ .Release.Name }} . \
+       --set api.bootstrapUser.enabled=true \
+       --set api.bootstrapUser.username=admin \
+       --set api.bootstrapUser.password=admin
+{{- end }}

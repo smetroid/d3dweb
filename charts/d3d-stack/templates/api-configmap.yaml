@@ -1,0 +1,31 @@
+{{- $component := "api" -}}
+{{- $rethinkAddr := .Values.api.config.rethinkAddress | default (printf "%s-rethinkdb:28015" .Release.Name) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-api-config
+  labels:
+    {{- include "d3d-stack.componentLabels" (dict "root" . "component" $component) | nindent 4 }}
+data:
+  samus.toml.tmpl: |
+    [samus]
+        bind_addr = "{{ .Values.api.config.bindAddr }}"
+        signing_key = "__SIGNING_KEY__"
+        auth_provider = "{{ .Values.api.config.authProvider }}"
+        continuous_query_interval = "{{ .Values.api.config.continuousQueryInterval }}"
+        log_dag_requests = {{ .Values.api.config.logDagRequests }}
+        log_edge_requests = {{ .Values.api.config.logEdgeRequests }}
+        log_node_requests = {{ .Values.api.config.logNodeRequests }}
+        log_menu_requests = {{ .Values.api.config.logMenuRequests }}
+
+    [rethinkdb]
+        address = "{{ $rethinkAddr }}"
+        database = "{{ .Values.api.config.database }}"
+
+    [notifiers.file]
+        enabled = true
+        files = ["stdout"]
+
+    [notifiers.pagerduty]
+        enabled = false
+        service_key = ""

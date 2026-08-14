@@ -1,0 +1,15 @@
+{{- $component := "web" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-web
+  labels:
+    {{- include "d3d-stack.componentLabels" (dict "root" . "component" $component) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  selector:
+    {{- include "d3d-stack.componentSelector" (dict "root" . "component" $component) | nindent 4 }}
