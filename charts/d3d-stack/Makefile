@@ -9,23 +9,40 @@ API_TAG ?= dev
 
 .PHONY: help
 help:
-	@echo "targets:"
-	@echo "  minikube-up      start minikube + enable ingress addon"
-	@echo "  images           build web and api images into minikube's docker"
-	@echo "  image-web        build d3dweb image only"
-	@echo "  image-api        build d3d-api image only"
-	@echo "  lint             helm lint"
-	@echo "  template         helm template (renders to stdout)"
+	@echo ""
+	@echo "cluster management:"
+	@echo "  minikube-up      start minikube + enable ingress addon + patch to LoadBalancer"
+	@echo "  tunnel           sudo minikube tunnel (keep in separate terminal)"
 	@echo "  install          helm upgrade --install"
+	@echo "  bootstrap-user   install + run createUser Job (admin/admin)"
 	@echo "  uninstall        helm uninstall (leaves PVC)"
 	@echo "  wipe             uninstall + delete PVC"
-	@echo "  status           kubectl get all + ingress"
+	@echo "  status           show pods / svc / ingress / pvc"
+	@echo ""
+	@echo "image build:"
+	@echo "  images           build web + api into minikube's docker"
+	@echo "  image-web        build d3dweb image only"
+	@echo "  image-api        build d3d-api image only"
+	@echo ""
+	@echo "local dev (fast iteration — no image rebuild):"
+	@echo "  dev-web          vite dev server → http://localhost:5173 (API via d3d.local)"
+	@echo "  pf-rethinkdb     port-forward RethinkDB :28015 to localhost:28015"
+	@echo "  dev-api-hint     print command to run d3d-api locally against port-forwarded RethinkDB"
+	@echo ""
+	@echo "hot reload (rebuild image + restart pod):"
+	@echo "  reload-api       image-api + rollout restart deploy/api"
+	@echo "  reload-web       image-web + rollout restart deploy/web"
+	@echo ""
+	@echo "observability:"
 	@echo "  logs-api         tail api logs"
 	@echo "  logs-web         tail web logs"
 	@echo "  logs-rdb         tail rethinkdb logs"
-	@echo "  rdb-ui           port-forward RethinkDB web UI to localhost:8080"
-	@echo "  bootstrap-user   run createUser Job with values from values.yaml"
-	@echo "  hosts-hint       print /etc/hosts line for d3d.local"
+	@echo "  rdb-ui           port-forward RethinkDB admin UI → localhost:8081"
+	@echo ""
+	@echo "misc:"
+	@echo "  lint             helm lint"
+	@echo "  template         helm template (dry-run to stdout)"
+	@echo "  hosts-hint       print /etc/hosts and tunnel instructions"
 
 .PHONY: minikube-up
 minikube-up:
@@ -120,3 +137,46 @@ bootstrap-user:
 		--set web.image.tag=$(WEB_TAG) \
 		--set api.image.tag=$(API_TAG) \
 		--set api.bootstrapUser.enabled=true
+
+# ── local dev (fast iteration) ────────────────────────────────────────────────
+
+# Start vite dev server. The SPA will call http://d3d.local/api/* directly
+# (minikube tunnel must be running). Browse http://localhost:5173.
+.PHONY: dev-web
+dev-web:
+	@echo "==> starting vite dev server (http://localhost:5173)"
+	@echo "    API calls go to http://d3d.local/api — make sure tunnel is running"
+	@cd $(REPO_ROOT) && VITE_API_BASE_URL=http://d3d.local/api npm run dev
+
+# Port-forward RethinkDB to localhost:28015 so the API can run locally.
+# Keep this running in a dedicated terminal.
+.PHONY: pf-rethinkdb
+pf-rethinkdb:
+	@echo "==> forwarding RethinkDB :28015 → localhost:28015"
+	kubectl -n $(NAMESPACE) port-forward svc/$(RELEASE)-rethinkdb 28015:28015
+
+# Print the command to run d3d-api locally against the port-forwarded RethinkDB.
+.PHONY: dev-api-hint
+dev-api-hint:
+	@echo ""
+	@echo "Run d3d-api locally (after 'make pf-rethinkdb' in another terminal):"
+	@echo ""
+	@echo "  cd $(D3D_API_PATH)"
+	@echo "  go run samus.go --config samus_dev.toml"
+	@echo ""
+	@echo "samus_dev.toml already points rethinkdb.address at localhost:28015."
+	@echo "The local API listens on :3001 — set Settings > Server URL to http://localhost:3001"
+	@echo "in the browser, or run 'make dev-web' and it will call d3d.local/api instead."
+	@echo ""
+
+# ── hot reload (rebuild image + restart pod) ──────────────────────────────────
+
+.PHONY: reload-api
+reload-api: image-api
+	kubectl -n $(NAMESPACE) rollout restart deploy/$(RELEASE)-api
+	kubectl -n $(NAMESPACE) rollout status deploy/$(RELEASE)-api
+
+.PHONY: reload-web
+reload-web: image-web
+	kubectl -n $(NAMESPACE) rollout restart deploy/$(RELEASE)-web
+	kubectl -n $(NAMESPACE) rollout status deploy/$(RELEASE)-web
