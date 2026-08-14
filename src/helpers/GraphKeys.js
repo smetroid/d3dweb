@@ -10,6 +10,7 @@ import Shortcuts from '@/helpers/Shortcuts.js'
 //   { action: 'addNode' }                      { action: 'addEdge' }
 //   { action: 'edit', data, mode }             { action: 'delete' }
 //   { action: 'copy' }                         { action: 'history' }
+//   { action: 'share' }
 //   { action: 'close' }                        { action: 'select' }
 //   { action: 'nav', direction: 'j'|'k'|'h'|'l' }
 //   { action: 'showHints' }
@@ -44,6 +45,7 @@ export function resolveGraphKey(event, ctx) {
   if (S.matches(event, 'deleteElement')) return { action: 'delete' }
   if (S.matches(event, 'copyNode')) return { action: 'copy' }
   if (S.matches(event, 'history')) return { action: 'history' }
+  if (S.matches(event, 'share')) return { action: 'share' }
   if (S.matches(event, 'close')) return { action: 'close' }
   if (S.matches(event, 'select')) return { action: 'select' }
   if (S.matches(event, 'showHints')) return { action: 'showHints' }

@@ -1,6 +1,8 @@
 import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
+import api from '@/services/api'
+import { clientId as collabClientId } from '@/services/collab'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -150,6 +152,8 @@ export default class DiagramGraph {
 
     this.colaConstraints = d3dInfo.colaConstraints || []
     this.cy.colaConstraints = this.colaConstraints
+
+    this._saveTimer = null
   }
 
   // ─── Convenience counts ───────────────────────────────────────────────────────
@@ -427,8 +431,7 @@ export default class DiagramGraph {
       iconName: data.iconName,
       iconPosition: data.iconPosition,
       iconSize: data.iconSize,
-      iconColor: data.iconColor,
-      id
+      iconColor: data.iconColor
     }
   }
 
@@ -589,6 +592,7 @@ export default class DiagramGraph {
       dagreOpts: this.dagreOpts
     })
     this._saveTempDiagram()
+    this._scheduleServerSave()
   }
 
   setLayoutMode(mode) {
@@ -601,6 +605,34 @@ export default class DiagramGraph {
 
   reset() {
     if (this.renderer) this.renderer.resetCamera()
+  }
+
+  _scheduleServerSave() {
+    if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
+    if (!this.d3dInfo?.id) return
+    try {
+      const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
+      if (claims.iss === 'd3d-share' && claims.role !== 'edit') return
+    } catch {
+      /* not a JWT — proceed */
+    }
+    clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(() => this._serverSave(), 500)
+  }
+
+  async _serverSave() {
+    const json = modelToGraphlib(this.cy)
+    try {
+      await api.updateDiagram({
+        id: this.d3dInfo.id,
+        name: this.d3dInfo.name || D3Util.tempInfo().name,
+        description: this.d3dInfo.description || D3Util.tempInfo().description,
+        diagram: JSON.stringify(json),
+        clientId: collabClientId()
+      })
+    } catch (err) {
+      console.error('collab auto-save failed', err)
+    }
   }
 
   _saveTempDiagram() {

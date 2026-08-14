@@ -1062,6 +1062,25 @@ export default class CytoscapeRenderer {
     this._renderCrosshairs()
   }
 
+  setPeerSelections(peers) {
+    if (!this.cy) return
+    this.cy
+      .nodes()
+      .removeClass('peer-selected')
+      .removeStyle('underlay-color underlay-opacity underlay-padding')
+    for (const peer of Object.values(peers)) {
+      for (const nodeId of peer.selection || []) {
+        const el = this.cy.getElementById(nodeId)
+        if (el.empty()) continue
+        el.addClass('peer-selected').style({
+          'underlay-color': peer.color,
+          'underlay-opacity': 0.4,
+          'underlay-padding': 8
+        })
+      }
+    }
+  }
+
   selectNode(id) {
     this.cy?.elements()?.removeClass('focused')
     this.cy?.getElementById(id).addClass('focused')
