@@ -31,12 +31,23 @@ help:
 minikube-up:
 	minikube status >/dev/null 2>&1 || minikube start
 	minikube addons enable ingress
+	kubectl patch svc ingress-nginx-controller -n ingress-nginx \
+		-p '{"spec":{"type":"LoadBalancer"}}' 2>/dev/null || true
 	@$(MAKE) hosts-hint
 
 .PHONY: hosts-hint
 hosts-hint:
-	@echo "add this to /etc/hosts (needs sudo):"
-	@echo "  $$(minikube ip)  d3d.local"
+	@echo ""
+	@echo "1. Update /etc/hosts (macOS Docker driver — run once):"
+	@echo "   sudo sh -c 'echo \"127.0.0.1  d3d.local\" >> /etc/hosts'"
+	@echo ""
+	@echo "2. Keep minikube tunnel running in a separate terminal:"
+	@echo "   sudo minikube tunnel"
+	@echo ""
+
+.PHONY: tunnel
+tunnel:
+	sudo minikube tunnel
 
 .PHONY: images
 images: image-web image-api
