@@ -3,30 +3,36 @@ import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
 
 vi.mock('vue-cookies', () => ({
-  default: { get: () => null, set: () => {}, config: () => {} },
+  default: { get: () => null, set: () => {}, config: () => {} }
 }))
 
 vi.stubGlobal('localStorage', {
   store: new Map(),
-  getItem(key) { return this.store.get(key) ?? null },
-  setItem(key, value) { this.store.set(key, String(value)) },
-  removeItem(key) { this.store.delete(key) },
+  getItem(key) {
+    return this.store.get(key) ?? null
+  },
+  setItem(key, value) {
+    this.store.set(key, String(value))
+  },
+  removeItem(key) {
+    this.store.delete(key)
+  }
 })
 
 function makeGraph(nodeCount = 6) {
   const elements = Array.from({ length: nodeCount }, (_, i) => ({
     group: 'nodes',
-    data: { id: `n${i}`, label: `Node ${i}` },
+    data: { id: `n${i}`, label: `Node ${i}` }
   }))
   const model = new GraphModel(elements)
   const renderer = {
-    updateScene:    vi.fn(),
-    selectNode:     vi.fn(),
-    deselectNode:   vi.fn(),
-    selectEdge:     vi.fn(),
-    deselectEdge:   vi.fn(),
+    updateScene: vi.fn(),
+    selectNode: vi.fn(),
+    deselectNode: vi.fn(),
+    selectEdge: vi.fn(),
+    deselectEdge: vi.fn(),
     getNodeElement: vi.fn(() => null),
-    resetCamera:    vi.fn(),
+    resetCamera: vi.fn()
   }
   const graph = new DiagramGraph({ diagram: model, name: 'test' }, { emit: vi.fn() })
   graph.renderer = renderer
@@ -65,7 +71,7 @@ describe('node CRUD', () => {
       bgColor: '#ff0000',
       borderColor: '#00ff00',
       borderWidth: 3,
-      fontSize: 18,
+      fontSize: 18
     })
     const data = graph.getNodeData(id)
     expect(data.nodeShape).toBe('diamond')
@@ -190,7 +196,7 @@ describe('edge CRUD', () => {
       edgeColor: '#ff00aa',
       edgeLineStyle: 'dashed',
       edgeCurve: 'straight',
-      edgeOpacity: 0.5,
+      edgeOpacity: 0.5
     })
     const eid = graph.cy.edges()[0].id()
     const data = graph.getEdgeData(eid)
@@ -229,7 +235,7 @@ describe('empty optional fields', () => {
       edgeColor: '',
       edgeLineStyle: '',
       edgeCurve: '',
-      edgeOpacity: null,
+      edgeOpacity: null
     })
     const eid = graph.cy.edges()[0].id()
     const data = graph.getEdgeData(eid)
@@ -248,7 +254,17 @@ describe('empty optional fields', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'a', label: 'A' } },
       { group: 'nodes', data: { id: 'b', label: 'B' } },
-      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b', edgeColor: '', sourceArrowhead: '', edgeWidth: null } },
+      {
+        group: 'edges',
+        data: {
+          id: 'ab',
+          source: 'a',
+          target: 'b',
+          edgeColor: '',
+          sourceArrowhead: '',
+          edgeWidth: null
+        }
+      }
     ])
     expect(model.getElementById('ab').data('edgeColor')).toBeUndefined()
     expect(model.getElementById('ab').data('sourceArrowhead')).toBeUndefined()
@@ -257,7 +273,17 @@ describe('empty optional fields', () => {
 
   it('normalizes empty optional fields in loaded model nodes', () => {
     const model = new GraphModel([
-      { group: 'nodes', data: { id: 'n', label: 'N', bgColor: '', borderColor: '', borderWidth: null, fontSize: null } },
+      {
+        group: 'nodes',
+        data: {
+          id: 'n',
+          label: 'N',
+          bgColor: '',
+          borderColor: '',
+          borderWidth: null,
+          fontSize: null
+        }
+      }
     ])
     expect(model.getElementById('n').data('bgColor')).toBeUndefined()
     expect(model.getElementById('n').data('borderColor')).toBeUndefined()
@@ -297,7 +323,11 @@ describe('proximity selection', () => {
     const { renderer, graph } = makeGraph(3)
     renderer.nearestElementId = vi.fn(() => 'n2')
     const res = graph.selectNodeProximity('l', 'n0')
-    expect(renderer.nearestElementId).toHaveBeenCalledWith({ direction: 'l', fromId: 'n0', kind: 'nodes' })
+    expect(renderer.nearestElementId).toHaveBeenCalledWith({
+      direction: 'l',
+      fromId: 'n0',
+      kind: 'nodes'
+    })
     expect(renderer.deselectNode).toHaveBeenCalledWith('n0')
     expect(renderer.selectNode).toHaveBeenCalledWith('n2')
     expect(res).toEqual({ id: 'n2', index: 2 })
@@ -330,7 +360,10 @@ describe('proximity selection', () => {
 describe('layout opts initialization', () => {
   it('reads layoutMode from d3dInfo when provided', () => {
     const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
-    const graph = new DiagramGraph({ diagram: model, name: 'test', layoutMode: 'dagre' }, { emit: vi.fn() })
+    const graph = new DiagramGraph(
+      { diagram: model, name: 'test', layoutMode: 'dagre' },
+      { emit: vi.fn() }
+    )
     expect(graph.layoutMode).toBe('dagre')
   })
 
@@ -353,12 +386,15 @@ describe('layout opts initialization', () => {
 
   it('merges stored d3dInfo coseOpts over defaults', () => {
     const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
-    const graph = new DiagramGraph({
-      diagram: model,
-      name: 'test',
-      layoutMode: 'cose',
-      coseOpts: { nodeRepulsion: 999000 },
-    }, { emit: vi.fn() })
+    const graph = new DiagramGraph(
+      {
+        diagram: model,
+        name: 'test',
+        layoutMode: 'cose',
+        coseOpts: { nodeRepulsion: 999000 }
+      },
+      { emit: vi.fn() }
+    )
     expect(graph.layoutMode).toBe('cose')
     expect(graph.coseOpts.nodeRepulsion).toBe(999000)
     expect(graph.coseOpts.idealEdgeLength).toBe(100)
@@ -366,12 +402,15 @@ describe('layout opts initialization', () => {
 
   it('merges stored d3dInfo dagreOpts over defaults', () => {
     const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
-    const graph = new DiagramGraph({
-      diagram: model,
-      name: 'test',
-      layoutMode: 'dagre',
-      dagreOpts: { rankDir: 'LR', nodeSep: 80 },
-    }, { emit: vi.fn() })
+    const graph = new DiagramGraph(
+      {
+        diagram: model,
+        name: 'test',
+        layoutMode: 'dagre',
+        dagreOpts: { rankDir: 'LR', nodeSep: 80 }
+      },
+      { emit: vi.fn() }
+    )
     expect(graph.dagreOpts.rankDir).toBe('LR')
     expect(graph.dagreOpts.nodeSep).toBe(80)
     expect(graph.dagreOpts.rankSep).toBe(50)
@@ -395,13 +434,13 @@ describe('redraw with layout opts', () => {
   it('passes layoutMode and all per-layout opts to updateScene', () => {
     const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
     const renderer = {
-      updateScene:    vi.fn(),
-      selectNode:     vi.fn(),
-      deselectNode:   vi.fn(),
-      selectEdge:     vi.fn(),
-      deselectEdge:   vi.fn(),
+      updateScene: vi.fn(),
+      selectNode: vi.fn(),
+      deselectNode: vi.fn(),
+      selectEdge: vi.fn(),
+      deselectEdge: vi.fn(),
       getNodeElement: vi.fn(() => null),
-      resetCamera:    vi.fn(),
+      resetCamera: vi.fn()
     }
     const graph = new DiagramGraph(
       { diagram: model, name: 'test', layoutMode: 'dagre', dagreOpts: { rankDir: 'LR' } },
@@ -412,14 +451,106 @@ describe('redraw with layout opts', () => {
     expect(renderer.updateScene).toHaveBeenCalledWith(
       graph.cy,
       expect.objectContaining({
-        layoutMode:       'dagre',
-        dagreOpts:        expect.objectContaining({ rankDir: 'LR' }),
-        coseOpts:         expect.any(Object),
+        layoutMode: 'dagre',
+        dagreOpts: expect.objectContaining({ rankDir: 'LR' }),
+        coseOpts: expect.any(Object),
         breadthfirstOpts: expect.any(Object),
-        gridOpts:         expect.any(Object),
-        circleOpts:       expect.any(Object),
-        concentricOpts:   expect.any(Object),
+        gridOpts: expect.any(Object),
+        circleOpts: expect.any(Object),
+        concentricOpts: expect.any(Object)
       })
     )
+  })
+})
+
+describe('icon round-trip on nodes', () => {
+  it('stores icon fields when addNode is called with icon data', () => {
+    const { graph } = makeGraph(0)
+    const id = graph.addNode({
+      nodeLabel: 'Server',
+      nodeShape: 'rectangle',
+      iconSet: 'mdi',
+      iconName: 'mdi-server',
+      iconPosition: 'left',
+      iconSize: 20,
+      iconColor: '#ff0000'
+    })
+    const d = graph.getNodeData(id)
+    expect(d.iconSet).toBe('mdi')
+    expect(d.iconName).toBe('mdi-server')
+    expect(d.iconPosition).toBe('left')
+    expect(d.iconSize).toBe(20)
+    expect(d.iconColor).toBe('#ff0000')
+  })
+
+  it('updates icon fields via updateNode', () => {
+    const { graph } = makeGraph(1)
+    graph.updateNode(
+      {
+        nodeLabel: 'Updated',
+        iconSet: 'mdi',
+        iconName: 'mdi-account',
+        iconPosition: 'above',
+        iconSize: null,
+        iconColor: ''
+      },
+      'n0'
+    )
+    const d = graph.getNodeData('n0')
+    expect(d.iconSet).toBe('mdi')
+    expect(d.iconName).toBe('mdi-account')
+    expect(d.iconPosition).toBe('above')
+    expect(d.iconSize).toBeUndefined()
+    expect(d.iconColor).toBeUndefined()
+  })
+
+  it('copies icon fields via copyNode', () => {
+    const { graph } = makeGraph(1)
+    graph.updateNode(
+      { nodeLabel: 'Orig', iconSet: 'mdi', iconName: 'mdi-home', iconPosition: 'only' },
+      'n0'
+    )
+    const srcData = graph.cy.getElementById('n0').data()
+    const newId = graph.copyNode(srcData)
+    const d = graph.getNodeData(newId)
+    expect(d.iconSet).toBe('mdi')
+    expect(d.iconName).toBe('mdi-home')
+    expect(d.iconPosition).toBe('only')
+  })
+
+  it('clears icon when updateNode sends empty iconSet', () => {
+    const { graph } = makeGraph(1)
+    graph.updateNode(
+      { nodeLabel: 'X', iconSet: 'mdi', iconName: 'mdi-account', iconPosition: 'left' },
+      'n0'
+    )
+    graph.updateNode({ nodeLabel: 'X', iconSet: '', iconName: '', iconPosition: 'left' }, 'n0')
+    const d = graph.getNodeData('n0')
+    expect(d.iconSet).toBeUndefined()
+    expect(d.iconName).toBeUndefined()
+  })
+})
+
+describe('icon round-trip on edges', () => {
+  it('stores icon fields when an edge is added', () => {
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'a', label: 'A' } },
+      { group: 'nodes', data: { id: 'b', label: 'B' } }
+    ])
+    const graph = new DiagramGraph({ diagram: model, name: 'test' }, { emit: vi.fn() })
+    graph.renderer = { updateScene: vi.fn(), selectNode: vi.fn(), deselectNode: vi.fn() }
+    graph.selectedNodes = [0, 1]
+    graph.addEdge({
+      edgeLabel: 'link',
+      iconSet: 'material-symbols',
+      iconName: 'bolt',
+      iconPosition: 'only'
+    })
+    const edges = model.edges()
+    expect(edges.length).toBe(1)
+    const d = graph.getEdgeData(edges[0].id())
+    expect(d.iconSet).toBe('material-symbols')
+    expect(d.iconName).toBe('bolt')
+    expect(d.iconPosition).toBe('only')
   })
 })
