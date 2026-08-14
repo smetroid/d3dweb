@@ -6,7 +6,7 @@ import {
   resolveBoxOverlap,
   hintTransform,
   paletteFromCSSVars,
-  themeStyle,
+  themeStyle
 } from '@/helpers/CytoscapeRenderer.js'
 import GraphModel from '@/helpers/GraphModel.js'
 
@@ -27,7 +27,7 @@ describe('CytoscapeRenderer', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'a', label: 'A' } },
       { group: 'nodes', data: { id: 'b', label: 'B' } },
-      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b' } },
+      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b' } }
     ])
 
     renderer.updateScene(model)
@@ -36,9 +36,7 @@ describe('CytoscapeRenderer', () => {
   })
 
   it('updates surviving node data without rebuilding the scene', async () => {
-    const model = new GraphModel([
-      { group: 'nodes', data: { id: 'a', label: 'A' } },
-    ])
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'a', label: 'A' } }])
     await renderer.updateScene(model)
     model.getElementById('a').data({ label: 'Renamed' })
     await renderer.updateScene(model)
@@ -48,9 +46,22 @@ describe('CytoscapeRenderer', () => {
 
   it('syncs per-element style data and applies the data-driven styles', async () => {
     const model = new GraphModel([
-      { group: 'nodes', data: { id: 'st', label: 'S', nodeShape: 'diamond', bgColor: '#ff0000', borderWidth: 3 } },
+      {
+        group: 'nodes',
+        data: { id: 'st', label: 'S', nodeShape: 'diamond', bgColor: '#ff0000', borderWidth: 3 }
+      },
       { group: 'nodes', data: { id: 'st2', label: 'T' } },
-      { group: 'edges', data: { id: 'ste', source: 'st', target: 'st2', edgeWidth: 5, edgeColor: '#00ff00', edgeCurve: 'straight' } },
+      {
+        group: 'edges',
+        data: {
+          id: 'ste',
+          source: 'st',
+          target: 'st2',
+          edgeWidth: 5,
+          edgeColor: '#00ff00',
+          edgeCurve: 'straight'
+        }
+      }
     ])
     await renderer.updateScene(model)
 
@@ -77,7 +88,7 @@ describe('CytoscapeRenderer', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'a', label: 'A' } },
       { group: 'nodes', data: { id: 'b', label: 'B' } },
-      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b' } },
+      { group: 'edges', data: { id: 'ab', source: 'a', target: 'b' } }
     ])
 
     // Inject empty values bypassing _addElement to exercise the renderer guard
@@ -98,7 +109,7 @@ describe('CytoscapeRenderer', () => {
 
   it('derives legacy "style: fill: …" into fillColor and applies it inline', async () => {
     const model = new GraphModel([
-      { group: 'nodes', data: { id: 'leg', label: 'Old', style: 'fill: #5f9488' } },
+      { group: 'nodes', data: { id: 'leg', label: 'Old', style: 'fill: #5f9488' } }
     ])
     await renderer.updateScene(model)
 
@@ -117,14 +128,14 @@ describe('CytoscapeRenderer', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'x1', label: 'X1' } },
       { group: 'nodes', data: { id: 'x2', label: 'X2' } },
-      { group: 'edges', data: { id: 'x1x2', source: 'x1', target: 'x2' } },
+      { group: 'edges', data: { id: 'x1x2', source: 'x1', target: 'x2' } }
     ])
 
     await renderer.updateScene(model)
 
-    const positions = renderer.cy.nodes().map(n => n.position())
-    const spreadX = Math.max(...positions.map(p => p.x)) - Math.min(...positions.map(p => p.x))
-    const spreadY = Math.max(...positions.map(p => p.y)) - Math.min(...positions.map(p => p.y))
+    const positions = renderer.cy.nodes().map((n) => n.position())
+    const spreadX = Math.max(...positions.map((p) => p.x)) - Math.min(...positions.map((p) => p.x))
+    const spreadY = Math.max(...positions.map((p) => p.y)) - Math.min(...positions.map((p) => p.y))
     expect(spreadX + spreadY).toBeGreaterThan(0)
   })
 
@@ -137,13 +148,13 @@ describe('CytoscapeRenderer', () => {
       { group: 'nodes', data: { id: 'n4', label: 'Node' } },
       { group: 'edges', data: { id: 'e1', source: 'n1', target: 'n2' } },
       { group: 'edges', data: { id: 'e2', source: 'n1', target: 'n3' } },
-      { group: 'edges', data: { id: 'e3', source: 'n3', target: 'n4' } },
+      { group: 'edges', data: { id: 'e3', source: 'n3', target: 'n4' } }
     ])
 
     await renderer.updateScene(model)
 
-    const kids  = renderer.cy.getElementById('n1').position()
-    const n2    = renderer.cy.getElementById('n2').position()
+    const kids = renderer.cy.getElementById('n1').position()
+    const n2 = renderer.cy.getElementById('n2').position()
     const parent = renderer.cy.getElementById('first').position()
     const expectedX = (kids.x + n2.x) / 2
     const expectedY = (kids.y + n2.y) / 2
@@ -151,12 +162,8 @@ describe('CytoscapeRenderer', () => {
     expect(Math.abs(parent.y - expectedY)).toBeLessThan(0.01)
   })
 
-
-
   it('does not rebuild on pan/zoom options', () => {
-    const model = new GraphModel([
-      { group: 'nodes', data: { id: 'z', label: 'Z' } },
-    ])
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'z', label: 'Z' } }])
     renderer.updateScene(model)
     renderer.updateScene(model, { pan: 'Left' })
     renderer.updateScene(model, { zoom: 'In' })
@@ -166,7 +173,7 @@ describe('CytoscapeRenderer', () => {
   it('skips the layout on layout:false so edit saves keep node positions', async () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'a', label: 'A' } },
-      { group: 'nodes', data: { id: 'b', label: 'B' } },
+      { group: 'nodes', data: { id: 'b', label: 'B' } }
     ])
     await renderer.updateScene(model)
     const posA = renderer.cy.getElementById('a').position()
@@ -182,9 +189,7 @@ describe('CytoscapeRenderer', () => {
   })
 
   it('fits the viewport after a rebuild (gliding with the layout)', async () => {
-    const model = new GraphModel([
-      { group: 'nodes', data: { id: 'fit1', label: 'Fit' } },
-    ])
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'fit1', label: 'Fit' } }])
     await renderer.updateScene(model)
     const target = renderer._computeFitTarget()
     expect(target).not.toBeNull()
@@ -194,21 +199,20 @@ describe('CytoscapeRenderer', () => {
   })
 
   it('applies the default zoom level on open when fit-on-open is disabled', async () => {
-    const nextFrame = () => new Promise(resolve => {
-      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resolve)
-      else resolve()
-    })
+    const nextFrame = () =>
+      new Promise((resolve) => {
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resolve)
+        else resolve()
+      })
     // Drain any deferred fits still pending from earlier tests in this file
     for (let i = 0; i < 6; i++) await nextFrame()
 
     const VueCookies = (await import('vue-cookies')).default
     const spy = vi.spyOn(VueCookies, 'get').mockReturnValue({
       defaultZoomFit: false,
-      defaultZoomLevel: 2,
+      defaultZoomLevel: 2
     })
-    await renderer.updateScene(new GraphModel([
-      { group: 'nodes', data: { id: 'zl', label: 'Z' } },
-    ]))
+    await renderer.updateScene(new GraphModel([{ group: 'nodes', data: { id: 'zl', label: 'Z' } }]))
     for (let i = 0; i < 3; i++) await nextFrame()
     expect(renderer.cy.zoom()).toBe(2)
     spy.mockRestore()
@@ -218,14 +222,12 @@ describe('CytoscapeRenderer', () => {
     const VueCookies = (await import('vue-cookies')).default
     const spy = vi.spyOn(VueCookies, 'get').mockReturnValue({
       defaultZoomFit: true,
-      defaultZoomLevel: 2,
+      defaultZoomLevel: 2
     })
     const widthSpy = vi.spyOn(renderer.cy, 'width').mockReturnValue(800)
     const heightSpy = vi.spyOn(renderer.cy, 'height').mockReturnValue(600)
 
-    await renderer.updateScene(new GraphModel([
-      { group: 'nodes', data: { id: 'zc', label: 'Z' } },
-    ]))
+    await renderer.updateScene(new GraphModel([{ group: 'nodes', data: { id: 'zc', label: 'Z' } }]))
     renderer.cy.stop()
 
     const c = { x: 400, y: 300 }
@@ -249,7 +251,7 @@ describe('CytoscapeRenderer', () => {
       { group: 'nodes', data: { id: 'P', label: 'Group' } },
       { group: 'nodes', data: { id: 'A', label: 'A', parent: 'P' } },
       { group: 'nodes', data: { id: 'B', label: 'B', parent: 'P' } },
-      { group: 'nodes', data: { id: 'C', label: 'C' } },
+      { group: 'nodes', data: { id: 'C', label: 'C' } }
     ])
     renderer.updateScene(model)
 
@@ -272,7 +274,7 @@ describe('CytoscapeRenderer', () => {
   it('tracks the focused node and keeps the cytoscape focused class in sync', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'f1', label: 'F' } },
-      { group: 'nodes', data: { id: 'f2', label: 'G' } },
+      { group: 'nodes', data: { id: 'f2', label: 'G' } }
     ])
     renderer.updateScene(model)
 
@@ -293,7 +295,7 @@ describe('CytoscapeRenderer', () => {
   it('stores selected/double-selected node ids for the crosshair overlay', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 's1', label: 'S' } },
-      { group: 'nodes', data: { id: 's2', label: 'T' } },
+      { group: 'nodes', data: { id: 's2', label: 'T' } }
     ])
     renderer.updateScene(model)
 
@@ -373,7 +375,7 @@ describe('CytoscapeRenderer', () => {
 
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'lm1', label: 'A' } },
-      { group: 'nodes', data: { id: 'lm2', label: 'B' } },
+      { group: 'nodes', data: { id: 'lm2', label: 'B' } }
     ])
     await renderer.updateScene(model, { layoutMode: 'grid' })
 
@@ -387,9 +389,7 @@ describe('CytoscapeRenderer', () => {
     const spy = vi.spyOn(VueCookies, 'get').mockReturnValue({ defaultLayoutMode: 'circle' })
     const computeSpy = vi.spyOn(renderer, '_computeBuiltinLayout')
 
-    const model = new GraphModel([
-      { group: 'nodes', data: { id: 'fb1', label: 'A' } },
-    ])
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'fb1', label: 'A' } }])
     await renderer.updateScene(model, {})
 
     expect(computeSpy).toHaveBeenCalledWith('circle', expect.anything())
@@ -423,7 +423,9 @@ describe('_computeBuiltinLayout per-layout opts', () => {
 
   it('applies dagreOpts to the dagre layout', () => {
     const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
-    cr._computeBuiltinLayout('dagre', { dagreOpts: { rankDir: 'LR', nodeSep: 80, rankSep: 100, edgeSep: 20, ranker: 'tight-tree' } })
+    cr._computeBuiltinLayout('dagre', {
+      dagreOpts: { rankDir: 'LR', nodeSep: 80, rankSep: 100, edgeSep: 20, ranker: 'tight-tree' }
+    })
     const opts = spy.mock.calls[0][0]
     expect(opts.name).toBe('dagre')
     expect(opts.rankDir).toBe('LR')
@@ -435,7 +437,9 @@ describe('_computeBuiltinLayout per-layout opts', () => {
 
   it('applies gridOpts rows/cols/spacingFactor/avoidOverlap to the grid layout', () => {
     const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
-    cr._computeBuiltinLayout('grid', { gridOpts: { rows: 3, cols: 4, spacingFactor: 2.0, avoidOverlap: false } })
+    cr._computeBuiltinLayout('grid', {
+      gridOpts: { rows: 3, cols: 4, spacingFactor: 2.0, avoidOverlap: false }
+    })
     const opts = spy.mock.calls[0][0]
     expect(opts.name).toBe('grid')
     expect(opts.rows).toBe(3)
@@ -447,7 +451,9 @@ describe('_computeBuiltinLayout per-layout opts', () => {
 
   it('applies breadthfirstOpts to the breadthfirst layout', () => {
     const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
-    cr._computeBuiltinLayout('breadthfirst', { breadthfirstOpts: { directed: false, circle: true, spacingFactor: 2.5 } })
+    cr._computeBuiltinLayout('breadthfirst', {
+      breadthfirstOpts: { directed: false, circle: true, spacingFactor: 2.5 }
+    })
     const opts = spy.mock.calls[0][0]
     expect(opts.name).toBe('breadthfirst')
     expect(opts.directed).toBe(false)
@@ -468,7 +474,14 @@ describe('_computeBuiltinLayout per-layout opts', () => {
 
   it('applies concentricOpts to the concentric layout', () => {
     const spy = vi.spyOn(cr.cy, 'layout').mockReturnValue({ run: vi.fn() })
-    cr._computeBuiltinLayout('concentric', { concentricOpts: { spacingFactor: 2.0, minNodeSpacing: 50, clockwise: false, equidistant: true } })
+    cr._computeBuiltinLayout('concentric', {
+      concentricOpts: {
+        spacingFactor: 2.0,
+        minNodeSpacing: 50,
+        clockwise: false,
+        equidistant: true
+      }
+    })
     const opts = spy.mock.calls[0][0]
     expect(opts.name).toBe('concentric')
     expect(opts.spacingFactor).toBe(2.0)
@@ -507,28 +520,27 @@ describe('hintTransform', () => {
 
 describe('resolveBoxOverlap', () => {
   it('returns no movement when the boxes do not overlap', () => {
-    expect(resolveBoxOverlap(
-      { x1: 0, y1: 0, x2: 10, y2: 10 },
-      { x1: 20, y1: 20, x2: 30, y2: 30 },
-    )).toEqual({ x: 0, y: 0 })
+    expect(
+      resolveBoxOverlap({ x1: 0, y1: 0, x2: 10, y2: 10 }, { x1: 20, y1: 20, x2: 30, y2: 30 })
+    ).toEqual({ x: 0, y: 0 })
   })
 
   it('pushes a node that is fully inside the group out to the nearest edge', () => {
     const group = { x1: 0, y1: 0, x2: 100, y2: 100 }
-    const node  = { x1: 40, y1: 40, x2: 60, y2: 60 }
+    const node = { x1: 40, y1: 40, x2: 60, y2: 60 }
     expect(resolveBoxOverlap(node, group)).toEqual({ x: -62, y: 0 })
   })
 
   it('pushes horizontally when the horizontal escape is smallest', () => {
     // node pokes out of the right edge only a little
     const group = { x1: 0, y1: 0, x2: 100, y2: 100 }
-    const node  = { x1: 98, y1: 10, x2: 108, y2: 20 }
+    const node = { x1: 98, y1: 10, x2: 108, y2: 20 }
     expect(resolveBoxOverlap(node, group)).toEqual({ x: 4, y: 0 })
   })
 
   it('pushes vertically when the vertical escape is smallest', () => {
     const group = { x1: 0, y1: 0, x2: 100, y2: 100 }
-    const node  = { x1: 10, y1: 98, x2: 20, y2: 110 }
+    const node = { x1: 10, y1: 98, x2: 20, y2: 110 }
     expect(resolveBoxOverlap(node, group)).toEqual({ x: 0, y: 4 })
   })
 })
@@ -556,7 +568,9 @@ describe('edgeStyleFrom', () => {
   })
 
   it('passes other curve styles straight through', () => {
-    expect(edgeStyleFrom({ defaultEdgeStyle: 'unbundled-bezier' })['curve-style']).toBe('unbundled-bezier')
+    expect(edgeStyleFrom({ defaultEdgeStyle: 'unbundled-bezier' })['curve-style']).toBe(
+      'unbundled-bezier'
+    )
   })
 
   it('honours numeric overrides from settings', () => {
@@ -581,14 +595,14 @@ describe('edgeStyleFrom', () => {
 describe('paletteFromCSSVars', () => {
   it('parses --fx-* RGB triplets into cytoscape colors', () => {
     const vars = {
-      '--fx-accent':       ' 94, 116, 255 ',
-      '--fx-ink':          '223, 230, 255',
-      '--fx-ink-soft':     '185, 194, 236',
-      '--fx-drop-bg':      '10, 16, 34',
-      '--fx-glass-top':    '14, 21, 44',
-      '--fx-glass-bottom': '7, 12, 28',
+      '--fx-accent': ' 94, 116, 255 ',
+      '--fx-ink': '223, 230, 255',
+      '--fx-ink-soft': '185, 194, 236',
+      '--fx-drop-bg': '10, 16, 34',
+      '--fx-glass-top': '14, 21, 44',
+      '--fx-glass-bottom': '7, 12, 28'
     }
-    const pal = paletteFromCSSVars(key => vars[key] || null)
+    const pal = paletteFromCSSVars((key) => vars[key] || null)
     expect(pal.accent).toBe('rgb(94,116,255)')
     expect(pal.accentA(0.45)).toBe('rgba(94,116,255,0.45)')
     expect(pal.nodeBg).toBe('rgb(7,12,28)')
@@ -608,13 +622,13 @@ describe('paletteFromCSSVars', () => {
 
   it('flips the node background with the light-theme CSS vars', () => {
     const vars = {
-      '--fx-accent':       '94, 116, 255',
-      '--fx-ink':          '28, 36, 66',
-      '--fx-drop-bg':      '255, 255, 255',
-      '--fx-glass-top':    '242, 246, 255',
-      '--fx-glass-bottom': '222, 230, 252',
+      '--fx-accent': '94, 116, 255',
+      '--fx-ink': '28, 36, 66',
+      '--fx-drop-bg': '255, 255, 255',
+      '--fx-glass-top': '242, 246, 255',
+      '--fx-glass-bottom': '222, 230, 252'
     }
-    const pal = paletteFromCSSVars(key => vars[key] || null)
+    const pal = paletteFromCSSVars((key) => vars[key] || null)
     expect(pal.nodeBg).toBe('rgb(222,230,252)')
     expect(pal.nodeTop).toBe('rgb(242,246,255)')
     expect(pal.nodeBottom).toBe('rgb(222,230,252)')
@@ -625,30 +639,32 @@ describe('paletteFromCSSVars', () => {
 describe('themeStyle', () => {
   it('builds the full style with node/edge colors from the palette', () => {
     const pal = {
-      nodeTop:    'rgb(14,21,44)',
+      nodeTop: 'rgb(14,21,44)',
       nodeBottom: 'rgb(7,12,28)',
-      nodeBg:     'rgb(7,12,28)',
-      label:      'rgb(223,230,255)',
-      labelSoft:  'rgb(185,194,236)',
-      accent:     'rgb(94,116,255)',
-      accentA:    (a) => `rgba(94,116,255,${a})`,
+      nodeBg: 'rgb(7,12,28)',
+      label: 'rgb(223,230,255)',
+      labelSoft: 'rgb(185,194,236)',
+      accent: 'rgb(94,116,255)',
+      accentA: (a) => `rgba(94,116,255,${a})`
     }
     const style = themeStyle(pal, {})
-    const node  = style.find(s => s.selector === 'node')
-    const parent = style.find(s => s.selector === 'node:parent')
-    const edge  = style.find(s => s.selector === 'edge')
+    const node = style.find((s) => s.selector === 'node')
+    const parent = style.find((s) => s.selector === 'node:parent')
+    const edge = style.find((s) => s.selector === 'edge')
     expect(node.style['background-gradient-stop-colors']).toBe('rgb(14,21,44) rgb(7,12,28)')
     expect(node.style['background-color']).toBe('rgb(7,12,28)')
     expect(node.style['color']).toBe('rgb(223,230,255)')
     expect(node.style['width']).toBe('label')
     expect(node.style['height']).toBe('label')
-    expect(parent.style['background-gradient-stop-colors']).toBe('rgba(94,116,255,0.22) rgb(14,21,44) rgb(7,12,28)')
+    expect(parent.style['background-gradient-stop-colors']).toBe(
+      'rgba(94,116,255,0.22) rgb(14,21,44) rgb(7,12,28)'
+    )
     expect(edge.style['line-color']).toBe('rgb(94,116,255)')
   })
 
   it('drives per-element node/edge styles from data fields', () => {
     const style = themeStyle(DEFAULT_PALETTE, {})
-    const selector = s => style.find(r => r.selector === s)
+    const selector = (s) => style.find((r) => r.selector === s)
     expect(selector('node[?nodeShape]').style['shape']).toBe('data(nodeShape)')
     expect(selector('node[textHalign]').style['text-halign']).toBe('data(textHalign)')
     expect(selector('node[textValign]').style['text-valign']).toBe('data(textValign)')
@@ -656,12 +672,140 @@ describe('themeStyle', () => {
     expect(selector('node[borderColor]').style['border-color']).toBe('data(borderColor)')
     expect(selector('node[borderWidth]').style['border-width']).toBe('data(borderWidth)')
     expect(selector('node[fontSize]').style['font-size']).toBe('data(fontSize)')
-    expect(selector('edge[sourceArrowhead]').style['source-arrow-shape']).toBe('data(sourceArrowhead)')
+    expect(selector('edge[sourceArrowhead]').style['source-arrow-shape']).toBe(
+      'data(sourceArrowhead)'
+    )
     expect(selector('edge[edgeWidth]').style['width']).toBe('data(edgeWidth)')
     expect(selector('edge[edgeColor]').style['line-color']).toBe('data(edgeColor)')
     expect(selector('edge[edgeColor]').style['target-arrow-color']).toBe('data(edgeColor)')
     expect(selector('edge[edgeLineStyle]').style['line-style']).toBe('data(edgeLineStyle)')
     expect(selector('edge[edgeCurve]').style['curve-style']).toBe('data(edgeCurve)')
     expect(selector('edge[edgeOpacity]').style['opacity']).toBe('data(edgeOpacity)')
+  })
+
+  it('includes icon display selectors in themeStyle', () => {
+    const style = themeStyle(DEFAULT_PALETTE, {})
+    const sel = (s) => style.find((r) => r.selector === s)
+    expect(sel('node[_displayFont]').style['label']).toBe('data(_displayLabel)')
+    expect(sel('node[_displayFont]').style['font-family']).toBe('data(_displayFont)')
+    expect(sel('edge[_displayFont]').style['label']).toBe('data(_displayLabel)')
+    expect(sel('edge[_displayFont]').style['font-family']).toBe('data(_displayFont)')
+    expect(sel('node[iconColor]').style['color']).toBe('data(iconColor)')
+    expect(sel('edge[iconColor]').style['color']).toBe('data(iconColor)')
+    expect(sel('node[iconSize]').style['font-size']).toBe('data(iconSize)')
+    expect(sel('edge[iconSize]').style['font-size']).toBe('data(iconSize)')
+  })
+
+  it('hides the box for nodeShape none', () => {
+    const style = themeStyle(DEFAULT_PALETTE, {})
+    const s = style.find((r) => r.selector === 'node[nodeShape="none"]')
+    expect(s.style['shape']).toBe('round-rectangle')
+    expect(s.style['background-opacity']).toBe(0)
+    expect(s.style['border-width']).toBe(0)
+    expect(s.style['border-opacity']).toBe(0)
+  })
+})
+
+describe('icon display label derivation in updateScene', () => {
+  let iconRenderer
+  beforeAll(() => {
+    const emitter = { on: vi.fn(), off: vi.fn(), emit: vi.fn() }
+    iconRenderer = new CytoscapeRenderer(undefined, emitter)
+    iconRenderer.init()
+  })
+  afterAll(() => {
+    iconRenderer.teardown()
+  })
+
+  it('sets _displayLabel and _displayFont on a node with a known MDI icon', async () => {
+    const renderer = iconRenderer
+    const model = new GraphModel([
+      {
+        group: 'nodes',
+        data: {
+          id: 'x',
+          label: 'Server',
+          iconSet: 'mdi',
+          iconName: 'mdi-server',
+          iconPosition: 'left'
+        }
+      }
+    ])
+    await renderer.updateScene(model, { animate: false, layout: false })
+    const ele = renderer.cy.getElementById('x')
+    expect(ele.data('_displayFont')).toContain('Material Design Icons')
+    expect(ele.data('_displayLabel')).toContain('Server')
+  })
+
+  it('leaves _displayLabel undefined when no icon is set', async () => {
+    const renderer = iconRenderer
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'y', label: 'Plain' } }])
+    await renderer.updateScene(model, { animate: false, layout: false })
+    const ele = renderer.cy.getElementById('y')
+    expect(ele.data('_displayFont')).toBeUndefined()
+    expect(ele.data('_displayLabel')).toBeUndefined()
+  })
+
+  it('sets _displayLabel to glyph-only for iconPosition=only', async () => {
+    const renderer = iconRenderer
+    const model = new GraphModel([
+      {
+        group: 'nodes',
+        data: { id: 'z', label: 'Home', iconSet: 'mdi', iconName: 'mdi-home', iconPosition: 'only' }
+      }
+    ])
+    await renderer.updateScene(model, { animate: false, layout: false })
+    const ele = renderer.cy.getElementById('z')
+    const label = ele.data('_displayLabel')
+    expect(label).toBeTruthy()
+    expect(label).not.toContain('Home')
+  })
+
+  it('sets _displayLabel and _displayFont on an edge with a known MDI icon', async () => {
+    const renderer = iconRenderer
+    const model = new GraphModel([
+      { group: 'nodes', data: { id: 'a2', label: 'A' } },
+      { group: 'nodes', data: { id: 'b2', label: 'B' } },
+      {
+        group: 'edges',
+        data: {
+          id: 'ab2',
+          source: 'a2',
+          target: 'b2',
+          label: 'link',
+          iconSet: 'mdi',
+          iconName: 'mdi-arrow-right',
+          iconPosition: 'left'
+        }
+      }
+    ])
+    await renderer.updateScene(model, { animate: false, layout: false })
+    const ele = renderer.cy.getElementById('ab2')
+    expect(ele.data('_displayFont')).toContain('Material Design Icons')
+    expect(ele.data('_displayLabel')).toContain('link')
+  })
+
+  it('applies the invisible box to an icon node with nodeShape none', async () => {
+    const renderer = iconRenderer
+    const model = new GraphModel([
+      {
+        group: 'nodes',
+        data: {
+          id: 'ghost',
+          label: 'Ghost',
+          nodeShape: 'none',
+          iconSet: 'mdi',
+          iconName: 'mdi-ghost',
+          iconPosition: 'left'
+        }
+      }
+    ])
+    await renderer.updateScene(model, { animate: false, layout: false })
+    const ele = renderer.cy.getElementById('ghost')
+    expect(ele.data('nodeShape')).toBe('none')
+    expect(ele.style('background-opacity')).toBe('0')
+    expect(ele.style('border-width')).toBe('0px')
+    expect(ele.style('border-opacity')).toBe('0')
+    expect(ele.style('label')).toContain('Ghost')
   })
 })

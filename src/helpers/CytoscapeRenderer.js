@@ -5,8 +5,9 @@ import VueCookies from 'vue-cookies'
 import {
   normalizeOptionalFields,
   NODE_OPTIONAL_FIELDS,
-  EDGE_OPTIONAL_FIELDS,
+  EDGE_OPTIONAL_FIELDS
 } from '@/helpers/GraphModel.js'
+import { composeIconLabel } from '@/helpers/IconRegistry.js'
 
 cytoscape.use(cola)
 cytoscape.use(dagre)
@@ -14,13 +15,13 @@ cytoscape.use(dagre)
 // Fallback palette used when the app's CSS variables can't be read (headless
 // tests, style-less pages). Matches the previous hardcoded dark HUD look.
 export const DEFAULT_PALETTE = {
-  nodeTop:     '#242b4d',
-  nodeBottom:  '#121a30',
-  nodeBg:      '#121a30',
-  label:       '#c8d0f0',
-  labelSoft:   '#a8b4dc',
-  accent:      '#5e74ff',
-  accentA:     (a) => `rgba(94,116,255,${a})`,
+  nodeTop: '#242b4d',
+  nodeBottom: '#121a30',
+  nodeBg: '#121a30',
+  label: '#c8d0f0',
+  labelSoft: '#a8b4dc',
+  accent: '#5e74ff',
+  accentA: (a) => `rgba(94,116,255,${a})`
 }
 
 // Reads the app's --fx-* CSS variables (RGB triplets) and returns a cytoscape
@@ -29,24 +30,26 @@ export function paletteFromCSSVars(getVar) {
   const read = (key) => {
     const raw = getVar(key)
     if (!raw) return null
-    const m = String(raw).trim().match(/^([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/)
+    const m = String(raw)
+      .trim()
+      .match(/^([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/)
     return m ? { r: +m[1], g: +m[2], b: +m[3] } : null
   }
-  const accent   = read('--fx-accent')
-  const ink      = read('--fx-ink')
-  const inkSoft  = read('--fx-ink-soft')
+  const accent = read('--fx-accent')
+  const ink = read('--fx-ink')
+  const inkSoft = read('--fx-ink-soft')
   const glassTop = read('--fx-glass-top')
   const glassBot = read('--fx-glass-bottom')
   if (!accent) return DEFAULT_PALETTE
   const rgb = (c) => `rgb(${c.r},${c.g},${c.b})`
   return {
-    nodeTop:    glassTop ? rgb(glassTop) : DEFAULT_PALETTE.nodeTop,
+    nodeTop: glassTop ? rgb(glassTop) : DEFAULT_PALETTE.nodeTop,
     nodeBottom: glassBot ? rgb(glassBot) : DEFAULT_PALETTE.nodeBottom,
-    nodeBg:     glassBot ? rgb(glassBot) : DEFAULT_PALETTE.nodeBg,
-    label:      ink      ? rgb(ink)      : DEFAULT_PALETTE.label,
-    labelSoft:  inkSoft  ? rgb(inkSoft)  : DEFAULT_PALETTE.labelSoft,
-    accent:     rgb(accent),
-    accentA:    (a) => `rgba(${accent.r},${accent.g},${accent.b},${a})`,
+    nodeBg: glassBot ? rgb(glassBot) : DEFAULT_PALETTE.nodeBg,
+    label: ink ? rgb(ink) : DEFAULT_PALETTE.label,
+    labelSoft: inkSoft ? rgb(inkSoft) : DEFAULT_PALETTE.labelSoft,
+    accent: rgb(accent),
+    accentA: (a) => `rgba(${accent.r},${accent.g},${accent.b},${a})`
   }
 }
 
@@ -68,11 +71,11 @@ export function resolveBoxOverlap(nodeBox, groupBox) {
 
   const gap = 2
   if (overlapX <= overlapY) {
-    const toLeft  = nodeBox.x2 - groupBox.x1
+    const toLeft = nodeBox.x2 - groupBox.x1
     const toRight = groupBox.x2 - nodeBox.x1
     return toLeft <= toRight ? { x: -toLeft - gap, y: 0 } : { x: toRight + gap, y: 0 }
   }
-  const toTop    = nodeBox.y2 - groupBox.y1
+  const toTop = nodeBox.y2 - groupBox.y1
   const toBottom = groupBox.y2 - nodeBox.y1
   return toTop <= toBottom ? { x: 0, y: -toTop - gap } : { x: 0, y: toBottom + gap }
 }
@@ -85,19 +88,18 @@ export function edgeStyleFrom(settings, accent = '#5e74ff') {
   // Legacy settings stored 'curved' ("Curved (Bezier)"); normalize it to the
   // cytoscape curve-style value 'bezier'. Everything else passes straight
   // through so all curve options in the node/edge forms are supported.
-  const curve = settings.defaultEdgeStyle === 'curved'
-    ? 'bezier'
-    : settings.defaultEdgeStyle || 'bezier'
+  const curve =
+    settings.defaultEdgeStyle === 'curved' ? 'bezier' : settings.defaultEdgeStyle || 'bezier'
   const raw = Number(settings.defaultArrowScale)
   const arrowScale = Number.isFinite(raw) ? Math.min(3, Math.max(0.1, raw)) : 1
   return {
-    'width':                Number(settings.defaultEdgeWidth)   || 2,
-    'line-color':           accent,
-    'target-arrow-color':   accent,
-    'target-arrow-shape':   settings.defaultArrowShape || 'vee',
-    'arrow-scale':          arrowScale,
-    'curve-style':          curve,
-    'opacity':              Number(settings.defaultEdgeOpacity)  || 0.85,
+    width: Number(settings.defaultEdgeWidth) || 2,
+    'line-color': accent,
+    'target-arrow-color': accent,
+    'target-arrow-shape': settings.defaultArrowShape || 'vee',
+    'arrow-scale': arrowScale,
+    'curve-style': curve,
+    opacity: Number(settings.defaultEdgeOpacity) || 0.85
   }
 }
 
@@ -108,123 +110,123 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
     // ── Edges ────────────────────────────────────────────────────────────────
     {
       selector: 'edge',
-      style:    edgeStyleFrom(settings, pal.accent),
+      style: edgeStyleFrom(settings, pal.accent)
     },
     {
       selector: 'edge.hovered',
       style: {
-        'opacity':            1,
-        'width':              3,
-        'line-color':         pal.accent,
+        opacity: 1,
+        width: 3,
+        'line-color': pal.accent,
         'target-arrow-color': pal.accent,
-        'underlay-color':     pal.accent,
-        'underlay-padding':   4,
-        'underlay-opacity':   0.15,
-      },
+        'underlay-color': pal.accent,
+        'underlay-padding': 4,
+        'underlay-opacity': 0.15
+      }
     },
     {
       selector: 'edge.focused',
       style: {
-        'line-color':         '#ffab40',
+        'line-color': '#ffab40',
         'target-arrow-color': '#ffab40',
-        'opacity':            1,
-        'width':              3.5,
-        'underlay-color':     '#ffab40',
-        'underlay-padding':   6,
-        'underlay-opacity':   0.22,
-      },
+        opacity: 1,
+        width: 3.5,
+        'underlay-color': '#ffab40',
+        'underlay-padding': 6,
+        'underlay-opacity': 0.22
+      }
     },
     {
       selector: 'edge[label]',
       style: {
-        'label':                     'data(label)',
-        'color':                     pal.label,
-        'font-size':                 10,
-        'font-family':               'ui-monospace, "Cascadia Code", Menlo, monospace',
-        'text-rotation':             'autorotate',
-        'text-background-color':     pal.nodeBg,
-        'text-background-opacity':   1,
-        'text-background-padding':   '3px',
-        'text-background-shape':     'round-rectangle',
-      },
+        label: 'data(label)',
+        color: pal.label,
+        'font-size': 10,
+        'font-family': 'ui-monospace, "Cascadia Code", Menlo, monospace',
+        'text-rotation': 'autorotate',
+        'text-background-color': pal.nodeBg,
+        'text-background-opacity': 1,
+        'text-background-padding': '3px',
+        'text-background-shape': 'round-rectangle'
+      }
     },
     {
       selector: 'edge[?arrowhead]',
-      style: { 'target-arrow-shape': 'data(arrowhead)' },
+      style: { 'target-arrow-shape': 'data(arrowhead)' }
     },
     {
       selector: 'edge[?arrowheadStyle]',
-      style: { 'target-arrow-fill': 'data(arrowheadStyle)' },
+      style: { 'target-arrow-fill': 'data(arrowheadStyle)' }
     },
     // ── Nodes (base) ─────────────────────────────────────────────────────────
     {
       selector: 'node',
       style: {
-        'width':                      'label',
-        'height':                     'label',
-        'min-width':                          '40px',
-        'min-height':                         '30px',
-        'padding':                            '8px 14px',
-        'background-color':                   pal.nodeBottom,
-        'background-gradient-stop-colors':    `${pal.nodeTop} ${pal.nodeBottom}`,
+        width: 'label',
+        height: 'label',
+        'min-width': '40px',
+        'min-height': '30px',
+        padding: '8px 14px',
+        'background-color': pal.nodeBottom,
+        'background-gradient-stop-colors': `${pal.nodeTop} ${pal.nodeBottom}`,
         'background-gradient-stop-positions': '0 100',
-        'background-gradient-direction':      'to-bottom',
-        'background-opacity':                 0.88,
-        'border-color':                       pal.accent,
-        'border-width':                       1.5,
-        'border-opacity':                     0.8,
-        'color':                              pal.label,
-        'label':                              'data(label)',
-        'text-valign':                        'center',
-        'text-halign':                        'center',
-        'text-wrap':                          'wrap',
-        'text-max-width':                     '120px',
-        'font-family':                        'ui-monospace, "Cascadia Code", Menlo, monospace',
-        'font-size':                          12,
-        'font-weight':                        600,
-        'shape':                              'round-rectangle',
-        'underlay-color':                     pal.accent,
-        'underlay-padding':                   '5px',
-        'underlay-opacity':                   0.06,
-        'overlay-color':                      pal.accent,
-        'overlay-padding':                    '2px',
-        'overlay-opacity':                    0.08,
-      },
+        'background-gradient-direction': 'to-bottom',
+        'background-opacity': 0.88,
+        'border-color': pal.accent,
+        'border-width': 1.5,
+        'border-opacity': 0.8,
+        color: pal.label,
+        label: 'data(label)',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'text-wrap': 'wrap',
+        'text-max-width': '120px',
+        'font-family': 'ui-monospace, "Cascadia Code", Menlo, monospace',
+        'font-size': 12,
+        'font-weight': 600,
+        shape: 'round-rectangle',
+        'underlay-color': pal.accent,
+        'underlay-padding': '5px',
+        'underlay-opacity': 0.06,
+        'overlay-color': pal.accent,
+        'overlay-padding': '2px',
+        'overlay-opacity': 0.08
+      }
     },
 
     // Nodes with no label collapse to zero with width:'label' — give them
     // a fixed minimum rendered size so they remain visible.
     {
       selector: 'node[label = ""]',
-      style: { 'width': 40, 'height': 30 },
+      style: { width: 40, height: 30 }
     },
 
     // Per-node shape driven by form data (e.g. hexagon, diamond, star …)
     {
       selector: 'node[?nodeShape]',
-      style: { 'shape': 'data(nodeShape)' },
+      style: { shape: 'data(nodeShape)' }
     },
 
     // Shape-based accent colors (theme-invariant semantic tints)
     {
       selector: 'node[nodeShape="ellipse"]',
-      style: { 'border-color': '#26a69a', 'underlay-color': '#26a69a' },
+      style: { 'border-color': '#26a69a', 'underlay-color': '#26a69a' }
     },
     {
       selector: 'node[nodeShape="diamond"], node[nodeShape="round-diamond"]',
-      style: { 'border-color': '#ffab40', 'underlay-color': '#ffab40' },
+      style: { 'border-color': '#ffab40', 'underlay-color': '#ffab40' }
     },
     {
       selector: 'node[nodeShape="hexagon"], node[nodeShape="octagon"]',
-      style: { 'border-color': '#29b6f6', 'underlay-color': '#29b6f6' },
+      style: { 'border-color': '#29b6f6', 'underlay-color': '#29b6f6' }
     },
     {
       selector: 'node[nodeShape="star"]',
-      style: { 'border-color': '#ef5350', 'underlay-color': '#ef5350' },
+      style: { 'border-color': '#ef5350', 'underlay-color': '#ef5350' }
     },
     {
       selector: 'node[nodeShape="tag"], node[nodeShape="barrel"]',
-      style: { 'border-color': '#ab47bc', 'underlay-color': '#ab47bc' },
+      style: { 'border-color': '#ab47bc', 'underlay-color': '#ab47bc' }
     },
 
     // Custom fill color parsed from the node's "style" field (fill: #hex).
@@ -233,9 +235,9 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
     {
       selector: 'node[?fillColor]',
       style: {
-        'border-color':   'data(fillColor)',
-        'underlay-color': 'data(fillColor)',
-      },
+        'border-color': 'data(fillColor)',
+        'underlay-color': 'data(fillColor)'
+      }
     },
 
     // ── Compound nodes ───────────────────────────────────────────────────────
@@ -243,77 +245,77 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       selector: 'node:parent',
       style: {
         // accent-tinted header strip at top 18%, then regular node gradient
-        'background-color':                   pal.nodeBottom,
-        'background-gradient-stop-colors':    `${pal.accentA(0.22)} ${pal.nodeTop} ${pal.nodeBottom}`,
+        'background-color': pal.nodeBottom,
+        'background-gradient-stop-colors': `${pal.accentA(0.22)} ${pal.nodeTop} ${pal.nodeBottom}`,
         'background-gradient-stop-positions': '0 18 100',
-        'background-gradient-direction':      'to-bottom',
-        'background-opacity':                 0.6,
-        'border-color':                       pal.labelSoft,
-        'border-style':                       'dashed',
-        'border-width':                       1.5,
-        'border-opacity':                     0.45,
-        'color':                              pal.labelSoft,
-        'text-valign':                        'top',
-        'text-halign':                        'left',
-        'text-background-color':              pal.accentA(0.35),
-        'text-background-opacity':            1,
-        'text-background-padding':            '4px',
-        'text-background-shape':              'round-rectangle',
-        'text-margin-x':                      8,
-        'text-margin-y':                      8,
-        'font-weight':                        'bold',
-        'font-size':                          13,
-        'padding':                            '20px',
-        'shape':                              'round-rectangle',
-        'underlay-color':                     pal.nodeTop,
-        'underlay-padding':                   '8px',
-        'underlay-opacity':                   0.04,
-      },
+        'background-gradient-direction': 'to-bottom',
+        'background-opacity': 0.6,
+        'border-color': pal.labelSoft,
+        'border-style': 'dashed',
+        'border-width': 1.5,
+        'border-opacity': 0.45,
+        color: pal.labelSoft,
+        'text-valign': 'top',
+        'text-halign': 'left',
+        'text-background-color': pal.accentA(0.35),
+        'text-background-opacity': 1,
+        'text-background-padding': '4px',
+        'text-background-shape': 'round-rectangle',
+        'text-margin-x': 8,
+        'text-margin-y': 8,
+        'font-weight': 'bold',
+        'font-size': 13,
+        padding: '20px',
+        shape: 'round-rectangle',
+        'underlay-color': pal.nodeTop,
+        'underlay-padding': '8px',
+        'underlay-opacity': 0.04
+      }
     },
 
     // ── Node interaction states ───────────────────────────────────────────────
     {
       selector: 'node.hovered',
       style: {
-        'border-opacity':   1,
-        'border-width':     2.5,
+        'border-opacity': 1,
+        'border-width': 2.5,
         'underlay-opacity': 0.18,
-        'underlay-padding': '7px',
-      },
+        'underlay-padding': '7px'
+      }
     },
     {
       selector: 'node.focused',
       style: {
-        'border-color':     '#ffab40',
-        'border-width':     3,
-        'border-opacity':   1,
-        'underlay-color':   '#ffab40',
+        'border-color': '#ffab40',
+        'border-width': 3,
+        'border-opacity': 1,
+        'underlay-color': '#ffab40',
         'underlay-padding': '6px',
-        'underlay-opacity': 0.2,
-      },
+        'underlay-opacity': 0.2
+      }
     },
     {
       selector: 'node.active_node',
       style: {
-        'border-color':     '#ffab40',
-        'border-width':     3,
-        'border-opacity':   1,
+        'border-color': '#ffab40',
+        'border-width': 3,
+        'border-opacity': 1,
         'background-color': 'rgba(255,171,64,0.18)',
-        'underlay-color':   '#ffab40',
+        'underlay-color': '#ffab40',
         'underlay-padding': '8px',
-        'underlay-opacity': 0.3,
-      },
+        'underlay-opacity': 0.3
+      }
     },
     {
       selector: 'node.d_active_node',
       style: {
-        'border-color':     '#ff6e40',
-        'border-width':     3,
-        'border-opacity':   1,
-        'underlay-color':   '#ff6e40',
+        'border-color': '#ff6e40',
+        'border-width': 3,
+        'border-opacity': 1,
+        'underlay-color': '#ff6e40',
         'underlay-padding': '8px',
-        'underlay-opacity': 0.22,
-      },
+        'underlay-opacity': 0.22
+      }
     },
 
     // ─── Per-element data-driven styling (edited via the node/edge forms) ────
@@ -322,58 +324,113 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
     // node[?nodeShape] above (unified with the shape-color tints).
     {
       selector: 'node[textHalign]',
-      style:    { 'text-halign': 'data(textHalign)' },
+      style: { 'text-halign': 'data(textHalign)' }
     },
     {
       selector: 'node[textValign]',
-      style:    { 'text-valign': 'data(textValign)' },
+      style: { 'text-valign': 'data(textValign)' }
     },
     {
       selector: 'node[bgColor]',
       style: {
-        'background-color': 'data(bgColor)',
-      },
+        'background-color': 'data(bgColor)'
+      }
     },
     {
       selector: 'node[borderColor]',
-      style:    { 'border-color': 'data(borderColor)' },
+      style: { 'border-color': 'data(borderColor)' }
     },
     {
       selector: 'node[borderWidth]',
-      style:    { 'border-width': 'data(borderWidth)' },
+      style: { 'border-width': 'data(borderWidth)' }
     },
     {
       selector: 'node[fontSize]',
-      style:    { 'font-size': 'data(fontSize)' },
+      style: { 'font-size': 'data(fontSize)' }
+    },
+    // Shape "none": keep the hit area and label/icon rendering, but drop the
+    // visible box so the icon (or text) stands alone on the canvas. Placed
+    // after bgColor/borderColor/borderWidth so it wins on equal specificity.
+    // shape: 'none' is not a valid cytoscape value, so fall back to a valid
+    // shape whose box is then fully hidden by the zeroed opacity/border.
+    {
+      selector: 'node[nodeShape="none"]',
+      style: {
+        shape: 'round-rectangle',
+        'background-opacity': 0,
+        'border-width': 0,
+        'border-opacity': 0
+      }
     },
     {
       selector: 'edge[sourceArrowhead]',
-      style:    { 'source-arrow-shape': 'data(sourceArrowhead)' },
+      style: { 'source-arrow-shape': 'data(sourceArrowhead)' }
     },
     {
       selector: 'edge[edgeWidth]',
-      style:    { 'width': 'data(edgeWidth)' },
+      style: { width: 'data(edgeWidth)' }
     },
     {
       selector: 'edge[edgeColor]',
       style: {
-        'line-color':         'data(edgeColor)',
+        'line-color': 'data(edgeColor)',
         'target-arrow-color': 'data(edgeColor)',
-        'source-arrow-color': 'data(edgeColor)',
-      },
+        'source-arrow-color': 'data(edgeColor)'
+      }
     },
     {
       selector: 'edge[edgeLineStyle]',
-      style:    { 'line-style': 'data(edgeLineStyle)' },
+      style: { 'line-style': 'data(edgeLineStyle)' }
     },
     {
       selector: 'edge[edgeCurve]',
-      style:    { 'curve-style': 'data(edgeCurve)' },
+      style: { 'curve-style': 'data(edgeCurve)' }
     },
     {
       selector: 'edge[edgeOpacity]',
-      style:    { 'opacity': 'data(edgeOpacity)' },
+      style: { opacity: 'data(edgeOpacity)' }
     },
+
+    // ── Icon rendering ───────────────────────────────────────────────────────
+    // When an icon is attached, _displayFont and _displayLabel are computed by
+    // updateScene() and stored on the element. These selectors consume them.
+    {
+      selector: 'node[_displayFont]',
+      style: {
+        label: 'data(_displayLabel)',
+        'font-family': 'data(_displayFont)'
+      }
+    },
+    {
+      selector: 'edge[_displayFont]',
+      style: {
+        label: 'data(_displayLabel)',
+        'font-family': 'data(_displayFont)'
+      }
+    },
+    // Empty-label fallback sets a fixed size; icon nodes need width:'label'
+    // so the glyph can auto-size the node instead.
+    {
+      selector: 'node[label = ""][_displayFont]',
+      style: { width: 'label', height: 'label', 'min-width': '40px', 'min-height': '40px' }
+    },
+    // Per-element icon color and size overrides
+    {
+      selector: 'node[iconColor]',
+      style: { color: 'data(iconColor)' }
+    },
+    {
+      selector: 'edge[iconColor]',
+      style: { color: 'data(iconColor)' }
+    },
+    {
+      selector: 'node[iconSize]',
+      style: { 'font-size': 'data(iconSize)' }
+    },
+    {
+      selector: 'edge[iconSize]',
+      style: { 'font-size': 'data(iconSize)' }
+    }
   ]
 }
 
@@ -388,7 +445,7 @@ export const DIRECTION = {
   k: { axis: 'y', sign: -1 },
   j: { axis: 'y', sign: 1 },
   h: { axis: 'x', sign: -1 },
-  l: { axis: 'x', sign: 1 },
+  l: { axis: 'x', sign: 1 }
 }
 
 function anchorFor(cy, id, kind) {
@@ -415,12 +472,12 @@ export function nearestInDirection(cy, fromId, direction, kind = 'nodes') {
   const from = anchorFor(cy, fromId, kind)
   if (!from) return null
 
-  const pool   = kind === 'edges' ? cy.edges() : cy.nodes()
+  const pool = kind === 'edges' ? cy.edges() : cy.nodes()
   const anchor = (ele) => (kind === 'edges' ? anchorFor(cy, ele.id(), 'edges') : ele.position())
-  const axis   = dir.axis
-  const sign   = dir.sign
+  const axis = dir.axis
+  const sign = dir.sign
 
-  let onTarget  = null
+  let onTarget = null
   let onOpposite = null
 
   for (let i = 0; i < pool.length; i++) {
@@ -433,7 +490,10 @@ export function nearestInDirection(cy, fromId, direction, kind = 'nodes') {
       if (!onTarget || isCloser(p, from, onTarget.p, axis)) onTarget = { ele, p }
     } else if (delta * sign < 0) {
       // "Farthest along the axis on the opposite side" = largest |delta|
-      if (!onOpposite || Math.abs(p[axis] - from[axis]) > Math.abs(onOpposite.p[axis] - from[axis])) {
+      if (
+        !onOpposite ||
+        Math.abs(p[axis] - from[axis]) > Math.abs(onOpposite.p[axis] - from[axis])
+      ) {
         onOpposite = { ele, p }
       }
     }
@@ -449,7 +509,7 @@ export function nearestInDirection(cy, fromId, direction, kind = 'nodes') {
 function isCloser(p, from, best, axis) {
   const score = (pos) => {
     const along = Math.abs(pos[axis] - from[axis])
-    const perp  = Math.abs(pos[axis === 'x' ? 'y' : 'x'] - from[axis === 'x' ? 'y' : 'x'])
+    const perp = Math.abs(pos[axis === 'x' ? 'y' : 'x'] - from[axis === 'x' ? 'y' : 'x'])
     return along + perp * 2
   }
   return score(p) < score(best)
@@ -458,22 +518,22 @@ function isCloser(p, from, best, axis) {
 export default class CytoscapeRenderer {
   constructor(container, emitter) {
     this.container = container
-    this.emitter   = emitter
-    this.cy        = null
+    this.emitter = emitter
+    this.cy = null
   }
 
   init() {
     this.cy = cytoscape({
-      container:       this.container,
-      style:           [],
-      styleEnabled:    true,
-      minZoom:         0.08,
-      maxZoom:         5,
+      container: this.container,
+      style: [],
+      styleEnabled: true,
+      minZoom: 0.08,
+      maxZoom: 5,
       // Native pan is kept enabled so cytoscape handles drag-to-pan on all
       // devices. Only wheel zoom is overridden (see _bindCameraControls).
       userZoomingEnabled: false,
       userPanningEnabled: true,
-      boxSelectionEnabled: false,
+      boxSelectionEnabled: false
     })
 
     this._applyTheme()
@@ -483,10 +543,18 @@ export default class CytoscapeRenderer {
       this.emitter?.emit('node-click', evt.target.id())
     })
 
-    this.cy.on('mouseover', 'node', (evt) => { evt.target.addClass('hovered') })
-    this.cy.on('mouseout',  'node', (evt) => { evt.target.removeClass('hovered') })
-    this.cy.on('mouseover', 'edge', (evt) => { evt.target.addClass('hovered') })
-    this.cy.on('mouseout',  'edge', (evt) => { evt.target.removeClass('hovered') })
+    this.cy.on('mouseover', 'node', (evt) => {
+      evt.target.addClass('hovered')
+    })
+    this.cy.on('mouseout', 'node', (evt) => {
+      evt.target.removeClass('hovered')
+    })
+    this.cy.on('mouseover', 'edge', (evt) => {
+      evt.target.addClass('hovered')
+    })
+    this.cy.on('mouseout', 'edge', (evt) => {
+      evt.target.removeClass('hovered')
+    })
 
     // Keep hint badges + selection crosshairs glued to their nodes while panning/zooming
     this._viewportEmitPending = false
@@ -524,10 +592,10 @@ export default class CytoscapeRenderer {
       // Normalize to one "click" equivalent (120 units for a wheel mouse).
       // Cap at 3× to prevent flinging on high-resolution trackpads.
       const normalized = Math.sign(raw) * Math.min(Math.abs(raw) / 120, 3)
-      const diff = normalized * 0.2  // ~37% zoom change per mouse click
+      const diff = normalized * 0.2 // ~37% zoom change per mouse click
 
       const rect = this.container ? this.container.getBoundingClientRect() : { left: 0, top: 0 }
-      const pos  = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+      const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top }
 
       // Apply directly instead of animating: rapid scroll ticks would otherwise
       // interrupt each glide mid-flight, so only a fraction of each step lands.
@@ -543,7 +611,9 @@ export default class CytoscapeRenderer {
 
     // Trackpad pinch keeps the natural "spread to zoom in" direction
     this._gestureStartZoom = 1
-    this._onGestureStart = () => { this._gestureStartZoom = this.cy.zoom() }
+    this._onGestureStart = () => {
+      this._gestureStartZoom = this.cy.zoom()
+    }
     this._onGestureChange = (e) => {
       if (!e.scale) return
       e.preventDefault()
@@ -553,30 +623,34 @@ export default class CytoscapeRenderer {
       this.container.addEventListener('gesturestart', this._onGestureStart)
       this.container.addEventListener('gesturechange', this._onGestureChange)
     }
-
-
   }
 
   updateScene(graphModel, options = {}) {
     if (!this.cy) return
 
-    if (options.pan)  { this._pan(options.pan);  return }
-    if (options.zoom) { this._zoom(options.zoom); return }
+    if (options.pan) {
+      this._pan(options.pan)
+      return
+    }
+    if (options.zoom) {
+      this._zoom(options.zoom)
+      return
+    }
 
     const animate = options.animate !== false
 
     // Diff against the current scene instead of tearing everything down, so
     // surviving nodes keep their identity and glide to the new layout.
-    const nodeIds = new Set(graphModel.nodes().map(n => n.id()))
-    const edgeIds = new Set(graphModel.edges().map(e => e.id()))
-    this.cy.elements().forEach(ele => {
+    const nodeIds = new Set(graphModel.nodes().map((n) => n.id()))
+    const edgeIds = new Set(graphModel.edges().map((e) => e.id()))
+    this.cy.elements().forEach((ele) => {
       const keep = ele.isNode() ? nodeIds.has(ele.id()) : edgeIds.has(ele.id())
       if (!keep) ele.remove()
     })
 
     // Remember where surviving nodes are, so the layout can animate from here.
     const prevPos = new Map()
-    this.cy.nodes().forEach(n => prevPos.set(n.id(), { ...n.position() }))
+    this.cy.nodes().forEach((n) => prevPos.set(n.id(), { ...n.position() }))
     const seed = this._centroid(this.cy.nodes())
 
     this.cy.startBatch()
@@ -584,18 +658,24 @@ export default class CytoscapeRenderer {
     const elements = []
 
     // Parent nodes must be added before children
-    graphModel.nodes().filter(n => n.isParent()).forEach(node => {
-      const d = { ...node.data(), id: node.id() }
-      normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
-      delete d.parent
-      elements.push({ group: 'nodes', data: d })
-    })
-    graphModel.nodes().filter(n => !n.isParent()).forEach(node => {
-      const d = { ...node.data(), id: node.id() }
-      normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
-      elements.push({ group: 'nodes', data: d })
-    })
-    graphModel.edges().forEach(edge => {
+    graphModel
+      .nodes()
+      .filter((n) => n.isParent())
+      .forEach((node) => {
+        const d = { ...node.data(), id: node.id() }
+        normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
+        delete d.parent
+        elements.push({ group: 'nodes', data: d })
+      })
+    graphModel
+      .nodes()
+      .filter((n) => !n.isParent())
+      .forEach((node) => {
+        const d = { ...node.data(), id: node.id() }
+        normalizeOptionalFields(d, NODE_OPTIONAL_FIELDS)
+        elements.push({ group: 'nodes', data: d })
+      })
+    graphModel.edges().forEach((edge) => {
       const d = edge.data()
       const edgeData = { ...d, id: edge.id(), source: d.source, target: d.target }
       normalizeOptionalFields(edgeData, EDGE_OPTIONAL_FIELDS)
@@ -608,7 +688,7 @@ export default class CytoscapeRenderer {
     // Surviving elements keep their identity, so push the model's latest data
     // onto them (label/shape/style edits, parent changes) — otherwise diffs
     // would leave stale labels on renamed nodes.
-    graphModel.nodes().forEach(node => {
+    graphModel.nodes().forEach((node) => {
       const ele = this.cy.getElementById(node.id())
       if (ele.empty()) return
       const d = { ...node.data() }
@@ -623,6 +703,11 @@ export default class CytoscapeRenderer {
       // clearing the style also clears a stale fillColor.
       const legacy = d.style && String(d.style).match(/\bfill\s*:\s*([^;]+)/i)
       d.fillColor = legacy ? legacy[1].trim() : null
+
+      // Compute icon display fields from the element's icon data.
+      const { displayLabel, displayFont } = composeIconLabel(d)
+      d._displayLabel = displayLabel
+      d._displayFont = displayFont
       ele.data(d)
       // Custom fills (bgColor from the form, or legacy fillColor) are applied
       // inline — background-gradient-stop-colors does not take data() mappings.
@@ -630,24 +715,27 @@ export default class CytoscapeRenderer {
       const fill = d.bgColor || d.fillColor
       if (fill) {
         ele.style({
-          'background-color':                fill,
-          'background-gradient-stop-colors': `${fill} ${fill}`,
+          'background-color': fill,
+          'background-gradient-stop-colors': `${fill} ${fill}`
         })
       } else {
         ele.removeStyle('background-color background-gradient-stop-colors')
       }
     })
-    graphModel.edges().forEach(edge => {
+    graphModel.edges().forEach((edge) => {
       const ele = this.cy.getElementById(edge.id())
       if (ele.empty()) return
       const d = { ...edge.data() }
       normalizeOptionalFields(d, EDGE_OPTIONAL_FIELDS)
       delete d.id
+      const { displayLabel: edgeDisplayLabel, displayFont: edgeDisplayFont } = composeIconLabel(d)
+      d._displayLabel = edgeDisplayLabel
+      d._displayFont = edgeDisplayFont
       ele.data(d)
     })
 
     // New nodes start at the graph centroid so they glide in from the middle.
-    this.cy.nodes().forEach(n => {
+    this.cy.nodes().forEach((n) => {
       if (!prevPos.has(n.id())) n.position(seed)
     })
 
@@ -658,7 +746,7 @@ export default class CytoscapeRenderer {
       this.emitter?.emit('scene-updated', {
         count: graphModel.nodes().length,
         nodes: graphModel.nodes().length,
-        edges: graphModel.edges().length,
+        edges: graphModel.edges().length
       })
       return
     }
@@ -669,7 +757,7 @@ export default class CytoscapeRenderer {
     this.emitter?.emit('scene-updated', {
       count: graphModel.nodes().length,
       nodes: graphModel.nodes().length,
-      edges: graphModel.edges().length,
+      edges: graphModel.edges().length
     })
     return animation
   }
@@ -680,7 +768,7 @@ export default class CytoscapeRenderer {
         const w = this.cy.width()
         const h = this.cy.height()
         if (w && h) {
-          const pan  = this.cy.pan()
+          const pan = this.cy.pan()
           const zoom = this.cy.zoom()
           return { x: (w / 2 - pan.x) / zoom, y: (h / 2 - pan.y) / zoom }
         }
@@ -714,16 +802,16 @@ export default class CytoscapeRenderer {
     // IMPORTANT: capture every `to` BEFORE rewinding any node — cytoscape moves
     // a compound parent's children when the parent's position is set, so
     // rewinding a parent first would corrupt its children's captured `to`.
-    const targets = this.cy.nodes().map(node => ({
+    const targets = this.cy.nodes().map((node) => ({
       node,
-      to:   { ...node.position() },
-      from: prevPos.get(node.id()) || seed || { x: 0, y: 0 },
+      to: { ...node.position() },
+      from: prevPos.get(node.id()) || seed || { x: 0, y: 0 }
     }))
     const anims = targets.map(({ node, to, from }) => {
       node.position(from)
       return node.animation({ position: to, duration: 650, easing: 'ease-out-cubic' }).play()
     })
-    const done = Promise.all(anims.map(a => a.promise()))
+    const done = Promise.all(anims.map((a) => a.promise()))
 
     if (fitTarget) {
       this._glide(fitTarget, 500)
@@ -735,26 +823,28 @@ export default class CytoscapeRenderer {
   }
 
   _computeColaLayout(colaOpts, settings) {
-    const nodeSpacing   = Number(colaOpts.nodeSpacing        ?? settings.defaultColaNodeSpacing)        || 30
-    const edgeLength    = Number(colaOpts.edgeLength         ?? settings.defaultColaEdgeLength)         || 120
-    const avoidOverlaps = colaOpts.avoidOverlap !== false && settings.defaultColaAvoidOverlap !== false
-    const flow          = colaOpts.flow ?? settings.defaultColaFlow ?? null
-    const maxTime       = Number(colaOpts.maxSimulationTime  ?? settings.defaultColaMaxSimulationTime)  || 1500
-    const gravity       = Number(colaOpts.gravity            ?? settings.defaultColaGravity)            || 0
+    const nodeSpacing = Number(colaOpts.nodeSpacing ?? settings.defaultColaNodeSpacing) || 30
+    const edgeLength = Number(colaOpts.edgeLength ?? settings.defaultColaEdgeLength) || 120
+    const avoidOverlaps =
+      colaOpts.avoidOverlap !== false && settings.defaultColaAvoidOverlap !== false
+    const flow = colaOpts.flow ?? settings.defaultColaFlow ?? null
+    const maxTime =
+      Number(colaOpts.maxSimulationTime ?? settings.defaultColaMaxSimulationTime) || 1500
+    const gravity = Number(colaOpts.gravity ?? settings.defaultColaGravity) || 0
 
     const opts = {
-      name:               'cola',
+      name: 'cola',
       nodeSpacing,
       edgeLength,
       avoidOverlaps,
       handleDisconnected: true,
-      animate:            false,
-      infinite:           false,
-      maxSimulationTime:  maxTime,
-      fit:                false,
-      padding:            60,
+      animate: false,
+      infinite: false,
+      maxSimulationTime: maxTime,
+      fit: false,
+      padding: 60
     }
-    if (flow)    opts.flow    = { axis: flow, minSeparation: nodeSpacing }
+    if (flow) opts.flow = { axis: flow, minSeparation: nodeSpacing }
     if (gravity) opts.gravity = gravity
 
     // cytoscape-cola runs out of memory when compound (parent) nodes are
@@ -763,20 +853,23 @@ export default class CytoscapeRenderer {
     const childless = this.cy.nodes(':childless')
     if (childless.length) childless.layout(opts).run()
 
-    this.cy.nodes(':parent').forEach(parent => {
+    this.cy.nodes(':parent').forEach((parent) => {
       const children = parent.children()
       if (!children.length) return
-      const p0  = { ...parent.position() }
-      const sum = children.reduce((acc, node) => {
-        const p = node.position()
-        acc.x += p.x
-        acc.y += p.y
-        return acc
-      }, { x: 0, y: 0 })
+      const p0 = { ...parent.position() }
+      const sum = children.reduce(
+        (acc, node) => {
+          const p = node.position()
+          acc.x += p.x
+          acc.y += p.y
+          return acc
+        },
+        { x: 0, y: 0 }
+      )
       const centroid = { x: sum.x / children.length, y: sum.y / children.length }
       parent.position(centroid)
       const delta = { x: centroid.x - p0.x, y: centroid.y - p0.y }
-      children.forEach(child => {
+      children.forEach((child) => {
         const p = child.position()
         child.position({ x: p.x - delta.x, y: p.y - delta.y })
       })
@@ -784,26 +877,26 @@ export default class CytoscapeRenderer {
   }
 
   _computeBuiltinLayout(name, passedOpts = {}) {
-    const s      = readSettings()
+    const s = readSettings()
     const cyOpts = { name, fit: false, padding: 60, animate: false }
 
     if (name === 'cose') {
       const o = passedOpts.coseOpts || {}
-      const repulsion = Number(o.nodeRepulsion   ?? s.defaultCoseNodeRepulsion)   || 400000
-      const edgeLen   = Number(o.idealEdgeLength ?? s.defaultCoseIdealEdgeLength) || 100
-      cyOpts.nodeRepulsion   = () => repulsion
+      const repulsion = Number(o.nodeRepulsion ?? s.defaultCoseNodeRepulsion) || 400000
+      const edgeLen = Number(o.idealEdgeLength ?? s.defaultCoseIdealEdgeLength) || 100
+      cyOpts.nodeRepulsion = () => repulsion
       cyOpts.idealEdgeLength = () => edgeLen
-      cyOpts.gravity         = Number(o.gravity     ?? s.defaultCoseGravity)     ?? 1
-      cyOpts.nodeOverlap     = Number(o.nodeOverlap ?? s.defaultCoseNodeOverlap) || 4
+      cyOpts.gravity = Number(o.gravity ?? s.defaultCoseGravity) ?? 1
+      cyOpts.nodeOverlap = Number(o.nodeOverlap ?? s.defaultCoseNodeOverlap) || 4
     } else if (name === 'breadthfirst') {
       const o = passedOpts.breadthfirstOpts || {}
-      cyOpts.directed      = (o.directed      ?? s.defaultBreadthfirstDirected) !== false
-      cyOpts.circle        = Boolean(o.circle  ?? s.defaultBreadthfirstCircle)
+      cyOpts.directed = (o.directed ?? s.defaultBreadthfirstDirected) !== false
+      cyOpts.circle = Boolean(o.circle ?? s.defaultBreadthfirstCircle)
       cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultBreadthfirstSpacingFactor) || 1.5
     } else if (name === 'grid') {
       const o = passedOpts.gridOpts || {}
       cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultGridSpacingFactor) || 1.5
-      cyOpts.avoidOverlap  = (o.avoidOverlap   ?? s.defaultGridAvoidOverlap) !== false
+      cyOpts.avoidOverlap = (o.avoidOverlap ?? s.defaultGridAvoidOverlap) !== false
       const rows = o.rows ?? s.defaultGridRows
       const cols = o.cols ?? s.defaultGridCols
       if (rows != null) cyOpts.rows = Number(rows)
@@ -811,20 +904,20 @@ export default class CytoscapeRenderer {
     } else if (name === 'circle') {
       const o = passedOpts.circleOpts || {}
       cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultCircleSpacingFactor) || 1.0
-      cyOpts.clockwise     = (o.clockwise     ?? s.defaultCircleClockwise) !== false
+      cyOpts.clockwise = (o.clockwise ?? s.defaultCircleClockwise) !== false
     } else if (name === 'concentric') {
       const o = passedOpts.concentricOpts || {}
-      cyOpts.spacingFactor  = Number(o.spacingFactor  ?? s.defaultConcentricSpacingFactor)  || 1.5
+      cyOpts.spacingFactor = Number(o.spacingFactor ?? s.defaultConcentricSpacingFactor) || 1.5
       cyOpts.minNodeSpacing = Number(o.minNodeSpacing ?? s.defaultConcentricMinNodeSpacing) || 30
-      cyOpts.clockwise      = (o.clockwise    ?? s.defaultConcentricClockwise) !== false
-      cyOpts.equidistant    = Boolean(o.equidistant ?? s.defaultConcentricEquidistant)
+      cyOpts.clockwise = (o.clockwise ?? s.defaultConcentricClockwise) !== false
+      cyOpts.equidistant = Boolean(o.equidistant ?? s.defaultConcentricEquidistant)
     } else if (name === 'dagre') {
       const o = passedOpts.dagreOpts || {}
-      cyOpts.rankDir = (o.rankDir ?? s.defaultDagreRankDir)  || 'TB'
+      cyOpts.rankDir = (o.rankDir ?? s.defaultDagreRankDir) || 'TB'
       cyOpts.nodeSep = Number(o.nodeSep ?? s.defaultDagreNodeSep) || 50
       cyOpts.rankSep = Number(o.rankSep ?? s.defaultDagreRankSep) || 50
       cyOpts.edgeSep = Number(o.edgeSep ?? s.defaultDagreEdgeSep) || 10
-      cyOpts.ranker  = (o.ranker  ?? s.defaultDagreRanker)   || 'network-simplex'
+      cyOpts.ranker = (o.ranker ?? s.defaultDagreRanker) || 'network-simplex'
     }
 
     this.cy.layout(cyOpts).run()
@@ -860,7 +953,7 @@ export default class CytoscapeRenderer {
       const c = { x: this.cy.width() / 2, y: this.cy.height() / 2 }
       pan = {
         x: c.x - (c.x - pan.x) * (z1 / zoom),
-        y: c.y - (c.y - pan.y) * (z1 / zoom),
+        y: c.y - (c.y - pan.y) * (z1 / zoom)
       }
       zoom = z1
     }
@@ -876,9 +969,9 @@ export default class CytoscapeRenderer {
 
     for (let pass = 0; pass < 20; pass++) {
       let moved = false
-      parents.forEach(parent => {
+      parents.forEach((parent) => {
         const pbox = parent.boundingBox()
-        this.cy.nodes().forEach(node => {
+        this.cy.nodes().forEach((node) => {
           if (node === parent || node.ancestors().contains(parent)) return
           const delta = resolveBoxOverlap(node.boundingBox(), pbox)
           if (delta.x !== 0 || delta.y !== 0) {
@@ -928,8 +1021,8 @@ export default class CytoscapeRenderer {
         this.cy.fit(undefined, this._fitPadding())
         if (lvl !== 1) {
           this.cy.zoom({
-            level:            this.cy.zoom() * lvl,
-            renderedPosition: { x: this.cy.width() / 2, y: this.cy.height() / 2 },
+            level: this.cy.zoom() * lvl,
+            renderedPosition: { x: this.cy.width() / 2, y: this.cy.height() / 2 }
           })
         }
       }
@@ -937,8 +1030,8 @@ export default class CytoscapeRenderer {
 
     if (typeof requestAnimationFrame === 'function') {
       requestAnimationFrame(() => {
-        const unsized = this.container && this.cy &&
-          (this.cy.width() === 0 || this.cy.height() === 0)
+        const unsized =
+          this.container && this.cy && (this.cy.width() === 0 || this.cy.height() === 0)
         if (unsized) requestAnimationFrame(apply)
         else apply()
       })
@@ -957,14 +1050,14 @@ export default class CytoscapeRenderer {
   }
 
   setSelectedNodes(ids = [], doubleIds = []) {
-    this._selectedNodeIds   = ids
+    this._selectedNodeIds = ids
     this._doubleSelectedIds = doubleIds
     this._renderCrosshairs()
   }
 
   clearSelectionCrosshairs() {
     this._focusedNodeId = null
-    this._selectedNodeIds   = []
+    this._selectedNodeIds = []
     this._doubleSelectedIds = []
     this._renderCrosshairs()
   }
@@ -1006,7 +1099,7 @@ export default class CytoscapeRenderer {
       inset: '0',
       overflow: 'hidden',
       'pointer-events': 'none',
-      'z-index': '5',
+      'z-index': '5'
     })
     this.container.appendChild(this._selectionLayer)
     return this._selectionLayer
@@ -1030,7 +1123,7 @@ export default class CytoscapeRenderer {
       '<span class="crosshair-bracket tl"></span>',
       '<span class="crosshair-bracket tr"></span>',
       '<span class="crosshair-bracket bl"></span>',
-      '<span class="crosshair-bracket br"></span>',
+      '<span class="crosshair-bracket br"></span>'
     ].join('')
     this._applyCrosshairPosition(el, node)
     layer.appendChild(el)
@@ -1045,14 +1138,14 @@ export default class CytoscapeRenderer {
       if (!node.empty()) this._appendCrosshair(layer, node, 'focus')
     }
     const rendered = new Set()
-    ;(this._selectedNodeIds || []).forEach(id => {
+    ;(this._selectedNodeIds || []).forEach((id) => {
       const node = this.cy.getElementById(id)
       if (node.empty()) return
       const kind = (this._doubleSelectedIds || []).includes(id) ? 'double' : 'selected'
       this._appendCrosshair(layer, node, kind)
       rendered.add(id)
     })
-    ;(this._doubleSelectedIds || []).forEach(id => {
+    ;(this._doubleSelectedIds || []).forEach((id) => {
       if (rendered.has(id)) return
       const node = this.cy.getElementById(id)
       if (node.empty()) return
@@ -1063,9 +1156,12 @@ export default class CytoscapeRenderer {
   _updateCrosshairs() {
     const layer = this._getSelectionLayer()
     if (!layer || !this.cy) return
-    layer.querySelectorAll('.cytoscape-crosshair').forEach(el => {
+    layer.querySelectorAll('.cytoscape-crosshair').forEach((el) => {
       const node = this.cy.getElementById(el.dataset.nodeId)
-      if (node.empty()) { el.remove(); return }
+      if (node.empty()) {
+        el.remove()
+        return
+      }
       this._applyCrosshairPosition(el, node)
     })
   }
@@ -1087,8 +1183,9 @@ export default class CytoscapeRenderer {
   getAllNodeElements() {
     if (!this.cy) return []
     this._clearHintsLayer()
-    return this.cy.nodes()
-      .map(node => this._positionHintAnchor(node))
+    return this.cy
+      .nodes()
+      .map((node) => this._positionHintAnchor(node))
       .filter(Boolean)
   }
 
@@ -1103,7 +1200,7 @@ export default class CytoscapeRenderer {
       inset: '0',
       overflow: 'hidden',
       'pointer-events': 'none',
-      'z-index': '10',
+      'z-index': '10'
     })
     this.container.appendChild(this._hintsLayer)
     return this._hintsLayer
@@ -1157,22 +1254,29 @@ export default class CytoscapeRenderer {
   getAllEdgeElements() {
     if (!this.cy) return []
     this._clearHintsLayer()
-    return this.cy.edges()
-      .map(edge => this._positionEdgeHintAnchor(edge))
+    return this.cy
+      .edges()
+      .map((edge) => this._positionEdgeHintAnchor(edge))
       .filter(Boolean)
   }
 
   _updateHintAnchors() {
     if (!this._hintsLayer || !this.cy) return
-    this._hintsLayer.querySelectorAll('.cytoscape-hint-anchor').forEach(anchor => {
+    this._hintsLayer.querySelectorAll('.cytoscape-hint-anchor').forEach((anchor) => {
       if (anchor.dataset.type === 'edge') {
         const edge = this.cy.getElementById(anchor.dataset.edgeId)
-        if (edge.empty()) { anchor.remove(); return }
+        if (edge.empty()) {
+          anchor.remove()
+          return
+        }
         const pos = this._edgeRenderedMidpoint(edge)
         if (pos) anchor.style.transform = hintTransform(pos.x, pos.y)
       } else {
         const node = this.cy.getElementById(anchor.dataset.nodeId)
-        if (node.empty()) { anchor.remove(); return }
+        if (node.empty()) {
+          anchor.remove()
+          return
+        }
         const bb = node.renderedBoundingBox({ includeLabels: false, includeOverlays: false })
         anchor.style.transform = hintTransform((bb.x1 + bb.x2) / 2, (bb.y1 + bb.y2) / 2)
         anchor.style.setProperty('--w', `${(bb.x2 - bb.x1) / 2}px`)
@@ -1205,10 +1309,10 @@ export default class CytoscapeRenderer {
     const delta = 100
     const deltas = {
       // Vim-style: j/k/h/l move the drawing down/up/left/right with the key.
-      Up:    { x: 0,      y: -delta },
-      Down:  { x: 0,      y:  delta },
-      Left:  { x: -delta, y: 0 },
-      Right: { x:  delta, y: 0 },
+      Up: { x: 0, y: -delta },
+      Down: { x: 0, y: delta },
+      Left: { x: -delta, y: 0 },
+      Right: { x: delta, y: 0 }
     }
     const by = deltas[direction]
     if (!by) return
@@ -1219,9 +1323,12 @@ export default class CytoscapeRenderer {
   _zoom(direction) {
     if (!this.cy) return
     const factor = direction === 'In' ? 1.3 : 0.77
-    const cx = this.cy.width()  / 2
+    const cx = this.cy.width() / 2
     const cy = this.cy.height() / 2
-    return this._glide({ zoom: { level: this.cy.zoom() * factor, renderedPosition: { x: cx, y: cy } } }, 220)
+    return this._glide(
+      { zoom: { level: this.cy.zoom() * factor, renderedPosition: { x: cx, y: cy } } },
+      220
+    )
   }
 
   // Eased viewport movement. Interrupts any in-flight glide so rapid inputs
@@ -1244,7 +1351,9 @@ export default class CytoscapeRenderer {
     }
 
     let resolve
-    const promise = new Promise(r => { resolve = r })
+    const promise = new Promise((r) => {
+      resolve = r
+    })
     this._resolveLastGlide = resolve
     const anim = this.cy.animation({ ...viewportProps, duration, easing })
     anim.promise('complete').then(() => {
@@ -1267,8 +1376,8 @@ export default class CytoscapeRenderer {
     if (typeof document === 'undefined') {
       this._palette = DEFAULT_PALETTE
     } else {
-      this._palette = paletteFromCSSVars(
-        key => getComputedStyle(document.documentElement).getPropertyValue(key)
+      this._palette = paletteFromCSSVars((key) =>
+        getComputedStyle(document.documentElement).getPropertyValue(key)
       )
     }
     this._applySettings()
@@ -1276,9 +1385,9 @@ export default class CytoscapeRenderer {
 
   // ─── Compat stubs (3-D mode removed) ─────────────────────────────────────────
 
-  enable3D()               {}
-  enable2D()               {}
-  transitionToPositions()  {}
+  enable3D() {}
+  enable2D() {}
+  transitionToPositions() {}
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────────
 

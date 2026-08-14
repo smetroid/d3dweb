@@ -14,14 +14,24 @@ import D3Util from '@/helpers/D3Util'
 
 // CSS cards are min 80×36px; SCALE=2 maps CSS px → layout units. These are the
 // sizes cola uses for overlap-avoidance.
-export const CARD_W = 40   // 80px / SCALE
-export const CARD_H = 18   // 36px / SCALE
+export const CARD_W = 40 // 80px / SCALE
+export const CARD_H = 18 // 36px / SCALE
 
 // Optional styling fields whose empty value means "use the theme default". They
 // are stored as undefined so cytoscape's bare [attr] selectors (which match any
 // value that is not undefined) fall back to the theme instead of mapping an
 // empty string onto a style property.
-export const NODE_OPTIONAL_FIELDS = ['bgColor', 'borderColor', 'borderWidth', 'fontSize']
+export const NODE_OPTIONAL_FIELDS = [
+  'bgColor',
+  'borderColor',
+  'borderWidth',
+  'fontSize',
+  'iconSet',
+  'iconName',
+  'iconPosition',
+  'iconSize',
+  'iconColor'
+]
 
 export const EDGE_OPTIONAL_FIELDS = [
   'arrowheadStyle',
@@ -32,6 +42,11 @@ export const EDGE_OPTIONAL_FIELDS = [
   'edgeLineStyle',
   'edgeCurve',
   'edgeOpacity',
+  'iconSet',
+  'iconName',
+  'iconPosition',
+  'iconSize',
+  'iconColor'
 ]
 
 export function normalizeOptionalFields(data, fields) {
@@ -44,18 +59,42 @@ export function normalizeOptionalFields(data, fields) {
 }
 
 const EMPTY = Object.freeze({
-  empty()      { return true },
-  nonempty()   { return false },
-  remove()     { return this },
-  data()       { return undefined },
-  position()   { return undefined },
-  id()         { return undefined },
-  isParent()   { return false },
-  parent()     { return new Collection([]) },
-  children()   { return new Collection([]) },
-  move()       { return this },
-  source()     { return undefined },
-  target()     { return undefined },
+  empty() {
+    return true
+  },
+  nonempty() {
+    return false
+  },
+  remove() {
+    return this
+  },
+  data() {
+    return undefined
+  },
+  position() {
+    return undefined
+  },
+  id() {
+    return undefined
+  },
+  isParent() {
+    return false
+  },
+  parent() {
+    return new Collection([])
+  },
+  children() {
+    return new Collection([])
+  },
+  move() {
+    return this
+  },
+  source() {
+    return undefined
+  },
+  target() {
+    return undefined
+  }
 })
 
 /**
@@ -104,7 +143,7 @@ class Collection extends Array {
   }
 
   move(moveArgs) {
-    this.forEach(item => item?.move?.(moveArgs))
+    this.forEach((item) => item?.move?.(moveArgs))
     return this
   }
 }
@@ -209,8 +248,8 @@ class EdgeFacade {
 
 export default class GraphModel {
   constructor(elements = []) {
-    this._nodes = []            // node records (insertion order)
-    this._edges = []            // edge records (insertion order)
+    this._nodes = [] // node records (insertion order)
+    this._edges = [] // edge records (insertion order)
     this._nodeIndex = new Map() // id → node record
     this._edgeIndex = new Map() // id → edge record
 
@@ -220,11 +259,11 @@ export default class GraphModel {
   // ─── Element list / lookup (cytoscape-compatible facade) ────────────────────
 
   nodes() {
-    return new Collection(this._nodes.map(node => new NodeFacade(this, node)))
+    return new Collection(this._nodes.map((node) => new NodeFacade(this, node)))
   }
 
   edges() {
-    return new Collection(this._edges.map(edge => new EdgeFacade(this, edge)))
+    return new Collection(this._edges.map((edge) => new EdgeFacade(this, edge)))
   }
 
   getElementById(id) {
@@ -239,12 +278,14 @@ export default class GraphModel {
   }
 
   _hasChildren(parentId) {
-    return this._nodes.some(node => node.data.parent === parentId)
+    return this._nodes.some((node) => node.data.parent === parentId)
   }
 
   _childrenOf(parentId) {
     return new Collection(
-      this._nodes.filter(node => node.data.parent === parentId).map(node => new NodeFacade(this, node))
+      this._nodes
+        .filter((node) => node.data.parent === parentId)
+        .map((node) => new NodeFacade(this, node))
     )
   }
 
@@ -276,7 +317,7 @@ export default class GraphModel {
   addNode(data) {
     const nodeData = {
       id: D3Util.randomId(),
-      ...data,
+      ...data
     }
     this._addElement({ group: 'nodes', data: nodeData })
     return nodeData.id
@@ -287,7 +328,7 @@ export default class GraphModel {
       id: D3Util.randomId(),
       source: data.source,
       target: data.target,
-      ...data,
+      ...data
     }
     this._addElement({ group: 'edges', data: edgeData })
     return edgeData.id
@@ -300,8 +341,8 @@ export default class GraphModel {
     this._nodes.splice(this._nodes.indexOf(node), 1)
     // cytoscape also removes every edge touching the removed node
     this._edges
-      .filter(edge => edge.source === id || edge.target === id)
-      .forEach(edge => this.removeEdge(edge.id))
+      .filter((edge) => edge.source === id || edge.target === id)
+      .forEach((edge) => this.removeEdge(edge.id))
     return true
   }
 
