@@ -1,0 +1,79 @@
+<template>
+  <div class="join-screen">
+    <div class="join-card">
+      <div v-if="error" class="join-error">
+        <p class="join-error-msg">{{ error }}</p>
+        <a href="/" class="join-home-link">Go to home</a>
+      </div>
+      <div v-else class="join-loading">Opening shared diagram…</div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/services/api'
+
+export default {
+  name: 'JoinView',
+  data() {
+    return { error: null }
+  },
+  async mounted() {
+    const token = this.$route.params.token
+    if (!token) {
+      this.error = 'Invalid share link.'
+      return
+    }
+
+    const data = await api.exchangeShare(token)
+    if (!data || data.status !== 'ok') {
+      this.error = data && data.error ? data.error : 'Invalid, expired, or revoked share link.'
+      return
+    }
+
+    localStorage.setItem('token', token)
+    if (data.anonName) localStorage.setItem('d3d_anon_name', data.anonName)
+    this.$cookies.set('LastLocallySavedItemId', data.dagId)
+    window.location.href = '/'
+  }
+}
+</script>
+
+<style scoped>
+.join-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--v-theme-background, 255 255 255));
+}
+
+.join-card {
+  padding: 32px 40px;
+  border-radius: 12px;
+  background: rgba(var(--fx-glass-bottom, 255 255 255), 0.9);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.join-loading {
+  font-size: 14px;
+  color: #888;
+}
+
+.join-error-msg {
+  font-size: 14px;
+  color: #ef5350;
+  margin-bottom: 16px;
+}
+
+.join-home-link {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.6;
+  text-decoration: underline;
+}
+</style>

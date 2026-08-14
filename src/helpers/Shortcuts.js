@@ -48,7 +48,8 @@ export const DEFAULT_SHORTCUTS = [
   { id: 'actionsMenu', group: 'graph', label: 'Open actions menu', mac: 'a', other: 'a' },
   { id: 'help', group: 'graph', label: 'Show help', mac: '/', other: '/' },
   { id: 'copyNode', group: 'graph', label: 'Copy focused node', mac: 'y', other: 'y' },
-  { id: 'history', group: 'graph', label: 'History panel', mac: 'shift+h', other: 'shift+h' }
+  { id: 'history', group: 'graph', label: 'History panel', mac: 'shift+h', other: 'shift+h' },
+  { id: 'share', group: 'graph', label: 'Share link dialog', mac: 'shift+s', other: 'shift+s' }
 ]
 
 // Combos owned by non-rebindable handlers (menu, palette, pan/zoom/layouts)
