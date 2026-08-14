@@ -1,6 +1,7 @@
 /* eslint-env es2020 */
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, vi, beforeEach } from 'vitest'
 import D3Util from '@/helpers/D3Util.js'
+import Shortcuts from '@/helpers/Shortcuts.js'
 
 vi.mock('vue-cookies', () => ({
   default: { get: vi.fn(() => null), set: vi.fn() }
@@ -42,19 +43,29 @@ describe('isMac', () => {
 })
 
 describe('shortcutLabels', () => {
+  beforeEach(() => {
+    vi.spyOn(Shortcuts, 'isMac').mockReturnValue(false)
+  })
+
   it('uses command labels on macOS', () => {
-    vi.spyOn(D3Util, 'isMac').mockReturnValue(true)
+    Shortcuts.isMac.mockReturnValue(true)
     const labels = D3Util.shortcutLabels()
-    expect(labels.save).toBe('⌘+S')
-    expect(labels.close).toBe('⌘+C')
+    expect(labels.save).toBe('⌘+Shift+S')
+    expect(labels.close).toBe('Esc')
     expect(labels.login).toBe('⌘+L')
   })
 
-  it('uses alt / ctrl labels elsewhere', () => {
-    vi.spyOn(D3Util, 'isMac').mockReturnValue(false)
+  it('uses alt labels elsewhere and esc to close', () => {
+    Shortcuts.isMac.mockReturnValue(false)
     const labels = D3Util.shortcutLabels()
-    expect(labels.save).toBe('Alt+S')
-    expect(labels.close).toBe('Ctrl+C')
+    expect(labels.save).toBe('Alt+Shift+S')
+    expect(labels.close).toBe('Esc')
+  })
+
+  it('reflects user shortcut rebinds', () => {
+    const spy = vi.spyOn(Shortcuts, 'overrides').mockReturnValue({ close: 'j' })
+    expect(D3Util.shortcutLabels().close).toBe('J')
+    spy.mockRestore()
   })
 })
 

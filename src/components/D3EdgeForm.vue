@@ -3,11 +3,8 @@
     id="iform"
     ref="formfields"
     class="fx-panel"
-    @keyup.alt.s="updateEdge()"
-    @keyup.meta.s="updateEdge()"
-    @keyup.ctrl.c="close()"
-    @keyup.meta.c="close()"
-    @keydown.esc="keyPress($event)"
+    @keyup="onKeyup($event)"
+    @keydown="onKeydown($event)"
     @keypress.stop.prevent="keyPress($event)"
   >
     <focus-trap v-model:active="enableTrap">
@@ -19,7 +16,15 @@
             </span>
             <h2 class="fx-title">EDGE</h2>
           </div>
-          <button type="button" class="fx-close" @click="close()" @keypress.stop="" aria-label="Close">✕</button>
+          <button
+            type="button"
+            class="fx-close"
+            @click="close()"
+            @keypress.stop=""
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </header>
 
         <div class="fx-readout">
@@ -48,7 +53,9 @@
                   @click.stop="toggleSel('arrowStyle')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('arrowStyle', $event)"
-                >{{ arrowStyleLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ arrowStyleLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'arrowStyle'" class="fx-options">
                     <li
@@ -65,7 +72,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -80,7 +89,9 @@
                   @click.stop="toggleSel('arrow')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('arrow', $event)"
-                >{{ arrowLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ arrowLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'arrow'" class="fx-options">
                     <li
@@ -97,7 +108,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -107,11 +120,23 @@
           <div class="fx-grid fx-grid-2">
             <label class="fx-field">
               <span class="fx-label">From Node</span>
-              <input class="fx-input fx-input-static" type="text" v-model="fromNode" readonly placeholder="select source" />
+              <input
+                class="fx-input fx-input-static"
+                type="text"
+                v-model="fromNode"
+                readonly
+                placeholder="select source"
+              />
             </label>
             <label class="fx-field">
               <span class="fx-label">To Node</span>
-              <input class="fx-input fx-input-static" type="text" v-model="toNode" readonly placeholder="select target" />
+              <input
+                class="fx-input fx-input-static"
+                type="text"
+                v-model="toNode"
+                readonly
+                placeholder="select target"
+              />
             </label>
           </div>
 
@@ -124,8 +149,6 @@
               :rows="edgeRows"
               placeholder="Add edge label... can be html ... {{ shortcutLabels.clear }} to clear value"
               @keypress.stop=""
-              @keydown.alt.shift.w="edgeLabel=''"
-              @keydown.meta.shift.w="edgeLabel=''"
             ></textarea>
           </label>
 
@@ -139,7 +162,9 @@
                   @click.stop="toggleSel('sourceArrowhead')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('sourceArrowhead', $event)"
-                >{{ sourceArrowLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ sourceArrowLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'sourceArrowhead'" class="fx-options">
                     <li
@@ -154,7 +179,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >— none —</li>
+                    >
+                      — none —
+                    </li>
                     <li
                       v-for="opt in edgeArrowHeadOptions"
                       :key="opt.value"
@@ -169,7 +196,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -206,7 +235,9 @@
                   @click="edgeColor = ''"
                   @keypress.stop=""
                   title="Use theme color"
-                >none</button>
+                >
+                  none
+                </button>
               </div>
             </label>
 
@@ -219,7 +250,9 @@
                   @click.stop="toggleSel('lineStyle')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('lineStyle', $event)"
-                >{{ lineStyleLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ lineStyleLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'lineStyle'" class="fx-options">
                     <li
@@ -236,7 +269,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -251,7 +286,9 @@
                   @click.stop="toggleSel('curve')"
                   @keypress.stop=""
                   @keydown.down.prevent="openAndFocus('curve', $event)"
-                >{{ edgeCurveLabel }}<span class="fx-caret">▾</span></button>
+                >
+                  {{ edgeCurveLabel }}<span class="fx-caret">▾</span>
+                </button>
                 <transition name="fx-drop">
                   <ul v-if="openSel === 'curve'" class="fx-options">
                     <li
@@ -268,7 +305,9 @@
                       @keydown.k.prevent="focusPrev($event)"
                       @keydown.j.prevent="focusNext($event)"
                       @keydown.esc.stop="closeSel($event)"
-                    >{{ opt.label }}</li>
+                    >
+                      {{ opt.label }}
+                    </li>
                   </ul>
                 </transition>
               </div>
@@ -297,20 +336,21 @@
             class="fx-btn fx-btn-primary"
             @click="updateEdge()"
             @keypress.stop=""
-          >Update Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
+          >
+            Update Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span>
+          </button>
           <button
             v-else
             type="button"
             class="fx-btn fx-btn-primary"
             @click="addEdge()"
             @keypress.stop=""
-          >Add Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span></button>
-          <button
-            type="button"
-            class="fx-btn fx-btn-ghost"
-            @click="close()"
-            @keypress.stop=""
-          >Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+          >
+            Add Edge <span class="fx-kbd">{{ shortcutLabels.save }}</span>
+          </button>
+          <button type="button" class="fx-btn fx-btn-ghost" @click="close()" @keypress.stop="">
+            Cancel <span class="fx-kbd">{{ shortcutLabels.close }}</span>
+          </button>
         </footer>
       </div>
     </focus-trap>
@@ -319,11 +359,12 @@
 
 <script>
 import D3Util from '@/helpers/D3Util'
+import Shortcuts from '@/helpers/Shortcuts.js'
 export default {
   name: 'D3Edge',
   props: ['active', 'd3Data'],
   inject: ['modifier'],
-  data () {
+  data() {
     return {
       edgeModal: false,
       edgeLabel: '',
@@ -361,17 +402,41 @@ export default {
       return D3Util.edgeCurveOptions()
     },
     arrowStyleLabel() {
-      return this._optLabel(this.edgeArrowHeadStyleOptions, this.edgeArrowHeadStyle, 'value', 'label', 'Filled')
+      return this._optLabel(
+        this.edgeArrowHeadStyleOptions,
+        this.edgeArrowHeadStyle,
+        'value',
+        'label',
+        'Filled'
+      )
     },
     arrowLabel() {
-      return this._optLabel(this.edgeArrowHeadOptions, this.edgeArrowHead, 'value', 'label', 'Triangle')
+      return this._optLabel(
+        this.edgeArrowHeadOptions,
+        this.edgeArrowHead,
+        'value',
+        'label',
+        'Triangle'
+      )
     },
     sourceArrowLabel() {
       if (!this.sourceArrowhead) return '— none —'
-      return this._optLabel(this.edgeArrowHeadOptions, this.sourceArrowhead, 'value', 'label', this.sourceArrowhead)
+      return this._optLabel(
+        this.edgeArrowHeadOptions,
+        this.sourceArrowhead,
+        'value',
+        'label',
+        this.sourceArrowhead
+      )
     },
     lineStyleLabel() {
-      return this._optLabel(this.edgeLineStyleOptions, this.edgeLineStyle, 'value', 'label', '— theme —')
+      return this._optLabel(
+        this.edgeLineStyleOptions,
+        this.edgeLineStyle,
+        'value',
+        'label',
+        '— theme —'
+      )
     },
     edgeCurveLabel() {
       return this._optLabel(this.edgeCurveOptions, this.edgeCurve, 'value', 'label', '— theme —')
@@ -384,9 +449,9 @@ export default {
     edgeRows() {
       const count = (this.edgeLabel || '').split('\n').length
       return Math.min(6, Math.max(2, count))
-    },
+    }
   },
-  mounted () {
+  mounted() {
     document.addEventListener('click', this.onDocClick)
 
     if (this.edgeModal) {
@@ -400,21 +465,22 @@ export default {
       })
     }
   },
-  beforeUnmount () {
+  beforeUnmount() {
     document.removeEventListener('click', this.onDocClick)
   },
   methods: {
     _populate() {
       // Derive from the prop every time: the immediate d3Data watcher runs
       // before created(), so we can't rely on update/edgeModal being set yet.
-      this.update    = this.active == 'Edit Edge'
+      this.update = this.active == 'Edit Edge'
       this.edgeModal = this.active == 'Edit Edge' || this.active == 'Add Edge'
-      if (D3Util.debug) console.log('[D3EdgeForm] _populate', {
-        active:    this.active,
-        update:    this.update,
-        edgeModal: this.edgeModal,
-        d3Data:    this.d3Data,
-      })
+      if (D3Util.debug)
+        console.log('[D3EdgeForm] _populate', {
+          active: this.active,
+          update: this.update,
+          edgeModal: this.edgeModal,
+          d3Data: this.d3Data
+        })
       if (!(this.update || this.edgeModal)) return
       const mod = this.modifier?.value ?? this.modifier
       this.edgeId = this.d3Data?.id
@@ -432,15 +498,15 @@ export default {
         // Create mode: start from the configurable edge creation defaults in
         // Settings so a new line inherits the user's preferred look.
         const d = D3Util.defaultEdgeValues()
-        this.edgeLabel          = d.edgeLabel
+        this.edgeLabel = d.edgeLabel
         this.edgeArrowHeadStyle = d.edgeArrowHeadStyle
-        this.edgeArrowHead      = d.edgeArrowHead
-        this.sourceArrowhead    = d.sourceArrowhead
-        this.edgeWidth          = d.edgeWidth
-        this.edgeColor          = d.edgeColor
-        this.edgeLineStyle      = d.edgeLineStyle
-        this.edgeCurve          = d.edgeCurve
-        this.edgeOpacity        = d.edgeOpacity
+        this.edgeArrowHead = d.edgeArrowHead
+        this.sourceArrowhead = d.sourceArrowhead
+        this.edgeWidth = d.edgeWidth
+        this.edgeColor = d.edgeColor
+        this.edgeLineStyle = d.edgeLineStyle
+        this.edgeCurve = d.edgeCurve
+        this.edgeOpacity = d.edgeOpacity
       }
 
       let srcId = null
@@ -455,26 +521,27 @@ export default {
         srcId = this.edgeId.v
         tgtId = this.edgeId.w
       }
-      this.fromNode = srcId ? (mod.getNodeData(srcId)?.label || srcId) : ''
-      this.toNode = tgtId ? (mod.getNodeData(tgtId)?.label || tgtId) : ''
-      if (D3Util.debug) console.log('[D3EdgeForm] fields', {
-        edgeId:    this.edgeId,
-        edgeLabel: this.edgeLabel,
-        edgeArrowHeadStyle: this.edgeArrowHeadStyle,
-        edgeArrowHead: this.edgeArrowHead,
-        sourceArrowhead: this.sourceArrowhead,
-        edgeWidth: this.edgeWidth,
-        edgeColor: this.edgeColor,
-        edgeLineStyle: this.edgeLineStyle,
-        edgeCurve: this.edgeCurve,
-        edgeOpacity: this.edgeOpacity,
-        fromNode:  this.fromNode,
-        toNode:    this.toNode,
-      })
+      this.fromNode = srcId ? mod.getNodeData(srcId)?.label || srcId : ''
+      this.toNode = tgtId ? mod.getNodeData(tgtId)?.label || tgtId : ''
+      if (D3Util.debug)
+        console.log('[D3EdgeForm] fields', {
+          edgeId: this.edgeId,
+          edgeLabel: this.edgeLabel,
+          edgeArrowHeadStyle: this.edgeArrowHeadStyle,
+          edgeArrowHead: this.edgeArrowHead,
+          sourceArrowhead: this.sourceArrowhead,
+          edgeWidth: this.edgeWidth,
+          edgeColor: this.edgeColor,
+          edgeLineStyle: this.edgeLineStyle,
+          edgeCurve: this.edgeCurve,
+          edgeOpacity: this.edgeOpacity,
+          fromNode: this.fromNode,
+          toNode: this.toNode
+        })
     },
     _optLabel(list, val, valKey, labelKey, fallback) {
       if (!val) return fallback
-      const opt = list.find(o => o[valKey] === val)
+      const opt = list.find((o) => o[valKey] === val)
       return opt ? opt[labelKey] : fallback
     },
     toggleSel(key) {
@@ -512,7 +579,7 @@ export default {
     onDocClick() {
       this.openSel = null
     },
-    updateEdge () {
+    updateEdge() {
       const mod = this.modifier?.value ?? this.modifier
       mod.updateEdge(this.$data, this.edgeId)
       this.close()
@@ -520,12 +587,30 @@ export default {
     keyPress(event) {
       this.hints = D3Util.formHints(event, this)
     },
-    addEdge () {
+    onKeydown(event) {
+      if (Shortcuts.matches(event, 'close')) {
+        event.preventDefault()
+        this.close()
+        return
+      }
+      if (Shortcuts.matches(event, 'clear')) {
+        event.preventDefault()
+        this.edgeLabel = ''
+      }
+    },
+    onKeyup(event) {
+      if (event.repeat) return
+      if (Shortcuts.matches(event, 'save')) {
+        event.preventDefault()
+        this.updateEdge()
+      }
+    },
+    addEdge() {
       const mod = this.modifier?.value ?? this.modifier
       mod.addEdge(this.$data)
       this.common()
     },
-    close () {
+    close() {
       this.common()
     },
     common() {
@@ -536,7 +621,7 @@ export default {
   },
   watch: {
     active(val) {
-      this.update    = val == 'Edit Edge'
+      this.update = val == 'Edit Edge'
       this.edgeModal = val == 'Edit Edge' || val == 'Add Edge'
       this._populate()
     },
@@ -544,9 +629,9 @@ export default {
       handler() {
         this._populate()
       },
-      immediate: true,
-    },
-  },
+      immediate: true
+    }
+  }
 }
 </script>
 
