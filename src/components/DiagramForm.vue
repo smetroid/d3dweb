@@ -451,6 +451,7 @@ import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
 import { modelToGraphlib, graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
 import D3DApi from '@/services/api'
+import { clearHistory } from '@/services/localHistory.js'
 
 export default {
   name: 'DiagramForm',
@@ -696,6 +697,7 @@ export default {
 
     newDiagram() {
       this.$cookies.remove('LastLocallySavedItemId')
+      clearHistory(null)
 
       const settings = this.$cookies.get('settings') || D3Util.appDefaults()
       const defaults = D3Util.appDefaults()

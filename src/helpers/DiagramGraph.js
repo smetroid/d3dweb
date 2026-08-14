@@ -3,6 +3,7 @@ import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import api from '@/services/api'
 import { clientId as collabClientId } from '@/services/collab'
+import { pushSnapshot } from '@/services/localHistory'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -591,8 +592,9 @@ export default class DiagramGraph {
       concentricOpts: this.concentricOpts,
       dagreOpts: this.dagreOpts
     })
-    this._saveTempDiagram()
-    this._scheduleServerSave()
+    // Pan/zoom are view-only ops — nothing to persist.
+    if (options.pan || options.zoom) return
+    this._persist()
   }
 
   setLayoutMode(mode) {
@@ -607,31 +609,67 @@ export default class DiagramGraph {
     if (this.renderer) this.renderer.resetCamera()
   }
 
-  _scheduleServerSave() {
-    if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
-    if (!this.d3dInfo?.id) return
+  _isViewOnly() {
     try {
       const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
-      if (claims.iss === 'd3d-share' && claims.role !== 'edit') return
+      return claims.iss === 'd3d-share' && claims.role !== 'edit'
     } catch {
-      /* not a JWT — proceed */
+      /* not a JWT — editable */
+      return false
     }
-    clearTimeout(this._saveTimer)
-    this._saveTimer = setTimeout(() => this._serverSave(), 500)
   }
 
-  async _serverSave() {
+  // Persist every diagram change: the browser draft + real localStorage entry
+  // are written synchronously (cheap, crash-safe), history snapshots are
+  // coalesced by localHistory, and the server write is debounced.
+  _persist() {
+    if (this._isViewOnly()) return
+    this._saveTempDiagram()
+
     const json = modelToGraphlib(this.cy)
-    try {
-      await api.updateDiagram({
-        id: this.d3dInfo.id,
-        name: this.d3dInfo.name || D3Util.tempInfo().name,
-        description: this.d3dInfo.description || D3Util.tempInfo().description,
-        diagram: JSON.stringify(json),
-        clientId: collabClientId()
+    const diagram = JSON.stringify(json)
+    const id = this.d3dInfo?.id
+    const name = this.d3dInfo?.name || D3Util.tempInfo().name
+    const description = this.d3dInfo?.description || D3Util.tempInfo().description
+
+    if (id) {
+      D3Util.updateLocalEntry({
+        id,
+        name,
+        description,
+        diagram: this.cy,
+        created: this.d3dInfo.created
       })
+    }
+
+    pushSnapshot(id, { name, description, diagram })
+
+    this._scheduleServerSave(diagram)
+  }
+
+  _scheduleServerSave(diagram) {
+    if (!D3Util.auth()) return
+    if (!this.d3dInfo?.id) return
+    clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(() => this._serverSave(diagram), 800)
+  }
+
+  async _serverSave(diagram) {
+    const payload = {
+      id: this.d3dInfo.id,
+      name: this.d3dInfo.name || D3Util.tempInfo().name,
+      description: this.d3dInfo.description || D3Util.tempInfo().description,
+      diagram
+    }
+    // Collab keeps the clientId so the WebSocket echo of our own write is
+    // ignored; the manual-save path posts without it, so mirror that here.
+    if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
+      payload.clientId = collabClientId()
+    }
+    try {
+      await api.updateDiagram(payload)
     } catch (err) {
-      console.error('collab auto-save failed', err)
+      console.error('auto-save failed', err)
     }
   }
 
