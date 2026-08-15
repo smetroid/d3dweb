@@ -13,12 +13,14 @@ export default class DiagramGraph {
     this.diagram = d3dInfo.diagram // alias kept for backward compat
     this.renderer = null // CytoscapeRenderer, set by DiagramGraphView
     this.selectedNodes = []
-    // Suppress auto-save during initial layout so a remote reload doesn't
-    // immediately broadcast another diagram:updated and create a feedback loop.
-    this._suppressSave = true
-    setTimeout(() => {
-      this._suppressSave = false
-    }, 5000)
+    // Suppress auto-save during initial layout in collab mode so a remote
+    // reload doesn't immediately broadcast another diagram:updated.
+    this._suppressSave = import.meta.env.VITE_COLLAB_ENABLED === 'true'
+    if (this._suppressSave) {
+      setTimeout(() => {
+        this._suppressSave = false
+      }, 5000)
+    }
     this.doubleSelection = []
     this.selectedEdges = []
     this.focusedIndex = null
