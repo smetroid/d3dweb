@@ -307,8 +307,12 @@ export default class GraphModel {
       this._edgeIndex.set(edge.id, edge)
     } else {
       const data = { id: el?.data?.id || D3Util.randomId(), ...el?.data }
+      const x = typeof data._x === 'number' ? data._x : 0
+      const y = typeof data._y === 'number' ? data._y : 0
+      delete data._x
+      delete data._y
       normalizeOptionalFields(data, NODE_OPTIONAL_FIELDS)
-      const node = { id: data.id, data, x: 0, y: 0, width: CARD_W, height: CARD_H }
+      const node = { id: data.id, data, x, y, width: CARD_W, height: CARD_H }
       this._nodes.push(node)
       this._nodeIndex.set(node.id, node)
     }

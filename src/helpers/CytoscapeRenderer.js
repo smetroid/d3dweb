@@ -734,14 +734,25 @@ export default class CytoscapeRenderer {
       ele.data(d)
     })
 
-    // New nodes start at the graph centroid so they glide in from the middle.
+    // New nodes start at their stored position if available, else the centroid.
     this.cy.nodes().forEach((n) => {
-      if (!prevPos.has(n.id())) n.position(seed)
+      if (!prevPos.has(n.id())) {
+        const modelNode = graphModel.getElementById(n.id())
+        const stored = modelNode.empty() ? null : modelNode.position()
+        n.position(stored && (stored.x !== 0 || stored.y !== 0) ? stored : seed)
+      }
     })
 
-    // Edit-only redraws refresh data/styles without re-running the layout, so
-    // saving a label/color change does not set the whole graph gliding again.
+    // Edit-only / remote reloads: refresh data and positions without layout.
     if (options.layout === false) {
+      // Apply stored positions from GraphModel so remote updates land exactly
+      // where the originating browser placed them.
+      graphModel.nodes().forEach((n) => {
+        const cyNode = this.cy.getElementById(n.id())
+        if (cyNode.empty()) return
+        const stored = n.position()
+        if (stored && (stored.x !== 0 || stored.y !== 0)) cyNode.position(stored)
+      })
       this._renderCrosshairs()
       this.emitter?.emit('scene-updated', {
         count: graphModel.nodes().length,
@@ -752,6 +763,13 @@ export default class CytoscapeRenderer {
     }
 
     const animation = this._runLayout(options, { prevPos, seed, animate })
+
+    // Sync final layout positions back to GraphModel synchronously so _persist()
+    // (called right after updateScene returns) serializes the new positions.
+    if (this._lastLayoutPositions) {
+      this._lastLayoutPositions.forEach((pos, id) => graphModel.setPosition(id, pos.x, pos.y))
+    }
+
     animation.then(() => this._renderCrosshairs())
 
     this.emitter?.emit('scene-updated', {
@@ -791,6 +809,12 @@ export default class CytoscapeRenderer {
 
     this._resolveGroupOverlaps()
     this.cy.nodes().stop(true)
+
+    // Capture final positions synchronously (before animation rewinds nodes to
+    // their starting positions), so updateScene can write them back to the
+    // GraphModel before _persist() serializes the diagram.
+    this._lastLayoutPositions = new Map()
+    this.cy.nodes().forEach((n) => this._lastLayoutPositions.set(n.id(), { ...n.position() }))
 
     if (!animate) {
       this._fitViewport()

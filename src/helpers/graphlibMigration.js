@@ -28,8 +28,8 @@ export function graphlibToModel(graphlibJson) {
         id: edge.value?.id || `${edge.v}->${edge.w}`,
         source: edge.v,
         target: edge.w,
-        ...edge.value,
-      },
+        ...edge.value
+      }
     })
   }
   return new GraphModel(elements)
@@ -40,8 +40,13 @@ export function graphlibToModel(graphlibJson) {
  * Carries cola constraints through in options.constraints.
  */
 export function modelToGraphlib(model) {
-  const nodes = model.nodes().map(n => {
+  const nodes = model.nodes().map((n) => {
     const value = { ...n.data() }
+    const pos = n.position()
+    if (pos && (pos.x !== 0 || pos.y !== 0)) {
+      value._x = pos.x
+      value._y = pos.y
+    }
     const entry = { v: n.id(), value }
     delete entry.value.id
     if (value.parent != null) {
@@ -51,7 +56,7 @@ export function modelToGraphlib(model) {
     return entry
   })
 
-  const edges = model.edges().map(e => {
+  const edges = model.edges().map((e) => {
     const value = { ...e.data() }
     const entry = { v: e.data('source'), w: e.data('target'), value }
     delete entry.value.source
@@ -73,5 +78,10 @@ export function modelToGraphlib(model) {
  * Cytoscape format is an array; graphlib format is an object with a `nodes` key.
  */
 export function isGraphlibFormat(parsed) {
-  return !!(parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Array.isArray(parsed.nodes))
+  return !!(
+    parsed &&
+    typeof parsed === 'object' &&
+    !Array.isArray(parsed) &&
+    Array.isArray(parsed.nodes)
+  )
 }
