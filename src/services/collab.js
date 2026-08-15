@@ -25,6 +25,7 @@ let dagId = null
 let reconnectTimer = null
 let attempt = 0
 let intentionalClose = false
+let _socketId = 0
 
 const handlers = {
   diagramUpdated: null,
@@ -41,6 +42,7 @@ function scheduleReconnect() {
 
 function openSocket() {
   if (!dagId) return
+  const myId = ++_socketId
   socket = new WebSocket(wsUrl(dagId))
 
   socket.addEventListener('open', () => {
@@ -66,6 +68,7 @@ function openSocket() {
   })
 
   socket.addEventListener('close', () => {
+    if (myId !== _socketId) return // stale socket — a newer connection took over
     handlers.statusChange?.('disconnected')
     scheduleReconnect()
   })

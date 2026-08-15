@@ -17,7 +17,7 @@ export default class DiagramGraph {
     this._suppressSave = true
     setTimeout(() => {
       this._suppressSave = false
-    }, 2000)
+    }, 5000)
     this.doubleSelection = []
     this.selectedEdges = []
     this.focusedIndex = null

@@ -323,9 +323,13 @@ export default {
       if (id) this.loadFromServer(id)
     })
 
+    let _remoteReloadTimer = null
     this.emitter.on('diagram:updated-remote', () => {
-      const id = this.d3dInfo?.id
-      if (id) this.loadFromServer(id)
+      clearTimeout(_remoteReloadTimer)
+      _remoteReloadTimer = setTimeout(() => {
+        const id = this.d3dInfo?.id
+        if (id) this.loadFromServer(id)
+      }, 2000)
     })
 
     this.emitter.on('toggleTheme', () => {
