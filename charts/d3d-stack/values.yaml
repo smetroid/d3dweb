@@ -1,0 +1,63 @@
+global:
+  domain: d3d.local
+  imagePullPolicy: IfNotPresent
+
+rethinkdb:
+  image: rethinkdb:2.4
+  storage: 1Gi
+  storageClass: standard
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  webUI:
+    enabled: true
+
+api:
+  image:
+    repository: d3d-api
+    tag: dev
+    pullPolicy: ""
+  replicas: 1
+  port: 8081
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  config:
+    bindAddr: ":8081"
+    signingKey: dev-signing-key-change-in-prod
+    authProvider: localauth
+    database: samus
+    # rethinkAddress defaults to <release>-rethinkdb:28015 when empty
+    rethinkAddress: ""
+    continuousQueryInterval: 5s
+    logDagRequests: true
+    logEdgeRequests: false
+    logNodeRequests: false
+    logMenuRequests: false
+  bootstrapUser:
+    enabled: false
+    username: admin
+    password: admin
+
+web:
+  image:
+    repository: d3dweb
+    tag: dev
+    pullPolicy: ""
+  replicas: 1
+  collabEnabled: true
+  apiBaseUrl: /api
+
+ingress:
+  enabled: true
+  className: nginx
+  host: d3d.local
+  rethinkUI: true

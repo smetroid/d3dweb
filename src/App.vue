@@ -35,11 +35,7 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <RouterView
-      v-if="
-        route.name === 'collab-poc' || route.name === 'collab-cyto-poc' || route.name === 'join'
-      "
-    />
+    <RouterView v-if="route.name === 'join'" />
     <v-main app v-else>
       <Teleport to="body">
         <div class="fx-toast-stack">
@@ -323,6 +319,10 @@ export default {
       if (id) this.loadFromServer(id)
     })
 
+    this.emitter.on('diagram:restore-local', (snapshot) => {
+      this.restoreLocal(snapshot)
+    })
+
     let _remoteReloadTimer = null
     this.emitter.on('diagram:updated-remote', () => {
       clearTimeout(_remoteReloadTimer)
@@ -538,6 +538,30 @@ export default {
     runCommand(cmd) {
       this.closeCommandPalette()
       this.d3Action(cmd.title)
+    },
+    restoreLocal(snapshot) {
+      try {
+        const parsed = migrateDiagramPayload(JSON.parse(snapshot.diagram))
+        const model = markRaw(
+          isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed)
+        )
+        model.colaConstraints = parsed.options?.constraints || []
+        this.d3dInfo = {
+          ...this.d3dInfo,
+          name: snapshot.name ?? this.d3dInfo?.name,
+          description: snapshot.description ?? this.d3dInfo?.description,
+          diagram: model,
+          colaConstraints: model.colaConstraints
+        }
+        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        this.emitter.emit('appMessage', { message: 'Snapshot restored', status: 'success' })
+      } catch (err) {
+        console.error('local restore failed', err)
+        this.emitter.emit('appMessage', {
+          message: 'Unable to restore this snapshot',
+          status: 'error'
+        })
+      }
     },
     d3Action: async function (event) {
       MenuLinks.Click(event, this)

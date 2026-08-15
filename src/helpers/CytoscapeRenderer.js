@@ -7,6 +7,7 @@ import {
   NODE_OPTIONAL_FIELDS,
   EDGE_OPTIONAL_FIELDS
 } from '@/helpers/GraphModel.js'
+import { composeIconLabel } from '@/helpers/IconRegistry.js'
 
 cytoscape.use(cola)
 cytoscape.use(dagre)
@@ -347,6 +348,20 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
       selector: 'node[fontSize]',
       style: { 'font-size': 'data(fontSize)' }
     },
+    // Shape "none": keep the hit area and label/icon rendering, but drop the
+    // visible box so the icon (or text) stands alone on the canvas. Placed
+    // after bgColor/borderColor/borderWidth so it wins on equal specificity.
+    // shape: 'none' is not a valid cytoscape value, so fall back to a valid
+    // shape whose box is then fully hidden by the zeroed opacity/border.
+    {
+      selector: 'node[nodeShape="none"]',
+      style: {
+        shape: 'round-rectangle',
+        'background-opacity': 0,
+        'border-width': 0,
+        'border-opacity': 0
+      }
+    },
     {
       selector: 'edge[sourceArrowhead]',
       style: { 'source-arrow-shape': 'data(sourceArrowhead)' }
@@ -374,6 +389,47 @@ export function themeStyle(pal = DEFAULT_PALETTE, settings = {}) {
     {
       selector: 'edge[edgeOpacity]',
       style: { opacity: 'data(edgeOpacity)' }
+    },
+
+    // ── Icon rendering ───────────────────────────────────────────────────────
+    // When an icon is attached, _displayFont and _displayLabel are computed by
+    // updateScene() and stored on the element. These selectors consume them.
+    {
+      selector: 'node[_displayFont]',
+      style: {
+        label: 'data(_displayLabel)',
+        'font-family': 'data(_displayFont)'
+      }
+    },
+    {
+      selector: 'edge[_displayFont]',
+      style: {
+        label: 'data(_displayLabel)',
+        'font-family': 'data(_displayFont)'
+      }
+    },
+    // Empty-label fallback sets a fixed size; icon nodes need width:'label'
+    // so the glyph can auto-size the node instead.
+    {
+      selector: 'node[label = ""][_displayFont]',
+      style: { width: 'label', height: 'label', 'min-width': '40px', 'min-height': '40px' }
+    },
+    // Per-element icon color and size overrides
+    {
+      selector: 'node[iconColor]',
+      style: { color: 'data(iconColor)' }
+    },
+    {
+      selector: 'edge[iconColor]',
+      style: { color: 'data(iconColor)' }
+    },
+    {
+      selector: 'node[iconSize]',
+      style: { 'font-size': 'data(iconSize)' }
+    },
+    {
+      selector: 'edge[iconSize]',
+      style: { 'font-size': 'data(iconSize)' }
     }
   ]
 }
@@ -647,6 +703,11 @@ export default class CytoscapeRenderer {
       // clearing the style also clears a stale fillColor.
       const legacy = d.style && String(d.style).match(/\bfill\s*:\s*([^;]+)/i)
       d.fillColor = legacy ? legacy[1].trim() : null
+
+      // Compute icon display fields from the element's icon data.
+      const { displayLabel, displayFont } = composeIconLabel(d)
+      d._displayLabel = displayLabel
+      d._displayFont = displayFont
       ele.data(d)
       // Custom fills (bgColor from the form, or legacy fillColor) are applied
       // inline — background-gradient-stop-colors does not take data() mappings.
@@ -667,6 +728,9 @@ export default class CytoscapeRenderer {
       const d = { ...edge.data() }
       normalizeOptionalFields(d, EDGE_OPTIONAL_FIELDS)
       delete d.id
+      const { displayLabel: edgeDisplayLabel, displayFont: edgeDisplayFont } = composeIconLabel(d)
+      d._displayLabel = edgeDisplayLabel
+      d._displayFont = edgeDisplayFont
       ele.data(d)
     })
 

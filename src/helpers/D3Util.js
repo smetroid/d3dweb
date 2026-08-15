@@ -111,6 +111,7 @@ export default {
   // dialog and the node/edge forms cannot drift apart.
   nodeShapeOptions() {
     return [
+      { value: 'none', label: 'None' },
       { value: 'rectangle', label: 'Rectangle' },
       { value: 'round-rectangle', label: 'Round Rectangle' },
       { value: 'ellipse', label: 'Ellipse' },
@@ -171,6 +172,15 @@ export default {
       { value: 'segmented', label: 'Segmented' },
       { value: 'unbundled-bezier', label: 'Unbundled Bezier' },
       { value: 'haystack', label: 'Haystack' }
+    ]
+  },
+  iconPositionOptions() {
+    return [
+      { value: 'left', label: '← Left' },
+      { value: 'right', label: 'Right →' },
+      { value: 'above', label: '↑ Above' },
+      { value: 'below', label: 'Below ↓' },
+      { value: 'only', label: 'Only' }
     ]
   },
   layoutOptions() {
@@ -249,7 +259,17 @@ export default {
       defaultNodeBorderColor: '',
       defaultNodeBorderWidth: null,
       defaultNodeFontSize: null,
+      defaultNodeIconSet: '',
+      defaultNodeIconName: '',
+      defaultNodeIconPosition: 'left',
+      defaultNodeIconSize: null,
+      defaultNodeIconColor: '',
       defaultEdgeLabel: '',
+      defaultEdgeIconSet: '',
+      defaultEdgeIconName: '',
+      defaultEdgeIconPosition: 'left',
+      defaultEdgeIconSize: null,
+      defaultEdgeIconColor: '',
       serverUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
@@ -259,9 +279,13 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    return s && s.serverUrl
-      ? s.serverUrl
-      : import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+    if (s && s.serverUrl) return s.serverUrl
+    const envBase = import.meta.env.VITE_API_BASE_URL
+    if (envBase) {
+      if (/^https?:\/\//.test(envBase)) return envBase
+      return window.location.origin + envBase
+    }
+    return 'http://localhost:3000'
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
@@ -600,7 +624,12 @@ export default {
       bgColor: s.defaultNodeBgColor || '',
       borderColor: s.defaultNodeBorderColor || '',
       borderWidth: s.defaultNodeBorderWidth != null ? s.defaultNodeBorderWidth : null,
-      fontSize: s.defaultNodeFontSize != null ? s.defaultNodeFontSize : null
+      fontSize: s.defaultNodeFontSize != null ? s.defaultNodeFontSize : null,
+      iconSet: s.defaultNodeIconSet || '',
+      iconName: s.defaultNodeIconName || '',
+      iconPosition: s.defaultNodeIconPosition || 'left',
+      iconSize: s.defaultNodeIconSize != null ? s.defaultNodeIconSize : null,
+      iconColor: s.defaultNodeIconColor || ''
     }
     return data
   },
@@ -615,7 +644,12 @@ export default {
       edgeColor: s.defaultEdgeColor || '',
       edgeLineStyle: s.defaultEdgeLineStyle || 'solid',
       edgeCurve: this._normalizeEdgeCurve(s.defaultEdgeStyle),
-      edgeOpacity: s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85
+      edgeOpacity: s.defaultEdgeOpacity != null ? Number(s.defaultEdgeOpacity) : 0.85,
+      iconSet: s.defaultEdgeIconSet || '',
+      iconName: s.defaultEdgeIconName || '',
+      iconPosition: s.defaultEdgeIconPosition || 'left',
+      iconSize: s.defaultEdgeIconSize != null ? s.defaultEdgeIconSize : null,
+      iconColor: s.defaultEdgeIconColor || ''
     }
     return data
   },

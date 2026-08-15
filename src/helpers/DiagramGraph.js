@@ -3,6 +3,7 @@ import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import api from '@/services/api'
 import { clientId as collabClientId } from '@/services/collab'
+import { pushSnapshot } from '@/services/localHistory'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -184,7 +185,12 @@ export default class DiagramGraph {
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
       fontSize: data.fontSize,
-      style: data.style
+      style: data.style,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor
     }
     this._cleanPatch(nodeData)
     if (data.parentNode) {
@@ -207,7 +213,12 @@ export default class DiagramGraph {
       bgColor: data.bgColor,
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize: data.fontSize
+      fontSize: data.fontSize,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor
     }
     this._cleanPatch(patch)
 
@@ -268,7 +279,12 @@ export default class DiagramGraph {
       bgColor: data.bgColor || this._legacyFillColor(data.style),
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
-      fontSize: data.fontSize
+      fontSize: data.fontSize,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor
     }
     if (parentId) copy.parentNode = parentId
     return this.addNode(copy)
@@ -328,6 +344,11 @@ export default class DiagramGraph {
       source,
       target,
       label,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor,
       arrowheadStyle: data.edgeArrowHeadStyle,
       arrowhead: data.edgeArrowHead,
       sourceArrowhead: data.sourceArrowhead,
@@ -351,7 +372,12 @@ export default class DiagramGraph {
         edgeColor: data.edgeColor,
         edgeLineStyle: data.edgeLineStyle,
         edgeCurve: data.edgeCurve,
-        edgeOpacity: data.edgeOpacity
+        edgeOpacity: data.edgeOpacity,
+        iconSet: data.iconSet,
+        iconName: data.iconName,
+        iconPosition: data.iconPosition,
+        iconSize: data.iconSize,
+        iconColor: data.iconColor
       }
       this._cleanPatch(patch)
       edge.data(patch)
@@ -408,6 +434,11 @@ export default class DiagramGraph {
       borderColor: data.borderColor,
       borderWidth: data.borderWidth,
       fontSize: data.fontSize,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor,
       id
     }
   }
@@ -427,6 +458,11 @@ export default class DiagramGraph {
       edgeLineStyle: data.edgeLineStyle,
       edgeCurve: data.edgeCurve,
       edgeOpacity: data.edgeOpacity,
+      iconSet: data.iconSet,
+      iconName: data.iconName,
+      iconPosition: data.iconPosition,
+      iconSize: data.iconSize,
+      iconColor: data.iconColor,
       id: edge.id()
     }
   }
@@ -563,8 +599,9 @@ export default class DiagramGraph {
       concentricOpts: this.concentricOpts,
       dagreOpts: this.dagreOpts
     })
-    this._saveTempDiagram()
-    this._scheduleServerSave()
+    // Pan/zoom are view-only ops — nothing to persist.
+    if (options.pan || options.zoom) return
+    this._persist()
   }
 
   setLayoutMode(mode) {
@@ -579,32 +616,63 @@ export default class DiagramGraph {
     if (this.renderer) this.renderer.resetCamera()
   }
 
-  _scheduleServerSave() {
-    if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
-    if (!this.d3dInfo?.id) return
-    if (this._suppressSave) return
+  _isViewOnly() {
     try {
       const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
-      if (claims.iss === 'd3d-share' && claims.role !== 'edit') return
+      return claims.iss === 'd3d-share' && claims.role !== 'edit'
     } catch {
-      /* not a JWT — proceed */
+      /* not a JWT — editable */
+      return false
     }
-    clearTimeout(this._saveTimer)
-    this._saveTimer = setTimeout(() => this._serverSave(), 500)
   }
 
-  async _serverSave() {
+  _persist() {
+    if (this._isViewOnly()) return
+    this._saveTempDiagram()
+
     const json = modelToGraphlib(this.cy)
-    try {
-      await api.updateDiagram({
-        id: this.d3dInfo.id,
-        name: this.d3dInfo.name || D3Util.tempInfo().name,
-        description: this.d3dInfo.description || D3Util.tempInfo().description,
-        diagram: JSON.stringify(json),
-        clientId: collabClientId()
+    const diagram = JSON.stringify(json)
+    const id = this.d3dInfo?.id
+    const name = this.d3dInfo?.name || D3Util.tempInfo().name
+    const description = this.d3dInfo?.description || D3Util.tempInfo().description
+
+    if (id) {
+      D3Util.updateLocalEntry({
+        id,
+        name,
+        description,
+        diagram: this.cy,
+        created: this.d3dInfo.created
       })
+    }
+
+    pushSnapshot(id, { name, description, diagram })
+
+    this._scheduleServerSave(diagram)
+  }
+
+  _scheduleServerSave(diagram) {
+    if (!D3Util.auth()) return
+    if (!this.d3dInfo?.id) return
+    if (this._suppressSave) return
+    clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(() => this._serverSave(diagram), 800)
+  }
+
+  async _serverSave(diagram) {
+    const payload = {
+      id: this.d3dInfo.id,
+      name: this.d3dInfo.name || D3Util.tempInfo().name,
+      description: this.d3dInfo.description || D3Util.tempInfo().description,
+      diagram
+    }
+    if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
+      payload.clientId = collabClientId()
+    }
+    try {
+      await api.updateDiagram(payload)
     } catch (err) {
-      console.error('collab auto-save failed', err)
+      console.error('auto-save failed', err)
     }
   }
 

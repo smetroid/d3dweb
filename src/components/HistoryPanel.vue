@@ -15,15 +15,23 @@
         <div class="fx-panel-body">
           <div v-if="loading" class="hist-loading">Loading…</div>
 
-          <div v-else-if="entries.length === 0" class="hist-empty">No history yet.</div>
+          <div v-else-if="entries.length === 0" class="hist-empty">
+            No history yet — snapshots are saved automatically as you edit.
+          </div>
 
           <ul v-else class="hist-list">
-            <li v-for="entry in entries" :key="entry.id" class="hist-entry">
+            <li v-for="entry in entries" :key="entry.source + entry.id" class="hist-entry">
               <div class="hist-meta">
                 <span class="hist-time" :title="entry.savedAt">{{
                   formatTime(entry.savedAt)
                 }}</span>
-                <span v-if="entry.savedBy" class="hist-user">{{ entry.savedBy }}</span>
+                <span class="hist-subline">
+                  <span class="hist-chip" :class="entry.source === 'server' ? 'hist-chip-server' : 'hist-chip-local'">{{
+                    entry.source === 'server' ? 'SERVER' : 'LOCAL'
+                  }}</span>
+                  <span v-if="entry.savedBy" class="hist-user">{{ entry.savedBy }}</span>
+                  <span v-else-if="entry.name" class="hist-name">{{ entry.name }}</span>
+                </span>
               </div>
               <button
                 class="hist-restore-btn"
@@ -57,6 +65,8 @@
 
 <script>
 import api from '@/services/api'
+import D3Util from '@/helpers/D3Util'
+import { getHistory, getSnapshot } from '@/services/localHistory'
 
 export default {
   name: 'HistoryPanel',
@@ -78,16 +88,33 @@ export default {
     await this.fetchHistory()
   },
   methods: {
+    _serverAvailable() {
+      // 'unsaved' is the browser-only history bucket — never a server dag id.
+      return D3Util.auth() && !!this.dagId && this.dagId !== 'unsaved'
+    },
+
     async fetchHistory() {
       this.loading = true
-      try {
-        const data = await api.getHistory(this.dagId)
-        this.entries = data?.history ?? []
-      } catch {
-        this.entries = []
-      } finally {
-        this.loading = false
+      const local = getHistory(this.dagId).map((entry) => ({
+        ...entry,
+        source: 'local'
+      }))
+
+      let server = []
+      if (this._serverAvailable()) {
+        try {
+          const data = await api.getHistory(this.dagId)
+          server = (data?.history ?? []).map((entry) => ({ ...entry, source: 'server' }))
+        } catch {
+          // Server unreachable — local snapshots still available.
+          server = []
+        }
       }
+
+      this.entries = [...local, ...server].sort(
+        (a, b) => new Date(b.savedAt) - new Date(a.savedAt)
+      )
+      this.loading = false
     },
 
     confirmRestore(entry) {
@@ -98,10 +125,20 @@ export default {
       this.confirmEntry = null
       this.restoring = entry.id
       try {
-        await api.restoreHistory(this.dagId, entry.id)
-        this.$emit('restored')
-      } catch {
-        // silent — parent will handle via reload
+        if (entry.source === 'server') {
+          await api.restoreHistory(this.dagId, entry.id)
+          this.$emit('restored', { source: 'server' })
+        } else {
+          const snapshot = getSnapshot(this.dagId, entry.id)
+          if (!snapshot) throw new Error('local snapshot missing')
+          this.$emit('restored', { source: 'local', snapshot })
+        }
+      } catch (err) {
+        this.emitter?.emit('appMessage', {
+          message: 'Unable to restore this snapshot',
+          status: 'error'
+        })
+        console.error('history restore failed', err)
       } finally {
         this.restoring = null
       }
@@ -170,12 +207,47 @@ export default {
   white-space: nowrap;
 }
 
+.hist-subline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hist-chip {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.hist-chip-local {
+  color: rgb(var(--fx-ink));
+  border: 1px solid rgba(var(--fx-accent), 0.4);
+}
+
+.hist-chip-server {
+  color: #fff;
+  background: rgba(var(--fx-accent), 0.55);
+}
+
 .hist-user {
   font-size: 10px;
   color: rgb(var(--fx-ink-dim));
-  truncate: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hist-name {
+  font-size: 10px;
+  color: rgb(var(--fx-ink-dim));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hist-restore-btn {

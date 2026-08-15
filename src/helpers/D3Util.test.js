@@ -231,6 +231,7 @@ describe('appDefaults', () => {
 describe('shared dropdown options', () => {
   it('node shape options cover every node shape used in the node form', () => {
     expect(D3Util.nodeShapeOptions()).toEqual([
+      { value: 'none', label: 'None' },
       { value: 'rectangle', label: 'Rectangle' },
       { value: 'round-rectangle', label: 'Round Rectangle' },
       { value: 'ellipse', label: 'Ellipse' },

@@ -92,7 +92,7 @@
       <transition name="fx-panel">
         <div v-if="showHistory" class="fx-hud-stage">
           <HistoryPanel
-            :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id || 'unsaved'"
             @close="showHistory = false"
             @restored="onHistoryRestored"
           />
@@ -527,7 +527,7 @@ export default {
             break
           }
           case 'history':
-            if (mod?.d3dInfo?.id) this.showHistory = true
+            if (mod) this.showHistory = true
             break
           case 'close':
             if (this.escCount >= 2) this.resetValues()
@@ -562,8 +562,12 @@ export default {
         .toUpperCase()
     },
 
-    onHistoryRestored() {
+    onHistoryRestored(payload) {
       this.showHistory = false
+      if (payload?.source === 'local') {
+        this.emitter.emit('diagram:restore-local', payload.snapshot)
+        return
+      }
       const mod = this.modifier?.value ?? this.modifier
       const id = mod?.d3dInfo?.id
       if (id) this.emitter.emit('diagram:reload', id)
