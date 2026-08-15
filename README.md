@@ -1,164 +1,321 @@
+<div align="center">
+
+<img src="docs/hero.svg" alt="d3dweb" width="720" />
+
 # d3dweb
 
-Vue 3 + Cytoscape DAG (directed acyclic graph) editor with real-time multi-user collaboration. Connects to [d3d-api](https://github.com/smetroid/d3d-api) for persistence and WebSocket relay.
+**Real-time collaborative DAG editor. Vim-style keys. Zero-config sharing.**
 
-## Tech stack
+[![Node](https://img.shields.io/badge/node-18%2B-3fb950?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Vue 3](https://img.shields.io/badge/vue-3.4-41b883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/vite-5-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Cytoscape](https://img.shields.io/badge/cytoscape-3.34-ff6b9d?style=for-the-badge)](https://js.cytoscape.org/)
+[![License](https://img.shields.io/badge/license-MIT-a78bfa?style=for-the-badge)](LICENSE)
 
-| Layer            | Library                                                                      |
-| ---------------- | ---------------------------------------------------------------------------- |
-| Framework        | [Vue 3](https://vuejs.org/) (Options API) + [Vite](https://vitejs.dev/)      |
-| Graph rendering  | [Cytoscape.js](https://js.cytoscape.org/) + cytoscape-cola + cytoscape-dagre |
-| UI components    | [Vuetify 3](https://vuetifyjs.com/)                                          |
-| HTTP             | [Axios](https://axios-http.com/)                                             |
-| Real-time        | Native WebSocket (via `src/services/collab.js`)                              |
-| Routing          | Vue Router 4                                                                 |
-| Focus management | focus-trap-vue                                                               |
-| Animations       | GSAP                                                                         |
+[**Live demo**](https://d3dweb.fly.dev) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
 
-## Prerequisites
+</div>
 
-- Node.js 18+
-- [d3d-api](https://github.com/smetroid/d3d-api) running locally (see that repo's README)
+---
 
-## Local development
+## Why d3dweb
 
-### 1. Install dependencies
+You have a graph. You want to work on it _with someone else_, right now, without setting up Miro, Figma, or Google Docs. You want to move fast with the keyboard, not a mouse. You want the whole thing to autosave, version, and be sharable via a link.
+
+That's d3dweb.
+
+| For **users**                                 | For **engineers**                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| Multi-user editing with live avatars          | Vue 3 Options API — familiar and easy to fork                      |
+| Vim-style `hjkl` graph navigation             | Cytoscape.js core — swap layouts or extensions freely              |
+| Command palette (`⌘K`)                        | 8 layouts (Cola, CoSE, Dagre, BFS…) hot-swap `⌘+1..8`              |
+| Share links with view/edit roles              | JWT share tokens with server-side revocation list                  |
+| Snapshot history + one-click restore          | 500ms debounced autosave with `clientId` echo prevention           |
+| View-only anonymous identities (`"Teal Fox"`) | Native WebSocket relay — no Redis, no CRDT server tax              |
+| Every shortcut rebindable in Settings         | Fly.io deploy + release-please + Renovate + gitleaks preconfigured |
+
+---
+
+## Feature matrix
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### Live presence
+
+Colored halos on every peer's selection. Avatar chips in the top-left HUD. Presence multiplexed through a single WebSocket room per diagram.
+
+</td>
+<td width="33%" valign="top">
+
+### Time travel
+
+`Shift+H` opens the history drawer — the last 50 snapshots of your diagram. Restore any one; peers reload instantly via `diagram:updated`.
+
+</td>
+<td width="33%" valign="top">
+
+### Signed share links
+
+`Shift+S` mints a JWT via `/shares/create`. Recipients hit `/join/:token`, the API validates against a revocation list, and the token lands in localStorage.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### Keyboard first
+
+`hjkl` for directional nav, `e` to edit, `x` to delete, `n` for new node, `d` for new edge, `f` for hint mode, `⌘K` for command palette. Every default is rebindable.
+
+</td>
+<td valign="top">
+
+### Eight layouts, one keystroke
+
+Cola, CoSE, Breadth-First, Grid, Circle, Concentric, Dagre, Random — switch with `⌘+1..8`. Choice persists per-diagram.
+
+</td>
+<td valign="top">
+
+### Anonymous by default
+
+View-only guests get a random display name server-side. No sign-up, no email, no PII. Names persist per share in `localStorage`.
+
+</td>
+</tr>
+</table>
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Browser
+        A[Vue 3 + Vuetify]
+        B[Cytoscape canvas]
+        C[collab.js WS client]
+    end
+    subgraph d3d-api
+        D[REST /dag /shares]
+        E[WS relay]
+        F[(RethinkDB)]
+    end
+    A <--> B
+    A --> C
+    A -.HTTP.-> D
+    C <-.WebSocket.-> E
+    D --> F
+    E --> F
+```
+
+The client is dumb-ish: it renders, it emits, it saves. The API owns identity, persistence, and the WebSocket fan-out. A single `clientId` claim on every save prevents the sender from replaying their own change.
+
+---
+
+## Quick start
 
 ```bash
+# 1. Clone and install
+git clone https://github.com/smetroid/d3dweb.git
+cd d3dweb
 npm install
-```
 
-### 2. Configure environment
+# 2. Start d3d-api in another terminal (see its README)
 
-Create `.env.local` (gitignored) with your local overrides:
-
-```bash
-# Enable real-time collaboration features
+# 3. Point the client at it
+cat > .env.local <<EOF
 VITE_COLLAB_ENABLED=true
-
-# API base URL (defaults to http://localhost:3001 if not set)
 VITE_API_BASE_URL=http://localhost:3001
+EOF
+
+# 4. Go
+npm run dev  # http://localhost:5173
 ```
 
-`.env` ships with `VITE_COLLAB_ENABLED=false` as the safe default for production builds.
+Create a user via the `d3d-api` `createuser` CLI, log in, and start dragging nodes.
 
-### 3. Start the dev server
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:5173`. Log in with a user created via the `d3d-api` `createuser` CLI.
+---
 
 ## Environment variables
 
-| Variable              | Default                 | Description                                                     |
-| --------------------- | ----------------------- | --------------------------------------------------------------- |
-| `VITE_COLLAB_ENABLED` | `false`                 | Enables WS collab, presence HUD, history panel, and share links |
-| `VITE_API_BASE_URL`   | `http://localhost:3001` | Base URL for d3d-api                                            |
+| Variable              | Default                 | Description                                                 |
+| --------------------- | ----------------------- | ----------------------------------------------------------- |
+| `VITE_COLLAB_ENABLED` | `false`                 | Enables WS collab, presence HUD, history panel, share links |
+| `VITE_API_BASE_URL`   | `http://localhost:3001` | Base URL for d3d-api                                        |
 
-## Real-time collaboration features
-
-Enabled when `VITE_COLLAB_ENABLED=true`.
-
-### Presence
-
-Each connected user appears as an avatar chip in the top-left HUD. Peer node selections are shown as colored halos on the graph. Presence messages are relayed via the WebSocket room for the current diagram.
-
-### Auto-save
-
-Diagram changes are debounced (500ms) and saved to the server via `POST /dag/:dag/update`. The `clientId` claim in the payload prevents the saving peer from reloading its own change.
-
-### History panel (`Shift+H`)
-
-Opens a drawer listing the last 50 diagram snapshots. Any snapshot can be restored; restoration broadcasts `diagram:updated` to all live peers.
-
-### Share links (`Shift+S`)
-
-Generates a signed JWT share link. Recipients open `/join/:token` which:
-
-1. Calls `GET /shares/exchange?token=<jwt>` on d3d-api to validate the token and check the revocation list
-2. Stores the token in `localStorage` and redirects to the diagram
-
-**Roles:**
-
-- `view` — read-only; edit keyboard shortcuts, auto-save, and the share dialog are all disabled; a **VIEW ONLY** badge is shown top-right
-- `edit` — full editing access
-
-Share tokens can be revoked by the owner via the API (`POST /dag/:dag/shares/:jti/revoke`).
-
-### Anonymous identity
-
-View-only share holders are assigned a random display name (e.g. `"Teal Fox"`) on the server at share-creation time. The name is returned by `/shares/exchange` and stored in `localStorage` as `d3d_anon_name`, where it is picked up by presence messages.
+---
 
 ## Keyboard shortcuts
 
-| Key       | Action                              |
-| --------- | ----------------------------------- |
-| `j` / `k` | Navigate nodes                      |
-| `h` / `l` | Navigate edges                      |
-| `e`       | Edit focused node or edge           |
-| `x`       | Delete focused node or edge         |
-| `n`       | Add node (via alt/meta combo)       |
-| `f`       | Hint mode (visual shortcut overlay) |
-| `d`       | Clear multi-selection               |
-| `Shift+H` | Open history panel                  |
-| `Shift+S` | Open share dialog                   |
-| `Esc`     | Close panels / cancel               |
+Everything is one key away. All defaults are user-rebindable via **Settings** (`Ctrl+t`).
+Mac uses `⌘` for the modifier; other platforms use `Alt`. All mutating shortcuts auto-disable in view-only mode.
 
-All mutating shortcuts (`e`, `x`, `n`, alt/meta combos, `Shift+S`) are disabled in view-only mode.
+### Navigation & selection
+
+| Key       | Action                               |
+| --------- | ------------------------------------ |
+| `j` / `k` | Focus next / previous element        |
+| `h` / `l` | Focus left / right                   |
+| `Enter`   | Select (double-tap for multi-select) |
+| `f`       | Show element hints (jump-to overlay) |
+| `Esc`     | Change focus / close panels          |
+| `⌘K`      | Command palette (also `Ctrl+K`)      |
+
+### Editing
+
+| Key   | Action                            |
+| ----- | --------------------------------- |
+| `n`   | Add node                          |
+| `d`   | Add edge                          |
+| `e`   | Edit focused node or edge         |
+| `x`   | Delete focused node or edge       |
+| `y`   | Copy focused node                 |
+| `r`   | Toggle read-only mode             |
+| `⌘⇧S` | Save form (node / edge / diagram) |
+| `⌘⇧W` | Clear label field                 |
+
+### Collaboration
+
+| Key  | Action             |
+| ---- | ------------------ |
+| `⇧H` | Open history panel |
+| `⇧S` | Open share dialog  |
+
+### Zoom & pan
+
+| Key  | Action    |
+| ---- | --------- |
+| `⌘=` | Zoom in   |
+| `⌘-` | Zoom out  |
+| `⌘h` | Pan left  |
+| `⌘l` | Pan right |
+| `⌘j` | Pan down  |
+| `⌘k` | Pan up    |
+
+### Menus & views
+
+| Key      | Action            |
+| -------- | ----------------- |
+| `m`      | Open main menu    |
+| `a`      | Open actions menu |
+| `t`      | Toggle theme      |
+| `/`      | Show help HUD     |
+| `⌘L`     | Login             |
+| `Ctrl+t` | Open settings     |
+
+### Diagrams (Alt on non-mac, ⌘ on mac)
+
+| Key  | Action       |
+| ---- | ------------ |
+| `⌘N` | New diagram  |
+| `⌘O` | Open diagram |
+| `⌘E` | Edit diagram |
+| `⌘S` | Save diagram |
+
+---
+
+## Layouts
+
+d3dweb ships with **8 built-in Cytoscape layouts**. Switch instantly with `⌘+1..8` (or `Alt+1..8` on non-mac). Choice persists per-diagram.
+
+| Shortcut | Layout                    | Best for                                 |
+| -------- | ------------------------- | ---------------------------------------- |
+| `⌘+1`    | **Cola** (physics-based)  | Organic, force-directed with constraints |
+| `⌘+2`    | **CoSE** (force-directed) | Compound graphs, hierarchical clusters   |
+| `⌘+3`    | **Breadth First** (tree)  | Trees, BFS visualizations                |
+| `⌘+4`    | **Grid**                  | Alphabetical / index-style views         |
+| `⌘+5`    | **Circle**                | Small graphs, cycle emphasis             |
+| `⌘+6`    | **Concentric**            | Center-out importance ranking            |
+| `⌘+7`    | **Dagre** (hierarchical)  | DAGs, pipelines, dependency trees        |
+| `⌘+8`    | **Random**                | Force-solver seeding                     |
+
+---
+
+## Roles
+
+| Role   | Can edit | Can share | Can see presence | Badge shown |
+| ------ | :------: | :-------: | :--------------: | :---------: |
+| `edit` |    ✓     |     ✓     |        ✓         |      —      |
+| `view` |    —     |     —     |        ✓         | `VIEW ONLY` |
+
+Tokens are revocable by the owner via `POST /dag/:dag/shares/:jti/revoke`.
+
+---
 
 ## Routes
 
 | Path               | Description                                                 |
 | ------------------ | ----------------------------------------------------------- |
-| `/`                | Main DAG editor (App.vue)                                   |
+| `/`                | Main DAG editor                                             |
 | `/join/:token`     | Share link exchange — validates token, redirects to diagram |
-| `/collab-poc`      | Dev POC: Yjs text sync (internal, can be removed)           |
-| `/collab-cyto-poc` | Dev POC: Cytoscape collab spike (internal, can be removed)  |
+| `/collab-poc`      | Dev POC: Yjs text sync (internal)                           |
+| `/collab-cyto-poc` | Dev POC: Cytoscape collab spike (internal)                  |
+
+---
 
 ## Project structure
 
 ```
 src/
-  components/
-    DiagramGraphView.vue   # Main graph canvas, keyboard handler, collab HUD
-    DiagramGraph.js        # (helpers/) Cytoscape model, auto-save, layout
-    HistoryPanel.vue       # Snapshot list and restore UI
-    ShareDialog.vue        # Share link generator
-    JoinView.vue           # /join/:token exchange and redirect
-    D3NodeForm.vue         # Node edit form
-    D3EdgeForm.vue         # Edge edit form
-  services/
-    api.js                 # Axios wrapper for all d3d-api calls
-    collab.js              # WebSocket client singleton (connect, presence, echo prevention)
-  helpers/
-    DiagramGraph.js        # Graph model, layout, auto-save
-    CytoscapeRenderer.js   # Peer selection halos
-    D3Util.js              # Shared utilities
-  router/
-    index.js               # Vue Router routes
+├── components/
+│   ├── DiagramGraphView.vue   # Main canvas, keyboard handler, collab HUD
+│   ├── HistoryPanel.vue       # Snapshot list and restore
+│   ├── ShareDialog.vue        # JWT share link generator
+│   ├── JoinView.vue           # /join/:token exchange
+│   └── D3{Node,Edge}Form.vue  # Entity edit forms
+├── services/
+│   ├── api.js                 # Axios wrapper for d3d-api
+│   └── collab.js              # WS singleton: presence, echo prevention
+├── helpers/
+│   ├── DiagramGraph.js        # Cytoscape model, layout, autosave
+│   ├── CytoscapeRenderer.js   # Peer selection halos
+│   └── D3Util.js              # Shared utilities
+└── router/index.js
 ```
+
+---
 
 ## Scripts
 
 ```bash
-npm run dev       # Start Vite dev server
-npm run build     # Production build
-npm run preview   # Preview production build locally
+npm run dev       # Vite dev server
+npm run build     # Production build (runs gen-icons first)
+npm run preview   # Preview production build
 npm run lint      # ESLint (auto-fix)
-npm run test      # Vitest unit tests
+npm run test      # Vitest
 npm run format    # Prettier
 ```
 
-## Building for production
-
-```bash
-npm run build
-```
-
-Output goes to `dist/`. Set `VITE_API_BASE_URL` to your production API URL at build time or via the hosting platform's environment variables.
+---
 
 ## Deployment
 
-CI runs lint and tests on every push. Production deploys are gated on CI passing. See `.github/workflows/` for the pipeline configuration.
+CI runs lint + tests on every push. Fly.io deploys are gated on CI passing.
+`release-please` cuts semver releases from Conventional Commits.
+Renovate keeps dependencies fresh. Gitleaks scans every push for secrets.
+Husky + lint-staged enforce format on commit.
+
+See `.github/workflows/` for the pipelines.
+
+---
+
+## Contributing
+
+PRs welcome. Use [Conventional Commits](https://www.conventionalcommits.org/) — release-please depends on them.
+
+```
+feat: add node color picker
+fix(collab): prevent double-echo on rapid drag
+chore(deps): bump vuetify to 3.7.4
+```
+
+---
+
+<div align="center">
+
+Built by [@smetroid](https://github.com/smetroid) · MIT licensed
+
+</div>
