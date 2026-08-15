@@ -270,7 +270,7 @@ export default {
       defaultEdgeIconPosition: 'left',
       defaultEdgeIconSize: null,
       defaultEdgeIconColor: '',
-      serverUrl: 'http://localhost:3000',
+      serverUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}

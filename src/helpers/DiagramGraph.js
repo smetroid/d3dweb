@@ -13,6 +13,14 @@ export default class DiagramGraph {
     this.diagram = d3dInfo.diagram // alias kept for backward compat
     this.renderer = null // CytoscapeRenderer, set by DiagramGraphView
     this.selectedNodes = []
+    // Suppress auto-save during initial layout in collab mode so a remote
+    // reload doesn't immediately broadcast another diagram:updated.
+    this._suppressSave = import.meta.env.VITE_COLLAB_ENABLED === 'true'
+    if (this._suppressSave) {
+      setTimeout(() => {
+        this._suppressSave = false
+      }, 5000)
+    }
     this.doubleSelection = []
     this.selectedEdges = []
     this.focusedIndex = null
@@ -432,7 +440,8 @@ export default class DiagramGraph {
       iconName: data.iconName,
       iconPosition: data.iconPosition,
       iconSize: data.iconSize,
-      iconColor: data.iconColor
+      iconColor: data.iconColor,
+      id
     }
   }
 
@@ -619,9 +628,6 @@ export default class DiagramGraph {
     }
   }
 
-  // Persist every diagram change: the browser draft + real localStorage entry
-  // are written synchronously (cheap, crash-safe), history snapshots are
-  // coalesced by localHistory, and the server write is debounced.
   _persist() {
     if (this._isViewOnly()) return
     this._saveTempDiagram()
@@ -650,6 +656,7 @@ export default class DiagramGraph {
   _scheduleServerSave(diagram) {
     if (!D3Util.auth()) return
     if (!this.d3dInfo?.id) return
+    if (this._suppressSave) return
     clearTimeout(this._saveTimer)
     this._saveTimer = setTimeout(() => this._serverSave(diagram), 800)
   }
@@ -661,8 +668,6 @@ export default class DiagramGraph {
       description: this.d3dInfo.description || D3Util.tempInfo().description,
       diagram
     }
-    // Collab keeps the clientId so the WebSocket echo of our own write is
-    // ignored; the manual-save path posts without it, so mirror that here.
     if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
       payload.clientId = collabClientId()
     }
