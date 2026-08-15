@@ -328,7 +328,7 @@ export default {
       clearTimeout(_remoteReloadTimer)
       _remoteReloadTimer = setTimeout(() => {
         const id = this.d3dInfo?.id
-        if (id) this.loadFromServer(id)
+        if (id) this.loadFromServer(id, { remoteReload: true })
       }, 300)
     })
 
@@ -471,7 +471,7 @@ export default {
       this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
       console.log(this.modifier)
     },
-    loadFromServer: async function (id) {
+    loadFromServer: async function (id, { remoteReload = false } = {}) {
       let serverDiagramInfo = null
       if (id) {
         serverDiagramInfo = await D3DApi.getDiagram(id)
@@ -509,7 +509,9 @@ export default {
         this.d3dInfo.diagram = model
         this.d3dInfo.colaConstraints = model.colaConstraints
 
-        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        const mod = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        if (remoteReload) mod._noLayout = true
+        this.modifier = mod
         console.log(this.modifier)
       } catch (error) {
         this.emitter.emit('appMessage', {

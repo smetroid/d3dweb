@@ -636,7 +636,9 @@ export default {
         const mod = newMod?.value ?? newMod
         if (mod && typeof mod.redraw === 'function' && this.threeDRenderer) {
           mod.renderer = this.threeDRenderer
-          mod.redraw()
+          const noLayout = mod._noLayout
+          mod._noLayout = false
+          mod.redraw(noLayout ? { layout: false } : {})
         }
         if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
           collab.disconnect()
