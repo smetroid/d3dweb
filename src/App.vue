@@ -329,7 +329,7 @@ export default {
       _remoteReloadTimer = setTimeout(() => {
         const id = this.d3dInfo?.id
         if (id) this.loadFromServer(id)
-      }, 2000)
+      }, 300)
     })
 
     this.emitter.on('toggleTheme', () => {
