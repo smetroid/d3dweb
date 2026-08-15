@@ -163,7 +163,7 @@ export default {
       active: 'Graph', //Default active component
       showCommandPalette: false,
       commandGroup: null,
-      showHelpPane: true,
+      showHelpPane: false,
       showDiagramForm: false,
       toasts: [],
       response: 'loading',

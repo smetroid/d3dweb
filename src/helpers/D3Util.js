@@ -250,7 +250,7 @@ export default {
       defaultNodeBorderWidth: null,
       defaultNodeFontSize: null,
       defaultEdgeLabel: '',
-      serverUrl: 'http://localhost:3000',
+      serverUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}
@@ -259,7 +259,9 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    return s && s.serverUrl ? s.serverUrl : 'http://localhost:3000'
+    return s && s.serverUrl
+      ? s.serverUrl
+      : import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}

@@ -30,7 +30,15 @@
 
           <section class="fx-hud-mod">
             <h3 class="fx-hud-mod-title">Actions</h3>
-            <div v-for="helper in samus" :key="helper.title" class="fx-hud-row">
+            <div v-for="helper in actions" :key="helper.title" class="fx-hud-row">
+              <span class="fx-hud-row-title">{{ helper.title }}</span>
+              <span class="fx-kbd">{{ helper.shortcut }}</span>
+            </div>
+          </section>
+
+          <section class="fx-hud-mod">
+            <h3 class="fx-hud-mod-title">Collaboration</h3>
+            <div v-for="helper in collab" :key="helper.title" class="fx-hud-row">
               <span class="fx-hud-row-title">{{ helper.title }}</span>
               <span class="fx-kbd">{{ helper.shortcut }}</span>
             </div>
@@ -116,6 +124,12 @@ export default {
         { title: 'Edit', shortcut: Shortcuts.label('editElement') },
         { title: 'Create Node', shortcut: Shortcuts.label('addNode') },
         { title: 'Create Edge', shortcut: Shortcuts.label('addEdge') }
+      ]
+    },
+    collab() {
+      return [
+        { title: 'History panel', shortcut: Shortcuts.label('history') },
+        { title: 'Share link dialog', shortcut: Shortcuts.label('share') }
       ]
     },
     zoom() {
