@@ -4,15 +4,16 @@
 
 # d3dweb
 
-**Real-time collaborative DAG editor. Vim-style keys. Zero-config sharing.**
+**Real-time collaborative DAG editor. Vim-style keys. Embeddable anywhere. AI-agent friendly.**
 
 [![Node](https://img.shields.io/badge/node-18%2B-3fb950?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Vue 3](https://img.shields.io/badge/vue-3.4-41b883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/vite-5-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Cytoscape](https://img.shields.io/badge/cytoscape-3.34-ff6b9d?style=for-the-badge)](https://js.cytoscape.org/)
 [![License](https://img.shields.io/badge/license-MIT-a78bfa?style=for-the-badge)](LICENSE)
+[![npm](https://img.shields.io/badge/npm-%40d3dweb%2Fembed-cb3837?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@d3dweb/embed)
 
-[**Live demo**](https://d3dweb.fly.dev) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
+[**Live demo**](https://d3dweb.fly.dev) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Render service**](https://github.com/smetroid/d3d-render) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
 
 </div>
 
@@ -24,7 +25,7 @@ You have a graph. You want to work on it _with someone else_, right now, without
 
 That's d3dweb.
 
-| For **users**                                 | For **engineers**                                                  |
+| For **users**                                 | For **engineers / AI agents**                                      |
 | --------------------------------------------- | ------------------------------------------------------------------ |
 | Multi-user editing with live avatars          | Vue 3 Options API — familiar and easy to fork                      |
 | Vim-style `hjkl` graph navigation             | Cytoscape.js core — swap layouts or extensions freely              |
@@ -32,6 +33,8 @@ That's d3dweb.
 | Share links with view/edit roles              | JWT share tokens with server-side revocation list                  |
 | Snapshot history + one-click restore          | 500ms debounced autosave with `clientId` echo prevention           |
 | View-only anonymous identities (`"Teal Fox"`) | Native WebSocket relay — no Redis, no CRDT server tax              |
+| **Embed diagrams in any markdown surface**    | `@d3dweb/embed` — encode graphlib JSON → URL, no account needed    |
+| **Fork an embedded diagram to your account**  | Agents emit graphlib JSON; d3d-render serves `image/svg+xml`       |
 | Every shortcut rebindable in Settings         | Fly.io deploy + release-please + Renovate + gitleaks preconfigured |
 
 ---
@@ -86,6 +89,83 @@ View-only guests get a random display name server-side. No sign-up, no email, no
 </td>
 </tr>
 </table>
+
+---
+
+## Embed in GitHub / anywhere
+
+Paste a d3dweb diagram into any markdown surface — GitHub READMEs, wikis, Notion, Confluence — with a single image tag. No login required to view.
+
+![Build → Test → Deploy pipeline](https://d3d-render.fly.dev/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark)
+
+> Click the image to open it in the live editor.
+
+### Portable embed (no account needed)
+
+The diagram is encoded directly in the URL. Copy the snippet from **Share → Embed → Inline** inside d3dweb, or generate it with `@d3dweb/embed`:
+
+```markdown
+![My diagram](https://d3d-render.fly.dev/svg?src=<encoded>&layout=dagre&theme=dark)
+```
+
+### Public embed (stable, revocable)
+
+Save the diagram to your account, toggle it public in **Share → Embed → By ID**, and use:
+
+```markdown
+![My diagram](https://d3d-render.fly.dev/svg?id=<dag-id>&layout=dagre&theme=dark)
+```
+
+The `?id=` embed updates automatically when you edit the diagram. Toggle public off to revoke access instantly.
+
+|                 | `?src=` Portable     | `?id=` Public              |
+| --------------- | -------------------- | -------------------------- |
+| Auth required   | No                   | Owner only (to set public) |
+| Updates on edit | No — snapshot in URL | Yes — live                 |
+| Revocable       | No                   | Yes                        |
+| Size limit      | 4 KB encoded         | Unlimited                  |
+
+---
+
+## For AI agents
+
+d3dweb diagrams are graphlib JSON — a format any LLM can emit. No account, no DSL, no tool-specific syntax.
+
+**Wire format** (3 required fields):
+
+```json
+{
+  "options": { "directed": true, "multigraph": false, "compound": false },
+  "nodes": [
+    { "v": "build", "value": { "label": "Build" } },
+    { "v": "test", "value": { "label": "Test" } },
+    { "v": "deploy", "value": { "label": "Deploy" } }
+  ],
+  "edges": [
+    { "v": "build", "w": "test", "value": { "label": "on push" } },
+    { "v": "test", "w": "deploy", "value": { "label": "on pass" } }
+  ]
+}
+```
+
+**Generate a shareable URL** with `@d3dweb/embed`:
+
+```js
+import { encode, embedUrl } from '@d3dweb/embed'
+
+const url = embedUrl({ src: encode(graphlibJson) })
+// → https://d3dweb.fly.dev/?src=<encoded>
+// Hand this URL to the user. No auth required.
+```
+
+The user opens the URL in d3dweb, sees the diagram in view-only mode, and can click **"Fork to my account"** to save and edit it.
+
+**Render to SVG/PNG** (for embedding in documents or reports):
+
+```
+GET https://d3d-render.fly.dev/svg?src=<encoded>&layout=dagre&theme=dark
+GET https://d3d-render.fly.dev/png?src=<encoded>&width=1200
+```
 
 ---
 
