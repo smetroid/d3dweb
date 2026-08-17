@@ -118,6 +118,7 @@
         <div v-if="showShare" class="fx-hud-stage">
           <ShareDialog
             :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            :graphlibJson="graphlibJson"
             @close="showShare = false"
           />
         </div>
@@ -129,6 +130,7 @@
 <script>
 import D3Util from '@/helpers/D3Util'
 import CytoscapeRenderer from '@/helpers/CytoscapeRenderer'
+import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
@@ -644,6 +646,10 @@ export default {
     },
     isLoggedIn() {
       return D3Util.auth()
+    },
+    graphlibJson() {
+      const mod = this.modifier?.value ?? this.modifier
+      return mod ? modelToGraphlib(mod) : null
     }
   },
   watch: {
