@@ -7,7 +7,8 @@ import Settings from '@/components/Settings.vue'
 import HelperPane from '@/components/Helper.vue'
 import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
-import { graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
+import { graphlibToModel, isGraphlibFormat, modelToGraphlib } from '@/helpers/graphlibMigration.js'
+import { decode as embedDecode } from '@d3dweb/embed'
 import { migrateDiagramPayload } from '@/helpers/legacyMigration.js'
 import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramList from '@/components/DiagramList.vue'
@@ -61,7 +62,12 @@ function toggleTheme() {
         :d3dInfo="d3dInfo"
       />
       -->
-      <DiagramGraphView :active="active" />
+      <DiagramGraphView
+        :active="active"
+        :embed-mode="embedMode"
+        @fork-embed="forkEmbedDiagram"
+        @embed-login="() => emitter.emit('changeActive', 'Login')"
+      />
       <DiagramForm :active="active" />
       <Settings :active="active" :d3dInfo="d3dInfo" />
       <DiagramList :active="active" />
@@ -199,7 +205,8 @@ export default {
         }
       ],
       d3dInfo: {},
-      modifier: {}
+      modifier: {},
+      embedMode: false
     }
   },
   provide() {
@@ -207,7 +214,7 @@ export default {
       modifier: computed(() => this.modifier)
     }
   },
-  mounted() {
+  async mounted() {
     try {
       console.log('App mounted')
 
@@ -219,7 +226,10 @@ export default {
       this.syncThemeAttr()
       this.emitter.emit('themeChanged')
 
-      if (D3Util.auth()) {
+      const query = new URLSearchParams(window.location.search)
+      if (query.has('src') || query.has('id')) {
+        await this.loadEmbedLink(query)
+      } else if (D3Util.auth()) {
         this.loadFromServer()
       } else {
         this.loadDiagram()
@@ -563,6 +573,91 @@ export default {
           message: 'Unable to restore this snapshot',
           status: 'error'
         })
+      }
+    },
+    async loadEmbedLink(query) {
+      this.embedMode = true
+      const src = query.get('src')
+      const id = query.get('id')
+      const theme = query.get('theme')
+
+      try {
+        let graphlibJson,
+          name = 'Embedded Diagram',
+          description = ''
+
+        if (src) {
+          graphlibJson = embedDecode(src)
+        } else {
+          const data = await D3DApi.getDiagramPublic(id)
+          if (!data || !data.diagram) {
+            this.emitter.emit('appMessage', {
+              message: 'Diagram not found or not public',
+              status: 'error'
+            })
+            this.embedMode = false
+            this.loadDiagram()
+            return
+          }
+          graphlibJson = JSON.parse(data.diagram)
+          name = data.name || 'Embedded Diagram'
+          description = data.description || ''
+        }
+
+        const parsed = migrateDiagramPayload(graphlibJson)
+        const model = markRaw(
+          isGraphlibFormat(parsed) ? graphlibToModel(parsed) : new GraphModel(parsed)
+        )
+        model.colaConstraints = parsed.options?.constraints || []
+
+        this.d3dInfo = {
+          id: D3Util.randomId(),
+          name,
+          description,
+          created: new Date().toISOString(),
+          diagram: model,
+          colaConstraints: model.colaConstraints
+        }
+        const mod = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        mod._suppressSave = true
+        this.modifier = mod
+
+        if (theme === 'dark' || theme === 'light') {
+          this.$vuetify.theme.global.name = theme
+          this.syncThemeAttr()
+          this.emitter.emit('themeChanged')
+        }
+      } catch (err) {
+        console.error('embed load failed', err)
+        this.emitter.emit('appMessage', {
+          message: 'Failed to load embedded diagram',
+          status: 'error'
+        })
+        this.embedMode = false
+        this.loadDiagram()
+      }
+    },
+    async forkEmbedDiagram() {
+      if (!D3Util.auth()) return
+      try {
+        const graphlibJson = modelToGraphlib(this.d3dInfo.diagram)
+        const result = await D3DApi.postDiagram({
+          name: this.d3dInfo.name || 'Forked Diagram',
+          description: this.d3dInfo.description || '',
+          diagram: JSON.stringify(graphlibJson)
+        })
+        const newId = result?.data?.id || result?.id
+        if (newId) {
+          this.embedMode = false
+          await this.loadFromServer(newId)
+          this.emitter.emit('appMessage', {
+            message: 'Diagram forked — you can now edit it',
+            status: 'success'
+          })
+        }
+      } catch (err) {
+        console.error('fork failed', err)
+        this.emitter.emit('appMessage', { message: 'Failed to fork diagram', status: 'error' })
       }
     },
     d3Action: async function (event) {

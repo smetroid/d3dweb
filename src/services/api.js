@@ -41,6 +41,12 @@ export default {
         console.log('getDiagram finished')
       })
   },
+  async getDiagramPublic(id) {
+    return api()
+      .get('/dag/' + id + '/public')
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
   async getDiagrams() {
     return api()
       .get('/dags', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
@@ -114,6 +120,18 @@ export default {
   async exchangeShare(token) {
     return api()
       .get('/shares/exchange', { params: { token } })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async setDiagramPublic(id, isPublic) {
+    return api()
+      .patch(
+        '/dag/' + id,
+        { public: isPublic },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
       .then((response) => response.data)
       .catch((error) => error)
   },
