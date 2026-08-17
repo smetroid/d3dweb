@@ -47,7 +47,7 @@ export function encode(graphlibJson) {
  */
 export function decode(str) {
   const bytes = fromBase64url(str)
-  return JSON.parse(inflate(bytes, { to: 'string' }))
+  return JSON.parse(new TextDecoder().decode(inflate(bytes)))
 }
 
 /**
