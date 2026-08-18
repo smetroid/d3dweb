@@ -96,7 +96,7 @@ View-only guests get a random display name server-side. No sign-up, no email, no
 
 Paste a d3dweb diagram into any markdown surface — GitHub READMEs, wikis, Notion, Confluence — with a single image tag. No login required to view.
 
-![Build → Test → Deploy pipeline](https://d3d-render.fly.dev/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark)
+![Build → Test → Deploy pipeline](https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark)
 
 > Click the image to open it in the live editor.
 
@@ -105,7 +105,7 @@ Paste a d3dweb diagram into any markdown surface — GitHub READMEs, wikis, Noti
 The diagram is encoded directly in the URL. Copy the snippet from **Share → Embed → Inline** inside d3dweb, or generate it with `@d3dweb/embed`:
 
 ```markdown
-![My diagram](https://d3d-render.fly.dev/svg?src=<encoded>&layout=dagre&theme=dark)
+![My diagram](https://d3d-render.vercel.app/svg?src=<encoded>&layout=dagre&theme=dark)
 ```
 
 ### Public embed (stable, revocable)
@@ -113,7 +113,7 @@ The diagram is encoded directly in the URL. Copy the snippet from **Share → Em
 Save the diagram to your account, toggle it public in **Share → Embed → By ID**, and use:
 
 ```markdown
-![My diagram](https://d3d-render.fly.dev/svg?id=<dag-id>&layout=dagre&theme=dark)
+![My diagram](https://d3d-render.vercel.app/svg?id=<dag-id>&layout=dagre&theme=dark)
 ```
 
 The `?id=` embed updates automatically when you edit the diagram. Toggle public off to revoke access instantly.
@@ -163,8 +163,8 @@ The user opens the URL in d3dweb, sees the diagram in view-only mode, and can cl
 **Render to SVG/PNG** (for embedding in documents or reports):
 
 ```
-GET https://d3d-render.fly.dev/svg?src=<encoded>&layout=dagre&theme=dark
-GET https://d3d-render.fly.dev/png?src=<encoded>&width=1200
+GET https://d3d-render.vercel.app/svg?src=<encoded>&layout=dagre&theme=dark
+GET https://d3d-render.vercel.app/png?src=<encoded>&width=1200
 ```
 
 ---

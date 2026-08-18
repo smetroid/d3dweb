@@ -60,7 +60,7 @@ export function decode(str) {
  * @param {string} [opts.theme]   - 'light' | 'dark'
  * @param {string} [opts.host]    - Host (default: d3dweb.fly.dev)
  * @param {'svg'|'png'|null} [opts.render] - If set, targets d3d-render endpoint instead of SPA
- * @param {string} [opts.renderHost] - Render service host (default: d3d-render.fly.dev)
+ * @param {string} [opts.renderHost] - Render service host (default: d3d-render.vercel.app)
  * @returns {URL}
  */
 export function embedUrl({ id, src, layout, theme, host, render, renderHost } = {}) {
@@ -69,7 +69,7 @@ export function embedUrl({ id, src, layout, theme, host, render, renderHost } = 
 
   let base
   if (render) {
-    const rh = renderHost || 'd3d-render.fly.dev'
+    const rh = renderHost || 'd3d-render.vercel.app'
     base = `https://${rh}/${render}`
   } else {
     base = `https://${host || DEFAULT_HOST}/`

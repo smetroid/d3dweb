@@ -129,7 +129,7 @@ describe('embedUrl', () => {
   it('targets render service SVG endpoint', () => {
     const encoded = encode(SMALL)
     const url = embedUrl({ src: encoded, render: 'svg' })
-    expect(url.hostname).toBe('d3d-render.fly.dev')
+    expect(url.hostname).toBe('d3d-render.vercel.app')
     expect(url.pathname).toBe('/svg')
     expect(url.searchParams.get('src')).toBe(encoded)
   })
