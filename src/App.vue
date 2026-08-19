@@ -155,6 +155,10 @@ function toggleTheme() {
               <span class="fx-nav-letter">LOGOUT</span>
             </button>
           </div>
+          <div v-if="d3dInfo.name" class="fx-nav-readout fx-nav-diagram-name">
+            <span class="fx-nav-key">DIAGRAM</span>
+            <span class="fx-nav-val">{{ d3dInfo.name }}</span>
+          </div>
         </div>
 
         <HelperPane :expand="showHelpPane" :diagramInfo="d3dInfo" />
@@ -760,6 +764,10 @@ export default {
   background-color: transparent;
 }
 */
+
+.fx-nav-diagram-name {
+  margin-left: auto;
+}
 
 .pitch-mixin {
   width: 100%;
