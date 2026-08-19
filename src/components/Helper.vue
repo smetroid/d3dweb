@@ -6,14 +6,19 @@
           <div class="fx-hud-title">
             <span class="fx-title-chip fx-chip-add">D3D</span>
             <h2 class="fx-title">CONTROL MATRIX</h2>
-            <span v-if="diagramInfo.id" class="fx-title-chip fx-chip-edit">DIAGRAM SAVED</span>
           </div>
-          <div v-if="diagramInfo.name" class="fx-hud-meta">
-            <span class="fx-hud-meta-label">DIAGRAM INFO</span>
-            <span class="fx-hud-meta-name">{{ diagramInfo.name }}</span>
-            <span v-if="diagramInfo.description" class="fx-hud-meta-desc">{{
-              diagramInfo.description
-            }}</span>
+          <div v-if="diagramInfo.name || diagramInfo.id" class="fx-hud-meta-group">
+            <div v-if="diagramInfo.name" class="fx-hud-meta">
+              <span class="fx-hud-meta-label">DIAGRAM INFO</span>
+              <span class="fx-hud-meta-name">{{ diagramInfo.name }}</span>
+              <span v-if="diagramInfo.description" class="fx-hud-meta-desc">{{
+                diagramInfo.description
+              }}</span>
+            </div>
+            <div v-if="diagramInfo.id" class="fx-hud-meta">
+              <span class="fx-hud-meta-label">DIAGRAM SAVED</span>
+              <span class="fx-hud-meta-name">{{ diagramInfo.id }}</span>
+            </div>
           </div>
           <span class="fx-hud-tag">{{ mod }} PLATFORM · HELP</span>
         </header>
@@ -159,15 +164,23 @@ export default {
 </script>
 
 <style scoped>
+.fx-hud-meta-group {
+  display: flex;
+  margin-left: auto;
+  border-left: 1px solid rgba(var(--fx-accent), 0.25);
+  border-right: 1px solid rgba(var(--fx-accent), 0.25);
+}
+
 .fx-hud-meta {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  flex: 1;
   padding: 0 16px;
   min-width: 0;
+}
+
+.fx-hud-meta + .fx-hud-meta {
   border-left: 1px solid rgba(var(--fx-accent), 0.25);
-  border-right: 1px solid rgba(var(--fx-accent), 0.25);
 }
 
 .fx-hud-meta-label {
