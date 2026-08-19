@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "gen-icons": "node scripts/gen-mdi-icons.mjs",
@@ -11,7 +14,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "test": "vitest run",
-    "format": "prettier --write src/",
+    "format": "prettier --write src/ packages/",
     "prepare": "husky"
   },
   "dependencies": {

@@ -461,6 +461,17 @@
         line-height: 1.6;
       }
 
+      /* --- Embed preview --- */
+      .embed-preview {
+        margin-top: 2rem;
+        text-align: center;
+      }
+      .embed-caption {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+      }
+
       /* --- Split section --- */
       .split {
         display: grid;
@@ -666,8 +677,9 @@
           d3dweb
         </a>
         <div class="nav-links">
-          <a href="#features">Features</a>
-          <a href="#quickstart">Quick start</a>
+<a href="#features">Features</a>
+<a href="#embed">Embed</a>
+<a href="#quickstart">Quick start</a>
           <a href="#keys">Shortcuts</a>
           <a href="#layouts">Layouts</a>
           <a href="#architecture">Architecture</a>
@@ -691,7 +703,7 @@
                 <path d="M5 12h14M13 5l7 7-7 7"/>
               </svg>
             </a>
-            <a class="btn" href="https://d3dweb.fly.dev">Live demo</a>
+            <a class="btn" href="https://d3dweb.vercel.app">Live demo</a>
             <a class="btn" href="https://github.com/smetroid/d3d-api">API repo</a>
           </div>
         </div>
@@ -701,7 +713,7 @@
             <span class="chrome-dot r"></span>
             <span class="chrome-dot y"></span>
             <span class="chrome-dot g"></span>
-            <span class="chrome-url">d3dweb.fly.dev/diagram/pipeline-v2</span>
+            <span class="chrome-url">d3dweb.vercel.app/diagram/pipeline-v2</span>
             <div class="avatars">
               <div class="avatar v" title="You">Y</div>
               <div class="avatar c" title="Teal Fox">T</div>
@@ -816,6 +828,55 @@
             </div>
             <h3>Anonymous guests</h3>
             <p>View-only visitors get a server-generated name (<em>"Teal Fox"</em>). No sign-up. No PII. Persisted per share in localStorage.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="embed">
+        <div class="section-eyebrow">// embed</div>
+        <h2 class="section-title">Works everywhere markdown renders.</h2>
+        <p class="section-lede">Drop a d3dweb diagram into any GitHub README, wiki, or doc. No login required to view. One click to fork and edit.</p>
+
+        <div class="embed-preview">
+          <img
+            src="https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark"
+            alt="Build → Test → Deploy pipeline rendered by d3d-render"
+            style="max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,0.08);"
+          />
+          <p class="embed-caption">↑ Live SVG — click to open in the editor</p>
+        </div>
+
+        <div class="features" style="margin-top:2rem;">
+          <div class="card">
+            <div class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <h3>Portable embed</h3>
+            <p>Diagram encoded in the URL itself. No account, no expiry. Generate from <strong>Share → Embed → Inline</strong> or via <span class="mono">@d3dweb/embed</span>.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+              </svg>
+            </div>
+            <h3>Public by ID</h3>
+            <p>Toggle public in the Share dialog. Updates live when you edit. Revoke anytime. Use <span class="mono">?id=</span> for stable links that track diagram changes.</p>
+          </div>
+
+          <div class="card">
+            <div class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+            </div>
+            <h3>AI-agent ready</h3>
+            <p>Agents emit graphlib JSON, encode with <span class="mono">@d3dweb/embed</span>, and hand the URL to the user. No auth. The user forks it with one click.</p>
           </div>
         </div>
       </section>

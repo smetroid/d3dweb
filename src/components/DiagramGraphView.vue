@@ -58,6 +58,19 @@
         </div>
 
         <div v-if="isViewOnly" class="view-only-badge">VIEW ONLY</div>
+        <div v-if="embedMode" class="embed-fork-bar">
+          <button
+            v-if="isLoggedIn"
+            class="embed-fork-btn"
+            title="Save a copy to your account"
+            @click="$emit('fork-embed')"
+          >
+            Fork to my account
+          </button>
+          <span v-else class="embed-login-hint">
+            <a href="#" @click.prevent="$emit('embed-login')">Log in</a> to fork this diagram
+          </span>
+        </div>
 
         <div v-if="graphEmpty" class="graph-empty-hint">
           Empty diagram — press <span class="kbd">n</span> to create a node
@@ -105,6 +118,7 @@
         <div v-if="showShare" class="fx-hud-stage">
           <ShareDialog
             :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            :graphlibJson="graphlibJson"
             @close="showShare = false"
           />
         </div>
@@ -116,6 +130,7 @@
 <script>
 import D3Util from '@/helpers/D3Util'
 import CytoscapeRenderer from '@/helpers/CytoscapeRenderer'
+import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import { markRaw } from 'vue'
 import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
@@ -150,7 +165,8 @@ function _sessionColor() {
 
 export default {
   name: 'DiagramGraphView',
-  props: ['active'],
+  props: ['active', 'embedMode'],
+  emits: ['fork-embed', 'embed-login'],
   inject: ['modifier'],
   components: { D3NodeForm, D3EdgeForm, HistoryPanel, ShareDialog },
   data() {
@@ -626,7 +642,14 @@ export default {
       return Object.keys(this.peers).length > 0
     },
     isViewOnly() {
-      return _isViewOnly()
+      return !!this.embedMode || _isViewOnly()
+    },
+    isLoggedIn() {
+      return D3Util.auth()
+    },
+    graphlibJson() {
+      const mod = this.modifier?.value ?? this.modifier
+      return mod ? modelToGraphlib(mod) : null
     }
   },
   watch: {
@@ -832,5 +855,48 @@ h2 {
   font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   letter-spacing: 0.08em;
   pointer-events: none;
+}
+
+.embed-fork-bar {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.embed-fork-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--fx-accent), 0.6);
+  background: rgba(var(--fx-glass-bottom), 0.9);
+  color: rgb(var(--fx-ink));
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: background 0.15s;
+}
+
+.embed-fork-btn:hover {
+  background: rgba(var(--fx-accent), 0.2);
+}
+
+.embed-login-hint {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  color: rgba(var(--fx-ink), 0.7);
+  background: rgba(var(--fx-glass-bottom), 0.85);
+  padding: 6px 12px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+}
+
+.embed-login-hint a {
+  color: rgb(var(--fx-accent));
+  text-decoration: none;
 }
 </style>
