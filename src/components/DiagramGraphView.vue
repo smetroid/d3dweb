@@ -649,7 +649,7 @@ export default {
     },
     graphlibJson() {
       const mod = this.modifier?.value ?? this.modifier
-      return mod ? modelToGraphlib(mod) : null
+      return mod ? modelToGraphlib(mod.cy) : null
     }
   },
   watch: {
