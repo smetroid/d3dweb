@@ -96,7 +96,7 @@ View-only guests get a random display name server-side. No sign-up, no email, no
 
 Paste a d3dweb diagram into any markdown surface — GitHub READMEs, wikis, Notion, Confluence — with a single image tag. No login required to view.
 
-![Build → Test → Deploy pipeline](https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark)
+![Build → Test → Deploy pipeline](https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark&v=3)
 
 > Click the image to open it in the live editor.
 
