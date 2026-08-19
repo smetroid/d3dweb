@@ -9,7 +9,7 @@ primary_region = 'den'
 [build]
   [build.args]
     VITE_COLLAB_ENABLED = "true"
-    VITE_API_BASE_URL = "https://d3d-api.fly.dev"
+    VITE_API_BASE_URL = "https://d3d-api.vercel.app"
 
 [http_service]
   internal_port = 80
