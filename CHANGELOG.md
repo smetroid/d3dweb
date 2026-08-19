@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.1.0...d3dweb-v1.2.0) (2026-08-19)
+
+
+### Features
+
+* **embed:** GitHub plugin embed fixes ([e5bf08d](https://github.com/smetroid/d3dweb/commit/e5bf08da12347dc50872cde2829547546d65d05d))
+
+
+### Bug Fixes
+
+* **embed:** add v=3 to render urls to bust github camo cache ([229d800](https://github.com/smetroid/d3dweb/commit/229d800c0f4be11196c80516469a1b4c1dccd6e6))
+* **embed:** bust github camo cache + add v param to render urls ([4222ceb](https://github.com/smetroid/d3dweb/commit/4222ceb1cde03b73372eb60ea3b915b91b36359c))
+* **embed:** pass GraphModel to modelToGraphlib, not DiagramGraph ([cfa86b3](https://github.com/smetroid/d3dweb/commit/cfa86b3849430828307cfd9f60c669631a53e173))
+
 ## [1.1.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.0.0...d3dweb-v1.1.0) (2026-08-19)
 
 
