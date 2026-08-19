@@ -6,28 +6,25 @@
           <div class="fx-hud-title">
             <span class="fx-title-chip fx-chip-add">D3D</span>
             <h2 class="fx-title">CONTROL MATRIX</h2>
-            <span v-if="diagramInfo.id" class="fx-title-chip fx-chip-edit">DIAGRAM SAVED</span>
+          </div>
+          <div v-if="diagramInfo.name || diagramInfo.id" class="fx-hud-meta-group">
+            <div v-if="diagramInfo.name" class="fx-hud-meta">
+              <span class="fx-hud-meta-label">DIAGRAM INFO</span>
+              <span class="fx-hud-meta-name">{{ diagramInfo.name }}</span>
+              <span v-if="diagramInfo.description" class="fx-hud-meta-desc">{{
+                diagramInfo.description
+              }}</span>
+            </div>
+            <div v-if="diagramInfo.id" class="fx-hud-meta">
+              <span class="fx-hud-meta-label">DIAGRAM SAVED</span>
+              <span class="fx-hud-meta-name">{{ diagramInfo.id }}</span>
+            </div>
           </div>
           <span class="fx-hud-tag">{{ mod }} PLATFORM · HELP</span>
         </header>
 
+        <div class="fx-hud-divider"></div>
         <div class="fx-hud-body">
-          <section class="fx-hud-mod">
-            <h3 class="fx-hud-mod-title">Diagram Info</h3>
-            <div class="fx-hud-row">
-              <span class="fx-hud-row-title">ID</span>
-              <span class="fx-hud-row-v">{{ diagramInfo.id || '—' }}</span>
-            </div>
-            <div class="fx-hud-row">
-              <span class="fx-hud-row-title">Name</span>
-              <span class="fx-hud-row-v">{{ diagramInfo.name || '—' }}</span>
-            </div>
-            <div class="fx-hud-row">
-              <span class="fx-hud-row-title">Description</span>
-              <span class="fx-hud-row-v">{{ diagramInfo.description || '—' }}</span>
-            </div>
-          </section>
-
           <section class="fx-hud-mod">
             <h3 class="fx-hud-mod-title">Actions</h3>
             <div v-for="helper in actions" :key="helper.title" class="fx-hud-row">
@@ -166,4 +163,58 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.fx-hud-meta-group {
+  display: flex;
+  margin-left: auto;
+  border-left: 1px solid rgba(var(--fx-accent), 0.25);
+  border-right: 1px solid rgba(var(--fx-accent), 0.25);
+}
+
+.fx-hud-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 16px;
+  min-width: 0;
+}
+
+.fx-hud-meta + .fx-hud-meta {
+  border-left: 1px solid rgba(var(--fx-accent), 0.25);
+}
+
+.fx-hud-meta-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--fx-accent));
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.fx-hud-meta-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgb(var(--fx-ink));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fx-hud-divider {
+  height: 1px;
+  background: rgba(var(--fx-accent), 0.2);
+  margin: 0;
+}
+
+.fx-hud-meta-desc {
+  font-size: 9px;
+  color: rgb(var(--fx-ink-dim));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+}
+</style>
