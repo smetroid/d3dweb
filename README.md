@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/license-MIT-a78bfa?style=for-the-badge)](LICENSE)
 [![npm](https://img.shields.io/badge/npm-%40d3dweb%2Fembed-cb3837?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@d3dweb/embed)
 
-[**Live demo**](https://d3dweb.fly.dev) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Render service**](https://github.com/smetroid/d3d-render) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
+[**Live demo**](https://d3dweb.vercel.app) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Render service**](https://github.com/smetroid/d3d-render) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
 
 </div>
 
