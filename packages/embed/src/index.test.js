@@ -103,7 +103,7 @@ describe('size guard', () => {
 describe('embedUrl', () => {
   it('builds SPA URL with id', () => {
     const url = embedUrl({ id: 'abc123' })
-    expect(url.hostname).toBe('d3dweb.fly.dev')
+    expect(url.hostname).toBe('d3dweb.vercel.app')
     expect(url.searchParams.get('id')).toBe('abc123')
     expect(url.searchParams.get('src')).toBeNull()
   })

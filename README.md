@@ -154,7 +154,7 @@ d3dweb diagrams are graphlib JSON — a format any LLM can emit. No account, no 
 import { encode, embedUrl } from '@d3dweb/embed'
 
 const url = embedUrl({ src: encode(graphlibJson) })
-// → https://d3dweb.fly.dev/?src=<encoded>
+// → https://d3dweb.vercel.app/?src=<encoded>
 // Hand this URL to the user. No auth required.
 ```
 

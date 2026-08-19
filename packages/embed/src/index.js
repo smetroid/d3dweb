@@ -1,7 +1,7 @@
 import { deflate, inflate } from 'pako'
 
 const MAX_ENCODED_BYTES = 4096
-const DEFAULT_HOST = 'd3dweb.fly.dev'
+const DEFAULT_HOST = 'd3dweb.vercel.app'
 
 export class EmbedSizeError extends Error {
   constructor(bytes) {
@@ -58,7 +58,7 @@ export function decode(str) {
  * @param {string} [opts.src]     - Already-encoded diagram payload (from encode())
  * @param {string} [opts.layout]  - Layout name (e.g. 'dagre', 'cola')
  * @param {string} [opts.theme]   - 'light' | 'dark'
- * @param {string} [opts.host]    - Host (default: d3dweb.fly.dev)
+ * @param {string} [opts.host]    - Host (default: d3dweb.vercel.app)
  * @param {'svg'|'png'|null} [opts.render] - If set, targets d3d-render endpoint instead of SPA
  * @param {string} [opts.renderHost] - Render service host (default: d3d-render.vercel.app)
  * @returns {URL}
