@@ -1,4 +1,5 @@
 import VueCookies from 'vue-cookies'
+import axios from 'axios'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import Shortcuts from '@/helpers/Shortcuts.js'
 
@@ -604,6 +605,31 @@ export default {
     if (localStorage.getItem('token')) {
       return true
     } else {
+      return false
+    }
+  },
+  logout() {
+    localStorage.removeItem('token')
+  },
+  username() {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return null
+      const claims = JSON.parse(atob(token.split('.')[1]))
+      return claims.username || null
+    } catch {
+      return null
+    }
+  },
+  async validateToken() {
+    const token = localStorage.getItem('token')
+    if (!token) return false
+    try {
+      await axios.get(this.serverUrl() + '/dags', {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      return true
+    } catch {
       return false
     }
   },
