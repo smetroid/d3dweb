@@ -148,6 +148,19 @@ function toggleTheme() {
               <span class="fx-nav-letter">⌘K</span>
             </button>
           </div>
+          <div class="fx-nav-readout">
+            <span class="fx-nav-key">STORAGE</span>
+            <span class="fx-nav-val">{{ storageLabel }}</span>
+          </div>
+          <div class="fx-nav-readout" v-if="loggedInUser">
+            <span class="fx-nav-key">USER</span>
+            <span class="fx-nav-val">{{ loggedInUser }}</span>
+          </div>
+          <div class="fx-nav-readout" v-if="loggedInUser">
+            <button type="button" class="fx-nav-btn" title="Logout" @click="logout()">
+              <span class="fx-nav-letter">LOGOUT</span>
+            </button>
+          </div>
         </div>
 
         <HelperPane :expand="showHelpPane" :diagramInfo="d3dInfo" />
@@ -182,6 +195,7 @@ export default {
       ],
       menuLinks: [
         { icon: 'mdi-login', title: 'Login' },
+        { icon: 'mdi-logout', title: 'Logout' },
         { icon: 'mdi-cog-outline', title: 'D3D Settings' },
         {
           icon: 'mdi-open-in-new',
@@ -206,7 +220,8 @@ export default {
       ],
       d3dInfo: {},
       modifier: {},
-      embedMode: false
+      embedMode: false,
+      loggedInUser: null
     }
   },
   provide() {
@@ -230,7 +245,19 @@ export default {
       if (query.has('src') || query.has('id')) {
         await this.loadEmbedLink(query)
       } else if (D3Util.auth()) {
-        this.loadFromServer()
+        D3Util.validateToken().then((valid) => {
+          if (valid) {
+            this.loggedInUser = D3Util.username()
+            this.loadFromServer()
+          } else {
+            D3Util.logout()
+            this.loadDiagram()
+            this.emitter.emit('appMessage', {
+              message: 'Session expired, working locally',
+              status: 'info'
+            })
+          }
+        })
       } else {
         this.loadDiagram()
       }
@@ -289,6 +316,14 @@ export default {
      */
     this.emitter.on('showHelp', () => {
       this.showHelpPane = !this.showHelpPane
+    })
+
+    this.emitter.on('authChanged', () => {
+      if (D3Util.auth()) {
+        this.loggedInUser = D3Util.username()
+      } else {
+        this.loggedInUser = null
+      }
     })
 
     /*NOTE - Handle the default active section/component
@@ -662,12 +697,25 @@ export default {
     },
     d3Action: async function (event) {
       MenuLinks.Click(event, this)
+    },
+    logout() {
+      D3Util.logout()
+      this.loggedInUser = null
+      this.emitter.emit('appMessage', { message: 'Logged out', status: 'info' })
     }
   },
   computed: {
+    storageLabel() {
+      return this.loggedInUser ? 'Server' : 'Local'
+    },
     commands() {
+      const filtered = this.menuLinks.filter((l) => {
+        if (l.title === 'Login' && this.loggedInUser) return false
+        if (l.title === 'Logout' && !this.loggedInUser) return false
+        return true
+      })
       return [
-        ...this.menuLinks.map((l) => ({ ...l, group: 'Menu' })),
+        ...filtered.map((l) => ({ ...l, group: 'Menu' })),
         ...this.actionLinks.map((l) => ({ ...l, group: 'Actions' }))
       ]
     }
