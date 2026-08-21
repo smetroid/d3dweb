@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.1...d3dweb-v1.3.0) (2026-08-21)
+
+
+### Features
+
+* **settings:** show deployed app version in settings footer ([93c52ce](https://github.com/smetroid/d3dweb/commit/93c52ce33442474a1a93be9a195f6396f35c395f))
+* **settings:** show deployed app version in settings footer ([d618ea8](https://github.com/smetroid/d3dweb/commit/d618ea8eb7058b1cf485a30582a26c74ca1923be))
+
+
+### Bug Fixes
+
+* **lint:** declare __APP_VERSION__ as eslint global ([83c1349](https://github.com/smetroid/d3dweb/commit/83c13495451a0846da0e29526e3de51d6e588b6b))
+
 ## [1.2.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.0...d3dweb-v1.2.1) (2026-08-21)
 
 
