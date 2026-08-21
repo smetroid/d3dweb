@@ -547,8 +547,12 @@ export default {
       }
 
       if (!serverDiagramInfo?.diagram) {
-        this.$cookies.remove('LastLocallySavedItemId')
-        this.loadDiagram()
+        if (id && D3Util.getLocalItem(id)) {
+          this.loadDiagram(id)
+        } else {
+          this.$cookies.remove('LastLocallySavedItemId')
+          this.loadDiagram()
+        }
         return
       }
 
