@@ -42,7 +42,6 @@ export default {
     return api()
       .get('/dag/' + id + '/public')
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async getDiagrams() {
     return api()
@@ -130,7 +129,6 @@ export default {
         }
       )
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async deleteDiagram(id) {
     if (D3Util.debug) {
