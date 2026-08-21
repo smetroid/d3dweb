@@ -1006,6 +1006,7 @@
                 <button type="button" class="fx-btn fx-btn-ghost" @click="close()">
                   Close ({{ shortcutLabels.close }})
                 </button>
+                <span class="fx-version-label">v{{ appVersion }}</span>
               </footer>
             </div>
           </div>
@@ -1029,6 +1030,7 @@ export default {
     return {
       settingsModal: false,
       openSel: null,
+      appVersion: __APP_VERSION__,
       settings: this.cloneDefaults(),
       flowOptions: [
         { label: 'None', value: null },
@@ -1400,6 +1402,13 @@ export default {
 </script>
 
 <style scoped>
+.fx-version-label {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  align-self: center;
+}
+
 .fx-chip-settings {
   background: rgba(var(--fx-accent), 0.1);
   color: rgb(var(--fx-ink));
