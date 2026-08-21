@@ -161,6 +161,10 @@ function toggleTheme() {
               <span class="fx-nav-letter">LOGOUT</span>
             </button>
           </div>
+          <div v-if="d3dInfo.name" class="fx-nav-readout fx-nav-diagram-name">
+            <span class="fx-nav-key">DIAGRAM</span>
+            <span class="fx-nav-val">{{ d3dInfo.name }}</span>
+          </div>
         </div>
 
         <HelperPane :expand="showHelpPane" :diagramInfo="d3dInfo" />
@@ -542,6 +546,16 @@ export default {
         console.log(id)
       }
 
+      if (!serverDiagramInfo?.diagram) {
+        if (id && D3Util.getLocalItem(id)) {
+          this.loadDiagram(id)
+        } else {
+          this.$cookies.remove('LastLocallySavedItemId')
+          this.loadDiagram()
+        }
+        return
+      }
+
       try {
         const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
         const model = markRaw(
@@ -855,6 +869,10 @@ export default {
   background-color: transparent;
 }
 */
+
+.fx-nav-diagram-name {
+  margin-left: auto;
+}
 
 .pitch-mixin {
   width: 100%;

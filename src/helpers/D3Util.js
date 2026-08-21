@@ -280,11 +280,11 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    if (s && s.serverUrl) return s.serverUrl
+    if (s && s.serverUrl) return s.serverUrl.replace(/\/+$/, '')
     const envBase = import.meta.env.VITE_API_BASE_URL
     if (envBase) {
-      if (/^https?:\/\//.test(envBase)) return envBase
-      return window.location.origin + envBase
+      if (/^https?:\/\//.test(envBase)) return envBase.replace(/\/+$/, '')
+      return (window.location.origin + envBase).replace(/\/+$/, '')
     }
     return 'http://localhost:3000'
   },
@@ -616,7 +616,7 @@ export default {
       const token = localStorage.getItem('token')
       if (!token) return null
       const claims = JSON.parse(atob(token.split('.')[1]))
-      return claims.username || null
+      return claims.name || claims.username || null
     } catch {
       return null
     }

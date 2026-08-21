@@ -126,6 +126,16 @@ describe('embedUrl', () => {
     expect(url.host).toBe('localhost:5173')
   })
 
+  it('strips protocol from host when given an origin', () => {
+    const url = embedUrl({ id: 'x', host: 'https://d3dweb.vercel.app' })
+    expect(url.href).toBe('https://d3dweb.vercel.app/?id=x')
+  })
+
+  it('strips protocol and trailing slash from renderHost', () => {
+    const url = embedUrl({ id: 'x', render: 'png', renderHost: 'https://render.d3dweb.dev/' })
+    expect(url.href).toBe('https://render.d3dweb.dev/png?id=x')
+  })
+
   it('targets render service SVG endpoint', () => {
     const encoded = encode(SMALL)
     const url = embedUrl({ src: encoded, render: 'svg' })

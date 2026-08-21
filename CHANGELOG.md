@@ -1,5 +1,62 @@
 # Changelog
 
+## [1.3.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.1...d3dweb-v1.3.0) (2026-08-21)
+
+
+### Features
+
+* **settings:** show deployed app version in settings footer ([93c52ce](https://github.com/smetroid/d3dweb/commit/93c52ce33442474a1a93be9a195f6396f35c395f))
+* **settings:** show deployed app version in settings footer ([d618ea8](https://github.com/smetroid/d3dweb/commit/d618ea8eb7058b1cf485a30582a26c74ca1923be))
+
+
+### Bug Fixes
+
+* **lint:** declare __APP_VERSION__ as eslint global ([83c1349](https://github.com/smetroid/d3dweb/commit/83c13495451a0846da0e29526e3de51d6e588b6b))
+
+## [1.2.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.0...d3dweb-v1.2.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **api:** graceful fallback when diagram cannot be loaded from server ([ff01d6d](https://github.com/smetroid/d3dweb/commit/ff01d6dbecce96aaf90b45bb3c82e9eff6860a21))
+
+## [1.2.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.1.0...d3dweb-v1.2.0) (2026-08-19)
+
+
+### Features
+
+* **embed:** GitHub plugin embed fixes ([e5bf08d](https://github.com/smetroid/d3dweb/commit/e5bf08da12347dc50872cde2829547546d65d05d))
+
+
+### Bug Fixes
+
+* **embed:** add v=3 to render urls to bust github camo cache ([229d800](https://github.com/smetroid/d3dweb/commit/229d800c0f4be11196c80516469a1b4c1dccd6e6))
+* **embed:** bust github camo cache + add v param to render urls ([4222ceb](https://github.com/smetroid/d3dweb/commit/4222ceb1cde03b73372eb60ea3b915b91b36359c))
+* **embed:** pass GraphModel to modelToGraphlib, not DiagramGraph ([cfa86b3](https://github.com/smetroid/d3dweb/commit/cfa86b3849430828307cfd9f60c669631a53e173))
+
+## [1.1.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.0.0...d3dweb-v1.1.0) (2026-08-19)
+
+
+### Features
+
+* **auth:** add login status indicator, logout, and token validation ([14f8866](https://github.com/smetroid/d3dweb/commit/14f8866a2d3fc1a1eddb5e3d86e0b804b04e1db5))
+* **auth:** login status indicator, logout, and token validation ([4aec892](https://github.com/smetroid/d3dweb/commit/4aec8924673a7fb3a3c6ab93104c1a52cc02f448))
+* **embed:** add embed tab to ShareDialog with inline and by-id modes ([261bbb8](https://github.com/smetroid/d3dweb/commit/261bbb82d44396dc9769b826fab74885ff956aad)), closes [#57](https://github.com/smetroid/d3dweb/issues/57)
+* **embed:** add npm workspaces + @d3dweb/embed package ([14270b5](https://github.com/smetroid/d3dweb/commit/14270b5fe495485e74e683d10ba16cf884d8f319))
+* **embed:** Release 1 — inline embed, @d3dweb/embed package, ShareDialog Embed tab, README ([528477c](https://github.com/smetroid/d3dweb/commit/528477c396fd77d025eb1725811414c163185666))
+* **embed:** spa deep-link handler for ?src= and ?id= embed params ([9af9a83](https://github.com/smetroid/d3dweb/commit/9af9a83f468e42f8422d207a35b46d5c4749e378)), closes [#56](https://github.com/smetroid/d3dweb/issues/56)
+* expand diagram saved block and right-align meta group in control matrix header ([f5faa9a](https://github.com/smetroid/d3dweb/commit/f5faa9a8c332d6d0fee1f870ee63572b836f012e))
+* move diagram info into footer nav bar and control matrix header ([12bfe9f](https://github.com/smetroid/d3dweb/commit/12bfe9f1c1ab4f6ea409e7e71e7f6c15ec96688f))
+* move diagram info into footer nav bar and control matrix header ([6da760b](https://github.com/smetroid/d3dweb/commit/6da760b601a1ba4ec3f2c35b0db5094bd4fa5137))
+
+
+### Bug Fixes
+
+* **auth:** use correct JWT claim for username and normalize serverUrl to prevent double slashes ([ea7828f](https://github.com/smetroid/d3dweb/commit/ea7828f1e54fee8a3fcb4dfe6e4f14b17b0b6565))
+* **auth:** use correct JWT claim for username and normalize serverUrl to prevent double slashes ([7f78d75](https://github.com/smetroid/d3dweb/commit/7f78d7561fdf7224a15ab73c6afd1fb32d099dab))
+* **embed:** use TextDecoder for pako v2 inflate (dropped to:string option) ([9d6a63b](https://github.com/smetroid/d3dweb/commit/9d6a63b7b0765a01cee928ee2933509303fe7c60))
+* **merge:** resolve conflict with main — keep embedMode + token validation ([2adbadc](https://github.com/smetroid/d3dweb/commit/2adbadced68533a7ccb5f7e7c42c8584a2902770))
+
 ## 1.0.0 (2026-08-15)
 
 

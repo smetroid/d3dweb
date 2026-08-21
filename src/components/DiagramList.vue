@@ -82,7 +82,6 @@
                         :id="item.id"
                         :class="{ 'fx-row-selected': selectedRowId == item.id }"
                       >
-                        <td>{{ item.id }}</td>
                         <td>{{ item.name }}</td>
                         <td class="fx-cell-description">{{ item.description }}</td>
                         <td>
@@ -225,7 +224,6 @@ export default {
         diagram: '',
       },
       headers: [
-        {title: 'Id', key: 'id', sortable: false},
         {title: 'Name', key: 'name', sortable: true},
         {title: 'Description', key: 'description', sortable: true},
         {title: 'Created', key: 'created', sortable: true},
