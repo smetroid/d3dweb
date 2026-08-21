@@ -546,6 +546,12 @@ export default {
         console.log(id)
       }
 
+      if (!serverDiagramInfo?.diagram) {
+        this.$cookies.remove('LastLocallySavedItemId')
+        this.loadDiagram()
+        return
+      }
+
       try {
         const parsed = migrateDiagramPayload(JSON.parse(serverDiagramInfo.diagram))
         const model = markRaw(

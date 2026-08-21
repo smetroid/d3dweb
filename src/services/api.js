@@ -34,11 +34,8 @@ export default {
       .then((response) => {
         return response.data
       })
-      .catch((error) => {
-        return error
-      })
-      .finally(() => {
-        console.log('getDiagram finished')
+      .catch(() => {
+        return null
       })
   },
   async getDiagramPublic(id) {
