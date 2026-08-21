@@ -471,6 +471,48 @@
         font-size: 0.8rem;
         color: var(--text-dim);
       }
+      .embed-snippet-group {
+        margin-top: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+      .embed-snippet-group h3 {
+        margin-bottom: 0.5rem;
+      }
+      .embed-snippet-group > div > p {
+        color: var(--text-dim);
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+      }
+      .code-snippet {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(5, 7, 15, 0.7);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 14px 18px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+        color: var(--cyan);
+        backdrop-filter: blur(20px);
+        overflow-x: auto;
+      }
+      .code-snippet code {
+        flex: 1;
+        white-space: nowrap;
+      }
+      .copy-btn {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: var(--text-dim);
+        transition: color 0.2s;
+      }
+      .copy-btn:hover { color: var(--cyan); }
 
       /* --- Split section --- */
       .split {
@@ -838,12 +880,14 @@
         <p class="section-lede">Drop a d3dweb diagram into any GitHub README, wiki, or doc. No login required to view. One click to fork and edit.</p>
 
         <div class="embed-preview">
-          <img
-            src="https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark&v=3"
-            alt="Build → Test → Deploy pipeline rendered by d3d-render"
-            style="max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,0.08);"
-          />
-          <p class="embed-caption">↑ Live SVG — click to open in the editor</p>
+          <a href="https://d3dweb.vercel.app/?id=29cbd78f-750a-48c7-95df-330d8316e83f" target="_blank" rel="noopener">
+            <img
+              src="https://d3d-render.vercel.app/svg?src=eJx9jrkKwzAQRH8lTFpVzgUqQz4hXUghW-sDZK2wJJtg9O_BcY4ixu3MvN03gl1o2HrIEbrpqAikIUMXSaCNJjRVp1wNWSrjSaDg1nG0-h0kAcuaPORtRA-JPDZGQ6BXJtJ006icDCTOryIlMe8C-bA0u855wYY7SGz36liqw4_T5Aw_lsjLp_myGZ30LkNKdwHS1YLlsGLCduOir_-Uh1WLiVLeT0_TE7KFcVc&layout=dagre&theme=dark&v=3"
+              alt="Build → Test → Deploy pipeline rendered by d3d-render"
+              style="max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,0.08);"
+            />
+          </a>
+          <p class="embed-caption">↑ Click the image to open it in the live editor</p>
         </div>
 
         <div class="features" style="margin-top:2rem;">
@@ -877,6 +921,30 @@
             </div>
             <h3>AI-agent ready</h3>
             <p>Agents emit graphlib JSON, encode with <span class="mono">@d3dweb/embed</span>, and hand the URL to the user. No auth. The user forks it with one click.</p>
+          </div>
+        </div>
+
+        <div class="embed-snippet-group">
+          <div>
+            <h3>Portable embed <span style="font-size:0.8rem;color:var(--text-dim);font-weight:normal;">(no account needed)</span></h3>
+            <p>Diagram encoded in the URL itself. No account, no expiry. Copy the snippet from <strong>Share → Embed → Inline</strong> inside d3dweb, or generate it with <span class="mono">@d3dweb/embed</span>.</p>
+            <div class="code-snippet">
+              <code>![My diagram](https://d3d-render.vercel.app/svg?src=&lt;encoded&gt;&amp;layout=dagre&amp;theme=dark)</code>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText('![My diagram](https://d3d-render.vercel.app/svg?src=<encoded>&layout=dagre&theme=dark)')" title="Copy">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <h3>Public embed <span style="font-size:0.8rem;color:var(--text-dim);font-weight:normal;">(stable, revocable)</span></h3>
+            <p>Save the diagram to your account, toggle it public in <strong>Share → Embed → By ID</strong>, and use:</p>
+            <div class="code-snippet">
+              <code>![My diagram](https://d3d-render.vercel.app/svg?id=29cbd78f-750a-48c7-95df-330d8316e83f&amp;layout=dagre&amp;theme=dark)</code>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText('![My diagram](https://d3d-render.vercel.app/svg?id=29cbd78f-750a-48c7-95df-330d8316e83f&layout=dagre&theme=dark)')" title="Copy">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+            </div>
+            <p style="margin-top:0.75rem;font-size:0.85rem;">The <span class="mono">?id=</span> embed updates automatically when you edit the diagram. Toggle public off to revoke instantly.</p>
           </div>
         </div>
       </section>
