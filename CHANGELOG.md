@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.3.0...d3dweb-v1.3.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **app:** fall back to local storage by ID when server diagram not found ([d332d00](https://github.com/smetroid/d3dweb/commit/d332d00d1ce8adc8a72c033c9c077e21b16e4a7d))
+* **diagram-list:** remove ID column to hide legacy byte-array IDs ([5926ff5](https://github.com/smetroid/d3dweb/commit/5926ff57f2a3670cdb8bf8e35bd97217d99327a9))
+* **embed:** strip protocol from host to prevent double-https in embed URL ([1744aea](https://github.com/smetroid/d3dweb/commit/1744aea0df58c421bb834fee0fe93e34c702462e))
+* **embed:** strip protocol from host to prevent double-https in embed URL ([2e4da9f](https://github.com/smetroid/d3dweb/commit/2e4da9f5ceb47539bd364e341812b6a0d9c92c0f))
+* handle legacy byte-array diagram IDs gracefully ([566fed7](https://github.com/smetroid/d3dweb/commit/566fed7654cc9eed9961ed36648520300bfa0c09))
+* remove catch blocks that silently swallow errors ([579ece2](https://github.com/smetroid/d3dweb/commit/579ece2595e500215e8f5c01930f27d912404cfe))
+* remove catch blocks that silently swallow errors ([cd85fed](https://github.com/smetroid/d3dweb/commit/cd85fed37d80e4990b3c25c28fb8dfa610411c37))
+
 ## [1.3.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.1...d3dweb-v1.3.0) (2026-08-21)
 
 
