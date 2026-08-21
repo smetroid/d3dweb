@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.2.0...d3dweb-v1.2.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **api:** graceful fallback when diagram cannot be loaded from server ([ff01d6d](https://github.com/smetroid/d3dweb/commit/ff01d6dbecce96aaf90b45bb3c82e9eff6860a21))
+
 ## [1.2.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.1.0...d3dweb-v1.2.0) (2026-08-19)
 
 
