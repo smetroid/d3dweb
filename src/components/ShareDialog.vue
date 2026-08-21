@@ -218,7 +218,7 @@ export default {
   computed: {
     byIdUrl() {
       if (!this.isPublic || !this.dagId) return null
-      return embedUrl({ id: this.dagId, host: window.location.origin })
+      return embedUrl({ id: this.dagId, host: window.location.hostname })
     }
   },
   methods: {
@@ -264,7 +264,7 @@ export default {
     buildInlineUrl() {
       if (!this.graphlibJson) return
       try {
-        this.inlineUrl = embedUrl({ src: encode(this.graphlibJson), host: window.location.origin })
+        this.inlineUrl = embedUrl({ src: encode(this.graphlibJson), host: window.location.hostname })
         this.inlineSizeError = null
       } catch (e) {
         if (e instanceof EmbedSizeError) {

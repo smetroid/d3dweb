@@ -50,6 +50,13 @@ export function decode(str) {
   return JSON.parse(new TextDecoder().decode(inflate(bytes)))
 }
 
+function normalizeHost(host) {
+  return String(host)
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '')
+}
+
 /**
  * Build a canonical embed URL for d3dweb or d3d-render.
  *
@@ -69,10 +76,10 @@ export function embedUrl({ id, src, layout, theme, host, render, renderHost } = 
 
   let base
   if (render) {
-    const rh = renderHost || 'd3d-render.vercel.app'
+    const rh = normalizeHost(renderHost || 'd3d-render.vercel.app')
     base = `https://${rh}/${render}`
   } else {
-    base = `https://${host || DEFAULT_HOST}/`
+    base = `https://${normalizeHost(host || DEFAULT_HOST)}/`
   }
 
   const url = new URL(base)
