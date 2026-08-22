@@ -191,11 +191,11 @@ export default {
         { icon: 'mdi-shape-square-plus', title: 'Add Node', shortcut: 'N' },
         { icon: 'mdi-file-edit-outline', title: 'Edit Node', shortcut: 'E' },
         { icon: 'mdi-selection-ellipse-remove', title: 'Delete Node', shortcut: 'X' },
-        { icon: 'mdi-selection', title: 'Select Node' },
+        { icon: 'mdi-selection', title: 'Select Node', shortcut: 'Shift+N' },
         { icon: 'mdi-shape-oval-plus', title: 'Add Edge', shortcut: 'D' },
         { icon: 'mdi-file-edit-outline', title: 'Edit Edge', shortcut: 'E' },
         { icon: 'mdi-selection-remove', title: 'Delete Edge', shortcut: 'X' },
-        { icon: 'mdi-selection', title: 'Select Edges' }
+        { icon: 'mdi-selection', title: 'Select Edges', shortcut: 'Shift+E' }
       ],
       menuLinks: [
         { icon: 'mdi-login', title: 'Login' },

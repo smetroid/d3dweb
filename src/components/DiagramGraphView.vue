@@ -227,8 +227,9 @@ export default {
     })
 
     this.emitter.on('edgeOrNode', (selection) => {
-      if (selection === 'Select Edges') this.edgeOrNode = 'edges'
-      else if (selection === 'Select Node') this.edgeOrNode = 'nodes'
+      if (selection === 'Select Edges' || selection === 'Select Node') {
+        this._setMode(selection === 'Select Edges' ? 'edges' : 'nodes')
+      }
     })
 
     // The command palette steals focus; release the graph trap so the two
@@ -542,6 +543,20 @@ export default {
             this._syncSelectionCrosshairs()
             break
           }
+          case 'selectNodes':
+          case 'selectEdges': {
+            const mode = graph.action === 'selectEdges' ? 'edges' : 'nodes'
+            if (this._setMode(mode)) {
+              this.emitter.emit('appMessage', {
+                message:
+                  mode === 'edges'
+                    ? 'Selecting edges — j/k/h/l to focus, Enter to select'
+                    : 'Selecting nodes — j/k/h/l to focus, Enter to select',
+                status: 'info'
+              })
+            }
+            break
+          }
           case 'history':
             if (mod) this.showHistory = true
             break
@@ -567,6 +582,16 @@ export default {
     _onContainerMousedown(event) {
       event.currentTarget.focus()
       event.preventDefault()
+    },
+
+    // Shared by the Actions Menu and the selectNodes/selectEdges shortcuts.
+    // Returns true only when the mode actually changed, and resets the focus
+    // index since it refers to a position in the previous element list.
+    _setMode(mode) {
+      if (this.edgeOrNode === mode) return false
+      this.edgeOrNode = mode
+      this.focusedIndex = null
+      return true
     },
 
     initials(name) {
