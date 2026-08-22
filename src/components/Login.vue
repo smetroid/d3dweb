@@ -111,19 +111,19 @@ export default {
       }
     },
     login: async function () {
-      var result = await D3DApi.auth(this.username, this.password)
+      try {
+        var result = await D3DApi.auth(this.username, this.password)
 
-      if (D3Util.debug) {
-        console.log(result)
-      }
-      if (Object.prototype.hasOwnProperty.call(result, 'data')) {
+        if (D3Util.debug) {
+          console.log(result)
+        }
         this.common()
-        this.emitter.emit('appMessage', { message: 'Successfully Authenticated', result: result })
-
         localStorage.setItem('token', JSON.stringify(result.data.token).replace(/"/g, ''))
+        this.emitter.emit('appMessage', { message: 'Successfully Authenticated', status: 'success' })
         this.emitter.emit('authChanged')
-      } else {
-        this.emitter.emit('appMessage', { message: 'Failed to Authenticate', result: result })
+      } catch (err) {
+        console.error('login failed', err)
+        this.emitter.emit('appMessage', { message: 'Failed to Authenticate', status: 'error' })
       }
     },
     close() {

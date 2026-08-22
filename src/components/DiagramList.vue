@@ -388,15 +388,15 @@ export default {
       this.diagrams = items;
     },
     getDiagrams: async function() {
-      var result = await D3DApi.getDiagrams()
-      if (D3Util.debug) console.log(result)
-      if (result.data === undefined) {
-        let data = {status: 'info', message: 'no data found ... Login to refresh token', result: result.response }
+      try {
+        var result = await D3DApi.getDiagrams()
+        if (D3Util.debug) console.log(result)
+        this.diagrams = result.dags || []
+      } catch (err) {
+        console.error('failed to load diagrams', err)
+        let data = {status: 'error', message: 'Failed to load diagrams — Login to refresh token'}
         this.emitter.emit('appMessage', data)
         this.close()
-      } else {
-        if (D3Util.debug) console.log(new Date(result.data.dags[0].updated).toLocaleString())
-        this.diagrams = result.data.dags
       }
     },
     close () {
