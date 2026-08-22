@@ -25,7 +25,15 @@ export default {
       return
     }
 
-    const data = await api.exchangeShare(token)
+    let data = null
+    try {
+      data = await api.exchangeShare(token)
+    } catch (err) {
+      console.error('share exchange failed', err)
+      this.error =
+        err.response?.data?.error || 'Could not reach the server. Please try again later.'
+      return
+    }
     if (!data || data.status !== 'ok') {
       this.error = data && data.error ? data.error : 'Invalid, expired, or revoked share link.'
       return

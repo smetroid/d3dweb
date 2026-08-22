@@ -913,14 +913,15 @@ export default {
       }
 
       if (D3Util.auth()) {
-        const result = await D3DApi.postDiagram(payload)
-        if (Object.prototype.hasOwnProperty.call(result, 'data')) {
+        try {
+          const result = await D3DApi.postDiagram(payload)
           this.id = result.data
           this.$cookies.set('LastLocallySavedItemId', this.id)
-          this.emitter.emit('appMessage', { message: 'New diagram successfully created', result })
+          this.emitter.emit('appMessage', { message: 'New diagram successfully created', status: 'success' })
           this.emitter.emit('updateDiagramInfo', this)
-        } else {
-          this.emitter.emit('appMessage', { message: 'Failed to create diagram', result })
+        } catch (err) {
+          console.error('failed to create diagram', err)
+          this.emitter.emit('appMessage', { message: 'Failed to create diagram', status: 'error' })
         }
       } else {
         const id = D3Util.createLocalEntry({
@@ -1026,14 +1027,16 @@ export default {
         created: this.created
       }
 
-      const response = await D3DApi.updateDiagram(updatedData)
-      if (Object.prototype.hasOwnProperty.call(response, 'data')) {
-        this.emitter.emit('appMessage', { message: 'Diagram saved', result: response })
-      } else {
-        this.emitter.emit('appMessage', { message: 'Failed to save diagram', result: response })
+      try {
+        await D3DApi.updateDiagram(updatedData)
+        this.emitter.emit('appMessage', { message: 'Diagram saved', status: 'success' })
+        this.emitter.emit('changeActive')
+        this.close()
+      } catch (err) {
+        console.error('failed to save diagram', err)
+        // Keep the form open — closing here would discard the user's edits.
+        this.emitter.emit('appMessage', { message: 'Failed to save diagram', status: 'error' })
       }
-      this.emitter.emit('changeActive')
-      this.close()
     },
 
     _modelFromJson() {

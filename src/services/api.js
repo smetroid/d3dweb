@@ -6,18 +6,15 @@ function api() {
 }
 
 export default {
+  // All methods reject on HTTP/network errors. Callers own error handling —
+  // no swallowing here. The one exception is getDiagram(), which resolves
+  // null on failure because loadFromServer() treats falsy as "fall back to
+  // local storage".
   async auth(username, password) {
-    return api()
-      .post('/auth/login', {
-        username: username,
-        password: password
-      })
-      .then((response) => {
-        return response
-      })
-      .catch((error) => {
-        return error
-      })
+    return api().post('/auth/login', {
+      username: username,
+      password: password
+    })
   },
   getOptions() {
     // return axios.get('http://192.168.1.4:3000/menus_options',
@@ -46,36 +43,21 @@ export default {
   async getDiagrams() {
     return api()
       .get('/dags', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
-      .then((response) => {
-        return response
-      })
-      .catch((error) => {
-        return error
-      })
+      .then((response) => response.data)
   },
   async postDiagram(payload) {
-    return api()
-      .post('/dag', payload, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
-      .then((response) => {
-        return response
-      })
-      .catch((error) => {
-        return error
-      })
+    return api().post(
+      '/dag',
+      payload,
+      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+    )
   },
   async updateDiagram(data) {
-    return api()
-      .post('/dag/' + data.id + '/update', data, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
-      .then((response) => {
-        return response
-      })
-      .catch((error) => {
-        return error
-      })
+    return api().post(
+      '/dag/' + data.id + '/update',
+      data,
+      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+    )
   },
   async getHistory(dagId) {
     return api()
@@ -83,17 +65,13 @@ export default {
         headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async restoreHistory(dagId, historyId) {
-    return api()
-      .post(
-        '/dag/' + dagId + '/history/' + historyId + '/restore',
-        {},
-        { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-      )
-      .then((response) => response)
-      .catch((error) => error)
+    return api().post(
+      '/dag/' + dagId + '/history/' + historyId + '/restore',
+      {},
+      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+    )
   },
   async createShare(dagId, req) {
     return api()
@@ -101,7 +79,6 @@ export default {
         headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async revokeShare(dagId, jti) {
     return api()
@@ -111,13 +88,11 @@ export default {
         { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
       )
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async exchangeShare(token) {
     return api()
       .get('/shares/exchange', { params: { token } })
       .then((response) => response.data)
-      .catch((error) => error)
   },
   async setDiagramPublic(id, isPublic) {
     return api()
