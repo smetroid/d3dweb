@@ -116,5 +116,171 @@ export default {
       .then((response) => {
         return response.data
       })
+  },
+
+  // ── Element Shares ───────────────────────────────────────────────────────────
+
+  async createElementShare(dagId, req) {
+    return api()
+      .post('/dag/' + dagId + '/elements/shares', req, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async exchangeElementShare(token) {
+    return api()
+      .get('/element-shares/exchange', { params: { token } })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async getElementShare(id) {
+    return api()
+      .get('/element-shares/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async revokeElementShare(id) {
+    return api()
+      .post(
+        '/element-shares/' + id + '/revoke',
+        {},
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async importElementShare(id) {
+    return api()
+      .post(
+        '/element-shares/' + id + '/import',
+        {},
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async listInbox() {
+    return api()
+      .get('/shares/inbox', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async getCatalog(limit) {
+    const params = limit ? { limit } : {}
+    return api()
+      .get('/catalog', { params })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+
+  // ── Companies ────────────────────────────────────────────────────────────────
+
+  async createCompany(name) {
+    return api()
+      .post(
+        '/companies',
+        { name },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async listCompanies() {
+    return api()
+      .get('/companies', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async addCompanyMember(companyId, userId) {
+    return api()
+      .put(
+        '/companies/' + companyId + '/members',
+        { userId },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async removeCompanyMember(companyId, userId) {
+    return api()
+      .delete('/companies/' + companyId + '/members/' + userId, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async deleteCompany(id) {
+    return api()
+      .delete('/companies/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+
+  // ── Groups ───────────────────────────────────────────────────────────────────
+
+  async createGroup(companyId, name) {
+    return api()
+      .post(
+        '/companies/' + companyId + '/groups',
+        { name },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async listGroups(companyId) {
+    return api()
+      .get('/companies/' + companyId + '/groups', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async addGroupMember(groupId, userId) {
+    return api()
+      .put(
+        '/groups/' + groupId + '/members',
+        { userId },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async removeGroupMember(groupId, userId) {
+    return api()
+      .delete('/groups/' + groupId + '/members/' + userId, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
+  },
+  async deleteGroup(id) {
+    return api()
+      .delete('/groups/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((response) => response.data)
+      .catch((error) => error)
   }
 }
