@@ -15,7 +15,7 @@
 
 [**Live demo**](https://d3dweb.vercel.app) · [**Landing page**](https://smetroid.github.io/d3dweb/) · [**API**](https://github.com/smetroid/d3d-api) · [**Render service**](https://github.com/smetroid/d3d-render) · [**Report bug**](https://github.com/smetroid/d3dweb/issues)
 
-[![Diagram](https://d3d-render.vercel.app/api/png?id=29cbd78f-750a-48c7-95df-330d8316e83f)](https://d3dweb.vercel.app/?id=29cbd78f-750a-48c7-95df-330d8316e83f)
+[![Diagram](https://d3d-render.vercel.app/api/png?id=29cbd78f-750a-48c7-95df-330d8316e83f&v=2)](https://d3dweb.vercel.app/?id=29cbd78f-750a-48c7-95df-330d8316e83f)
 
 </div>
 
