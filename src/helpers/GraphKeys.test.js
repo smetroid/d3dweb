@@ -50,6 +50,17 @@ describe('resolveGraphKey', () => {
     expect(resolveGraphKey(ev('f'), ctx())).toEqual({ action: 'showHints' })
     expect(resolveGraphKey(ev('Escape'), ctx())).toEqual({ action: 'close' })
     expect(resolveGraphKey(ev('H', { shift: true }), ctx())).toEqual({ action: 'history' })
+    expect(resolveGraphKey(ev('N', { shift: true }), ctx())).toEqual({ action: 'selectNodes' })
+    expect(resolveGraphKey(ev('E', { shift: true }), ctx())).toEqual({ action: 'selectEdges' })
+  })
+
+  it('mode switches fire regardless of current mode or focus', () => {
+    expect(
+      resolveGraphKey(ev('E', { shift: true }), ctx({ edgeOrNode: 'nodes', focusedNodeId: null }))
+    ).toEqual({ action: 'selectEdges' })
+    expect(
+      resolveGraphKey(ev('N', { shift: true }), ctx({ edgeOrNode: 'edges', focusedEdgeId: 'e1' }))
+    ).toEqual({ action: 'selectNodes' })
   })
 
   it('resolves navigation actions to their direction', () => {

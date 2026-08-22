@@ -104,6 +104,8 @@ export default {
           title: 'Focus Node',
           shortcut: `${Shortcuts.label('navDown')} or ${Shortcuts.label('navUp')}`
         },
+        { title: 'Select Nodes', shortcut: Shortcuts.label('selectNodes') },
+        { title: 'Select Edges', shortcut: Shortcuts.label('selectEdges') },
         { title: 'Active 1', shortcut: Shortcuts.label('select') },
         {
           title: 'Active 2',

@@ -542,6 +542,22 @@ export default {
             this._syncSelectionCrosshairs()
             break
           }
+          case 'selectNodes':
+          case 'selectEdges': {
+            const mode = graph.action === 'selectEdges' ? 'edges' : 'nodes'
+            if (this.edgeOrNode !== mode) {
+              this.edgeOrNode = mode
+              this.focusedIndex = null
+              this.emitter.emit('appMessage', {
+                message:
+                  mode === 'edges'
+                    ? 'Selecting edges — j/k/h/l to focus, Enter to select'
+                    : 'Selecting nodes — j/k/h/l to focus, Enter to select',
+                status: 'info'
+              })
+            }
+            break
+          }
           case 'history':
             if (mod) this.showHistory = true
             break

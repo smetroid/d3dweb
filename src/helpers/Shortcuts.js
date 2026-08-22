@@ -41,6 +41,20 @@ export const DEFAULT_SHORTCUTS = [
   { id: 'navUp', group: 'graph', label: 'Focus previous element', mac: 'k', other: 'k' },
   { id: 'navLeft', group: 'graph', label: 'Focus left', mac: 'h', other: 'h' },
   { id: 'navRight', group: 'graph', label: 'Focus right', mac: 'l', other: 'l' },
+  {
+    id: 'selectNodes',
+    group: 'graph',
+    label: 'Select nodes mode',
+    mac: 'shift+n',
+    other: 'shift+n'
+  },
+  {
+    id: 'selectEdges',
+    group: 'graph',
+    label: 'Select edges mode',
+    mac: 'shift+e',
+    other: 'shift+e'
+  },
   { id: 'select', group: 'graph', label: 'Select / deselect', mac: 'enter', other: 'enter' },
   { id: 'showHints', group: 'graph', label: 'Show element hints', mac: 'f', other: 'f' },
   { id: 'toggleTheme', group: 'graph', label: 'Toggle theme', mac: 't', other: 't' },
