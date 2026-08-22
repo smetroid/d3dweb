@@ -1212,7 +1212,8 @@ export default {
       merged.defaultTheme = stored.defaultTheme || defaults.defaultTheme
       merged.debug = Boolean(stored.debug)
       merged.d3dInfo = Boolean(stored.d3dInfo)
-      merged.showHelpPane = Boolean(stored.showHelpPane)
+      merged.showHelpPane =
+        stored.showHelpPane !== undefined ? Boolean(stored.showHelpPane) : defaults.showHelpPane
       merged.zoomFitFactor = Number(stored.zoomFitFactor) || defaults.zoomFitFactor
       merged.defaultZoomFit =
         stored.defaultZoomFit !== undefined
