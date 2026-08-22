@@ -65,6 +65,7 @@ function toggleTheme() {
       <DiagramGraphView
         :active="active"
         :embed-mode="embedMode"
+        :logged-in="!!loggedInUser"
         @fork-embed="forkEmbedDiagram"
         @embed-login="() => emitter.emit('changeActive', 'Login')"
       />
@@ -248,6 +249,12 @@ export default {
       const query = new URLSearchParams(window.location.search)
       if (query.has('src') || query.has('id')) {
         await this.loadEmbedLink(query)
+        if (D3Util.auth()) {
+          // Embed mode skips the normal auth bootstrap, so resolve the user
+          // here — otherwise the fork bar never shows for logged-in visitors.
+          const valid = await D3Util.validateToken()
+          this.loggedInUser = valid ? D3Util.username() : null
+        }
       } else if (D3Util.auth()) {
         D3Util.validateToken().then((valid) => {
           if (valid) {

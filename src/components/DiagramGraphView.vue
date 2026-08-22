@@ -60,7 +60,7 @@
         <div v-if="isViewOnly" class="view-only-badge">VIEW ONLY</div>
         <div v-if="embedMode" class="embed-fork-bar">
           <button
-            v-if="isLoggedIn"
+            v-if="loggedIn"
             class="embed-fork-btn"
             title="Save a copy to your account"
             @click="$emit('fork-embed')"
@@ -165,7 +165,7 @@ function _sessionColor() {
 
 export default {
   name: 'DiagramGraphView',
-  props: ['active', 'embedMode'],
+  props: ['active', 'embedMode', 'loggedIn'],
   emits: ['fork-embed', 'embed-login'],
   inject: ['modifier'],
   components: { D3NodeForm, D3EdgeForm, HistoryPanel, ShareDialog },
@@ -669,9 +669,6 @@ export default {
     isViewOnly() {
       return !!this.embedMode || _isViewOnly()
     },
-    isLoggedIn() {
-      return D3Util.auth()
-    },
     graphlibJson() {
       const mod = this.modifier?.value ?? this.modifier
       return mod ? modelToGraphlib(mod.cy) : null
@@ -883,10 +880,12 @@ h2 {
 }
 
 .embed-fork-bar {
-  position: absolute;
-  bottom: 12px;
+  /* Fixed + raised above the app footer (which overlays the bottom-right
+     corner and hides this bar when pinned to the container edge). */
+  position: fixed;
+  bottom: 60px;
   right: 12px;
-  z-index: 6;
+  z-index: 210;
   display: flex;
   align-items: center;
   gap: 8px;
