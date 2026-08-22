@@ -5,7 +5,9 @@
         <header class="fx-panel-header">
           <div class="fx-panel-title">
             <span class="fx-title-chip fx-chip-edit">SHR</span>
-            <h2 class="fx-title">{{ activeTab === 'share' ? 'SHARE' : 'EMBED' }}</h2>
+            <h2 class="fx-title">
+              {{ activeTab === 'share' ? 'SHARE' : activeTab === 'readme' ? 'README' : 'EMBED' }}
+            </h2>
           </div>
           <button type="button" class="fx-close" aria-label="Close" @click="$emit('close')">
             ✕
@@ -22,6 +24,13 @@
           </button>
           <button class="tab-btn" :class="{ active: activeTab === 'embed' }" @click="switchToEmbed">
             Embed
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'readme' }"
+            @click="switchToReadme"
+          >
+            README
           </button>
         </div>
 
@@ -93,7 +102,7 @@
           </template>
 
           <!-- EMBED TAB -->
-          <template v-else>
+          <template v-else-if="activeTab === 'embed'">
             <div class="share-field">
               <label class="share-label">MODE</label>
               <div class="share-seg">
@@ -175,6 +184,69 @@
               <div v-if="embedErrorMsg" class="share-error">{{ embedErrorMsg }}</div>
             </template>
           </template>
+
+          <!-- README TAB -->
+          <template v-else-if="activeTab === 'readme'">
+            <div class="embed-public-row">
+              <span class="share-label">PUBLIC</span>
+              <button
+                class="public-toggle"
+                :class="{ on: isPublic }"
+                :disabled="publicLoading || publicToggling"
+                @click="togglePublic"
+              >
+                {{ publicLoading ? '…' : isPublic ? 'On' : 'Off' }}
+              </button>
+            </div>
+            <p class="share-hint">
+              {{
+                isPublic
+                  ? 'Paste the markdown below into your README to show a live diagram badge.'
+                  : 'Make this diagram public to generate a README badge.'
+              }}
+            </p>
+            <template v-if="isPublic && readmeMarkdown">
+              <div class="share-field">
+                <label class="share-label">MARKDOWN</label>
+                <div class="share-link-row">
+                  <input
+                    ref="readmeMdInput"
+                    class="share-link-input"
+                    :value="readmeMarkdown"
+                    readonly
+                    @click="$refs.readmeMdInput?.select()"
+                  />
+                  <button
+                    class="share-copy-btn"
+                    :class="{ copied: readmeMdCopied }"
+                    @click="copyReadmeMd"
+                  >
+                    {{ readmeMdCopied ? '✓' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+              <div class="share-field">
+                <label class="share-label">IMAGE URL</label>
+                <div class="share-link-row">
+                  <input
+                    ref="readmeImgInput"
+                    class="share-link-input"
+                    :value="readmeImageUrl"
+                    readonly
+                    @click="$refs.readmeImgInput?.select()"
+                  />
+                  <button
+                    class="share-copy-btn"
+                    :class="{ copied: readmeImgCopied }"
+                    @click="copyReadmeImg"
+                  >
+                    {{ readmeImgCopied ? '✓' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+            </template>
+            <div v-if="embedErrorMsg" class="share-error">{{ embedErrorMsg }}</div>
+          </template>
         </div>
       </div>
     </focus-trap>
@@ -212,13 +284,25 @@ export default {
       publicLoading: false,
       publicToggling: false,
       idCopied: false,
-      embedErrorMsg: null
+      embedErrorMsg: null,
+      readmeMdCopied: false,
+      readmeImgCopied: false
     }
   },
   computed: {
     byIdUrl() {
       if (!this.isPublic || !this.dagId) return null
       return embedUrl({ id: this.dagId, host: window.location.hostname })
+    },
+    readmeImageUrl() {
+      if (!this.isPublic || !this.dagId) return null
+      return embedUrl({ id: this.dagId, render: 'api/png' }).toString()
+    },
+    readmeMarkdown() {
+      if (!this.isPublic || !this.dagId) return null
+      const img = this.readmeImageUrl
+      const link = embedUrl({ id: this.dagId, host: window.location.hostname }).toString()
+      return `[![Diagram](${img})](${link})`
     }
   },
   methods: {
@@ -264,7 +348,10 @@ export default {
     buildInlineUrl() {
       if (!this.graphlibJson) return
       try {
-        this.inlineUrl = embedUrl({ src: encode(this.graphlibJson), host: window.location.hostname })
+        this.inlineUrl = embedUrl({
+          src: encode(this.graphlibJson),
+          host: window.location.hostname
+        })
         this.inlineSizeError = null
       } catch (e) {
         if (e instanceof EmbedSizeError) {
@@ -321,6 +408,33 @@ export default {
         setTimeout(() => (this.idCopied = false), 2000)
       } catch {
         this.$refs.idLinkInput?.select()
+      }
+    },
+
+    switchToReadme() {
+      this.activeTab = 'readme'
+      this.loadPublicStatus()
+    },
+
+    async copyReadmeMd() {
+      if (!this.readmeMarkdown) return
+      try {
+        await navigator.clipboard.writeText(this.readmeMarkdown)
+        this.readmeMdCopied = true
+        setTimeout(() => (this.readmeMdCopied = false), 2000)
+      } catch {
+        this.$refs.readmeMdInput?.select()
+      }
+    },
+
+    async copyReadmeImg() {
+      if (!this.readmeImageUrl) return
+      try {
+        await navigator.clipboard.writeText(this.readmeImageUrl)
+        this.readmeImgCopied = true
+        setTimeout(() => (this.readmeImgCopied = false), 2000)
+      } catch {
+        this.$refs.readmeImgInput?.select()
       }
     }
   }
