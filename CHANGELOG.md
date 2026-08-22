@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.2](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.1...d3dweb-v1.5.2) (2026-08-22)
+
+
+### Bug Fixes
+
+* **api:** stop swallowing HTTP errors and handle failures at call sites ([7a5f5c2](https://github.com/smetroid/d3dweb/commit/7a5f5c2feb06c67cb1b7bd62e27bc8d9ac8a61fd))
+* **api:** stop swallowing HTTP errors and handle failures at call sites ([ab46fe2](https://github.com/smetroid/d3dweb/commit/ab46fe2243efd6e675a09fca9c7406a58e126b99))
+* **embed:** detect fork success correctly and always notify ([822e323](https://github.com/smetroid/d3dweb/commit/822e3235128f1121e96ed6155f8d840be255e8ff))
+* **embed:** detect fork success correctly and always notify ([8db3715](https://github.com/smetroid/d3dweb/commit/8db3715bd3f8295302090f274a1c2a48f3bc3186))
+* **embed:** detect fork success correctly and always notify ([14742a5](https://github.com/smetroid/d3dweb/commit/14742a5642ee9af4990d2606f91e9fa4285a6304))
+* **embed:** detect fork success correctly and always notify ([44b5051](https://github.com/smetroid/d3dweb/commit/44b5051b1a4237d36a84335b612ff29de7dfbc3e))
+
 ## [1.5.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.0...d3dweb-v1.5.1) (2026-08-22)
 
 
