@@ -702,18 +702,24 @@ export default {
           description: this.d3dInfo.description || '',
           diagram: JSON.stringify(graphlibJson)
         })
-        const newId = result?.data?.id || result?.id
-        if (newId) {
-          this.embedMode = false
-          await this.loadFromServer(newId)
-          this.emitter.emit('appMessage', {
-            message: 'Diagram forked — you can now edit it',
-            status: 'success'
-          })
-        }
+        // POST /dag answers with the new id as its body (see DiagramForm);
+        // api.js also swallows HTTP errors into the resolved value, so a
+        // missing/odd-shaped id here means the save did not happen.
+        const data = result?.data
+        const newId = typeof data === 'string' ? data : data?.id
+        if (!newId) throw new Error('no diagram id in fork response')
+        this.embedMode = false
+        await this.loadFromServer(newId)
+        this.emitter.emit('appMessage', {
+          message: 'Diagram saved to your account — you can now edit it',
+          status: 'success'
+        })
       } catch (err) {
         console.error('fork failed', err)
-        this.emitter.emit('appMessage', { message: 'Failed to fork diagram', status: 'error' })
+        this.emitter.emit('appMessage', {
+          message: 'Failed to save diagram to your account',
+          status: 'error'
+        })
       }
     },
     d3Action: async function (event) {
