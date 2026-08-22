@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.3.1...d3dweb-v1.4.0) (2026-08-22)
+
+
+### Features
+
+* **share:** add README badge tab to ShareDialog ([f9f91c8](https://github.com/smetroid/d3dweb/commit/f9f91c8d4b7e53c9060dcd28ff0c3d825ab4fc77))
+* **share:** add README badge tab to ShareDialog ([3b1e3ef](https://github.com/smetroid/d3dweb/commit/3b1e3ef3e1251d652272e4adecbf67bc5d4f9c55))
+
 ## [1.3.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.3.0...d3dweb-v1.3.1) (2026-08-21)
 
 
