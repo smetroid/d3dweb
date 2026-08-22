@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.0...d3dweb-v1.5.1) (2026-08-22)
+
+
+### Bug Fixes
+
+* **embed:** show fork bar for logged-in users and lift it above the footer ([849f30f](https://github.com/smetroid/d3dweb/commit/849f30fb82fe80fb42a679c5dbb1aed55a44f9bd))
+* **embed:** show fork bar for logged-in users and lift it above the footer ([4918b9b](https://github.com/smetroid/d3dweb/commit/4918b9b5267ebfacc9c6fee7c50b54a3bff555be))
+
 ## [1.5.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.4.0...d3dweb-v1.5.0) (2026-08-22)
 
 
