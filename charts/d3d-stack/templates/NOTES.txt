@@ -11,15 +11,9 @@ Next steps:
 3. Open the app:
      http://{{ .Values.ingress.host }}
 
-{{- if .Values.ingress.rethinkUI }}
-
-4. RethinkDB web UI:
-     http://{{ .Values.ingress.host }}/rethinkdb/
-{{- end }}
-
 {{- if not .Values.api.bootstrapUser.enabled }}
 
-5. Create a login user (localauth):
+4. Create a login user (localauth):
      kubectl -n {{ .Release.Namespace }} exec deploy/{{ .Release.Name }}-api -- \
        ./main createUser <username> <password> --config /etc/samus/samus.toml
 

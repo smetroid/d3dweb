@@ -1,4 +1,4 @@
-{{- $component := "rethinkdb" -}}
+{{- $component := "postgresql" -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,13 +6,9 @@ metadata:
   labels:
     {{- include "d3d-stack.componentLabels" (dict "root" . "component" $component) | nindent 4 }}
 spec:
-  clusterIP: None
   ports:
-    - name: driver
-      port: 28015
-      targetPort: driver
-    - name: cluster
-      port: 29015
-      targetPort: cluster
+    - name: postgres
+      port: 5432
+      targetPort: postgres
   selector:
     {{- include "d3d-stack.componentSelector" (dict "root" . "component" $component) | nindent 4 }}

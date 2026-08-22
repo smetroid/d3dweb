@@ -2,8 +2,11 @@ global:
   domain: d3d.local
   imagePullPolicy: IfNotPresent
 
-rethinkdb:
-  image: rethinkdb:2.4
+postgresql:
+  image: postgres:16-alpine
+  username: samus
+  password: dev-password-change-in-prod
+  database: samus
   storage: 1Gi
   storageClass: standard
   resources:
@@ -13,8 +16,6 @@ rethinkdb:
     limits:
       cpu: 500m
       memory: 512Mi
-  webUI:
-    enabled: true
 
 api:
   image:
@@ -34,9 +35,8 @@ api:
     bindAddr: ":8081"
     signingKey: dev-signing-key-change-in-prod
     authProvider: localauth
-    database: samus
-    # rethinkAddress defaults to <release>-rethinkdb:28015 when empty
-    rethinkAddress: ""
+    # postgresAddress defaults to <release>-postgresql:5432 when empty
+    postgresAddress: ""
     continuousQueryInterval: 5s
     logDagRequests: true
     logEdgeRequests: false
@@ -60,4 +60,3 @@ ingress:
   enabled: true
   className: nginx
   host: d3d.local
-  rethinkUI: true

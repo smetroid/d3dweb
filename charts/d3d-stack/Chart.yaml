@@ -1,6 +1,6 @@
 apiVersion: v2
 name: d3d-stack
-description: d3dweb + d3d-api + RethinkDB dev stack for minikube
+description: d3dweb + d3d-api + PostgreSQL dev stack for minikube
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
@@ -8,7 +8,7 @@ kubeVersion: ">=1.24.0"
 keywords:
   - d3dweb
   - d3d-api
-  - rethinkdb
+  - postgresql
   - development
 sources:
   - https://github.com/smetroid/d3dweb
