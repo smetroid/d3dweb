@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.4.0...d3dweb-v1.5.0) (2026-08-22)
+
+
+### Features
+
+* **graph:** add shortcuts for node/edge selection mode ([cbeb1f6](https://github.com/smetroid/d3dweb/commit/cbeb1f659eef7be07b938ff79ddd3a0a76bf1b07))
+* **graph:** add shortcuts for node/edge selection mode ([9c24b70](https://github.com/smetroid/d3dweb/commit/9c24b70faf87931fe19f6e9b2e12b75e9a14e3e5))
+* **settings:** change defaults for help pane and new node shape/alignment ([0c8c13b](https://github.com/smetroid/d3dweb/commit/0c8c13be568d742bbb643873fdc96db47bde41e8))
+* **settings:** change defaults for help pane and new node shape/alignment ([aff8d7e](https://github.com/smetroid/d3dweb/commit/aff8d7e475097ec877f122c6c7d7c2989322bc39))
+
 ## [1.4.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.3.1...d3dweb-v1.4.0) (2026-08-22)
 
 
