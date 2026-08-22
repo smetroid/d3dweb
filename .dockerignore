@@ -1,4 +1,3 @@
-# flyctl launch added from .gitignore
 # Logs
 **/logs
 **/*.log
@@ -29,5 +28,4 @@ cypress/screenshots
 **/*.sw?
 
 **/*.tsbuildinfo
-fly.toml
 charts

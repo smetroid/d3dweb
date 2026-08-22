@@ -4,14 +4,13 @@ Helm chart that runs the full d3d dev stack on **minikube**:
 
 - **d3dweb** — Vue SPA served by nginx
 - **d3d-api** — Go backend (`samus`) with WebSocket collab
-- **rethinkdb** — official `rethinkdb:2.4` StatefulSet with a persistent volume
+- **postgresql** — official `postgres:16-alpine` StatefulSet with a persistent volume
 
 Traffic is fronted by an **NGINX Ingress** on a single hostname:
 
 ```
 http://d3d.local/               -> d3dweb  (SPA)
 http://d3d.local/api/*          -> d3d-api (HTTP + WebSocket, /api prefix stripped)
-http://d3d.local/rethinkdb/*    -> rethinkdb admin UI (optional, dev-only)
 ```
 
 ## Prerequisites
@@ -54,9 +53,8 @@ charts/d3d-stack/
 └── templates/
     ├── _helpers.tpl
     ├── NOTES.txt
-    ├── rethinkdb-statefulset.yaml
-    ├── rethinkdb-service.yaml
-    ├── rethinkdb-service-ui.yaml
+    ├── postgresql-statefulset.yaml
+    ├── postgresql-service.yaml
     ├── api-deployment.yaml
     ├── api-service.yaml
     ├── api-configmap.yaml
@@ -84,8 +82,7 @@ WebSocket collab derives its URL from the same base (`ws://d3d.local/api/dag/:id
 make status              # pods / svc / ingress / pvc for the release
 make logs-api            # tail api logs
 make logs-web
-make logs-rdb
-make rdb-ui              # port-forward RethinkDB admin to :8080
+make logs-pg
 make uninstall           # helm uninstall (keeps the PVC)
 make wipe                # uninstall AND delete the PVC (destroys data)
 ```
@@ -105,22 +102,22 @@ Override anything in `values.yaml` with `--set` or a values file:
 helm upgrade --install d3d ./charts/d3d-stack \
   --set api.config.authProvider=ldap \
   --set api.config.signingKey=$(openssl rand -hex 32) \
-  --set rethinkdb.storage=5Gi
+  --set postgresql.storage=5Gi
 ```
 
 Key knobs:
 
-| Value                       | Default                          | Purpose                              |
-| --------------------------- | -------------------------------- | ------------------------------------ |
-| `ingress.host`              | `d3d.local`                      | Ingress hostname                     |
-| `ingress.rethinkUI`         | `true`                           | Expose `/rethinkdb/*` on the ingress |
-| `api.config.authProvider`   | `localauth`                      | Set `ldap` and configure LDAP block  |
-| `api.config.signingKey`     | `dev-signing-key-change-in-prod` | JWT signing key                      |
-| `api.bootstrapUser.enabled` | `false`                          | Create a user via post-install Job   |
-| `web.apiBaseUrl`            | `/api`                           | Baked into the SPA at build time     |
-| `web.collabEnabled`         | `true`                           | Sets `VITE_COLLAB_ENABLED`           |
-| `rethinkdb.storage`         | `1Gi`                            | PVC size                             |
-| `rethinkdb.storageClass`    | `standard`                       | StorageClass (minikube default)      |
+| Value                        | Default                          | Purpose                              |
+| ---------------------------- | -------------------------------- | ------------------------------------ |
+| `ingress.host`               | `d3d.local`                      | Ingress hostname                     |
+| `api.config.authProvider`    | `localauth`                      | Set `ldap` and configure LDAP block  |
+| `api.config.signingKey`      | `dev-signing-key-change-in-prod` | JWT signing key                      |
+| `api.config.postgresAddress` | ``                               | Override `<release>-postgresql:5432` |
+| `api.bootstrapUser.enabled`  | `false`                          | Create a user via post-install Job   |
+| `web.apiBaseUrl`             | `/api`                           | Baked into the SPA at build time     |
+| `web.collabEnabled`          | `true`                           | Sets `VITE_COLLAB_ENABLED`           |
+| `postgresql.storage`         | `1Gi`                            | PVC size                             |
+| `postgresql.storageClass`    | `standard`                       | StorageClass (minikube default)      |
 
 ## Not for production
 
@@ -128,12 +125,11 @@ This chart is optimized for a laptop dev loop:
 
 - `signingKey` is a dev default — override it
 - `authProvider: localauth` — swap to `ldap` and set the `ldap` block in `samus.toml.tmpl` for real deployments
-- The RethinkDB admin UI is publicly exposed on the ingress — set `ingress.rethinkUI=false` for anything shared
-- Single replica for API and RethinkDB, no TLS on the ingress
+- Single replica for API and PostgreSQL, no TLS on the ingress
 
 ## Troubleshooting
 
 - **`ErrImagePull` on d3dweb / d3d-api pods** — you skipped `eval $(minikube docker-env)`; re-run `make images`.
 - **404 on `/api/...`** — check `kubectl get ingress` and verify the nginx-ingress controller is running (`kubectl -n ingress-nginx get pods`).
 - **WebSocket won't connect** — nginx-ingress upgrades WS transparently; if the connection hangs, check `nginx.ingress.kubernetes.io/proxy-read-timeout` and confirm the client URL starts with `ws://d3d.local/api/dag/`.
-- **RethinkDB pod stays Pending** — no default StorageClass. Run `kubectl get storageclass` and set `--set rethinkdb.storageClass=<name>`.
+- **PostgreSQL pod stays Pending** — no default StorageClass. Run `kubectl get storageclass` and set `--set postgresql.storageClass=<name>`.

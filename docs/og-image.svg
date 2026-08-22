@@ -122,7 +122,7 @@
       <circle cx="22" cy="6" r="5" fill="#eab308"/>
       <circle cx="38" cy="6" r="5" fill="#3fb950"/>
       <rect x="60" y="-4" width="240" height="20" rx="5" fill="#000000" fill-opacity="0.35"/>
-      <text x="70" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#a9a3c9">d3dweb.fly.dev/diagram/pipeline-v2</text>
+      <text x="70" y="10" font-family="ui-monospace, monospace" font-size="10" fill="#a9a3c9">d3d.local/diagram/pipeline-v2</text>
 
       <!-- avatars -->
       <g transform="translate(340,-4)">

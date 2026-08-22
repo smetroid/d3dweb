@@ -2,7 +2,7 @@
  * Browser-local diagram history.
  *
  * Keeps a capped list of snapshots per diagram in localStorage so the History
- * panel can revert to earlier states without the RethinkDB-backed server.
+ * panel can revert to earlier states without the PostgreSQL-backed server.
  * Snapshots are the same graphlib JSON the server/local entries store, so a
  * restored snapshot can be fed straight through the normal load path.
  */

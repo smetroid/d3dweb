@@ -26,8 +26,8 @@ help:
 	@echo ""
 	@echo "local dev (fast iteration — no image rebuild):"
 	@echo "  dev-web          vite dev server → http://localhost:5173 (API via d3d.local)"
-	@echo "  pf-rethinkdb     port-forward RethinkDB :28015 to localhost:28015"
-	@echo "  dev-api-hint     print command to run d3d-api locally against port-forwarded RethinkDB"
+	@echo "  pf-postgres      port-forward PostgreSQL :5432 to localhost:5432"
+	@echo "  dev-api-hint     print command to run d3d-api locally against port-forwarded PostgreSQL"
 	@echo ""
 	@echo "hot reload (rebuild image + restart pod):"
 	@echo "  reload-api       image-api + rollout restart deploy/api"
@@ -36,8 +36,6 @@ help:
 	@echo "observability:"
 	@echo "  logs-api         tail api logs"
 	@echo "  logs-web         tail web logs"
-	@echo "  logs-rdb         tail rethinkdb logs"
-	@echo "  rdb-ui           port-forward RethinkDB admin UI → localhost:8081"
 	@echo ""
 	@echo "misc:"
 	@echo "  lint             helm lint"
@@ -121,14 +119,9 @@ logs-api:
 logs-web:
 	kubectl -n $(NAMESPACE) logs -f deploy/$(RELEASE)-web
 
-.PHONY: logs-rdb
-logs-rdb:
-	kubectl -n $(NAMESPACE) logs -f statefulset/$(RELEASE)-rethinkdb
-
-.PHONY: rdb-ui
-rdb-ui:
-	@echo "opening http://localhost:8080 (RethinkDB admin)"
-	kubectl -n $(NAMESPACE) port-forward svc/$(RELEASE)-rethinkdb-ui 8080:8080
+.PHONY: logs-pg
+logs-pg:
+	kubectl -n $(NAMESPACE) logs -f statefulset/$(RELEASE)-postgresql
 
 .PHONY: bootstrap-user
 bootstrap-user:
@@ -148,23 +141,23 @@ dev-web:
 	@echo "    API calls go to http://d3d.local/api — make sure tunnel is running"
 	@cd $(REPO_ROOT) && VITE_API_BASE_URL=http://d3d.local/api npm run dev
 
-# Port-forward RethinkDB to localhost:28015 so the API can run locally.
+# Port-forward PostgreSQL to localhost:5432 so the API can run locally.
 # Keep this running in a dedicated terminal.
-.PHONY: pf-rethinkdb
-pf-rethinkdb:
-	@echo "==> forwarding RethinkDB :28015 → localhost:28015"
-	kubectl -n $(NAMESPACE) port-forward svc/$(RELEASE)-rethinkdb 28015:28015
+.PHONY: pf-postgres
+pf-postgres:
+	@echo "==> forwarding PostgreSQL :5432 → localhost:5432"
+	kubectl -n $(NAMESPACE) port-forward svc/$(RELEASE)-postgresql 5432:5432
 
-# Print the command to run d3d-api locally against the port-forwarded RethinkDB.
+# Print the command to run d3d-api locally against the port-forwarded PostgreSQL.
 .PHONY: dev-api-hint
 dev-api-hint:
 	@echo ""
-	@echo "Run d3d-api locally (after 'make pf-rethinkdb' in another terminal):"
+	@echo "Run d3d-api locally (after 'make pf-postgres' in another terminal):"
 	@echo ""
 	@echo "  cd $(D3D_API_PATH)"
 	@echo "  go run samus.go --config samus_dev.toml"
 	@echo ""
-	@echo "samus_dev.toml already points rethinkdb.address at localhost:28015."
+	@echo "samus_dev.toml already points postgresql.address at localhost:5432."
 	@echo "The local API listens on :3001 — set Settings > Server URL to http://localhost:3001"
 	@echo "in the browser, or run 'make dev-web' and it will call d3d.local/api instead."
 	@echo ""

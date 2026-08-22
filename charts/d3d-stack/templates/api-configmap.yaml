@@ -1,5 +1,5 @@
 {{- $component := "api" -}}
-{{- $rethinkAddr := .Values.api.config.rethinkAddress | default (printf "%s-rethinkdb:28015" .Release.Name) -}}
+{{- $postgresAddr := .Values.api.config.postgresAddress | default (printf "%s-postgresql:5432" .Release.Name) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,9 +18,11 @@ data:
         log_node_requests = {{ .Values.api.config.logNodeRequests }}
         log_menu_requests = {{ .Values.api.config.logMenuRequests }}
 
-    [rethinkdb]
-        address = "{{ $rethinkAddr }}"
-        database = "{{ .Values.api.config.database }}"
+    [postgresql]
+        address = "{{ $postgresAddr }}"
+        user = "{{ .Values.postgresql.username }}"
+        password = "{{ .Values.postgresql.password }}"
+        database = "{{ .Values.postgresql.database }}"
 
     [notifiers.file]
         enabled = true

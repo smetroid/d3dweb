@@ -27,17 +27,17 @@ You have a graph. You want to work on it _with someone else_, right now, without
 
 That's d3dweb.
 
-| For **users**                                 | For **engineers / AI agents**                                      |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| Multi-user editing with live avatars          | Vue 3 Options API — familiar and easy to fork                      |
-| Vim-style `hjkl` graph navigation             | Cytoscape.js core — swap layouts or extensions freely              |
-| Command palette (`⌘K`)                        | 8 layouts (Cola, CoSE, Dagre, BFS…) hot-swap `⌘+1..8`              |
-| Share links with view/edit roles              | JWT share tokens with server-side revocation list                  |
-| Snapshot history + one-click restore          | 500ms debounced autosave with `clientId` echo prevention           |
-| View-only anonymous identities (`"Teal Fox"`) | Native WebSocket relay — no Redis, no CRDT server tax              |
-| **Embed diagrams in any markdown surface**    | `@d3dweb/embed` — encode graphlib JSON → URL, no account needed    |
-| **Fork an embedded diagram to your account**  | Agents emit graphlib JSON; d3d-render serves `image/svg+xml`       |
-| Every shortcut rebindable in Settings         | Fly.io deploy + release-please + Renovate + gitleaks preconfigured |
+| For **users**                                 | For **engineers / AI agents**                                   |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| Multi-user editing with live avatars          | Vue 3 Options API — familiar and easy to fork                   |
+| Vim-style `hjkl` graph navigation             | Cytoscape.js core — swap layouts or extensions freely           |
+| Command palette (`⌘K`)                        | 8 layouts (Cola, CoSE, Dagre, BFS…) hot-swap `⌘+1..8`           |
+| Share links with view/edit roles              | JWT share tokens with server-side revocation list               |
+| Snapshot history + one-click restore          | 500ms debounced autosave with `clientId` echo prevention        |
+| View-only anonymous identities (`"Teal Fox"`) | Native WebSocket relay — no Redis, no CRDT server tax           |
+| **Embed diagrams in any markdown surface**    | `@d3dweb/embed` — encode graphlib JSON → URL, no account needed |
+| **Fork an embedded diagram to your account**  | Agents emit graphlib JSON; d3d-render serves `image/svg+xml`    |
+| Every shortcut rebindable in Settings         | release-please + Renovate + gitleaks preconfigured              |
 
 ---
 
@@ -183,7 +183,7 @@ flowchart LR
     subgraph d3d-api
         D[REST /dag /shares]
         E[WS relay]
-        F[(RethinkDB)]
+        F[(PostgreSQL)]
     end
     A <--> B
     A --> C
@@ -375,7 +375,7 @@ npm run format    # Prettier
 
 ## Deployment
 
-CI runs lint + tests on every push. Fly.io deploys are gated on CI passing.
+CI runs lint + tests on every push.
 `release-please` cuts semver releases from Conventional Commits.
 Renovate keeps dependencies fresh. Gitleaks scans every push for secrets.
 Husky + lint-staged enforce format on commit.
