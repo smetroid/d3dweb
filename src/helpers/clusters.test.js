@@ -1,196 +1,226 @@
 import { describe, it, expect } from 'vitest'
-import { computeCluster, mergeClusterInto } from '@/helpers/clusters'
+import { computeCluster, mergeClusterInto } from './clusters.js'
 
-// A→B→C in one component; D is disconnected.
-const simpleGraph = JSON.stringify({
-  options: { directed: true, compound: true },
-  nodes: [
-    { v: 'A', value: { label: 'A' } },
-    { v: 'B', value: { label: 'B' } },
-    { v: 'C', value: { label: 'C' } },
-    { v: 'D', value: { label: 'D' } }
-  ],
-  edges: [
-    { v: 'A', w: 'B', value: {} },
-    { v: 'B', w: 'C', value: {} }
-  ]
-})
-
-function nodeIds(result) {
-  return result.nodes.map((n) => n.v).sort()
+// graphlib JSON format: {options, nodes:[{v, value, parent?}], edges:[{v, w, value}]}
+function makeGraph(nodes, edges = [], options = {}) {
+  return {
+    options: { directed: true, multigraph: false, compound: true, ...options },
+    nodes: nodes.map((n) =>
+      typeof n === 'string'
+        ? { v: n, value: {} }
+        : { v: n.v, value: n.value ?? {}, ...(n.parent ? { parent: n.parent } : {}) }
+    ),
+    edges: edges.map((e) => ({ v: e[0], w: e[1], value: e[2] ?? {} }))
+  }
 }
 
-// ── computeCluster ────────────────────────────────────────────────────────────
+// ─── computeCluster ───────────────────────────────────────────────────────────
 
-describe('computeCluster depth -1 (whole component)', () => {
-  it('returns A,B,C when starting from A', () => {
-    const result = computeCluster(simpleGraph, ['A'], -1)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C'])
+describe('computeCluster – depth -1 (undirected component)', () => {
+  it('returns only the root node when it has no edges', () => {
+    const g = makeGraph(['a', 'b', 'c'])
+    const result = computeCluster(g, ['a'], -1)
+    expect(result.nodes.map((n) => n.v).sort()).toEqual(['a'])
+    expect(result.edges).toEqual([])
   })
 
-  it('returns A,B,C when starting from middle node B', () => {
-    const result = computeCluster(simpleGraph, ['B'], -1)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C'])
-  })
-
-  it('returns full graph when roots span both components', () => {
-    const result = computeCluster(simpleGraph, ['A', 'D'], -1)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C', 'D'])
-  })
-
-  it('includes only edges between selected nodes', () => {
-    const result = computeCluster(simpleGraph, ['A'], -1)
+  it('returns connected component for a simple chain', () => {
+    const g = makeGraph(
+      ['a', 'b', 'c', 'd'],
+      [
+        ['a', 'b'],
+        ['b', 'c']
+      ]
+    )
+    const result = computeCluster(g, ['a'], -1)
+    expect(result.nodes.map((n) => n.v).sort()).toEqual(['a', 'b', 'c'])
     expect(result.edges).toHaveLength(2)
   })
-})
 
-describe('computeCluster depth 0 (roots + descendants)', () => {
-  it('returns A,B,C from root A (directed traversal)', () => {
-    const result = computeCluster(simpleGraph, ['A'], 0)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C'])
+  it('treats edges as undirected so upstream nodes are included', () => {
+    const g = makeGraph(
+      ['a', 'b', 'c'],
+      [
+        ['b', 'a'],
+        ['b', 'c']
+      ]
+    )
+    const result = computeCluster(g, ['a'], -1)
+    expect(result.nodes.map((n) => n.v).sort()).toEqual(['a', 'b', 'c'])
   })
 
-  it('returns only C when starting from leaf C', () => {
-    const result = computeCluster(simpleGraph, ['C'], 0)
-    expect(nodeIds(result)).toEqual(['C'])
-    expect(result.edges).toHaveLength(0)
-  })
-})
-
-describe('computeCluster depth N (N-hop undirected BFS)', () => {
-  it('depth 1 from B reaches A and C', () => {
-    const result = computeCluster(simpleGraph, ['B'], 1)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C'])
-  })
-
-  it('depth 1 from A reaches only B (C is 2 hops away)', () => {
-    const result = computeCluster(simpleGraph, ['A'], 1)
-    expect(nodeIds(result)).toEqual(['A', 'B'])
-  })
-
-  it('depth 2 from A reaches B and C', () => {
-    const result = computeCluster(simpleGraph, ['A'], 2)
-    expect(nodeIds(result)).toEqual(['A', 'B', 'C'])
+  it('multi-root expands from all roots simultaneously', () => {
+    const g = makeGraph(
+      ['a', 'b', 'c', 'd'],
+      [
+        ['a', 'b'],
+        ['c', 'd']
+      ]
+    )
+    const result = computeCluster(g, ['a', 'c'], -1)
+    expect(result.nodes.map((n) => n.v).sort()).toEqual(['a', 'b', 'c', 'd'])
   })
 })
 
-describe('computeCluster compound node handling', () => {
-  const compoundGraph = JSON.stringify({
-    nodes: [
-      { v: 'container' },
-      { v: 'child', parent: 'container' },
-      { v: 'sibling', parent: 'container' },
-      { v: 'other' }
-    ],
-    edges: [{ v: 'child', w: 'other', value: {} }]
-  })
-
-  it('includes parent container without pulling in siblings', () => {
-    const result = computeCluster(compoundGraph, ['child'], -1)
-    const ids = nodeIds(result)
+describe('computeCluster – depth 0 (directed descendants only)', () => {
+  it('returns only root and its direct/transitive successors', () => {
+    const g = makeGraph(
+      ['root', 'child', 'grandchild', 'upstream'],
+      [
+        ['upstream', 'root'],
+        ['root', 'child'],
+        ['child', 'grandchild']
+      ]
+    )
+    const result = computeCluster(g, ['root'], 0)
+    const ids = result.nodes.map((n) => n.v).sort()
+    expect(ids).toContain('root')
     expect(ids).toContain('child')
-    expect(ids).toContain('container')
-    expect(ids).toContain('other')
-    expect(ids).not.toContain('sibling')
+    expect(ids).toContain('grandchild')
+    expect(ids).not.toContain('upstream')
   })
 })
 
-describe('computeCluster options preservation', () => {
-  it('carries the options object through to the result', () => {
-    const result = computeCluster(simpleGraph, ['A'], -1)
-    expect(result.options).toEqual({ directed: true, compound: true })
+describe('computeCluster – depth N (N-hop undirected)', () => {
+  it('depth 1 returns root plus immediate neighbours', () => {
+    const g = makeGraph(
+      ['a', 'b', 'c', 'd'],
+      [
+        ['a', 'b'],
+        ['b', 'c'],
+        ['b', 'd']
+      ]
+    )
+    const result = computeCluster(g, ['a'], 1)
+    const ids = result.nodes.map((n) => n.v).sort()
+    expect(ids).toEqual(['a', 'b'])
   })
 
-  it('handles diagram with no options field', () => {
-    const g = JSON.stringify({ nodes: [{ v: 'X' }], edges: [] })
-    const result = computeCluster(g, ['X'], -1)
-    expect(result.nodes).toHaveLength(1)
-  })
-})
-
-// ── mergeClusterInto ─────────────────────────────────────────────────────────
-
-describe('mergeClusterInto non-conflicting nodes', () => {
-  it('appends new nodes and edges without modification', () => {
-    const current = JSON.stringify({ nodes: [{ v: 'X', value: {} }], edges: [] })
-    const cluster = JSON.stringify({
-      nodes: [
-        { v: 'Y', value: {} },
-        { v: 'Z', value: {} }
-      ],
-      edges: [{ v: 'Y', w: 'Z', value: {} }]
-    })
-    const result = JSON.parse(mergeClusterInto(current, cluster))
-    expect(nodeIds(result)).toEqual(['X', 'Y', 'Z'])
-    expect(result.edges).toHaveLength(1)
-    expect(result.edges[0]).toMatchObject({ v: 'Y', w: 'Z' })
+  it('depth 2 reaches two hops', () => {
+    const g = makeGraph(
+      ['a', 'b', 'c', 'd'],
+      [
+        ['a', 'b'],
+        ['b', 'c'],
+        ['c', 'd']
+      ]
+    )
+    const result = computeCluster(g, ['a'], 2)
+    const ids = result.nodes.map((n) => n.v).sort()
+    expect(ids).toEqual(['a', 'b', 'c'])
   })
 })
 
-describe('mergeClusterInto conflicting node IDs', () => {
-  it('remaps conflicting IDs so both nodes survive', () => {
-    const current = JSON.stringify({ nodes: [{ v: 'n1', value: {} }], edges: [] })
-    const cluster = JSON.stringify({
-      nodes: [{ v: 'n1', value: { label: 'from-cluster' } }],
-      edges: []
-    })
-    const result = JSON.parse(mergeClusterInto(current, cluster))
-    expect(result.nodes).toHaveLength(2)
-    const imported = result.nodes.find((n) => n.value?.label === 'from-cluster')
-    expect(imported).toBeDefined()
-    expect(imported.v).not.toBe('n1')
+describe('computeCluster – compound nodes', () => {
+  it('includes parent containers of included nodes without pulling in siblings', () => {
+    const g = makeGraph([
+      { v: 'parent' },
+      { v: 'child1', parent: 'parent' },
+      { v: 'child2', parent: 'parent' }
+    ])
+    const result = computeCluster(g, ['child1'], 0)
+    const ids = result.nodes.map((n) => n.v).sort()
+    expect(ids).toContain('parent')
+    expect(ids).toContain('child1')
+    expect(ids).not.toContain('child2')
   })
 
-  it('updates edge endpoints when their node IDs are remapped', () => {
-    const current = JSON.stringify({ nodes: [{ v: 'n1', value: {} }], edges: [] })
-    const cluster = JSON.stringify({
-      nodes: [
-        { v: 'n1', value: {} },
-        { v: 'n2', value: {} }
-      ],
-      edges: [{ v: 'n1', w: 'n2', value: {} }]
-    })
-    const result = JSON.parse(mergeClusterInto(current, cluster))
-    const ids = result.nodes.map((n) => n.v)
-    const edge = result.edges[0]
-    expect(ids).toContain(edge.v)
-    expect(ids).toContain(edge.w)
-  })
-
-  it('updates parent references when the parent is remapped', () => {
-    const current = JSON.stringify({ nodes: [{ v: 'box', value: {} }], edges: [] })
-    const cluster = JSON.stringify({
-      nodes: [
-        { v: 'box', value: { label: 'cluster-box' } },
-        { v: 'inner', parent: 'box', value: {} }
-      ],
-      edges: []
-    })
-    const result = JSON.parse(mergeClusterInto(current, cluster))
-    const inner = result.nodes.find((n) => n.v === 'inner')
-    expect(inner.parent).not.toBe('box')
-    const remappedParent = result.nodes.find((n) => n.v === inner.parent)
-    expect(remappedParent).toBeDefined()
-    expect(remappedParent.value?.label).toBe('cluster-box')
+  it('preserves parent reference on nodes in result', () => {
+    const g = makeGraph([{ v: 'p' }, { v: 'c', parent: 'p' }], [])
+    const result = computeCluster(g, ['c'], -1)
+    const child = result.nodes.find((n) => n.v === 'c')
+    expect(child.parent).toBe('p')
   })
 })
 
-describe('mergeClusterInto return format', () => {
-  it('returns a valid JSON string', () => {
-    const current = JSON.stringify({ nodes: [], edges: [] })
-    const cluster = JSON.stringify({ nodes: [{ v: 'A' }], edges: [] })
+describe('computeCluster – options and value preservation', () => {
+  it('copies options from the source graph', () => {
+    const g = makeGraph(['a'], [], { directed: true, compound: false })
+    const result = computeCluster(g, ['a'], -1)
+    expect(result.options.directed).toBe(true)
+    expect(result.options.compound).toBe(false)
+  })
+
+  it('preserves node value objects', () => {
+    const g = makeGraph([{ v: 'a', value: { label: 'Alpha', color: 'red' } }])
+    const result = computeCluster(g, ['a'], -1)
+    expect(result.nodes[0].value).toEqual({ label: 'Alpha', color: 'red' })
+  })
+})
+
+// ─── mergeClusterInto ─────────────────────────────────────────────────────────
+
+describe('mergeClusterInto – non-conflicting IDs', () => {
+  it('adds cluster nodes that do not exist in current graph', () => {
+    const current = makeGraph(['x'])
+    const cluster = makeGraph(['a', 'b'], [['a', 'b']])
     const result = mergeClusterInto(current, cluster)
-    expect(() => JSON.parse(result)).not.toThrow()
+    const ids = result.nodes.map((n) => n.v).sort()
+    expect(ids).toEqual(['a', 'b', 'x'])
   })
 
-  it('preserves options from the current diagram', () => {
-    const current = JSON.stringify({
-      options: { directed: true },
-      nodes: [],
-      edges: []
-    })
-    const cluster = JSON.stringify({ nodes: [{ v: 'A' }], edges: [] })
-    const result = JSON.parse(mergeClusterInto(current, cluster))
-    expect(result.options).toEqual({ directed: true })
+  it('adds cluster edges to the merged graph', () => {
+    const current = makeGraph(['x'])
+    const cluster = makeGraph(['a', 'b'], [['a', 'b']])
+    const result = mergeClusterInto(current, cluster)
+    expect(result.edges).toHaveLength(1)
+    expect(result.edges[0]).toMatchObject({ v: 'a', w: 'b' })
+  })
+
+  it('does not duplicate nodes that already exist', () => {
+    const current = makeGraph(['a', 'x'])
+    const cluster = makeGraph(['a', 'b'], [['a', 'b']])
+    const result = mergeClusterInto(current, cluster)
+    const ids = result.nodes.map((n) => n.v)
+    expect(ids.filter((id) => id === 'a')).toHaveLength(1)
+  })
+})
+
+describe('mergeClusterInto – ID conflict remapping', () => {
+  it('remaps a cluster node ID that conflicts with an existing node', () => {
+    const current = makeGraph(['a'])
+    const cluster = makeGraph(['a', 'b'], [['a', 'b']])
+    const result = mergeClusterInto(current, cluster)
+    const ids = result.nodes.map((n) => n.v)
+    // 'a' from cluster should be remapped to something like 'a_2'
+    expect(ids).toContain('a')
+    expect(ids.some((id) => id.startsWith('a_'))).toBe(true)
+  })
+
+  it('remaps edge endpoints when a node ID is remapped', () => {
+    const current = makeGraph(['a'])
+    const cluster = makeGraph(['a', 'b'], [['a', 'b']])
+    const result = mergeClusterInto(current, cluster)
+    const remappedA = result.nodes.find((n) => n.v !== 'a' && n.v.startsWith('a_'))?.v
+    expect(result.edges.some((e) => e.v === remappedA && e.w === 'b')).toBe(true)
+  })
+
+  it('remaps parent references when the parent node ID is remapped', () => {
+    const current = makeGraph(['p'])
+    const cluster = makeGraph([{ v: 'p' }, { v: 'c', parent: 'p' }])
+    const result = mergeClusterInto(current, cluster)
+    const child = result.nodes.find((n) => n.v === 'c')
+    expect(child?.parent).not.toBe('p')
+    expect(child?.parent).toMatch(/^p_/)
+  })
+})
+
+describe('mergeClusterInto – output format', () => {
+  it('returns a valid graphlib JSON object with options, nodes, edges', () => {
+    const current = makeGraph(['x'])
+    const cluster = makeGraph(['a'])
+    const result = mergeClusterInto(current, cluster)
+    expect(result).toHaveProperty('options')
+    expect(result).toHaveProperty('nodes')
+    expect(result).toHaveProperty('edges')
+    expect(Array.isArray(result.nodes)).toBe(true)
+    expect(Array.isArray(result.edges)).toBe(true)
+  })
+
+  it('preserves existing nodes and edges unchanged', () => {
+    const current = makeGraph(['x', 'y'], [['x', 'y']])
+    const cluster = makeGraph(['a'])
+    const result = mergeClusterInto(current, cluster)
+    expect(result.edges.some((e) => e.v === 'x' && e.w === 'y')).toBe(true)
   })
 })

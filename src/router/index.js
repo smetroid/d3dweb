@@ -7,6 +7,17 @@ const router = createRouter({
       path: '/join/:token',
       name: 'join',
       component: () => import('@/components/JoinView.vue')
+    },
+    {
+      path: '/element-share/:token',
+      name: 'element-share',
+      component: () => import('@/components/SharedClusterPreview.vue'),
+      props: true
+    },
+    {
+      path: '/catalog',
+      name: 'catalog',
+      component: () => import('@/components/CatalogView.vue')
     }
   ]
 })

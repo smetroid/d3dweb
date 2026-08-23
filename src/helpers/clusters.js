@@ -1,154 +1,148 @@
 /**
- * Client-side cluster computation and merge helpers.
+ * Compute a subgraph cluster from a graphlib JSON diagram.
  *
- * computeCluster  — BFS over graphlib JSON for selection preview
- * mergeClusterInto — import a shared cluster into an existing diagram
- */
-
-// ── computeCluster ────────────────────────────────────────────────────────────
-
-/**
- * Compute a subgraph of `diagramJSON` rooted at `rootIds`.
+ * depth < 0  → undirected connected component from rootIds
+ * depth === 0 → directed descendants only (follow edges forward from rootIds)
+ * depth > 0  → N-hop undirected BFS from rootIds
  *
- * depth < 0  — whole connected component (undirected BFS)
- * depth === 0 — roots + all descendants (directed downward)
- * depth > 0  — N-hop undirected BFS
- *
- * Parent compound container nodes are always added without pulling siblings.
- *
- * @param {string} diagramJSON  Graphlib-serialised diagram
- * @param {string[]} rootIds    Starting node IDs
- * @param {number} depth        Traversal depth (-1 = full component)
- * @returns {{ options, nodes, edges }}
+ * Parent containers of included nodes are always added (without pulling siblings).
  */
 export function computeCluster(diagramJSON, rootIds, depth = -1) {
-  const g = JSON.parse(diagramJSON)
-  const nodeMap = Object.fromEntries((g.nodes ?? []).map((n) => [n.v, n]))
+  const { options, nodes, edges } = diagramJSON
 
-  // Build adjacency lists.
-  const undirected = {}
-  const children = {}
-  for (const e of g.edges ?? []) {
-    ;(undirected[e.v] ??= []).push(e.w)
-    ;(undirected[e.w] ??= []).push(e.v)
-    ;(children[e.v] ??= []).push(e.w)
+  // Build lookup maps
+  const nodeMap = new Map(nodes.map((n) => [n.v, n]))
+  const fwd = new Map() // v → [w, ...]
+  const bwd = new Map() // w → [v, ...]
+  for (const n of nodes) {
+    fwd.set(n.v, [])
+    bwd.set(n.v, [])
+  }
+  for (const e of edges) {
+    fwd.get(e.v)?.push(e.w)
+    bwd.get(e.w)?.push(e.v)
   }
 
-  const visited = new Set()
+  const included = new Set()
 
   if (depth < 0) {
-    // Whole connected component — undirected BFS.
+    // Undirected component BFS
     const queue = [...rootIds]
-    rootIds.forEach((id) => visited.add(id))
+    for (const r of queue) included.add(r)
     while (queue.length) {
       const cur = queue.shift()
-      for (const nb of undirected[cur] ?? []) {
-        if (!visited.has(nb)) {
-          visited.add(nb)
+      const neighbours = [...(fwd.get(cur) ?? []), ...(bwd.get(cur) ?? [])]
+      for (const nb of neighbours) {
+        if (!included.has(nb)) {
+          included.add(nb)
           queue.push(nb)
         }
       }
     }
   } else if (depth === 0) {
-    // Roots + all descendants (directed).
+    // Directed descendants BFS (forward only)
     const queue = [...rootIds]
-    rootIds.forEach((id) => visited.add(id))
+    for (const r of queue) included.add(r)
     while (queue.length) {
       const cur = queue.shift()
-      for (const ch of children[cur] ?? []) {
-        if (!visited.has(ch)) {
-          visited.add(ch)
-          queue.push(ch)
+      for (const nb of fwd.get(cur) ?? []) {
+        if (!included.has(nb)) {
+          included.add(nb)
+          queue.push(nb)
         }
       }
     }
   } else {
-    // N-hop undirected BFS.
-    const queue = rootIds.map((id) => ({ id, hop: 0 }))
-    rootIds.forEach((id) => visited.add(id))
+    // N-hop undirected BFS
+    const dist = new Map(rootIds.map((r) => [r, 0]))
+    const queue = [...rootIds]
+    for (const r of rootIds) included.add(r)
     while (queue.length) {
-      const { id: cur, hop } = queue.shift()
-      if (hop >= depth) continue
-      for (const nb of undirected[cur] ?? []) {
-        if (!visited.has(nb)) {
-          visited.add(nb)
-          queue.push({ id: nb, hop: hop + 1 })
+      const cur = queue.shift()
+      const d = dist.get(cur)
+      if (d >= depth) continue
+      const neighbours = [...(fwd.get(cur) ?? []), ...(bwd.get(cur) ?? [])]
+      for (const nb of neighbours) {
+        if (!dist.has(nb)) {
+          dist.set(nb, d + 1)
+          included.add(nb)
+          queue.push(nb)
         }
       }
     }
   }
 
-  // Add ancestor container nodes without pulling in siblings.
-  for (const id of [...visited]) {
-    let cur = nodeMap[id]?.parent
-    while (cur && !visited.has(cur)) {
-      visited.add(cur)
-      cur = nodeMap[cur]?.parent
+  // Add parent containers (ancestors) of included nodes without pulling siblings
+  const toAdd = []
+  for (const id of included) {
+    let node = nodeMap.get(id)
+    while (node?.parent && !included.has(node.parent)) {
+      toAdd.push(node.parent)
+      node = nodeMap.get(node.parent)
     }
   }
+  for (const id of toAdd) included.add(id)
 
-  const nodes = [...visited].filter((id) => nodeMap[id]).map((id) => nodeMap[id])
-  const edges = (g.edges ?? []).filter((e) => visited.has(e.v) && visited.has(e.w))
+  // Build result nodes (preserving parent only if parent is also included)
+  const resultNodes = []
+  for (const id of included) {
+    const n = nodeMap.get(id)
+    if (!n) continue
+    const entry = { v: n.v, value: n.value }
+    if (n.parent && included.has(n.parent)) entry.parent = n.parent
+    resultNodes.push(entry)
+  }
 
-  return { options: g.options, nodes, edges }
+  // Build result edges (both endpoints must be included)
+  const resultEdges = edges.filter((e) => included.has(e.v) && included.has(e.w))
+
+  return { options, nodes: resultNodes, edges: resultEdges }
 }
-
-// ── mergeClusterInto ─────────────────────────────────────────────────────────
 
 /**
- * Merge `clusterJSON` into `currentJSON`, remapping any node IDs that already
- * exist in the current diagram to avoid collisions.
- *
- * @param {string} currentJSON  Graphlib JSON of the current diagram
- * @param {string} clusterJSON  Graphlib JSON of the imported cluster
- * @returns {string}            New graphlib JSON string with cluster merged in
+ * Merge clusterJSON into currentJSON.
+ * Nodes with conflicting IDs are remapped to <id>_2, _3, … etc.
+ * Edge endpoints and parent references are updated to match remapped IDs.
  */
 export function mergeClusterInto(currentJSON, clusterJSON) {
-  const current = JSON.parse(currentJSON)
-  const cluster = JSON.parse(clusterJSON)
+  const existingIds = new Set(currentJSON.nodes.map((n) => n.v))
 
-  const existingIds = new Set((current.nodes ?? []).map((n) => n.v))
-
-  // Build an ID remap for conflicting nodes.
-  const idMap = {}
-  for (const node of cluster.nodes ?? []) {
-    if (existingIds.has(node.v)) {
-      idMap[node.v] = uniqueId(node.v, existingIds)
+  // Build remap table for cluster nodes whose IDs conflict
+  const remap = new Map()
+  for (const n of clusterJSON.nodes) {
+    if (existingIds.has(n.v)) {
+      const newId = uniqueId(n.v, existingIds)
+      remap.set(n.v, newId)
+      existingIds.add(newId)
     }
   }
 
-  // Clone and remap cluster nodes.
-  const remappedNodes = (cluster.nodes ?? []).map((n) => {
-    const newId = idMap[n.v] ?? n.v
-    existingIds.add(newId)
-    const remapped = { ...n, v: newId }
-    if (n.parent != null) {
-      remapped.parent = idMap[n.parent] ?? n.parent
-    }
-    return remapped
-  })
+  const resolve = (id) => remap.get(id) ?? id
 
-  // Remap edge endpoints.
-  const remappedEdges = (cluster.edges ?? []).map((e) => ({
+  // Cluster nodes with remapped IDs (skip nodes already present with same id and no remap)
+  const clusterNodes = clusterJSON.nodes
+    .filter((n) => remap.has(n.v) || !currentJSON.nodes.some((e) => e.v === n.v))
+    .map((n) => {
+      const entry = { v: resolve(n.v), value: n.value }
+      if (n.parent) entry.parent = resolve(n.parent)
+      return entry
+    })
+
+  const clusterEdges = clusterJSON.edges.map((e) => ({
     ...e,
-    v: idMap[e.v] ?? e.v,
-    w: idMap[e.w] ?? e.w
+    v: resolve(e.v),
+    w: resolve(e.w)
   }))
 
-  return JSON.stringify({
-    options: current.options,
-    nodes: [...(current.nodes ?? []), ...remappedNodes],
-    edges: [...(current.edges ?? []), ...remappedEdges]
-  })
+  return {
+    options: currentJSON.options,
+    nodes: [...currentJSON.nodes, ...clusterNodes],
+    edges: [...currentJSON.edges, ...clusterEdges]
+  }
 }
 
-/** Generate a unique ID by appending _2, _3, … until unused. */
 function uniqueId(base, existingIds) {
   let n = 2
-  let candidate = `${base}_${n}`
-  while (existingIds.has(candidate)) {
-    n++
-    candidate = `${base}_${n}`
-  }
-  return candidate
+  while (existingIds.has(`${base}_${n}`)) n++
+  return `${base}_${n}`
 }

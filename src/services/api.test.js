@@ -214,10 +214,10 @@ describe('listCompanies', () => {
 })
 
 describe('addCompanyMember', () => {
-  it('PUTs /companies/:id/members with userId and auth', async () => {
-    http.put.mockResolvedValue({ data: { status: 'ok' } })
+  it('POSTs /companies/:id/members with userId and auth', async () => {
+    http.post.mockResolvedValue({ data: { status: 'ok' } })
     await api.addCompanyMember('co-1', 'bob')
-    expect(http.put).toHaveBeenCalledWith(
+    expect(http.post).toHaveBeenCalledWith(
       '/companies/co-1/members',
       { userId: 'bob' },
       { headers: AUTH }
@@ -266,10 +266,10 @@ describe('listGroups', () => {
 })
 
 describe('addGroupMember', () => {
-  it('PUTs /groups/:id/members with userId and auth', async () => {
-    http.put.mockResolvedValue({ data: { status: 'ok' } })
+  it('POSTs /groups/:id/members with userId and auth', async () => {
+    http.post.mockResolvedValue({ data: { status: 'ok' } })
     await api.addGroupMember('grp-1', 'alice')
-    expect(http.put).toHaveBeenCalledWith(
+    expect(http.post).toHaveBeenCalledWith(
       '/groups/grp-1/members',
       { userId: 'alice' },
       { headers: AUTH }
