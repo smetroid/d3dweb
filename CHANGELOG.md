@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.2...d3dweb-v1.6.0) (2026-08-23)
+
+
+### Features
+
+* **shares:** add frontend components, routes, and tests for element sharing ([#45](https://github.com/smetroid/d3dweb/issues/45)-[#50](https://github.com/smetroid/d3dweb/issues/50)) ([eb201c4](https://github.com/smetroid/d3dweb/commit/eb201c4563578d61b1cb34864f1ad1a355f52631))
+* **shares:** element share + company/group API client + cluster helpers ([22098c0](https://github.com/smetroid/d3dweb/commit/22098c0c8c3d094d66aac988c4218f3a886f5b5d))
+* **shares:** element sharing — dialogs, routes, inbox, catalog ([#45](https://github.com/smetroid/d3dweb/issues/45)–[#50](https://github.com/smetroid/d3dweb/issues/50)) ([a140da0](https://github.com/smetroid/d3dweb/commit/a140da0db178302c019b08010492d99243aa3cc2))
+
 ## [1.5.2](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.1...d3dweb-v1.5.2) (2026-08-22)
 
 
