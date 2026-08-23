@@ -13,9 +13,11 @@ import { migrateDiagramPayload } from '@/helpers/legacyMigration.js'
 import DiagramForm from '@/components/DiagramForm.vue'
 import DiagramList from '@/components/DiagramList.vue'
 import Login from '@/components/Login.vue'
+import SharedInbox from '@/components/SharedInbox.vue'
 import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
 import D3DApi from '@/services/api'
+import { mergeClusterInto } from '@/helpers/clusters'
 
 const route = useRoute()
 
@@ -36,7 +38,9 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <RouterView v-if="route.name === 'join'" />
+    <RouterView
+      v-if="route.name === 'join' || route.name === 'element-share' || route.name === 'catalog'"
+    />
     <v-main app v-else>
       <Teleport to="body">
         <div class="fx-toast-stack">
@@ -79,6 +83,16 @@ function toggleTheme() {
         :group="commandGroup"
         @run="runCommand"
       />
+      <Teleport to="body">
+        <transition name="fx-scrim">
+          <div v-if="showInbox" class="fx-scrim" @click="showInbox = false"></div>
+        </transition>
+        <transition name="fx-panel">
+          <div v-if="showInbox" class="fx-hud-stage">
+            <SharedInbox @close="showInbox = false" @merge="mergeElementShare" />
+          </div>
+        </transition>
+      </Teleport>
     </v-main>
     <!--
       NOTE: app - in the footer makes the footer to stay at the bottom
@@ -162,6 +176,17 @@ function toggleTheme() {
               <span class="fx-nav-letter">LOGOUT</span>
             </button>
           </div>
+          <div class="fx-nav-readout" v-if="loggedInUser">
+            <button
+              type="button"
+              class="fx-nav-btn fx-nav-inbox-btn"
+              title="Shared Inbox"
+              @click="showInbox = true"
+            >
+              <span class="fx-nav-letter">INBOX</span>
+              <span v-if="inboxCount > 0" class="fx-inbox-badge">{{ inboxCount }}</span>
+            </button>
+          </div>
           <div v-if="d3dInfo.name" class="fx-nav-readout fx-nav-diagram-name">
             <span class="fx-nav-key">DIAGRAM</span>
             <span class="fx-nav-val">{{ d3dInfo.name }}</span>
@@ -177,7 +202,15 @@ function toggleTheme() {
 <script>
 export default {
   name: 'App',
-  components: { DiagramGraphView, Settings, DiagramForm, HelperPane, Login, CommandPalette },
+  components: {
+    DiagramGraphView,
+    Settings,
+    DiagramForm,
+    HelperPane,
+    Login,
+    CommandPalette,
+    SharedInbox
+  },
   data() {
     return {
       active: 'Graph', //Default active component
@@ -196,7 +229,8 @@ export default {
         { icon: 'mdi-shape-oval-plus', title: 'Add Edge', shortcut: 'D' },
         { icon: 'mdi-file-edit-outline', title: 'Edit Edge', shortcut: 'E' },
         { icon: 'mdi-selection-remove', title: 'Delete Edge', shortcut: 'X' },
-        { icon: 'mdi-selection', title: 'Select Edges', shortcut: 'Shift+E' }
+        { icon: 'mdi-selection', title: 'Select Edges' },
+        { icon: 'mdi-share-variant-outline', title: 'Share Selection', shortcut: 'Shift+E' }
       ],
       menuLinks: [
         { icon: 'mdi-login', title: 'Login' },
@@ -226,7 +260,9 @@ export default {
       d3dInfo: {},
       modifier: {},
       embedMode: false,
-      loggedInUser: null
+      loggedInUser: null,
+      showInbox: false,
+      inboxCount: 0
     }
   },
   provide() {
@@ -259,6 +295,7 @@ export default {
         D3Util.validateToken().then((valid) => {
           if (valid) {
             this.loggedInUser = D3Util.username()
+            this._refreshInboxCount()
             this.loadFromServer()
           } else {
             D3Util.logout()
@@ -332,8 +369,10 @@ export default {
     this.emitter.on('authChanged', () => {
       if (D3Util.auth()) {
         this.loggedInUser = D3Util.username()
+        this._refreshInboxCount()
       } else {
         this.loggedInUser = null
+        this.inboxCount = 0
       }
     })
 
@@ -377,6 +416,20 @@ export default {
 
     this.emitter.on('diagram:restore-local', (snapshot) => {
       this.restoreLocal(snapshot)
+    })
+
+    this.emitter.on('diagram:merge', (graphlibJson) => {
+      try {
+        const model = markRaw(graphlibToModel(graphlibJson))
+        const mod = this.modifier?.value ?? this.modifier
+        if (mod) {
+          mod.diagram = model
+          mod.redraw()
+        }
+      } catch (err) {
+        console.error('merge failed', err)
+        this.emitter.emit('appMessage', { message: 'Merge failed', status: 'error' })
+      }
     })
 
     let _remoteReloadTimer = null
@@ -728,7 +781,42 @@ export default {
     logout() {
       D3Util.logout()
       this.loggedInUser = null
+      this.inboxCount = 0
       this.emitter.emit('appMessage', { message: 'Logged out', status: 'info' })
+    },
+    async _refreshInboxCount() {
+      try {
+        const items = await D3DApi.listInbox()
+        this.inboxCount = Array.isArray(items) ? items.length : 0
+      } catch {
+        this.inboxCount = 0
+      }
+    },
+    async mergeElementShare(shareId) {
+      try {
+        const share = await D3DApi.getElementShare(shareId)
+        if (!share?.cluster) {
+          this.emitter.emit('appMessage', { message: 'No cluster data in share', status: 'error' })
+          return
+        }
+        const mod = this.modifier?.value ?? this.modifier
+        if (!mod) {
+          this.emitter.emit('appMessage', {
+            message: 'No active diagram to merge into',
+            status: 'info'
+          })
+          return
+        }
+        const currentJson = modelToGraphlib(mod.cy)
+        const merged = mergeClusterInto(currentJson, share.cluster)
+        this.emitter.emit('diagram:merge', merged)
+        this.emitter.emit('appMessage', {
+          message: 'Cluster merged into current diagram',
+          status: 'success'
+        })
+      } catch {
+        this.emitter.emit('appMessage', { message: 'Failed to merge cluster', status: 'error' })
+      }
     }
   },
   computed: {

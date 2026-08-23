@@ -116,5 +116,151 @@ export default {
       .then((response) => {
         return response.data
       })
+  },
+
+  // Element shares
+  async createElementShare(dagId, req) {
+    return api()
+      .post('/dag/' + dagId + '/elements/shares', req, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async exchangeElementShare(token) {
+    return api()
+      .get('/element-shares/exchange', { params: { token } })
+      .then((r) => r.data)
+  },
+  async getElementShare(id) {
+    return api()
+      .get('/element-shares/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async revokeElementShare(id) {
+    return api()
+      .post(
+        '/element-shares/' + id + '/revoke',
+        {},
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async importElementShare(id) {
+    return api()
+      .post(
+        '/element-shares/' + id + '/import',
+        {},
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async listInbox() {
+    return api()
+      .get('/shares/inbox', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async getCatalog(limit) {
+    const params = limit !== undefined ? { limit } : {}
+    return api()
+      .get('/catalog', { params })
+      .then((r) => r.data)
+  },
+
+  // Companies
+  async createCompany(name) {
+    return api()
+      .post(
+        '/companies',
+        { name },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async listCompanies() {
+    return api()
+      .get('/companies', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async addCompanyMember(companyId, userId) {
+    return api()
+      .post(
+        '/companies/' + companyId + '/members',
+        { userId },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async removeCompanyMember(companyId, userId) {
+    return api()
+      .delete('/companies/' + companyId + '/members/' + userId, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async deleteCompany(id) {
+    return api()
+      .delete('/companies/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+
+  // Groups
+  async createGroup(companyId, name) {
+    return api()
+      .post(
+        '/companies/' + companyId + '/groups',
+        { name },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async listGroups(companyId) {
+    return api()
+      .get('/companies/' + companyId + '/groups', {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async addGroupMember(groupId, userId) {
+    return api()
+      .post(
+        '/groups/' + groupId + '/members',
+        { userId },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
+      .then((r) => r.data)
+  },
+  async removeGroupMember(groupId, userId) {
+    return api()
+      .delete('/groups/' + groupId + '/members/' + userId, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
+  },
+  async deleteGroup(id) {
+    return api()
+      .delete('/groups/' + id, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+      })
+      .then((r) => r.data)
   }
 }

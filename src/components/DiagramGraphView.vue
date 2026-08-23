@@ -123,6 +123,18 @@
           />
         </div>
       </transition>
+      <transition name="fx-scrim">
+        <div v-if="showElementShare" class="fx-scrim" @click="showElementShare = false"></div>
+      </transition>
+      <transition name="fx-panel">
+        <div v-if="showElementShare" class="fx-hud-stage">
+          <ElementShareDialog
+            :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
+            :selectedNodeIds="selectedNodeIds"
+            @close="showElementShare = false"
+          />
+        </div>
+      </transition>
     </Teleport>
   </div>
 </template>
@@ -136,6 +148,7 @@ import D3EdgeForm from '@/components/D3EdgeForm.vue'
 import D3NodeForm from '@/components/D3NodeForm.vue'
 import HistoryPanel from '@/components/HistoryPanel.vue'
 import ShareDialog from '@/components/ShareDialog.vue'
+import ElementShareDialog from '@/components/ElementShareDialog.vue'
 import Hints from '@/helpers/Hints.js'
 import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
@@ -168,7 +181,7 @@ export default {
   props: ['active', 'embedMode', 'loggedIn'],
   emits: ['fork-embed', 'embed-login'],
   inject: ['modifier'],
-  components: { D3NodeForm, D3EdgeForm, HistoryPanel, ShareDialog },
+  components: { D3NodeForm, D3EdgeForm, HistoryPanel, ShareDialog, ElementShareDialog },
   data() {
     return {
       edgeOrNode: 'nodes',
@@ -194,7 +207,8 @@ export default {
       peers: {},
       collabStatus: 'disconnected',
       showHistory: false,
-      showShare: false
+      showShare: false,
+      showElementShare: false
     }
   },
   mounted() {
@@ -209,6 +223,7 @@ export default {
     this.emitter.on('node-click', this._onNodeClick)
     this.emitter.on('editNode', () => this._openEdit('nodes'))
     this.emitter.on('editEdge', () => this._openEdit('edges'))
+    this.emitter.on('shareSelection', () => this._openElementShare())
     this.emitter.on('d3ResetValues', () => this.resetValues())
     this.emitter.on('scene-updated', ({ count, nodes, edges }) => {
       this.graphEmpty = count === 0
@@ -505,6 +520,9 @@ export default {
           case 'share':
             if (mod?.d3dInfo?.id) this.showShare = true
             break
+          case 'shareSelection':
+            this._openElementShare()
+            break
           case 'delete':
             if (this.edgeOrNode === 'nodes') {
               const ok = mod.deleteNode(this.focusedNodeId)
@@ -603,6 +621,19 @@ export default {
         .toUpperCase()
     },
 
+    _openElementShare() {
+      const mod = this.modifier?.value ?? this.modifier
+      if (!mod?.d3dInfo?.id) return
+      if (!this.selectedNodes.length) {
+        this.emitter.emit('appMessage', {
+          message: 'Select nodes first to share a sub-graph',
+          status: 'info'
+        })
+        return
+      }
+      this.showElementShare = true
+    },
+
     onHistoryRestored(payload) {
       this.showHistory = false
       if (payload?.source === 'local') {
@@ -671,7 +702,11 @@ export default {
     },
     graphlibJson() {
       const mod = this.modifier?.value ?? this.modifier
-      return mod ? modelToGraphlib(mod.cy) : null
+      return mod ? modelToGraphlib(mod) : null
+    },
+    selectedNodeIds() {
+      const mod = this.modifier?.value ?? this.modifier
+      return (this.selectedNodes || []).map((n) => mod?.getNodeId?.(n)).filter(Boolean)
     }
   },
   watch: {
