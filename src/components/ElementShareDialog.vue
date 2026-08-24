@@ -21,14 +21,15 @@
         <div class="fx-panel-body">
           <div class="share-instructions">
             <p class="share-instr-line">
-              <span class="share-kbd">hjkl</span> navigate &nbsp;·&nbsp;
-              <span class="share-kbd">Enter</span> select node/edge &nbsp;·&nbsp;
-              <span class="share-kbd">Shift+E</span> switch to edge navigation
+              <strong>How to select:</strong> use <span class="share-kbd">hjkl</span> to focus an
+              element, then press <span class="share-kbd">Enter</span> to add it to your selection
+              (press again to deselect). Repeat for each node or edge you want to share.
             </p>
             <p class="share-instr-line">
-              Then open this dialog via the actions menu
-              <span class="share-kbd">a</span> → Share Selection, or press
-              <span class="share-kbd">Shift+O</span>.
+              Switch between node and edge navigation with
+              <span class="share-kbd">Shift+N</span> / <span class="share-kbd">Shift+E</span>. Once
+              your selection is ready, press <span class="share-kbd">Shift+O</span> or open the
+              actions menu <span class="share-kbd">a</span> → Share Selection.
             </p>
           </div>
           <div class="share-form">

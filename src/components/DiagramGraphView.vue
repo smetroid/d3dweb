@@ -638,9 +638,9 @@ export default {
     _openElementShare() {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod?.d3dInfo?.id) return
-      if (!this.selectedNodes.length) {
+      if (!this.selectedNodes.length && !this.focusedNodeId) {
         this.emitter.emit('appMessage', {
-          message: 'Select nodes first to share a sub-graph',
+          message: 'Focus or select a node first to share a sub-graph',
           status: 'info'
         })
         return
@@ -720,7 +720,10 @@ export default {
     },
     selectedNodeIds() {
       const mod = this.modifier?.value ?? this.modifier
-      return (this.selectedNodes || []).map((n) => mod?.getNodeId?.(n)).filter(Boolean)
+      if (this.selectedNodes?.length) {
+        return this.selectedNodes.map((n) => mod?.getNodeId?.(n)).filter(Boolean)
+      }
+      return this.focusedNodeId ? [this.focusedNodeId] : []
     }
   },
   watch: {
