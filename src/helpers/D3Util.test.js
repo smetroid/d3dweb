@@ -265,7 +265,7 @@ describe('shared dropdown options', () => {
     expect(D3Util.edgeCurveOptions().map((o) => o.value)).toEqual([
       'bezier',
       'straight',
-      'segmented',
+      'segments',
       'unbundled-bezier',
       'haystack'
     ])
