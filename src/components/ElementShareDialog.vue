@@ -19,14 +19,24 @@
         </header>
 
         <div class="fx-panel-body">
+          <div class="share-instructions">
+            <p class="share-instr-line">
+              <span class="share-kbd">hjkl</span> navigate &nbsp;·&nbsp;
+              <span class="share-kbd">Enter</span> select node/edge &nbsp;·&nbsp;
+              <span class="share-kbd">Shift+E</span> switch to edge navigation
+            </p>
+            <p class="share-instr-line">
+              Then open this dialog via the actions menu
+              <span class="share-kbd">a</span> → Share Selection, or press
+              <span class="share-kbd">Shift+O</span>.
+            </p>
+          </div>
           <div class="share-form">
             <!-- Selected node count -->
             <div class="share-field">
               <label class="share-label">SELECTED NODES</label>
               <p class="share-hint">
-                {{ selectedNodeIds.length }} node{{
-                  selectedNodeIds.length !== 1 ? 's' : ''
-                }}
+                {{ selectedNodeIds.length }} node{{ selectedNodeIds.length !== 1 ? 's' : '' }}
                 selected
               </p>
             </div>
@@ -237,6 +247,36 @@ export default {
 </script>
 
 <style scoped>
+.share-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--fx-accent), 0.2);
+  background: rgba(var(--fx-accent), 0.05);
+}
+
+.share-instr-line {
+  font-size: 11px;
+  color: rgb(var(--fx-ink-dim));
+  margin: 0;
+  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.share-kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(var(--fx-accent), 0.35);
+  background: rgba(var(--fx-glass-bottom), 0.5);
+  color: rgb(var(--fx-ink));
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  white-space: nowrap;
+}
+
 .fx-panel-body {
   overflow-y: auto;
   flex: 1;

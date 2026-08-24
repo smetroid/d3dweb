@@ -55,6 +55,13 @@ export const DEFAULT_SHORTCUTS = [
     mac: 'shift+e',
     other: 'shift+e'
   },
+  {
+    id: 'shareSelection',
+    group: 'graph',
+    label: 'Share selected nodes/edges',
+    mac: 'shift+o',
+    other: 'shift+o'
+  },
   { id: 'select', group: 'graph', label: 'Select / deselect', mac: 'enter', other: 'enter' },
   { id: 'showHints', group: 'graph', label: 'Show element hints', mac: 'f', other: 'f' },
   { id: 'toggleTheme', group: 'graph', label: 'Toggle theme', mac: 't', other: 't' },
