@@ -557,6 +557,20 @@ export default {
             }
             break
           }
+          case 'cycleCurveStyle': {
+            if (this.edgeOrNode === 'edges' && this.focusedEdgeId) {
+              const next = mod.cycleEdgeCurve(this.focusedEdgeId)
+              if (next) {
+                this.emitter.emit('appMessage', { message: `Curve: ${next}`, status: 'info' })
+              }
+            } else {
+              this.emitter.emit('appMessage', {
+                message: 'Focus an edge first (Shift+E, then j/k) to cycle its curve style',
+                status: 'info'
+              })
+            }
+            break
+          }
           case 'history':
             if (mod) this.showHistory = true
             break

@@ -388,6 +388,18 @@ export default class DiagramGraph {
     this.redraw({ layout: false })
   }
 
+  cycleEdgeCurve(edgeId) {
+    const edge = this.cy.getElementById(edgeId)
+    if (edge.empty()) return null
+    const CURVES = ['bezier', 'straight', 'segments', 'unbundled-bezier', 'haystack']
+    const current = edge.data('edgeCurve') || 'bezier'
+    const idx = CURVES.indexOf(current)
+    const next = CURVES[(idx + 1) % CURVES.length]
+    edge.data({ edgeCurve: next })
+    this.redraw({ layout: false })
+    return next
+  }
+
   deleteEdge(id) {
     const edge = this._resolveEdge(id)
     if (edge && !edge.empty()) {

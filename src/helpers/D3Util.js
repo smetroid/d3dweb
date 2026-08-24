@@ -170,7 +170,7 @@ export default {
     return [
       { value: 'bezier', label: 'Bezier' },
       { value: 'straight', label: 'Straight' },
-      { value: 'segmented', label: 'Segmented' },
+      { value: 'segments', label: 'Segmented' },
       { value: 'unbundled-bezier', label: 'Unbundled Bezier' },
       { value: 'haystack', label: 'Haystack' }
     ]

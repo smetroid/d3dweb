@@ -63,7 +63,8 @@ export const DEFAULT_SHORTCUTS = [
   { id: 'help', group: 'graph', label: 'Show help', mac: '/', other: '/' },
   { id: 'copyNode', group: 'graph', label: 'Copy focused node', mac: 'y', other: 'y' },
   { id: 'history', group: 'graph', label: 'History panel', mac: 'shift+h', other: 'shift+h' },
-  { id: 'share', group: 'graph', label: 'Share link dialog', mac: 'shift+s', other: 'shift+s' }
+  { id: 'share', group: 'graph', label: 'Share link dialog', mac: 'shift+s', other: 'shift+s' },
+  { id: 'cycleCurveStyle', group: 'graph', label: 'Cycle edge curve style', mac: 'c', other: 'c' }
 ]
 
 // Combos owned by non-rebindable handlers (menu, palette, pan/zoom/layouts)
