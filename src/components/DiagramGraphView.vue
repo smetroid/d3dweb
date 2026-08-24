@@ -124,14 +124,14 @@
         </div>
       </transition>
       <transition name="fx-scrim">
-        <div v-if="showElementShare" class="fx-scrim" @click="showElementShare = false"></div>
+        <div v-if="showElementShare" class="fx-scrim" @click="_closeElementShare()"></div>
       </transition>
       <transition name="fx-panel">
         <div v-if="showElementShare" class="fx-hud-stage">
           <ElementShareDialog
             :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
             :selectedNodeIds="selectedNodeIds"
-            @close="showElementShare = false"
+            @close="_closeElementShare()"
           />
         </div>
       </transition>
@@ -646,7 +646,13 @@ export default {
         })
         return
       }
+      this.trapGraph = false
       this.showElementShare = true
+    },
+
+    _closeElementShare() {
+      this.showElementShare = false
+      if (this.active === 'Graph') this.trapGraph = true
     },
 
     onHistoryRestored(payload) {
