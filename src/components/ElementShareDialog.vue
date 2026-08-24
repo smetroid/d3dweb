@@ -21,25 +21,21 @@
         <div class="fx-panel-body">
           <div class="share-instructions">
             <p class="share-instr-line">
-              <strong>How to select:</strong> use <span class="share-kbd">hjkl</span> to focus an
-              element, then press <span class="share-kbd">Enter</span> to add it to your selection
-              (press again to deselect). Repeat for each node or edge you want to share.
+              Use <span class="share-kbd">hjkl</span> to focus a node or edge, then press
+              <span class="share-kbd">Shift+O</span> (or <span class="share-kbd">a</span> → Share
+              Selection) to open this dialog.
             </p>
             <p class="share-instr-line">
               Switch between node and edge navigation with
-              <span class="share-kbd">Shift+N</span> / <span class="share-kbd">Shift+E</span>. Once
-              your selection is ready, press <span class="share-kbd">Shift+O</span> or open the
-              actions menu <span class="share-kbd">a</span> → Share Selection.
+              <span class="share-kbd">Shift+N</span> / <span class="share-kbd">Shift+E</span>. The
+              focused element is used as the sharing root — no need to press Enter.
             </p>
           </div>
           <div class="share-form">
-            <!-- Selected node count -->
+            <!-- Focused element -->
             <div class="share-field">
-              <label class="share-label">SELECTED NODES</label>
-              <p class="share-hint">
-                {{ selectedNodeIds.length }} node{{ selectedNodeIds.length !== 1 ? 's' : '' }}
-                selected
-              </p>
+              <label class="share-label">SHARING FROM</label>
+              <p class="share-hint">{{ selectedNodeIds.length ? selectedNodeIds[0] : '—' }}</p>
             </div>
 
             <!-- Audience -->

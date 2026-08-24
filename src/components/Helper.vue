@@ -128,7 +128,8 @@ export default {
     collab() {
       return [
         { title: 'History panel', shortcut: Shortcuts.label('history') },
-        { title: 'Share link dialog', shortcut: Shortcuts.label('share') }
+        { title: 'Share link dialog', shortcut: Shortcuts.label('share') },
+        { title: 'Share focused element', shortcut: Shortcuts.label('shareSelection') }
       ]
     },
     zoom() {

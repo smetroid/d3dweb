@@ -638,9 +638,10 @@ export default {
     _openElementShare() {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod?.d3dInfo?.id) return
-      if (!this.selectedNodes.length && !this.focusedNodeId) {
+      const focused = this.edgeOrNode === 'edges' ? this.focusedEdgeId : this.focusedNodeId
+      if (!focused) {
         this.emitter.emit('appMessage', {
-          message: 'Focus or select a node first to share a sub-graph',
+          message: 'Focus a node or edge first (hjkl), then press Shift+O to share',
           status: 'info'
         })
         return
@@ -719,9 +720,8 @@ export default {
       return mod?.cy ? modelToGraphlib(mod.cy) : null
     },
     selectedNodeIds() {
-      const mod = this.modifier?.value ?? this.modifier
-      if (this.selectedNodes?.length) {
-        return this.selectedNodes.map((n) => mod?.getNodeId?.(n)).filter(Boolean)
+      if (this.edgeOrNode === 'edges') {
+        return this.focusedEdgeId ? [this.focusedEdgeId] : []
       }
       return this.focusedNodeId ? [this.focusedNodeId] : []
     }
