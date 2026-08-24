@@ -716,7 +716,7 @@ export default {
     },
     graphlibJson() {
       const mod = this.modifier?.value ?? this.modifier
-      return mod ? modelToGraphlib(mod) : null
+      return mod?.cy ? modelToGraphlib(mod.cy) : null
     },
     selectedNodeIds() {
       const mod = this.modifier?.value ?? this.modifier
