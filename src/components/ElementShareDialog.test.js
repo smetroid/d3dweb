@@ -178,6 +178,61 @@ describe('ElementShareDialog – close', () => {
   })
 })
 
+describe('ElementShareDialog – title and catalog', () => {
+  it('renders a title input', async () => {
+    mountDialog()
+    await flush()
+    expect(document.querySelector('[data-testid="share-title-input"]')).not.toBeNull()
+  })
+
+  it('renders the catalog checkbox when audience is public', async () => {
+    mountDialog()
+    await flush()
+    expect(document.querySelector('[data-testid="catalog-checkbox"]')).not.toBeNull()
+  })
+
+  it('hides the catalog checkbox when audience is not public', async () => {
+    mountDialog()
+    await flush()
+    const companyBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent.match(/company/i)
+    )
+    companyBtn?.click()
+    await flush()
+    expect(document.querySelector('[data-testid="catalog-checkbox"]')).toBeNull()
+  })
+
+  it('includes title in the createElementShare request', async () => {
+    mountDialog({ dagId: 'dag1', selectedNodeIds: ['n1'] })
+    await flush()
+    const titleInput = document.querySelector('[data-testid="share-title-input"]')
+    titleInput.value = 'My Share'
+    titleInput.dispatchEvent(new Event('input'))
+    await flush()
+    document.querySelector('[data-testid="generate-btn"]').click()
+    await flush()
+    expect(mockCreateElementShare).toHaveBeenCalledWith(
+      'dag1',
+      expect.objectContaining({ title: 'My Share' })
+    )
+  })
+
+  it('includes catalog:true in the request when checkbox is checked', async () => {
+    mountDialog({ dagId: 'dag1', selectedNodeIds: ['n1'] })
+    await flush()
+    const checkbox = document.querySelector('[data-testid="catalog-checkbox"]')
+    checkbox.checked = true
+    checkbox.dispatchEvent(new Event('change'))
+    await flush()
+    document.querySelector('[data-testid="generate-btn"]').click()
+    await flush()
+    expect(mockCreateElementShare).toHaveBeenCalledWith(
+      'dag1',
+      expect.objectContaining({ catalog: true })
+    )
+  })
+})
+
 describe('ElementShareDialog – audience switching', () => {
   it('selecting company audience loads companies', async () => {
     mountDialog()
