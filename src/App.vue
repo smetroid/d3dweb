@@ -229,8 +229,8 @@ export default {
         { icon: 'mdi-shape-oval-plus', title: 'Add Edge', shortcut: 'D' },
         { icon: 'mdi-file-edit-outline', title: 'Edit Edge', shortcut: 'E' },
         { icon: 'mdi-selection-remove', title: 'Delete Edge', shortcut: 'X' },
-        { icon: 'mdi-selection', title: 'Select Edges' },
-        { icon: 'mdi-share-variant-outline', title: 'Share Selection', shortcut: 'Shift+E' }
+        { icon: 'mdi-selection', title: 'Select Edges', shortcut: 'Shift+E' },
+        { icon: 'mdi-share-variant-outline', title: 'Share Selection', shortcut: 'Shift+O' }
       ],
       menuLinks: [
         { icon: 'mdi-login', title: 'Login' },

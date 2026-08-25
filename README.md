@@ -66,6 +66,15 @@ Colored halos on every peer's selection. Avatar chips in the top-left HUD. Prese
 `Shift+S` mints a JWT via `/shares/create`. Recipients hit `/join/:token`, the API validates against a revocation list, and the token lands in localStorage.
 
 </td>
+<td valign="top">
+
+### Shareable sub-graphs
+
+Navigate to any node or edge with `hjkl`, then press `Shift+O` (or open the actions menu `a` → Share Selection). Choose audience (public / me / company / group), scope depth, and expiry, then generate a signed link that shares just that element and its connected sub-graph.
+
+Switch between node and edge navigation with `Shift+N` / `Shift+E` before invoking the share dialog.
+
+</td>
 </tr>
 <tr>
 <td valign="top">

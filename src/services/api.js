@@ -46,18 +46,14 @@ export default {
       .then((response) => response.data)
   },
   async postDiagram(payload) {
-    return api().post(
-      '/dag',
-      payload,
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
+    return api().post('/dag', payload, {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    })
   },
   async updateDiagram(data) {
-    return api().post(
-      '/dag/' + data.id + '/update',
-      data,
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
+    return api().post('/dag/' + data.id + '/update', data, {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    })
   },
   async getHistory(dagId) {
     return api()
@@ -165,13 +161,13 @@ export default {
       .get('/shares/inbox', {
         headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
-      .then((r) => r.data)
+      .then((r) => r.data.shares ?? [])
   },
   async getCatalog(limit) {
     const params = limit !== undefined ? { limit } : {}
     return api()
       .get('/catalog', { params })
-      .then((r) => r.data)
+      .then((r) => r.data.items ?? [])
   },
 
   // Companies

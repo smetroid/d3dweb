@@ -15,20 +15,24 @@ const ITEMS = [
   {
     id: 'es1',
     title: 'Auth service nodes',
-    shared_by: 'alice',
-    depth: -1,
-    node_count: 5,
-    edge_count: 3,
-    token: 'tok-abc'
+    createdBy: 'alice',
+    rootIds: ['n1'],
+    nodeCount: 5,
+    edgeCount: 3,
+    token: 'tok-abc',
+    tags: [],
+    createdAt: '2026-01-01T00:00:00Z'
   },
   {
     id: 'es2',
     title: 'Payment flow',
-    shared_by: 'bob',
-    depth: 0,
-    node_count: 8,
-    edge_count: 6,
-    token: 'tok-xyz'
+    createdBy: 'bob',
+    rootIds: ['n2'],
+    nodeCount: 8,
+    edgeCount: 6,
+    token: 'tok-xyz',
+    tags: [],
+    createdAt: '2026-01-02T00:00:00Z'
   }
 ]
 

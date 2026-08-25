@@ -171,7 +171,7 @@ describe('importElementShare', () => {
 
 describe('listInbox', () => {
   it('GETs /shares/inbox with auth and returns array', async () => {
-    http.get.mockResolvedValue({ data: [{ id: 'es-1' }] })
+    http.get.mockResolvedValue({ data: { status: 'ok', shares: [{ id: 'es-1' }] } })
     const result = await api.listInbox()
     expect(http.get).toHaveBeenCalledWith('/shares/inbox', { headers: AUTH })
     expect(result).toHaveLength(1)
@@ -180,14 +180,14 @@ describe('listInbox', () => {
 
 describe('getCatalog', () => {
   it('GETs /catalog with no auth and returns array', async () => {
-    http.get.mockResolvedValue({ data: [{ id: 'es-1' }] })
+    http.get.mockResolvedValue({ data: { status: 'ok', items: [{ id: 'es-1' }] } })
     const result = await api.getCatalog()
     expect(http.get).toHaveBeenCalledWith('/catalog', { params: {} })
     expect(result).toHaveLength(1)
   })
 
   it('passes limit as query param when provided', async () => {
-    http.get.mockResolvedValue({ data: [] })
+    http.get.mockResolvedValue({ data: { status: 'ok', items: [] } })
     await api.getCatalog(20)
     expect(http.get).toHaveBeenCalledWith('/catalog', { params: { limit: 20 } })
   })

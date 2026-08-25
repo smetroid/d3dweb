@@ -51,6 +51,7 @@ export function resolveGraphKey(event, ctx) {
   if (S.matches(event, 'history')) return { action: 'history' }
   if (S.matches(event, 'share')) return { action: 'share' }
   if (S.matches(event, 'cycleCurveStyle')) return { action: 'cycleCurveStyle' }
+  if (S.matches(event, 'shareSelection')) return { action: 'shareSelection' }
   if (S.matches(event, 'close')) return { action: 'close' }
   if (S.matches(event, 'select')) return { action: 'select' }
   if (S.matches(event, 'showHints')) return { action: 'showHints' }

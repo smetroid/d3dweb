@@ -6,12 +6,15 @@ export function validateRootIds(ids) {
   return { valid: true, ids: deduped }
 }
 
-export function buildShareRequest({ rootIds, audience, depth, expDays }) {
+export function buildShareRequest({ rootIds, audience, depth, expDays, title, catalog }) {
+  const ids = audience.ids ?? (audience.id ? [audience.id] : [])
   return {
-    root_ids: rootIds,
-    audience,
+    rootIds,
+    audience: { kind: audience.kind, ids },
     depth,
-    exp_days: expDays
+    expDays,
+    title: title ?? '',
+    catalog: catalog ?? false
   }
 }
 

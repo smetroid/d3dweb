@@ -124,14 +124,14 @@
         </div>
       </transition>
       <transition name="fx-scrim">
-        <div v-if="showElementShare" class="fx-scrim" @click="showElementShare = false"></div>
+        <div v-if="showElementShare" class="fx-scrim" @click="_closeElementShare()"></div>
       </transition>
       <transition name="fx-panel">
         <div v-if="showElementShare" class="fx-hud-stage">
           <ElementShareDialog
             :dagId="(modifier?.value ?? modifier)?.d3dInfo?.id"
             :selectedNodeIds="selectedNodeIds"
-            @close="showElementShare = false"
+            @close="_closeElementShare()"
           />
         </div>
       </transition>
@@ -208,7 +208,8 @@ export default {
       collabStatus: 'disconnected',
       showHistory: false,
       showShare: false,
-      showElementShare: false
+      showElementShare: false,
+      shareRootId: null
     }
   },
   mounted() {
@@ -408,6 +409,12 @@ export default {
     },
 
     keyPress(event) {
+      // When the element-share dialog is open, let it own all keys
+      if (this.showElementShare) {
+        if (event.key === 'Escape') this._closeElementShare()
+        return
+      }
+
       // Ignore keystrokes typed into form fields (forms handle their own keys)
       const tag = event.target?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
@@ -638,14 +645,21 @@ export default {
     _openElementShare() {
       const mod = this.modifier?.value ?? this.modifier
       if (!mod?.d3dInfo?.id) return
-      if (!this.selectedNodes.length) {
+      const focused = this.edgeOrNode === 'edges' ? this.focusedEdgeId : this.focusedNodeId
+      if (!focused) {
         this.emitter.emit('appMessage', {
-          message: 'Select nodes first to share a sub-graph',
+          message: 'Focus a node or edge first (hjkl), then press Shift+O to share',
           status: 'info'
         })
         return
       }
+      this.shareRootId = focused
       this.showElementShare = true
+    },
+
+    _closeElementShare() {
+      this.showElementShare = false
+      this.shareRootId = null
     },
 
     onHistoryRestored(payload) {
@@ -716,11 +730,10 @@ export default {
     },
     graphlibJson() {
       const mod = this.modifier?.value ?? this.modifier
-      return mod ? modelToGraphlib(mod) : null
+      return mod?.cy ? modelToGraphlib(mod.cy) : null
     },
     selectedNodeIds() {
-      const mod = this.modifier?.value ?? this.modifier
-      return (this.selectedNodes || []).map((n) => mod?.getNodeId?.(n)).filter(Boolean)
+      return this.shareRootId ? [this.shareRootId] : []
     }
   },
   watch: {

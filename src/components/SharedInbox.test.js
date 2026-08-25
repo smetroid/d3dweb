@@ -21,16 +21,28 @@ const SHARES = [
   {
     id: 'es1',
     title: 'Auth cluster',
-    shared_by: 'alice',
-    depth: -1,
-    expires_at: '2027-01-01T00:00:00Z'
+    type: 'cluster',
+    rootIds: ['n1', 'n2'],
+    audienceKind: 'user',
+    role: 'view',
+    createdBy: 'alice',
+    expiresAt: '2027-01-01T00:00:00Z',
+    catalog: false,
+    tags: [],
+    createdAt: '2026-01-01T00:00:00Z'
   },
   {
     id: 'es2',
     title: 'Payment nodes',
-    shared_by: 'bob',
-    depth: 0,
-    expires_at: '2027-06-01T00:00:00Z'
+    type: 'node',
+    rootIds: ['n3'],
+    audienceKind: 'company',
+    role: 'view',
+    createdBy: 'bob',
+    expiresAt: '2027-06-01T00:00:00Z',
+    catalog: false,
+    tags: [],
+    createdAt: '2026-01-02T00:00:00Z'
   }
 ]
 

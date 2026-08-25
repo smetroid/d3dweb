@@ -19,16 +19,35 @@
         </header>
 
         <div class="fx-panel-body">
+          <div class="share-instructions">
+            <p class="share-instr-line">
+              Use <span class="share-kbd">hjkl</span> to focus a node or edge, then press
+              <span class="share-kbd">Shift+O</span> (or <span class="share-kbd">a</span> → Share
+              Selection) to open this dialog.
+            </p>
+            <p class="share-instr-line">
+              Switch between node and edge navigation with
+              <span class="share-kbd">Shift+N</span> / <span class="share-kbd">Shift+E</span>. The
+              focused element is used as the sharing root — no need to press Enter.
+            </p>
+          </div>
           <div class="share-form">
-            <!-- Selected node count -->
+            <!-- Title -->
             <div class="share-field">
-              <label class="share-label">SELECTED NODES</label>
-              <p class="share-hint">
-                {{ selectedNodeIds.length }} node{{
-                  selectedNodeIds.length !== 1 ? 's' : ''
-                }}
-                selected
-              </p>
+              <label class="share-label">TITLE</label>
+              <input
+                v-model="title"
+                class="share-title-input"
+                placeholder="Optional title for this share"
+                data-testid="share-title-input"
+                maxlength="120"
+              />
+            </div>
+
+            <!-- Focused element -->
+            <div class="share-field">
+              <label class="share-label">SHARING FROM</label>
+              <p class="share-hint">{{ selectedNodeIds.length ? selectedNodeIds[0] : '—' }}</p>
             </div>
 
             <!-- Audience -->
@@ -63,6 +82,17 @@
                 </select>
                 <p v-else class="share-hint">Loading groups…</p>
               </template>
+
+              <!-- Catalog toggle (public only) -->
+              <label v-if="audience.kind === 'public'" class="share-catalog-label">
+                <input
+                  v-model="catalog"
+                  type="checkbox"
+                  class="share-catalog-check"
+                  data-testid="catalog-checkbox"
+                />
+                Publish to public catalog
+              </label>
             </div>
 
             <!-- Depth -->
@@ -125,6 +155,10 @@
             </p>
           </div>
 
+          <div v-if="sentToInbox" class="share-result">
+            <p class="share-hint">Shared — the recipient will see it in their inbox.</p>
+          </div>
+
           <div v-if="errorMsg" class="share-error">{{ errorMsg }}</div>
         </div>
       </div>
@@ -134,6 +168,7 @@
 
 <script>
 import api from '@/services/api'
+import D3Util from '@/helpers/D3Util'
 import {
   buildShareRequest,
   audienceLabel,
@@ -152,11 +187,14 @@ export default {
   emits: ['close'],
   data() {
     return {
+      title: '',
       audience: { kind: 'public' },
+      catalog: false,
       depth: -1,
       expDays: 7,
       generating: false,
       generatedLink: null,
+      sentToInbox: false,
       copied: false,
       errorMsg: null,
       companies: [],
@@ -184,7 +222,14 @@ export default {
   },
   methods: {
     async selectAudience(kind) {
-      this.audience = { kind }
+      if (kind === 'user') {
+        this.audience = { kind, id: D3Util.username() }
+      } else {
+        this.audience = { kind }
+      }
+      if (kind !== 'public') {
+        this.catalog = false
+      }
       if (kind === 'company' && !this.companies.length) {
         this.companies = await api.listCompanies().catch(() => [])
       }
@@ -201,17 +246,22 @@ export default {
       }
       this.generating = true
       this.generatedLink = null
+      this.sentToInbox = false
       this.errorMsg = null
       try {
         const req = buildShareRequest({
           rootIds: validation.ids,
           audience: this.audience,
           depth: this.depth,
-          expDays: this.expDays
+          expDays: this.expDays,
+          title: this.title,
+          catalog: this.catalog
         })
         const data = await api.createElementShare(this.dagId, req)
         if (data?.token) {
           this.generatedLink = shareUrl(data.token)
+        } else if (data?.id) {
+          this.sentToInbox = true
         } else {
           this.errorMsg = data?.error || 'Failed to generate link'
         }
@@ -237,6 +287,36 @@ export default {
 </script>
 
 <style scoped>
+.share-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--fx-accent), 0.2);
+  background: rgba(var(--fx-accent), 0.05);
+}
+
+.share-instr-line {
+  font-size: 11px;
+  color: rgb(var(--fx-ink-dim));
+  margin: 0;
+  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+}
+
+.share-kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(var(--fx-accent), 0.35);
+  background: rgba(var(--fx-glass-bottom), 0.5);
+  color: rgb(var(--fx-ink));
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  white-space: nowrap;
+}
+
 .fx-panel-body {
   overflow-y: auto;
   flex: 1;
@@ -299,6 +379,19 @@ export default {
   color: rgb(var(--fx-ink));
 }
 
+.share-title-input {
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(var(--fx-accent), 0.3);
+  background: rgba(var(--fx-glass-bottom), 0.6);
+  color: rgb(var(--fx-ink));
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  outline: none;
+  box-sizing: border-box;
+}
+
 .share-select {
   width: 100%;
   padding: 5px 8px;
@@ -309,6 +402,21 @@ export default {
   font-size: 11px;
   font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   outline: none;
+}
+
+.share-catalog-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgb(var(--fx-ink-dim));
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.share-catalog-check {
+  accent-color: rgb(var(--fx-accent));
 }
 
 .share-generate-btn {

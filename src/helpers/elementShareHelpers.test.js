@@ -37,25 +37,27 @@ describe('buildShareRequest', () => {
 
   it('returns a well-formed request for public audience', () => {
     const req = buildShareRequest(base)
-    expect(req.root_ids).toEqual(['node1'])
-    expect(req.audience).toEqual({ kind: 'public' })
+    expect(req.rootIds).toEqual(['node1'])
+    expect(req.audience).toEqual({ kind: 'public', ids: [] })
     expect(req.depth).toBe(-1)
-    expect(req.exp_days).toBe(7)
+    expect(req.expDays).toBe(7)
+    expect(req.title).toBe('')
+    expect(req.catalog).toBe(false)
   })
 
-  it('includes audience id for company audience', () => {
+  it('includes audience ids array for company audience', () => {
     const req = buildShareRequest({ ...base, audience: { kind: 'company', id: 'c1' } })
-    expect(req.audience).toEqual({ kind: 'company', id: 'c1' })
+    expect(req.audience).toEqual({ kind: 'company', ids: ['c1'] })
   })
 
-  it('includes audience id for group audience', () => {
+  it('includes audience ids array for group audience', () => {
     const req = buildShareRequest({ ...base, audience: { kind: 'group', id: 'g1' } })
-    expect(req.audience).toEqual({ kind: 'group', id: 'g1' })
+    expect(req.audience).toEqual({ kind: 'group', ids: ['g1'] })
   })
 
-  it('includes audience id for user audience', () => {
+  it('includes audience ids array for user audience', () => {
     const req = buildShareRequest({ ...base, audience: { kind: 'user', id: 'alice' } })
-    expect(req.audience).toEqual({ kind: 'user', id: 'alice' })
+    expect(req.audience).toEqual({ kind: 'user', ids: ['alice'] })
   })
 
   it('uses depth 0 for directed descendants', () => {
@@ -66,6 +68,12 @@ describe('buildShareRequest', () => {
   it('uses positive depth for hop-limited sharing', () => {
     const req = buildShareRequest({ ...base, depth: 3 })
     expect(req.depth).toBe(3)
+  })
+
+  it('passes title and catalog through', () => {
+    const req = buildShareRequest({ ...base, title: 'My share', catalog: true })
+    expect(req.title).toBe('My share')
+    expect(req.catalog).toBe(true)
   })
 })
 
