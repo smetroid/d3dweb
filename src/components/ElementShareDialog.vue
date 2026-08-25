@@ -145,6 +145,7 @@
 
 <script>
 import api from '@/services/api'
+import D3Util from '@/helpers/D3Util'
 import {
   buildShareRequest,
   audienceLabel,
@@ -196,7 +197,11 @@ export default {
   },
   methods: {
     async selectAudience(kind) {
-      this.audience = { kind }
+      if (kind === 'user') {
+        this.audience = { kind, id: D3Util.username() }
+      } else {
+        this.audience = { kind }
+      }
       if (kind === 'company' && !this.companies.length) {
         this.companies = await api.listCompanies().catch(() => [])
       }

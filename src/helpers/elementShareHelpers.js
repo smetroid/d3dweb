@@ -7,9 +7,10 @@ export function validateRootIds(ids) {
 }
 
 export function buildShareRequest({ rootIds, audience, depth, expDays }) {
+  const ids = audience.ids ?? (audience.id ? [audience.id] : [])
   return {
     rootIds,
-    audience,
+    audience: { kind: audience.kind, ids },
     depth,
     expDays
   }
