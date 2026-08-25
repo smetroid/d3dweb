@@ -25,10 +25,12 @@
           <ul v-else class="inbox-list">
             <li v-for="share in shares" :key="share.id" class="inbox-row" data-testid="inbox-row">
               <div class="inbox-row-info">
-                <span class="inbox-title">{{ share.title || '(untitled)' }}</span>
+                <span class="inbox-title">{{
+                  share.title || share.type + ' · ' + (share.rootIds?.[0] ?? '—')
+                }}</span>
                 <span class="inbox-meta">
-                  from <strong>{{ share.shared_by }}</strong> · expires
-                  {{ formatDate(share.expires_at) }}
+                  from <strong>{{ share.createdBy }}</strong> · expires
+                  {{ formatDate(share.expiresAt) }}
                 </span>
               </div>
               <div class="inbox-row-actions">

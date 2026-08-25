@@ -32,6 +32,18 @@
             </p>
           </div>
           <div class="share-form">
+            <!-- Title -->
+            <div class="share-field">
+              <label class="share-label">TITLE</label>
+              <input
+                v-model="title"
+                class="share-title-input"
+                placeholder="Optional title for this share"
+                data-testid="share-title-input"
+                maxlength="120"
+              />
+            </div>
+
             <!-- Focused element -->
             <div class="share-field">
               <label class="share-label">SHARING FROM</label>
@@ -70,6 +82,17 @@
                 </select>
                 <p v-else class="share-hint">Loading groups…</p>
               </template>
+
+              <!-- Catalog toggle (public only) -->
+              <label v-if="audience.kind === 'public'" class="share-catalog-label">
+                <input
+                  v-model="catalog"
+                  type="checkbox"
+                  class="share-catalog-check"
+                  data-testid="catalog-checkbox"
+                />
+                Publish to public catalog
+              </label>
             </div>
 
             <!-- Depth -->
@@ -164,7 +187,9 @@ export default {
   emits: ['close'],
   data() {
     return {
+      title: '',
       audience: { kind: 'public' },
+      catalog: false,
       depth: -1,
       expDays: 7,
       generating: false,
@@ -202,6 +227,9 @@ export default {
       } else {
         this.audience = { kind }
       }
+      if (kind !== 'public') {
+        this.catalog = false
+      }
       if (kind === 'company' && !this.companies.length) {
         this.companies = await api.listCompanies().catch(() => [])
       }
@@ -225,7 +253,9 @@ export default {
           rootIds: validation.ids,
           audience: this.audience,
           depth: this.depth,
-          expDays: this.expDays
+          expDays: this.expDays,
+          title: this.title,
+          catalog: this.catalog
         })
         const data = await api.createElementShare(this.dagId, req)
         if (data?.token) {
@@ -349,6 +379,19 @@ export default {
   color: rgb(var(--fx-ink));
 }
 
+.share-title-input {
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(var(--fx-accent), 0.3);
+  background: rgba(var(--fx-glass-bottom), 0.6);
+  color: rgb(var(--fx-ink));
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  outline: none;
+  box-sizing: border-box;
+}
+
 .share-select {
   width: 100%;
   padding: 5px 8px;
@@ -359,6 +402,21 @@ export default {
   font-size: 11px;
   font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   outline: none;
+}
+
+.share-catalog-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgb(var(--fx-ink-dim));
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.share-catalog-check {
+  accent-color: rgb(var(--fx-accent));
 }
 
 .share-generate-btn {

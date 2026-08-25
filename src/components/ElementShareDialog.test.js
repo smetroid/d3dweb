@@ -115,7 +115,7 @@ describe('ElementShareDialog – generate flow', () => {
     expect(mockCreateElementShare).toHaveBeenCalledWith(
       'mydag',
       expect.objectContaining({
-        root_ids: ['n1'],
+        rootIds: ['n1'],
         audience: expect.objectContaining({ kind: 'public' })
       })
     )

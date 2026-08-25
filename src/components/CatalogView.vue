@@ -30,10 +30,10 @@
         <div class="catalog-card-body">
           <h2 class="catalog-card-title">{{ item.title || '(untitled)' }}</h2>
           <p class="catalog-card-meta">
-            by <strong>{{ item.shared_by }}</strong> · {{ item.node_count ?? 0 }} node{{
-              item.node_count !== 1 ? 's' : ''
+            by <strong>{{ item.createdBy }}</strong> · {{ item.nodeCount ?? 0 }} node{{
+              item.nodeCount !== 1 ? 's' : ''
             }}
-            · {{ item.edge_count ?? 0 }} edge{{ item.edge_count !== 1 ? 's' : '' }}
+            · {{ item.edgeCount ?? 0 }} edge{{ item.edgeCount !== 1 ? 's' : '' }}
           </p>
         </div>
         <div class="catalog-card-actions">
