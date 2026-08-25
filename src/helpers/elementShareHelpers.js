@@ -8,10 +8,10 @@ export function validateRootIds(ids) {
 
 export function buildShareRequest({ rootIds, audience, depth, expDays }) {
   return {
-    root_ids: rootIds,
+    rootIds,
     audience,
     depth,
-    exp_days: expDays
+    expDays
   }
 }
 
