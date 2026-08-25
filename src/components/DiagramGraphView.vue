@@ -208,7 +208,8 @@ export default {
       collabStatus: 'disconnected',
       showHistory: false,
       showShare: false,
-      showElementShare: false
+      showElementShare: false,
+      shareRootId: null
     }
   },
   mounted() {
@@ -652,11 +653,13 @@ export default {
         })
         return
       }
+      this.shareRootId = focused
       this.showElementShare = true
     },
 
     _closeElementShare() {
       this.showElementShare = false
+      this.shareRootId = null
     },
 
     onHistoryRestored(payload) {
@@ -730,10 +733,7 @@ export default {
       return mod?.cy ? modelToGraphlib(mod.cy) : null
     },
     selectedNodeIds() {
-      if (this.edgeOrNode === 'edges') {
-        return this.focusedEdgeId ? [this.focusedEdgeId] : []
-      }
-      return this.focusedNodeId ? [this.focusedNodeId] : []
+      return this.shareRootId ? [this.shareRootId] : []
     }
   },
   watch: {
