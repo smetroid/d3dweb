@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.7.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.6.0...d3dweb-v1.7.0) (2026-08-25)
+
+
+### Features
+
+* **shares:** wire inbox and catalog — fix response shapes, add title + catalog UI ([a292e71](https://github.com/smetroid/d3dweb/commit/a292e710481c69deaaa0ad8e204df22b80fdd4a2))
+
+
+### Bug Fixes
+
+* correct segmented curve style value and add cycle shortcut ([7677ec7](https://github.com/smetroid/d3dweb/commit/7677ec759ecf4d12702c644afc830851591ffb77))
+* correct segmented curve style value and add cycle shortcut ([e940ec0](https://github.com/smetroid/d3dweb/commit/e940ec051f7b84d18337d67250fcec658fcb0f67))
+* normalize audience.id to ids array and populate username for Me audience ([2431f7f](https://github.com/smetroid/d3dweb/commit/2431f7f58751ffd847f64efb929abc061b41909c))
+* **shares:** intercept all graph keys while element share dialog is open ([f0f7082](https://github.com/smetroid/d3dweb/commit/f0f7082069150eb23155283ed62139555383ab6c))
+* **shares:** pass mod.cy to modelToGraphlib in graphlibJson computed ([c796aac](https://github.com/smetroid/d3dweb/commit/c796aac53408394a7c647c262ddbecf2dd04a62e))
+* **shares:** release graph focus trap when element share dialog opens ([e2ee3b7](https://github.com/smetroid/d3dweb/commit/e2ee3b736265dd7d762c3ea4891a39becde5647a))
+* **shares:** remove trapGraph toggle from element share dialog open/close ([db7903f](https://github.com/smetroid/d3dweb/commit/db7903f7df8a1d243b151ed4e346fc4748e62488))
+* **shares:** resolve shift+e conflict and add selection instructions ([371f0cf](https://github.com/smetroid/d3dweb/commit/371f0cf503604163000b66f25206dfcbe83620c4))
+* **shares:** resolve shift+e conflict and add share instructions ([da56a91](https://github.com/smetroid/d3dweb/commit/da56a91b7953627d78036cea69bca363277593ae))
+* **shares:** resolve Shift+E conflict and add share instructions ([a565422](https://github.com/smetroid/d3dweb/commit/a56542233f78b0a124ff70aa7ef85b46170adfa5))
+* **shares:** use focused element for sharing; update docs and helper pane ([91dc720](https://github.com/smetroid/d3dweb/commit/91dc720bb37e884b80d9c68612fe21cea2713fb9))
+* show inbox-sent confirmation for non-public shares instead of error ([5a6390d](https://github.com/smetroid/d3dweb/commit/5a6390d0a40dc04e3dac029f6e893f9e358fb7ca))
+* snapshot shareRootId at dialog open to prevent 400 on share POST ([52230e5](https://github.com/smetroid/d3dweb/commit/52230e5164f611e44cb9d28f3efc1c24a579fb60))
+* use camelCase field names in share request to match API contract ([132f188](https://github.com/smetroid/d3dweb/commit/132f188dbc84f39394924d2f0d645238ff8d4be7))
+
 ## [1.6.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.5.2...d3dweb-v1.6.0) (2026-08-23)
 
 
