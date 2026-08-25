@@ -408,6 +408,12 @@ export default {
     },
 
     keyPress(event) {
+      // When the element-share dialog is open, let it own all keys
+      if (this.showElementShare) {
+        if (event.key === 'Escape') this._closeElementShare()
+        return
+      }
+
       // Ignore keystrokes typed into form fields (forms handle their own keys)
       const tag = event.target?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
