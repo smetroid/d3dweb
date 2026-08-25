@@ -132,6 +132,10 @@
             </p>
           </div>
 
+          <div v-if="sentToInbox" class="share-result">
+            <p class="share-hint">Shared — the recipient will see it in their inbox.</p>
+          </div>
+
           <div v-if="errorMsg" class="share-error">{{ errorMsg }}</div>
         </div>
       </div>
@@ -164,6 +168,7 @@ export default {
       expDays: 7,
       generating: false,
       generatedLink: null,
+      sentToInbox: false,
       copied: false,
       errorMsg: null,
       companies: [],
@@ -208,6 +213,7 @@ export default {
       }
       this.generating = true
       this.generatedLink = null
+      this.sentToInbox = false
       this.errorMsg = null
       try {
         const req = buildShareRequest({
@@ -219,6 +225,8 @@ export default {
         const data = await api.createElementShare(this.dagId, req)
         if (data?.token) {
           this.generatedLink = shareUrl(data.token)
+        } else if (data?.id) {
+          this.sentToInbox = true
         } else {
           this.errorMsg = data?.error || 'Failed to generate link'
         }
