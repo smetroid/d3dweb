@@ -652,13 +652,11 @@ export default {
         })
         return
       }
-      this.trapGraph = false
       this.showElementShare = true
     },
 
     _closeElementShare() {
       this.showElementShare = false
-      if (this.active === 'Graph') this.trapGraph = true
     },
 
     onHistoryRestored(payload) {
