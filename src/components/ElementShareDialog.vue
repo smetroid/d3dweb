@@ -265,8 +265,9 @@ export default {
         } else {
           this.errorMsg = data?.error || 'Failed to generate link'
         }
-      } catch {
-        this.errorMsg = 'Failed to generate link'
+      } catch (err) {
+        console.error('[ElementShareDialog] createElementShare failed:', err)
+        this.errorMsg = err?.response?.data?.error || 'Failed to generate link'
       } finally {
         this.generating = false
       }
