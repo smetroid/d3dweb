@@ -799,10 +799,12 @@ export default {
     async mergeElementShare(shareId) {
       try {
         const share = await D3DApi.getElementShare(shareId)
-        if (!share?.cluster) {
+        const clusterRaw = share?.cluster
+        if (!clusterRaw) {
           this.emitter.emit('appMessage', { message: 'No cluster data in share', status: 'error' })
           return
         }
+        const cluster = typeof clusterRaw === 'string' ? JSON.parse(clusterRaw) : clusterRaw
         const mod = this.modifier?.value ?? this.modifier
         if (!mod) {
           this.emitter.emit('appMessage', {
@@ -812,7 +814,7 @@ export default {
           return
         }
         const currentJson = modelToGraphlib(mod.cy)
-        const merged = mergeClusterInto(currentJson, share.cluster)
+        const merged = mergeClusterInto(currentJson, cluster)
         this.emitter.emit('diagram:merge', merged)
         this.showInbox = false
         this.emitter.emit('appMessage', {
@@ -823,8 +825,9 @@ export default {
         this.emitter.emit('appMessage', { message: 'Failed to merge cluster', status: 'error' })
       }
     },
-    importSharedCluster(cluster) {
+    importSharedCluster(clusterRaw) {
       try {
+        const cluster = typeof clusterRaw === 'string' ? JSON.parse(clusterRaw) : clusterRaw
         const model = markRaw(graphlibToModel(cluster))
         this.d3dInfo = {
           name: 'Imported share',
