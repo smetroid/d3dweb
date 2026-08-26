@@ -72,7 +72,7 @@ The SPA calls the API through the ingress at same-origin `/api`. This is set at 
 
 1. User-configured `serverUrl` in Settings (cookie) — wins if present
 2. Build-time `VITE_API_BASE_URL` (relative → absolutized against `window.location.origin`)
-3. Fallback: `http://localhost:3000` (matches the standalone `vite dev` workflow)
+3. Fallback: `https://d3d-api.vercel.app` (the hosted d3d-api deployment)
 
 WebSocket collab derives its URL from the same base (`ws://d3d.local/api/dag/:id/ws`), which the ingress upgrades transparently.
 

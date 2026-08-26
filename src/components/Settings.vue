@@ -58,7 +58,7 @@
                           class="fx-input"
                           type="text"
                           v-model="settings.serverUrl"
-                          placeholder="http://localhost:3000"
+                          placeholder="https://d3d-api.vercel.app"
                         />
                         <small class="fx-toggle-note"
                           >Backend API URL. Change if your server runs on a different host or

@@ -67,7 +67,7 @@ import api from '@/services/api'
 
 export default {
   name: 'SharedInbox',
-  emits: ['close', 'merge'],
+  emits: ['close', 'merge', 'import'],
   data() {
     return {
       loading: true,
@@ -101,8 +101,9 @@ export default {
     async doImport(share) {
       this.importingId = share.id
       try {
-        await api.importElementShare(share.id)
+        const result = await api.importElementShare(share.id)
         this.importedIds = new Set([...this.importedIds, share.id])
+        this.$emit('import', result.cluster)
       } catch {
         // keep row available to retry
       } finally {

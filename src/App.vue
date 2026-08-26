@@ -89,7 +89,11 @@ function toggleTheme() {
         </transition>
         <transition name="fx-panel">
           <div v-if="showInbox" class="fx-hud-stage">
-            <SharedInbox @close="showInbox = false" @merge="mergeElementShare" />
+            <SharedInbox
+              @close="showInbox = false"
+              @merge="mergeElementShare"
+              @import="importSharedCluster"
+            />
           </div>
         </transition>
       </Teleport>
@@ -810,12 +814,37 @@ export default {
         const currentJson = modelToGraphlib(mod.cy)
         const merged = mergeClusterInto(currentJson, share.cluster)
         this.emitter.emit('diagram:merge', merged)
+        this.showInbox = false
         this.emitter.emit('appMessage', {
           message: 'Cluster merged into current diagram',
           status: 'success'
         })
       } catch {
         this.emitter.emit('appMessage', { message: 'Failed to merge cluster', status: 'error' })
+      }
+    },
+    importSharedCluster(cluster) {
+      try {
+        const model = markRaw(graphlibToModel(cluster))
+        this.d3dInfo = {
+          name: 'Imported share',
+          description: '',
+          created: new Date().toISOString(),
+          diagram: model,
+          colaConstraints: []
+        }
+        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        this.emitter.emit('newDiagram')
+        this.showInbox = false
+        this.emitter.emit('appMessage', {
+          message: 'Opened shared cluster as new diagram',
+          status: 'success'
+        })
+      } catch {
+        this.emitter.emit('appMessage', {
+          message: 'Failed to import cluster as new diagram',
+          status: 'error'
+        })
       }
     }
   },
