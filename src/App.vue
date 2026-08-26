@@ -866,11 +866,45 @@ export default {
           return
         }
         // Reset to a fresh diagram first so DiagramForm builds a new modifier
-        // and updateModifier fires — then replace the default "first" node
-        // model with the shared cluster via diagram:merge.
+        // and updateModifier wires it up. The fresh diagram contains a single
+        // default "first" node.
         this.emitter.emit('newDiagram')
         await this.$nextTick()
-        this.emitter.emit('diagram:merge', cluster)
+
+        const mod = this.modifier?.value ?? this.modifier
+        if (!mod) {
+          this.emitter.emit('appMessage', {
+            message: 'Failed to import cluster as new diagram',
+            status: 'error'
+          })
+          return
+        }
+
+        // Drop the default "first" node — the imported cluster is the whole
+        // diagram, not an addition to it.
+        mod.cy
+          .nodes()
+          .map((n) => n.id())
+          .forEach((id) => mod.cy.removeNode(id))
+
+        // Add cluster elements directly to mod.cy so the renderer picks them
+        // up on redraw. diagram:merge only reassigns mod.diagram, which the
+        // renderer does not consult (it diffs against mod.cy).
+        for (const node of cluster.nodes || []) {
+          const data = { id: node.v, ...node.value }
+          if (node.parent != null) data.parent = node.parent
+          mod.cy.addNode(data)
+        }
+        for (const edge of cluster.edges || []) {
+          mod.cy.addEdge({
+            id: edge.value?.id,
+            source: edge.v,
+            target: edge.w,
+            ...edge.value
+          })
+        }
+
+        mod.redraw()
         this.showInbox = false
         this.emitter.emit('appMessage', {
           message: 'Opened shared cluster as new diagram',
