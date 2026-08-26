@@ -271,7 +271,7 @@ export default {
       defaultEdgeIconPosition: 'left',
       defaultEdgeIconSize: null,
       defaultEdgeIconColor: '',
-      serverUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+      serverUrl: import.meta.env.VITE_API_BASE_URL || 'https://d3d-api.vercel.app',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}
@@ -286,7 +286,7 @@ export default {
       if (/^https?:\/\//.test(envBase)) return envBase.replace(/\/+$/, '')
       return (window.location.origin + envBase).replace(/\/+$/, '')
     }
-    return 'http://localhost:3000'
+    return 'https://d3d-api.vercel.app'
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
