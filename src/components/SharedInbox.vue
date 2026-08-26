@@ -79,8 +79,11 @@ export default {
   },
   async mounted() {
     try {
-      this.shares = await api.listInbox()
-    } catch {
+      const shares = await api.listInbox()
+      console.log('[SharedInbox] listInbox response:', shares)
+      this.shares = shares
+    } catch (err) {
+      console.error('[SharedInbox] listInbox failed:', err)
       this.error = 'Failed to load inbox'
     } finally {
       this.loading = false
