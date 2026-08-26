@@ -855,25 +855,29 @@ export default {
         this.emitter.emit('appMessage', { message: 'Failed to merge cluster', status: 'error' })
       }
     },
-    importSharedCluster(clusterRaw) {
+    async importSharedCluster(clusterRaw) {
       try {
         const cluster = typeof clusterRaw === 'string' ? JSON.parse(clusterRaw) : clusterRaw
-        const model = markRaw(graphlibToModel(cluster))
-        this.d3dInfo = {
-          name: 'Imported share',
-          description: '',
-          created: new Date().toISOString(),
-          diagram: model,
-          colaConstraints: []
+        if (!cluster) {
+          this.emitter.emit('appMessage', {
+            message: 'No cluster data in share',
+            status: 'error'
+          })
+          return
         }
-        this.modifier = markRaw(new DiagramGraph(this.d3dInfo, this.emitter))
+        // Reset to a fresh diagram first so DiagramForm builds a new modifier
+        // and updateModifier fires — then replace the default "first" node
+        // model with the shared cluster via diagram:merge.
         this.emitter.emit('newDiagram')
+        await this.$nextTick()
+        this.emitter.emit('diagram:merge', cluster)
         this.showInbox = false
         this.emitter.emit('appMessage', {
           message: 'Opened shared cluster as new diagram',
           status: 'success'
         })
-      } catch {
+      } catch (err) {
+        console.error('import as new diagram failed', err)
         this.emitter.emit('appMessage', {
           message: 'Failed to import cluster as new diagram',
           status: 'error'
