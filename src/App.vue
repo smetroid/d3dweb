@@ -17,7 +17,6 @@ import SharedInbox from '@/components/SharedInbox.vue'
 import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
 import D3DApi from '@/services/api'
-import { mergeClusterInto } from '@/helpers/clusters'
 
 const route = useRoute()
 
@@ -813,9 +812,40 @@ export default {
           })
           return
         }
-        const currentJson = modelToGraphlib(mod.cy)
-        const merged = mergeClusterInto(currentJson, cluster)
-        this.emitter.emit('diagram:merge', merged)
+
+        // Build set of existing node IDs so we can detect and remap conflicts.
+        const existingIds = new Set(mod.cy.nodes().map((n) => n.id()))
+
+        const remap = new Map()
+        for (const node of cluster.nodes || []) {
+          if (existingIds.has(node.v)) {
+            let candidate = node.v + '_2'
+            let n = 3
+            while (existingIds.has(candidate)) candidate = node.v + '_' + n++
+            remap.set(node.v, candidate)
+            existingIds.add(candidate)
+          }
+        }
+        const resolve = (id) => remap.get(id) ?? id
+
+        // Add only new (or remapped) nodes directly to mod.cy so the renderer picks them up.
+        for (const node of cluster.nodes || []) {
+          if (remap.has(node.v) || !existingIds.has(node.v)) {
+            const data = { id: resolve(node.v), ...node.value }
+            if (node.parent != null) data.parent = resolve(node.parent)
+            mod.cy.addNode(data)
+          }
+        }
+        for (const edge of cluster.edges || []) {
+          mod.cy.addEdge({
+            id: edge.value?.id ? resolve(edge.value.id) : undefined,
+            source: resolve(edge.v),
+            target: resolve(edge.w),
+            ...edge.value
+          })
+        }
+
+        mod.redraw()
         this.showInbox = false
         this.emitter.emit('appMessage', {
           message: 'Cluster merged into current diagram',
