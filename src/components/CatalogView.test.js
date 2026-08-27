@@ -2,11 +2,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import CatalogView from '@/components/CatalogView.vue'
+import { takePendingCluster } from '@/helpers/pendingCluster'
 
 const { mockGetCatalog, mockExchange, mockImport } = vi.hoisted(() => ({
   mockGetCatalog: vi.fn(),
   mockExchange: vi.fn(),
   mockImport: vi.fn()
+}))
+
+// Keeps a real cytoscape canvas out of jsdom; the render itself is covered by
+// ClusterGraphPreview.test.js.
+vi.mock('@/helpers/CytoscapeRenderer', () => ({
+  default: class {
+    init() {}
+    updateScene() {}
+    fitToContent() {}
+    teardown() {}
+  }
 }))
 
 vi.mock('@/services/api', () => ({
@@ -56,6 +68,8 @@ function mountCatalog() {
       return () => h(CatalogView)
     }
   })
+  const push = vi.fn()
+  app.config.globalProperties.$router = { push }
   app.component('v-icon', { template: '<span />' })
   app.component('FocusTrap', {
     props: { active: Boolean },
@@ -64,7 +78,7 @@ function mountCatalog() {
     }
   })
   app.mount(host)
-  return { host, app }
+  return { host, app, push }
 }
 
 beforeEach(() => {
@@ -85,11 +99,26 @@ beforeEach(() => {
       edges: [{ v: 'n1', w: 'n2', value: {} }]
     }
   })
-  mockImport.mockResolvedValue({ dagId: 'new-dag' })
+  // Mirrors POST /element-shares/:id/import, which returns the cluster for the
+  // client to open — it never creates a diagram, so there is no dagId.
+  mockImport.mockResolvedValue({
+    status: 'ok',
+    type: 'node',
+    rootIds: ['n1'],
+    cluster: {
+      options: { directed: true },
+      nodes: [
+        { v: 'n1', value: {} },
+        { v: 'n2', value: {} }
+      ],
+      edges: [{ v: 'n1', w: 'n2', value: {} }]
+    }
+  })
 })
 
 afterEach(() => {
   document.body.innerHTML = ''
+  sessionStorage.clear()
   vi.clearAllMocks()
 })
 
@@ -190,6 +219,14 @@ describe('CatalogView – preview dialog', () => {
     expect(dialog().textContent).toContain('Auth service nodes')
   })
 
+  it('renders the previewed cluster as a graph', async () => {
+    mountCatalog()
+    await flush()
+    document.querySelectorAll('[data-testid="catalog-preview-btn"]')[0].click()
+    await flush()
+    expect(dialog().querySelector('[data-testid="cluster-graph"]')).not.toBeNull()
+  })
+
   it('shows the cluster counts from the exchanged share', async () => {
     mountCatalog()
     await flush()
@@ -240,6 +277,85 @@ describe('CatalogView – preview dialog', () => {
     previewButtons()[0].click()
     await flush()
     expect(dialog().textContent).toContain('share link revoked')
+  })
+})
+
+describe('CatalogView – importing as a new diagram', () => {
+  const previewButtons = () => document.querySelectorAll('[data-testid="catalog-preview-btn"]')
+  const dialog = () => document.querySelector('[data-testid="catalog-preview-dialog"]')
+
+  const openAndImport = async (harness) => {
+    previewButtons()[0].click()
+    await flush()
+    document.querySelector('[data-testid="import-btn"]').click()
+    await flush()
+    return harness
+  }
+
+  it('imports the exchanged share by id', async () => {
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    expect(mockImport).toHaveBeenCalledWith('es1')
+  })
+
+  it('treats a cluster response as success — the API returns no dagId', async () => {
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    expect(document.body.textContent).not.toMatch(/import failed/i)
+  })
+
+  it('hands the cluster off for the editor to open', async () => {
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    const pending = takePendingCluster()
+    expect(pending).not.toBeNull()
+    expect(pending.mode).toBe('new')
+    expect(pending.cluster.nodes).toHaveLength(2)
+    expect(pending.cluster.edges).toHaveLength(1)
+  })
+
+  it('returns to the app so the new diagram is visible', async () => {
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    expect(h.push).toHaveBeenCalledWith('/')
+  })
+
+  it('surfaces a server error and does not hand anything off', async () => {
+    const err = new Error('Request failed with status code 403')
+    err.response = { status: 403, data: { status: 'error', message: 'access denied' } }
+    mockImport.mockRejectedValue(err)
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    expect(document.body.textContent).toContain('access denied')
+    expect(takePendingCluster()).toBeNull()
+    expect(h.push).not.toHaveBeenCalled()
+  })
+
+  it('does not hand off a success response that carries no cluster', async () => {
+    mockImport.mockResolvedValue({ status: 'ok' })
+    const h = mountCatalog()
+    await flush()
+    await openAndImport(h)
+    expect(takePendingCluster()).toBeNull()
+    expect(h.push).not.toHaveBeenCalled()
+    expect(dialog().textContent).toMatch(/failed/i)
+  })
+})
+
+describe('CatalogView – attribution', () => {
+  it("shows the catalog's real author, not the share's anonymous alias", async () => {
+    mountCatalog()
+    await flush()
+    document.querySelectorAll('[data-testid="catalog-preview-btn"]')[0].click()
+    await flush()
+    const text = document.querySelector('[data-testid="catalog-preview-dialog"]').textContent
+    expect(text).toContain('alice')
+    expect(text).not.toContain('anon-fox')
   })
 })
 

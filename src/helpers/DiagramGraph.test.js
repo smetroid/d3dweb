@@ -7,7 +7,10 @@ vi.mock('vue-cookies', () => ({
 }))
 
 vi.mock('@/services/api', () => ({
-  default: { updateDiagram: vi.fn().mockResolvedValue({}) }
+  default: {
+    updateDiagram: vi.fn().mockResolvedValue({}),
+    postDiagram: vi.fn().mockResolvedValue({ data: 'new-id' })
+  }
 }))
 
 vi.stubGlobal('localStorage', {
@@ -578,7 +581,13 @@ describe('autosave persistence', () => {
   function savedGraph() {
     const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
     const graph = new DiagramGraph(
-      { diagram: model, name: 'D', description: 'desc', id: 'dag-1', created: '2026-01-01T00:00:00Z' },
+      {
+        diagram: model,
+        name: 'D',
+        description: 'desc',
+        id: 'dag-1',
+        created: '2026-01-01T00:00:00Z'
+      },
       { emit: vi.fn() }
     )
     graph.renderer = { updateScene: vi.fn(), selectNode: vi.fn(), deselectNode: vi.fn() }
@@ -648,5 +657,160 @@ describe('autosave persistence', () => {
     graph.redraw()
     await vi.advanceTimersByTimeAsync(800)
     expect(api.updateDiagram).not.toHaveBeenCalled()
+  })
+})
+
+describe('save status reporting', () => {
+  let api
+
+  beforeEach(async () => {
+    localStorage.store.clear()
+    localStorage.removeItem('token')
+    vi.useFakeTimers()
+    vi.stubEnv('VITE_COLLAB_ENABLED', 'false')
+    api = (await import('@/services/api')).default
+    api.updateDiagram.mockClear().mockResolvedValue({})
+    api.postDiagram.mockClear().mockResolvedValue({ data: 'new-id' })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
+
+  // Returns the emitter too, so tests can assert on what the graph reported.
+  function statusGraph({ id } = {}) {
+    const model = new GraphModel([{ group: 'nodes', data: { id: 'n0', label: 'N' } }])
+    const emitter = { emit: vi.fn() }
+    const graph = new DiagramGraph(
+      { diagram: model, name: 'D', description: 'desc', id, created: '2026-01-01T00:00:00Z' },
+      emitter
+    )
+    graph.renderer = { updateScene: vi.fn(), selectNode: vi.fn(), deselectNode: vi.fn() }
+    return { graph, emitter }
+  }
+
+  const statuses = (emitter) =>
+    emitter.emit.mock.calls.filter((c) => c[0].startsWith('save:')).map((c) => c[0])
+
+  it('reports local-only when there is no token', async () => {
+    const { graph, emitter } = statusGraph({ id: 'dag-1' })
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(statuses(emitter)).toEqual(['save:local'])
+  })
+
+  it('reports saving then saved when the server write succeeds', async () => {
+    const { graph, emitter } = statusGraph({ id: 'dag-1' })
+    localStorage.setItem('token', 'a.b.c')
+
+    graph.redraw()
+    expect(statuses(emitter)).toEqual(['save:saving'])
+
+    await vi.advanceTimersByTimeAsync(800)
+    expect(statuses(emitter)).toEqual(['save:saving', 'save:saved'])
+
+    const saved = emitter.emit.mock.calls.find((c) => c[0] === 'save:saved')
+    expect(saved[1].at).toBeInstanceOf(Date)
+  })
+
+  it('reports an error when the server write fails', async () => {
+    const { graph, emitter } = statusGraph({ id: 'dag-1' })
+    localStorage.setItem('token', 'a.b.c')
+    api.updateDiagram.mockRejectedValue(new Error('boom'))
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(statuses(emitter)).toEqual(['save:saving', 'save:error'])
+  })
+
+  it('creates the diagram on the server when logged in without an id', async () => {
+    const { graph, emitter } = statusGraph()
+    localStorage.setItem('token', 'a.b.c')
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(api.postDiagram).toHaveBeenCalledTimes(1)
+    const payload = api.postDiagram.mock.calls[0][0]
+    expect(payload.name).toBe('D')
+    expect(payload.diagram).toContain('"label":"N"')
+
+    expect(graph.d3dInfo.id).toBe('new-id')
+    expect(emitter.emit).toHaveBeenCalledWith(
+      'updateDiagramInfo',
+      expect.objectContaining({ id: 'new-id' })
+    )
+    expect(statuses(emitter)).toEqual(['save:saving', 'save:saved'])
+  })
+
+  it('creates only once when edits arrive while the create is in flight', async () => {
+    const { graph } = statusGraph()
+    localStorage.setItem('token', 'a.b.c')
+
+    let release
+    api.postDiagram.mockReturnValue(
+      new Promise((resolve) => {
+        release = () => resolve({ data: 'new-id' })
+      })
+    )
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800) // create starts, still unresolved
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800) // second edit must not create again
+
+    expect(api.postDiagram).toHaveBeenCalledTimes(1)
+
+    release()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(api.postDiagram).toHaveBeenCalledTimes(1)
+  })
+
+  it('updates rather than re-creates once the server id is known', async () => {
+    const { graph } = statusGraph()
+    localStorage.setItem('token', 'a.b.c')
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(api.postDiagram).toHaveBeenCalledTimes(1)
+    expect(api.updateDiagram).toHaveBeenCalledTimes(1)
+    expect(api.updateDiagram.mock.calls[0][0].id).toBe('new-id')
+  })
+
+  it('retries the server write on demand after a failure', async () => {
+    const { graph, emitter } = statusGraph({ id: 'dag-1' })
+    localStorage.setItem('token', 'a.b.c')
+    api.updateDiagram.mockRejectedValueOnce(new Error('boom'))
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+    expect(statuses(emitter)).toEqual(['save:saving', 'save:error'])
+
+    graph.saveNow()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(api.updateDiagram).toHaveBeenCalledTimes(2)
+    expect(statuses(emitter)).toEqual(['save:saving', 'save:error', 'save:saving', 'save:saved'])
+  })
+
+  it('does not create on the server for a view-only share token', async () => {
+    const { graph } = statusGraph()
+    const claims = btoa(JSON.stringify({ iss: 'd3d-share', role: 'view' }))
+    localStorage.setItem('token', `header.${claims}.sig`)
+
+    graph.redraw()
+    await vi.advanceTimersByTimeAsync(800)
+
+    expect(api.postDiagram).not.toHaveBeenCalled()
   })
 })

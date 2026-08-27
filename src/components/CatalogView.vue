@@ -79,6 +79,7 @@
                   :key="previewItem.token"
                   :token="previewItem.token"
                   :title="previewItem.title"
+                  :shared-by="previewItem.createdBy"
                   :show-merge="false"
                 />
               </div>

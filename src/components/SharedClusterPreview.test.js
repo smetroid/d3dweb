@@ -2,10 +2,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import SharedClusterPreview from '@/components/SharedClusterPreview.vue'
+import { takePendingCluster } from '@/helpers/pendingCluster'
 
 const { mockExchange, mockImport } = vi.hoisted(() => ({
   mockExchange: vi.fn(),
   mockImport: vi.fn()
+}))
+
+// The graph render is exercised in ClusterGraphPreview.test.js; here it only
+// needs to not spin up a real cytoscape canvas under jsdom.
+vi.mock('@/helpers/CytoscapeRenderer', () => ({
+  default: class {
+    init() {}
+    updateScene() {}
+    fitToContent() {}
+    teardown() {}
+  }
 }))
 
 vi.mock('@/services/api', () => ({
@@ -49,18 +61,27 @@ function mountPreview(token = 'tok123') {
       return () => h(SharedClusterPreview, { token })
     }
   })
+  const push = vi.fn()
+  app.config.globalProperties.$router = { push }
   app.component('v-icon', { template: '<span />' })
   app.mount(host)
-  return { host, app }
+  return { host, app, push }
 }
 
 beforeEach(() => {
   mockExchange.mockResolvedValue(SHARE)
-  mockImport.mockResolvedValue({ dagId: 'new-dag' })
+  // Mirrors POST /element-shares/:id/import: the cluster to open, no dagId.
+  mockImport.mockResolvedValue({
+    status: 'ok',
+    type: 'node',
+    rootIds: ['n1'],
+    cluster: SHARE.cluster
+  })
 })
 
 afterEach(() => {
   document.body.innerHTML = ''
+  sessionStorage.clear()
   vi.clearAllMocks()
 })
 
@@ -112,6 +133,12 @@ describe('SharedClusterPreview – exchange flow', () => {
     const text = document.body.textContent
     expect(text).toMatch(/2/)
     expect(text).toMatch(/1/)
+  })
+
+  it('renders the cluster as a graph, not just its counts', async () => {
+    mountPreview()
+    await flush()
+    expect(document.querySelector('[data-testid="cluster-graph"]')).not.toBeNull()
   })
 
   it('shows an error when exchange returns null', async () => {
@@ -188,7 +215,7 @@ describe('SharedClusterPreview – import action', () => {
     await nextTick()
     const btn = document.querySelector('[data-testid="import-btn"]')
     expect(btn.disabled).toBe(true)
-    resolve({ dagId: 'dag2' })
+    resolve({ status: 'ok', cluster: SHARE.cluster })
     await flush()
   })
 
@@ -197,6 +224,67 @@ describe('SharedClusterPreview – import action', () => {
     await flush()
     document.querySelector('[data-testid="import-btn"]').click()
     await flush()
-    expect(document.body.textContent).toMatch(/import|added|success/i)
+    expect(document.body.textContent).toMatch(/success/i)
+    expect(document.body.textContent).not.toMatch(/import failed/i)
+  })
+
+  it('hands the cluster off and returns to the app', async () => {
+    const { push } = mountPreview()
+    await flush()
+    document.querySelector('[data-testid="import-btn"]').click()
+    await flush()
+    const pending = takePendingCluster()
+    expect(pending.mode).toBe('new')
+    expect(pending.cluster.nodes).toHaveLength(2)
+    expect(push).toHaveBeenCalledWith('/')
+  })
+
+  // A bare share link carries no real name, so the alias is all there is.
+  it('keeps the anonymous alias — no real author is known here', async () => {
+    mountPreview()
+    await flush()
+    expect(document.body.textContent).toContain('anon-fox')
+  })
+})
+
+describe('SharedClusterPreview – merge action', () => {
+  const mergeBtn = () => document.querySelector('[data-testid="merge-btn"]')
+
+  // A share link is opened outside the editor, so "Merge here" cannot reach the
+  // open diagram directly — it hands the cluster to the app the same way the
+  // import does.
+  it('offers merge on the standalone share page', async () => {
+    mountPreview()
+    await flush()
+    expect(mergeBtn()).not.toBeNull()
+  })
+
+  it('hands the cluster off for merging and returns to the app', async () => {
+    const { push } = mountPreview()
+    await flush()
+    mergeBtn().click()
+    await flush()
+    const pending = takePendingCluster()
+    expect(pending).not.toBeNull()
+    expect(pending.mode).toBe('merge')
+    expect(pending.cluster.nodes).toHaveLength(2)
+    expect(push).toHaveBeenCalledWith('/')
+  })
+
+  it('does not claim the cluster was imported when it was merged', async () => {
+    mountPreview()
+    await flush()
+    mergeBtn().click()
+    await flush()
+    expect(document.body.textContent).toMatch(/merging/i)
+    expect(document.body.textContent).not.toMatch(/imported/i)
+  })
+
+  it('merges the cluster it already exchanged, without a second fetch', async () => {
+    mountPreview()
+    await flush()
+    mergeBtn().click()
+    await flush()
+    expect(mockImport).not.toHaveBeenCalled()
   })
 })

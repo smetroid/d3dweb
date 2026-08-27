@@ -1081,6 +1081,32 @@ export default class CytoscapeRenderer {
     }
   }
 
+  // Frames the entire graph, ignoring the user's zoom settings. _fitViewport()
+  // honours defaultZoomFit/defaultZoomLevel, which is right for the editor but
+  // not for a preview: a share has to show the whole cluster whatever the
+  // viewer's own preferences are. Also the only way to frame a scene built with
+  // {layout: false}, which returns before _fitViewport() runs.
+  fitToContent(padding = this._fitPadding()) {
+    const apply = () => {
+      if (!this.cy) return
+      if (this.container) this.cy.resize()
+      this.cy.fit(undefined, padding)
+    }
+
+    // Same deferral as _fitViewport: cytoscape caches the container size from
+    // init(), which is usually 0x0 while Vue is still mounting.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        const unsized =
+          this.container && this.cy && (this.cy.width() === 0 || this.cy.height() === 0)
+        if (unsized) requestAnimationFrame(apply)
+        else apply()
+      })
+    } else {
+      apply()
+    }
+  }
+
   // ─── Selection (keyboard j/k navigation + Enter toggles) ─────────────────────
   // Cytoscape draws the focused border; an HTML overlay draws crosshair reticles
   // on the focused and Enter-selected nodes.

@@ -79,7 +79,8 @@ function mountInbox() {
 
 beforeEach(() => {
   mockListInbox.mockResolvedValue(SHARES)
-  mockImport.mockResolvedValue({ dagId: 'dag-new' })
+  // POST /element-shares/:id/import returns the cluster, not a dagId.
+  mockImport.mockResolvedValue({ status: 'ok', cluster: { nodes: [], edges: [] } })
   mockRevoke.mockResolvedValue({ ok: true })
 })
 
