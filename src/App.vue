@@ -239,6 +239,7 @@ export default {
         { icon: 'mdi-login', title: 'Login' },
         { icon: 'mdi-logout', title: 'Logout' },
         { icon: 'mdi-cog-outline', title: 'D3D Settings' },
+        { icon: 'mdi-view-grid-outline', title: 'Public Catalog' },
         {
           icon: 'mdi-open-in-new',
           title: 'New Diagram',

@@ -43,6 +43,9 @@ export default {
       case 'Login':
         app.emitter.emit('showLogin', '')
         break
+      case 'Public Catalog':
+        app.$router.push('/catalog')
+        break
       case 'Logout':
         app.logout()
         app.active = 'Graph'

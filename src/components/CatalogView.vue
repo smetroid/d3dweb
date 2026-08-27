@@ -1,6 +1,9 @@
 <template>
   <div class="catalog-page">
     <header class="catalog-header">
+      <router-link to="/" class="catalog-back" data-testid="catalog-back">
+        ← Back to app
+      </router-link>
       <h1 class="catalog-title">Public Element Catalog</h1>
       <p class="catalog-subtitle">Browse publicly shared sub-graphs</p>
     </header>
@@ -70,7 +73,7 @@ export default {
       return this.items.filter(
         (item) =>
           (item.title ?? '').toLowerCase().includes(q) ||
-          (item.shared_by ?? '').toLowerCase().includes(q)
+          (item.createdBy ?? '').toLowerCase().includes(q)
       )
     }
   },
@@ -96,6 +99,20 @@ export default {
 
 .catalog-header {
   margin-bottom: 24px;
+}
+
+.catalog-back {
+  display: inline-block;
+  font-size: 11px;
+  color: rgb(var(--fx-ink-dim));
+  text-decoration: none;
+  margin-bottom: 12px;
+  opacity: 0.7;
+  transition: opacity 0.12s;
+}
+
+.catalog-back:hover {
+  opacity: 1;
 }
 
 .catalog-title {

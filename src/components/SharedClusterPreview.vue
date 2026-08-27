@@ -1,10 +1,12 @@
 <template>
   <div class="cluster-preview">
+    <router-link to="/" class="cluster-back" data-testid="cluster-back">
+      ← Back to app
+    </router-link>
     <div v-if="loading" class="cluster-loading">Loading shared cluster…</div>
 
     <div v-else-if="error" class="cluster-error">
       <p>{{ error }}</p>
-      <a href="/" class="cluster-home-link">Go to home</a>
     </div>
 
     <template v-else-if="share">
@@ -129,13 +131,20 @@ export default {
   color: #ef5350;
 }
 
-.cluster-home-link {
-  display: block;
-  margin-top: 16px;
+.cluster-back {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   font-size: 12px;
   color: inherit;
   opacity: 0.6;
-  text-decoration: underline;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.cluster-back:hover {
+  opacity: 1;
 }
 
 .cluster-header {
