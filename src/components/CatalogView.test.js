@@ -3,12 +3,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import CatalogView from '@/components/CatalogView.vue'
 
-const { mockGetCatalog } = vi.hoisted(() => ({
-  mockGetCatalog: vi.fn()
+const { mockGetCatalog, mockExchange, mockImport } = vi.hoisted(() => ({
+  mockGetCatalog: vi.fn(),
+  mockExchange: vi.fn(),
+  mockImport: vi.fn()
 }))
 
 vi.mock('@/services/api', () => ({
-  default: { getCatalog: mockGetCatalog }
+  default: {
+    getCatalog: mockGetCatalog,
+    exchangeElementShare: mockExchange,
+    importElementShare: mockImport
+  }
 }))
 
 const ITEMS = [
@@ -51,12 +57,35 @@ function mountCatalog() {
     }
   })
   app.component('v-icon', { template: '<span />' })
+  app.component('FocusTrap', {
+    props: { active: Boolean },
+    setup(_, { slots }) {
+      return () => h('div', slots.default?.())
+    }
+  })
   app.mount(host)
   return { host, app }
 }
 
 beforeEach(() => {
   mockGetCatalog.mockResolvedValue(ITEMS)
+  mockExchange.mockResolvedValue({
+    status: 'ok',
+    shareId: 'es1',
+    role: 'view',
+    anonName: 'anon-fox',
+    type: 'node',
+    rootIds: ['n1'],
+    cluster: {
+      options: { directed: true },
+      nodes: [
+        { v: 'n1', value: {} },
+        { v: 'n2', value: {} }
+      ],
+      edges: [{ v: 'n1', w: 'n2', value: {} }]
+    }
+  })
+  mockImport.mockResolvedValue({ dagId: 'new-dag' })
 })
 
 afterEach(() => {
@@ -131,14 +160,86 @@ describe('CatalogView – loading and listing', () => {
   })
 })
 
-describe('CatalogView – preview links', () => {
-  it('each card has a preview link pointing to /element-share/:token', async () => {
+describe('CatalogView – preview dialog', () => {
+  const previewButtons = () => document.querySelectorAll('[data-testid="catalog-preview-btn"]')
+  const dialog = () => document.querySelector('[data-testid="catalog-preview-dialog"]')
+
+  it('offers a preview control per card that is not a document link', async () => {
     mountCatalog()
     await flush()
-    const links = document.querySelectorAll('[data-testid="catalog-preview-link"]')
-    expect(links).toHaveLength(2)
-    expect(links[0].getAttribute('href')).toMatch(/element-share\/tok-abc/)
-    expect(links[1].getAttribute('href')).toMatch(/element-share\/tok-xyz/)
+    expect(previewButtons()).toHaveLength(2)
+    // A plain <a href> would tear down the SPA and reload the whole app.
+    expect(document.querySelector('a[href^="/element-share/"]')).toBeNull()
+  })
+
+  it("opens the dialog and exchanges the clicked item's token", async () => {
+    mountCatalog()
+    await flush()
+    expect(dialog()).toBeNull()
+    previewButtons()[1].click()
+    await flush()
+    expect(dialog()).not.toBeNull()
+    expect(mockExchange).toHaveBeenCalledWith('tok-xyz')
+  })
+
+  it('shows the catalog item title in the dialog', async () => {
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    expect(dialog().textContent).toContain('Auth service nodes')
+  })
+
+  it('shows the cluster counts from the exchanged share', async () => {
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    expect(dialog().textContent).toMatch(/2 nodes/)
+    expect(dialog().textContent).toMatch(/1 edge/)
+  })
+
+  it('does not offer "Merge here" — the catalog has no active diagram', async () => {
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    expect(document.querySelector('[data-testid="merge-btn"]')).toBeNull()
+    expect(document.querySelector('[data-testid="import-btn"]')).not.toBeNull()
+  })
+
+  it('closes the dialog with the close button', async () => {
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    document.querySelector('[data-testid="catalog-preview-close"]').click()
+    await flush()
+    expect(dialog()).toBeNull()
+  })
+
+  it('re-exchanges when a different item is previewed', async () => {
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    document.querySelector('[data-testid="catalog-preview-close"]').click()
+    await flush()
+    previewButtons()[1].click()
+    await flush()
+    expect(mockExchange).toHaveBeenNthCalledWith(1, 'tok-abc')
+    expect(mockExchange).toHaveBeenNthCalledWith(2, 'tok-xyz')
+  })
+
+  it('surfaces the server message when the preview exchange fails', async () => {
+    const err = new Error('Request failed with status code 403')
+    err.response = { status: 403, data: { status: 'error', message: 'share link revoked' } }
+    mockExchange.mockRejectedValue(err)
+    mountCatalog()
+    await flush()
+    previewButtons()[0].click()
+    await flush()
+    expect(dialog().textContent).toContain('share link revoked')
   })
 })
 

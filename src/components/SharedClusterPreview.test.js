@@ -15,12 +15,15 @@ vi.mock('@/services/api', () => ({
   }
 }))
 
+// Mirrors GET /element-shares/exchange: shareId (not id), and no title or
+// shared_by — the endpoint does not return them.
 const SHARE = {
-  id: 'es1',
-  title: 'Auth Service cluster',
-  shared_by: 'alice',
-  depth: -1,
-  expires_at: '2027-01-01T00:00:00Z',
+  status: 'ok',
+  shareId: 'es1',
+  role: 'view',
+  anonName: 'anon-fox',
+  type: 'node',
+  rootIds: ['n1'],
   cluster: {
     options: { directed: true },
     nodes: [
@@ -81,16 +84,16 @@ describe('SharedClusterPreview – exchange flow', () => {
     await flush()
   })
 
-  it('shows the share title after successful exchange', async () => {
+  it('falls back to a generic title, which the exchange endpoint does not return', async () => {
     mountPreview()
     await flush()
-    expect(document.body.textContent).toContain('Auth Service cluster')
+    expect(document.body.textContent).toContain('Shared Cluster')
   })
 
-  it('shows the sharer name', async () => {
+  it('shows the anonymised sharer name the endpoint does return', async () => {
     mountPreview()
     await flush()
-    expect(document.body.textContent).toMatch(/alice/)
+    expect(document.body.textContent).toMatch(/anon-fox/)
   })
 
   it('shows the node and edge counts', async () => {

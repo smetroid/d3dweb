@@ -40,30 +40,70 @@
           </p>
         </div>
         <div class="catalog-card-actions">
-          <a
-            :href="'/element-share/' + item.token"
+          <button
+            type="button"
             class="catalog-link"
-            data-testid="catalog-preview-link"
+            data-testid="catalog-preview-btn"
+            @click="openPreview(item)"
           >
             Preview →
-          </a>
+          </button>
         </div>
       </li>
     </ul>
+
+    <Teleport to="body">
+      <div v-if="previewItem" class="fx-scrim" @click="closePreview"></div>
+      <div v-if="previewItem" class="fx-hud-stage">
+        <div class="fx-panel" data-testid="catalog-preview-dialog" @keydown.esc="closePreview">
+          <focus-trap :active="true" :escape-deactivates="false">
+            <div tabindex="0" class="fx-panel-inner">
+              <header class="fx-panel-header">
+                <div class="fx-panel-title">
+                  <span class="fx-title-chip fx-chip-edit">CAT</span>
+                  <h2 class="fx-title">PREVIEW</h2>
+                </div>
+                <button
+                  type="button"
+                  class="fx-close"
+                  aria-label="Close"
+                  data-testid="catalog-preview-close"
+                  @click="closePreview"
+                >
+                  ✕
+                </button>
+              </header>
+
+              <div class="fx-panel-body">
+                <SharedClusterView
+                  :key="previewItem.token"
+                  :token="previewItem.token"
+                  :title="previewItem.title"
+                  :show-merge="false"
+                />
+              </div>
+            </div>
+          </focus-trap>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script>
 import api from '@/services/api'
+import SharedClusterView from '@/components/SharedClusterView.vue'
 
 export default {
   name: 'CatalogView',
+  components: { SharedClusterView },
   data() {
     return {
       loading: true,
       error: null,
       items: [],
-      query: ''
+      query: '',
+      previewItem: null
     }
   },
   computed: {
@@ -84,6 +124,17 @@ export default {
       this.error = 'Failed to load catalog'
     } finally {
       this.loading = false
+    }
+  },
+  methods: {
+    // Previewing opens a dialog rather than navigating to /element-share/:token
+    // so the filter and scroll position survive. That route still exists — it
+    // is where an externally shared link lands.
+    openPreview(item) {
+      this.previewItem = item
+    },
+    closePreview() {
+      this.previewItem = null
     }
   }
 }
@@ -195,12 +246,15 @@ export default {
 }
 
 .catalog-link {
+  font-family: inherit;
   font-size: 11px;
   color: rgb(var(--fx-accent));
   text-decoration: none;
   padding: 4px 10px;
   border-radius: 4px;
   border: 1px solid rgba(var(--fx-accent), 0.4);
+  background: transparent;
+  cursor: pointer;
   transition: background 0.12s;
 }
 
