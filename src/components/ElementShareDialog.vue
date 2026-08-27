@@ -174,6 +174,7 @@ import {
   audienceLabel,
   depthOptions,
   depthLabel,
+  serverErrorMessage,
   shareUrl,
   validateRootIds
 } from '@/helpers/elementShareHelpers'
@@ -263,11 +264,11 @@ export default {
         } else if (data?.id) {
           this.sentToInbox = true
         } else {
-          this.errorMsg = data?.error || 'Failed to generate link'
+          this.errorMsg = serverErrorMessage(data, 'Failed to generate link')
         }
       } catch (err) {
         console.error('[ElementShareDialog] createElementShare failed:', err)
-        this.errorMsg = err?.response?.data?.error || 'Failed to generate link'
+        this.errorMsg = serverErrorMessage(err, 'Failed to generate link')
       } finally {
         this.generating = false
       }

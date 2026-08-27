@@ -166,6 +166,51 @@ describe('ElementShareDialog – generate flow', () => {
     await flush()
     expect(document.body.textContent).toMatch(/failed|error/i)
   })
+
+  it('surfaces the server message from a failed request', async () => {
+    // The API answers with {status: "error", message: "..."}; the dialog used
+    // to read `error` and so always showed the generic fallback instead.
+    const err = new Error('Request failed with status code 500')
+    err.response = {
+      status: 500,
+      data: {
+        status: 'error',
+        message: 'column "type" of relation "element_shares" does not exist'
+      }
+    }
+    mockCreateElementShare.mockRejectedValue(err)
+    mountDialog({ selectedNodeIds: ['n1'] })
+    await flush()
+    document.querySelector('[data-testid="generate-btn"]').click()
+    await flush()
+    expect(document.body.textContent).toContain(
+      'column "type" of relation "element_shares" does not exist'
+    )
+    expect(document.body.textContent).not.toMatch(/Failed to generate link/)
+  })
+
+  it('surfaces the server message from a non-token response body', async () => {
+    mockCreateElementShare.mockResolvedValue({
+      status: 'error',
+      message: 'rootIds not found in diagram: ghost'
+    })
+    mountDialog({ selectedNodeIds: ['n1'] })
+    await flush()
+    document.querySelector('[data-testid="generate-btn"]').click()
+    await flush()
+    expect(document.body.textContent).toContain('rootIds not found in diagram: ghost')
+  })
+
+  it('falls back to a generic message when the server sends none', async () => {
+    const err = new Error('Request failed with status code 502')
+    err.response = { status: 502, data: '<html>502 Bad Gateway</html>' }
+    mockCreateElementShare.mockRejectedValue(err)
+    mountDialog({ selectedNodeIds: ['n1'] })
+    await flush()
+    document.querySelector('[data-testid="generate-btn"]').click()
+    await flush()
+    expect(document.body.textContent).toMatch(/Failed to generate link/)
+  })
 })
 
 describe('ElementShareDialog – close', () => {
