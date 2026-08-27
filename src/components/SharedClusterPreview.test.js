@@ -15,11 +15,12 @@ vi.mock('@/services/api', () => ({
   }
 }))
 
-// Mirrors GET /element-shares/exchange: shareId (not id), and no title or
-// shared_by — the endpoint does not return them.
+// Mirrors GET /element-shares/exchange: shareId (not id), title, and anonName
+// in place of the creator's username.
 const SHARE = {
   status: 'ok',
   shareId: 'es1',
+  title: '',
   role: 'view',
   anonName: 'anon-fox',
   type: 'node',
@@ -84,7 +85,16 @@ describe('SharedClusterPreview – exchange flow', () => {
     await flush()
   })
 
-  it('falls back to a generic title, which the exchange endpoint does not return', async () => {
+  it('shows the title returned by the exchange endpoint', async () => {
+    mockExchange.mockResolvedValue({ ...SHARE, title: 'Auth service cluster' })
+    mountPreview()
+    await flush()
+    expect(document.body.textContent).toContain('Auth service cluster')
+    expect(document.body.textContent).not.toContain('Shared Cluster')
+  })
+
+  it('falls back to a generic title when the share has none', async () => {
+    mockExchange.mockResolvedValue({ ...SHARE, title: '' })
     mountPreview()
     await flush()
     expect(document.body.textContent).toContain('Shared Cluster')
