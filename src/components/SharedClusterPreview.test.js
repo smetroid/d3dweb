@@ -108,6 +108,36 @@ describe('SharedClusterPreview – exchange flow', () => {
     expect(document.body.textContent).toMatch(/invalid|expired|error/i)
   })
 
+  it('surfaces the server message when exchange rejects', async () => {
+    // The API answers with {status: "error", message: "..."}; the unbound
+    // catch discarded it and always showed the generic fallback.
+    const err = new Error('Request failed with status code 403')
+    err.response = { status: 403, data: { status: 'error', message: 'share link revoked' } }
+    mockExchange.mockRejectedValue(err)
+    mountPreview()
+    await flush()
+    expect(document.body.textContent).toContain('share link revoked')
+  })
+
+  it('surfaces the server message when import fails', async () => {
+    const err = new Error('Request failed with status code 500')
+    err.response = { status: 500, data: { status: 'error', message: 'diagram not found' } }
+    mockImport.mockRejectedValue(err)
+    mountPreview()
+    await flush()
+    document.querySelector('[data-testid="import-btn"]').click()
+    await flush()
+    expect(document.body.textContent).toContain('diagram not found')
+  })
+
+  it('keeps the generic message when the server sends none', async () => {
+    mockExchange.mockRejectedValue(new Error('Network Error'))
+    mountPreview()
+    await flush()
+    expect(document.body.textContent).toMatch(/invalid, expired, or revoked/i)
+    expect(document.body.textContent).not.toMatch(/Network Error/)
+  })
+
   it('shows an error when exchange rejects', async () => {
     mockExchange.mockRejectedValue(new Error('network'))
     mountPreview()

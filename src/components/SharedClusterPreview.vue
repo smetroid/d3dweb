@@ -47,6 +47,7 @@
 
 <script>
 import api from '@/services/api'
+import { serverErrorMessage } from '@/helpers/apiErrors'
 
 export default {
   name: 'SharedClusterPreview',
@@ -75,13 +76,14 @@ export default {
   async mounted() {
     try {
       const data = await api.exchangeElementShare(this.token)
-      if (!data || data.error) {
-        this.error = data?.error || 'Invalid, expired, or revoked share link.'
+      if (!data || data.status === 'error') {
+        this.error = serverErrorMessage(data, 'Invalid, expired, or revoked share link.')
       } else {
         this.share = data
       }
-    } catch {
-      this.error = 'Invalid, expired, or revoked share link.'
+    } catch (err) {
+      console.error('[SharedClusterPreview] exchangeElementShare failed:', err)
+      this.error = serverErrorMessage(err, 'Invalid, expired, or revoked share link.')
     } finally {
       this.loading = false
     }
@@ -96,10 +98,11 @@ export default {
         if (result?.dagId) {
           this.importSuccess = true
         } else {
-          this.importError = result?.error || 'Import failed'
+          this.importError = serverErrorMessage(result, 'Import failed')
         }
-      } catch {
-        this.importError = 'Import failed'
+      } catch (err) {
+        console.error('[SharedClusterPreview] importElementShare failed:', err)
+        this.importError = serverErrorMessage(err, 'Import failed')
       } finally {
         this.importing = false
       }

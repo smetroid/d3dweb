@@ -12,6 +12,7 @@
 
 <script>
 import api from '@/services/api'
+import { serverErrorMessage } from '@/helpers/apiErrors'
 
 export default {
   name: 'JoinView',
@@ -30,12 +31,11 @@ export default {
       data = await api.exchangeShare(token)
     } catch (err) {
       console.error('share exchange failed', err)
-      this.error =
-        err.response?.data?.error || 'Could not reach the server. Please try again later.'
+      this.error = serverErrorMessage(err, 'Could not reach the server. Please try again later.')
       return
     }
     if (!data || data.status !== 'ok') {
-      this.error = data && data.error ? data.error : 'Invalid, expired, or revoked share link.'
+      this.error = serverErrorMessage(data, 'Invalid, expired, or revoked share link.')
       return
     }
 

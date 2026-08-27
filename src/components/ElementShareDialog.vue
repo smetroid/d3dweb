@@ -174,10 +174,10 @@ import {
   audienceLabel,
   depthOptions,
   depthLabel,
-  serverErrorMessage,
   shareUrl,
   validateRootIds
 } from '@/helpers/elementShareHelpers'
+import { serverErrorMessage } from '@/helpers/apiErrors'
 
 export default {
   name: 'ElementShareDialog',
