@@ -384,8 +384,9 @@ export default {
       try {
         await api.setDiagramPublic(this.dagId, !this.isPublic)
         this.isPublic = !this.isPublic
-      } catch {
-        this.embedErrorMsg = 'Failed to update visibility'
+      } catch (err) {
+        console.error('[ShareDialog] setDiagramPublic failed:', err)
+        this.embedErrorMsg = serverErrorMessage(err, 'Failed to update visibility')
       } finally {
         this.publicToggling = false
       }

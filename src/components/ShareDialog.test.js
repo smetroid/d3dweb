@@ -3,16 +3,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import ShareDialog from '@/components/ShareDialog.vue'
 
-const { mockCreateShare, mockGetDiagramPublic } = vi.hoisted(() => ({
+const { mockCreateShare, mockGetDiagramPublic, mockSetDiagramPublic } = vi.hoisted(() => ({
   mockCreateShare: vi.fn(),
-  mockGetDiagramPublic: vi.fn()
+  mockGetDiagramPublic: vi.fn(),
+  mockSetDiagramPublic: vi.fn()
 }))
 
 vi.mock('@/services/api', () => ({
   default: {
     createShare: mockCreateShare,
     getDiagramPublic: mockGetDiagramPublic,
-    setDiagramPublic: vi.fn()
+    setDiagramPublic: mockSetDiagramPublic
   }
 }))
 
@@ -46,6 +47,7 @@ const clickGenerate = () => document.querySelector('.share-generate-btn').click(
 beforeEach(() => {
   mockCreateShare.mockResolvedValue({ token: 'share-token-abc' })
   mockGetDiagramPublic.mockRejectedValue(new Error('not public'))
+  mockSetDiagramPublic.mockResolvedValue({ status: 'ok' })
 })
 
 afterEach(() => {
@@ -95,6 +97,48 @@ describe('ShareDialog – generate flow', () => {
     clickGenerate()
     await flush()
     expect(document.body.textContent).toMatch(/Failed to generate link/)
+    expect(document.body.textContent).not.toMatch(/Network Error/)
+  })
+})
+
+const openReadmeTab = () =>
+  [...document.querySelectorAll('.tab-btn')].find((b) => b.textContent.trim() === 'README').click()
+
+describe('ShareDialog – public toggle', () => {
+  it('turns the diagram public on success', async () => {
+    mountDialog()
+    await flush()
+    openReadmeTab()
+    await flush()
+    document.querySelector('.public-toggle').click()
+    await flush()
+    expect(mockSetDiagramPublic).toHaveBeenCalledWith('dag1', true)
+    expect(document.querySelector('.public-toggle').textContent.trim()).toBe('On')
+  })
+
+  it('surfaces the server message when the toggle fails', async () => {
+    const err = new Error('Request failed with status code 403')
+    err.response = { status: 403, data: { status: 'error', message: 'not the diagram owner' } }
+    mockSetDiagramPublic.mockRejectedValue(err)
+    mountDialog()
+    await flush()
+    openReadmeTab()
+    await flush()
+    document.querySelector('.public-toggle').click()
+    await flush()
+    expect(document.body.textContent).toContain('not the diagram owner')
+    expect(document.body.textContent).not.toMatch(/Failed to update visibility/)
+  })
+
+  it('keeps the generic message when the server sends none', async () => {
+    mockSetDiagramPublic.mockRejectedValue(new Error('Network Error'))
+    mountDialog()
+    await flush()
+    openReadmeTab()
+    await flush()
+    document.querySelector('.public-toggle').click()
+    await flush()
+    expect(document.body.textContent).toMatch(/Failed to update visibility/)
     expect(document.body.textContent).not.toMatch(/Network Error/)
   })
 })
