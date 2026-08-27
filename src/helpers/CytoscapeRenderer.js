@@ -7,7 +7,7 @@ import {
   NODE_OPTIONAL_FIELDS,
   EDGE_OPTIONAL_FIELDS
 } from '@/helpers/GraphModel.js'
-import { composeIconLabel } from '@/helpers/IconRegistry.js'
+import { composeIconLabel, ensureIconFont } from '@/helpers/IconRegistry.js'
 
 cytoscape.use(cola)
 cytoscape.use(dagre)
@@ -685,6 +685,9 @@ export default class CytoscapeRenderer {
     this.cy.add(elements)
     this.cy.endBatch()
 
+    // Set when any element draws with the on-demand Material Symbols face.
+    let usesWebIconFont = false
+
     // Surviving elements keep their identity, so push the model's latest data
     // onto them (label/shape/style edits, parent changes) — otherwise diffs
     // would leave stale labels on renamed nodes.
@@ -706,6 +709,7 @@ export default class CytoscapeRenderer {
 
       // Compute icon display fields from the element's icon data.
       const { displayLabel, displayFont } = composeIconLabel(d)
+      if (d.iconSet === 'material-symbols' && displayLabel) usesWebIconFont = true
       d._displayLabel = displayLabel
       d._displayFont = displayFont
       ele.data(d)
@@ -729,10 +733,13 @@ export default class CytoscapeRenderer {
       normalizeOptionalFields(d, EDGE_OPTIONAL_FIELDS)
       delete d.id
       const { displayLabel: edgeDisplayLabel, displayFont: edgeDisplayFont } = composeIconLabel(d)
+      if (d.iconSet === 'material-symbols' && edgeDisplayLabel) usesWebIconFont = true
       d._displayLabel = edgeDisplayLabel
       d._displayFont = edgeDisplayFont
       ele.data(d)
     })
+
+    if (usesWebIconFont) this._redrawWhenIconFontReady()
 
     // New nodes start at their stored position if available, else the centroid.
     this.cy.nodes().forEach((n) => {
@@ -778,6 +785,16 @@ export default class CytoscapeRenderer {
       edges: graphModel.edges().length
     })
     return animation
+  }
+
+  // Cytoscape paints labels straight onto the canvas, and a canvas draw does not
+  // wait for — or get invalidated by — a webfont download. Material Symbols is
+  // fetched from Google on demand, so its glyphs come out as the raw ligature
+  // name ("home") until the face lands. Force a single redraw once it does.
+  _redrawWhenIconFontReady() {
+    if (this._iconFontRedrawQueued) return
+    this._iconFontRedrawQueued = true
+    ensureIconFont('material-symbols').then(() => this.cy?.forceRender?.())
   }
 
   _centroid(eles) {

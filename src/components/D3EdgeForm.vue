@@ -205,7 +205,9 @@
                   <input
                     class="fx-input"
                     v-model="iconSearch"
-                    :placeholder="iconSet === 'mdi' ? 'Search MDI icons…' : 'Icon name (e.g. home)'"
+                    :placeholder="
+                      iconSet === 'mdi' ? 'Search MDI icons…' : 'Search Material Symbols…'
+                    "
                     autocomplete="off"
                     @keypress.stop=""
                     @input="onIconSearchInput"
@@ -234,23 +236,27 @@
                   </button>
                 </div>
 
-                <div
-                  v-if="showIconPicker && iconSet === 'mdi' && iconPickerResults.length"
-                  class="fx-icon-picker"
-                >
+                <div v-if="showIconPicker && iconPickerResults.length" class="fx-icon-picker">
                   <ul class="fx-icon-grid">
                     <li
                       v-for="name in iconPickerResults"
                       :key="name"
                       class="fx-icon-item"
                       :class="{ 'fx-icon-item-active': iconName === name }"
-                      :title="name.slice(4)"
+                      :title="iconTitle(name)"
                       tabindex="0"
                       @click="pickIconName(name)"
                       @keydown.enter.prevent="pickIconName(name)"
                       @keydown.space.prevent="pickIconName(name)"
                     >
-                      <span :class="`mdi ${name}`" aria-hidden="true"></span>
+                      <span
+                        v-if="iconSet === 'mdi'"
+                        :class="`mdi ${name}`"
+                        aria-hidden="true"
+                      ></span>
+                      <span v-else class="material-symbols-rounded" aria-hidden="true">{{
+                        name
+                      }}</span>
                     </li>
                   </ul>
                   <div v-if="iconPickerHasMore" class="fx-icon-more">
@@ -549,7 +555,7 @@
 <script>
 import D3Util from '@/helpers/D3Util'
 import Shortcuts from '@/helpers/Shortcuts.js'
-import { listIcons, ICON_SETS, ICON_POSITIONS } from '@/helpers/IconRegistry.js'
+import { listIcons, ensureIconFont, ICON_SETS, ICON_POSITIONS } from '@/helpers/IconRegistry.js'
 export default {
   name: 'D3Edge',
   props: ['active', 'd3Data'],
@@ -655,13 +661,14 @@ export default {
       return found ? found.label : this.iconPosition
     },
     iconPickerResults() {
-      if (this.iconSet !== 'mdi') return []
-      return listIcons('mdi', this.iconSearch, { limit: this.iconPickerLimit })
+      if (!this.iconSet) return []
+      return listIcons(this.iconSet, this.iconSearch, { limit: this.iconPickerLimit })
     },
     iconPickerHasMore() {
-      if (this.iconSet !== 'mdi') return false
+      if (!this.iconSet) return false
       return (
-        listIcons('mdi', this.iconSearch, { limit: 1, offset: this.iconPickerLimit }).length > 0
+        listIcons(this.iconSet, this.iconSearch, { limit: 1, offset: this.iconPickerLimit })
+          .length > 0
       )
     },
     pathText() {
@@ -824,6 +831,11 @@ export default {
         this.iconName = ''
       }
     },
+    iconTitle(name) {
+      // MDI names carry an "mdi-" prefix that only adds noise in the tooltip;
+      // a Material Symbols name is already the bare ligature.
+      return this.iconSet === 'mdi' ? name.slice(4) : name
+    },
     pickIconName(name) {
       this.iconName = name
       this.iconSearch = name
@@ -883,6 +895,15 @@ export default {
     }
   },
   watch: {
+    iconSet: {
+      // The preview thumb is styled by the Material Symbols stylesheet, which is
+      // fetched on demand — pull it in as soon as the set is picked or restored,
+      // otherwise the thumb renders the raw ligature name instead of the glyph.
+      handler(val) {
+        ensureIconFont(val)
+      },
+      immediate: true
+    },
     active(val) {
       this.update = val == 'Edit Edge'
       this.edgeModal = val == 'Edit Edge' || val == 'Add Edge'
