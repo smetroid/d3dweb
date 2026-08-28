@@ -3,17 +3,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import SharedInbox from '@/components/SharedInbox.vue'
 
-const { mockListInbox, mockImport, mockRevoke } = vi.hoisted(() => ({
+const { mockListInbox, mockImport, mockRevoke, mockGetShare } = vi.hoisted(() => ({
   mockListInbox: vi.fn(),
   mockImport: vi.fn(),
-  mockRevoke: vi.fn()
+  mockRevoke: vi.fn(),
+  mockGetShare: vi.fn()
+}))
+
+// Thumbnail rendering has its own tests; here it only needs to resolve.
+vi.mock('@/helpers/shareThumbnails', () => ({
+  renderThumbnail: vi.fn().mockResolvedValue('data:image/png;base64,AAAA')
 }))
 
 vi.mock('@/services/api', () => ({
   default: {
     listInbox: mockListInbox,
     importElementShare: mockImport,
-    revokeElementShare: mockRevoke
+    revokeElementShare: mockRevoke,
+    getElementShare: mockGetShare
   }
 }))
 
@@ -82,6 +89,7 @@ beforeEach(() => {
   // POST /element-shares/:id/import returns the cluster, not a dagId.
   mockImport.mockResolvedValue({ status: 'ok', cluster: { nodes: [], edges: [] } })
   mockRevoke.mockResolvedValue({ ok: true })
+  mockGetShare.mockResolvedValue({ cluster: { nodes: [{ v: 'n1', value: {} }], edges: [] } })
 })
 
 afterEach(() => {
@@ -90,6 +98,21 @@ afterEach(() => {
 })
 
 describe('SharedInbox – loading and listing', () => {
+  it('shows a thumbnail for every row', async () => {
+    mountInbox()
+    await flush()
+    expect(document.querySelectorAll('[data-testid="share-thumb"]')).toHaveLength(2)
+  })
+
+  // An inbox row carries neither a token nor a cluster, only an id, so the
+  // thumbnail reads the share itself.
+  it("fetches each row's cluster by share id", async () => {
+    mountInbox()
+    await flush()
+    expect(mockGetShare).toHaveBeenCalledWith('es1')
+    expect(mockGetShare).toHaveBeenCalledWith('es2')
+  })
+
   it('calls listInbox on mount', async () => {
     mountInbox()
     await flush()

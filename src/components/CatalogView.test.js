@@ -21,6 +21,11 @@ vi.mock('@/helpers/CytoscapeRenderer', () => ({
   }
 }))
 
+// Thumbnail rendering has its own tests; here it only needs to resolve.
+vi.mock('@/helpers/shareThumbnails', () => ({
+  renderThumbnail: vi.fn().mockResolvedValue('data:image/png;base64,AAAA')
+}))
+
 vi.mock('@/services/api', () => ({
   default: {
     getCatalog: mockGetCatalog,
@@ -123,6 +128,21 @@ afterEach(() => {
 })
 
 describe('CatalogView – loading and listing', () => {
+  it('shows a thumbnail for every card', async () => {
+    mountCatalog()
+    await flush()
+    expect(document.querySelectorAll('[data-testid="share-thumb"]')).toHaveLength(2)
+  })
+
+  // A catalog item carries a public token, not a cluster, so each thumbnail
+  // has to exchange it.
+  it("fetches each card's cluster by its token", async () => {
+    mountCatalog()
+    await flush()
+    expect(mockExchange).toHaveBeenCalledWith('tok-abc')
+    expect(mockExchange).toHaveBeenCalledWith('tok-xyz')
+  })
+
   it('calls getCatalog on mount', async () => {
     mountCatalog()
     await flush()
@@ -217,6 +237,18 @@ describe('CatalogView – preview dialog', () => {
     previewButtons()[0].click()
     await flush()
     expect(dialog().textContent).toContain('Auth service nodes')
+  })
+
+  // The fx-panel chrome is a right-hand drawer by default, and six other
+  // dialogs share it — the catalog opts out with a modifier rather than
+  // restyling the class everyone uses.
+  it('opens the preview centred rather than as a right-hand drawer', async () => {
+    mountCatalog()
+    await flush()
+    document.querySelectorAll('[data-testid="catalog-preview-btn"]')[0].click()
+    await flush()
+    const stage = document.querySelector('.fx-hud-stage')
+    expect(stage.classList.contains('fx-hud-stage--center')).toBe(true)
   })
 
   it('renders the previewed cluster as a graph', async () => {
@@ -384,5 +416,60 @@ describe('CatalogView – search/filter', () => {
     input.dispatchEvent(new Event('input'))
     await flush()
     expect(document.querySelectorAll('[data-testid="catalog-card"]')).toHaveLength(2)
+  })
+})
+
+describe('CatalogView – import straight from a card', () => {
+  const importBtns = () => document.querySelectorAll('[data-testid="catalog-import-btn"]')
+
+  it('offers a New diagram button on every card', async () => {
+    mountCatalog()
+    await flush()
+    expect(importBtns()).toHaveLength(2)
+  })
+
+  it("imports the clicked card's share by id", async () => {
+    mountCatalog()
+    await flush()
+    importBtns()[1].click()
+    await flush()
+    expect(mockImport).toHaveBeenCalledWith('es2')
+  })
+
+  // Same handoff the preview dialog uses: /catalog renders instead of the
+  // editor, so the cluster is parked and the app applies it on arrival.
+  it('parks the cluster and returns to the app', async () => {
+    const { push } = mountCatalog()
+    await flush()
+    importBtns()[0].click()
+    await flush()
+    const pending = takePendingCluster()
+    expect(pending.mode).toBe('new')
+    expect(push).toHaveBeenCalledWith('/')
+  })
+
+  // /catalog is a full-screen route, so App's toast stack is not mounted —
+  // the card has to carry its own error. This is what a logged-out visitor sees.
+  it('shows the server message on the card when the import is refused', async () => {
+    const err = new Error('Request failed with status code 401')
+    err.response = { status: 401, data: { status: 'error', message: 'login required' } }
+    mockImport.mockRejectedValue(err)
+    mountCatalog()
+    await flush()
+    importBtns()[0].click()
+    await flush()
+    expect(document.body.textContent).toContain('login required')
+  })
+
+  it('disables the button while the import is in flight', async () => {
+    let resolve
+    mockImport.mockReturnValue(new Promise((r) => (resolve = r)))
+    mountCatalog()
+    await flush()
+    importBtns()[0].click()
+    await nextTick()
+    expect(importBtns()[0].disabled).toBe(true)
+    resolve({ status: 'ok', cluster: { nodes: [], edges: [] } })
+    await flush()
   })
 })

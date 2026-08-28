@@ -1107,6 +1107,19 @@ export default class CytoscapeRenderer {
     }
   }
 
+  // Snapshots the current scene as a data URI, for the share thumbnails. Returns
+  // null rather than throwing when the instance has no image export — cytoscape
+  // swaps png() for a thrower on headless instances — so a caller can fall back
+  // to a placeholder.
+  toPNG(options = {}) {
+    if (!this.cy) return null
+    try {
+      return this.cy.png({ full: true, bg: 'transparent', ...options })
+    } catch {
+      return null
+    }
+  }
+
   // ─── Selection (keyboard j/k navigation + Enter toggles) ─────────────────────
   // Cytoscape draws the focused border; an HTML overlay draws crosshair reticles
   // on the focused and Enter-selected nodes.

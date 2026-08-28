@@ -65,6 +65,13 @@ describe('CytoscapeRenderer', () => {
     expect(renderer.cy.zoom()).toBeLessThan(4)
   })
 
+  // Thumbnails snapshot the canvas. A headless instance has no image export
+  // (cytoscape swaps png() for a thrower), and callers get a placeholder rather
+  // than an exception.
+  it('returns no image when the instance cannot export one', () => {
+    expect(renderer.toPNG()).toBeNull()
+  })
+
   it('adds nodes and edges from the graph model', () => {
     const model = new GraphModel([
       { group: 'nodes', data: { id: 'a', label: 'A' } },

@@ -6,17 +6,7 @@
 import { markRaw } from 'vue'
 import mitt from 'mitt'
 import CytoscapeRenderer from '@/helpers/CytoscapeRenderer'
-import { graphlibToModel } from '@/helpers/graphlibMigration'
-
-// GraphModel parks a node at the origin when the share carries no _x/_y for it.
-// One placed node is enough to treat the cluster as laid out — a diagram whose
-// author never moved anything has them all at 0,0.
-function hasSavedPositions(model) {
-  return model.nodes().some((n) => {
-    const p = n.position()
-    return p && (p.x !== 0 || p.y !== 0)
-  })
-}
+import { drawCluster } from '@/helpers/clusterRender'
 
 // Read-only render of a shared cluster — pan and zoom, no editing. Lives inside
 // SharedClusterView, so it draws both in the catalog's preview dialog and on
@@ -43,20 +33,7 @@ export default {
     this.renderer = markRaw(new CytoscapeRenderer(this.$refs.canvas, this.localEmitter))
     this.renderer.init()
 
-    const model = graphlibToModel(this.cluster)
-    if (hasSavedPositions(model)) {
-      // Draw the diagram the way its author arranged it — {layout: false}
-      // applies the stored positions and skips the layout pass entirely.
-      this.renderer.updateScene(model, { layout: false })
-      this.renderer.fitToContent()
-    } else {
-      // Never positioned (or saved before positions were stored): every node
-      // sits at the origin, so a layout has to place them. No animation — the
-      // viewer never saw the starting arrangement to be animated away from.
-      Promise.resolve(this.renderer.updateScene(model, { animate: false })).then(() =>
-        this.renderer?.fitToContent()
-      )
-    }
+    drawCluster(this.renderer, this.cluster)
 
     // Theme changes are the one app-wide event the preview does want: the
     // renderer restyles itself from the CSS vars when it hears themeChanged.

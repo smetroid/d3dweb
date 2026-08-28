@@ -821,6 +821,28 @@ textarea {
   background: linear-gradient(180deg, rgb(var(--fx-accent)), transparent 60%);
 }
 
+/* Centred variant of the HUD stage, for a panel that frames a diagram rather
+   than a list. The default chrome is a right-hand drawer — full height, accent
+   bar on the left edge, shadow thrown leftward — and none of that reads as
+   correct floating in the middle, so the modifier restyles the panel as well as
+   moving it. Scoped to a modifier because six other dialogs share .fx-panel. */
+.fx-hud-stage--center {
+  justify-content: center;
+  align-items: center;
+}
+
+.fx-hud-stage--center .fx-panel {
+  width: min(720px, 92vw);
+  height: auto;
+  max-height: 80vh;
+  border: 2px solid rgba(var(--fx-accent), 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.6),
+    0 0 42px rgba(var(--fx-accent), 0.18);
+}
+
 .fx-panel-inner {
   outline: none;
   flex: 1;

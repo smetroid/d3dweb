@@ -52,6 +52,7 @@ import api from '@/services/api'
 import ClusterGraphPreview from '@/components/ClusterGraphPreview.vue'
 import { serverErrorMessage } from '@/helpers/apiErrors'
 import { stashPendingCluster } from '@/helpers/pendingCluster'
+import { importShareAsDiagram } from '@/helpers/shareImport'
 
 // Exchanges a share token and renders the cluster it unlocks. Used both by the
 // /element-share/:token page (the destination of a share link, which has to be
@@ -121,38 +122,21 @@ export default {
     }
   },
   methods: {
-    // Both buttons act on a diagram, and this view renders on routes that
-    // replace the editor entirely — so neither can apply the cluster here. Park
-    // it and head back to the app, which applies it on arrival.
-    handOff(cluster, mode) {
-      if (!stashPendingCluster(cluster, mode)) {
-        this.actionError = 'Could not open the cluster — session storage is unavailable.'
-        return false
-      }
-      this.successMessage =
-        mode === 'merge' ? 'Merging into your diagram…' : 'Cluster imported successfully.'
-      this.$router?.push('/')
-      return true
-    },
-
-    // POST /element-shares/:id/import records the import and returns the
-    // cluster; it does not create a diagram server-side, so there is no id to
-    // navigate to.
+    // This view renders on routes that replace the editor entirely, so the
+    // import cannot apply the cluster here — it is parked, and the app applies
+    // it on arrival.
     async doImport() {
       this.importing = true
       this.successMessage = null
       this.actionError = null
       try {
-        const result = await api.importElementShare(this.shareId)
-        const cluster = result?.cluster
-        if (!cluster) {
-          this.actionError = serverErrorMessage(result, 'Import failed')
+        const result = await importShareAsDiagram(this.shareId)
+        if (!result.ok) {
+          this.actionError = result.error
           return
         }
-        this.handOff(cluster, 'new')
-      } catch (err) {
-        console.error('[SharedClusterView] importElementShare failed:', err)
-        this.actionError = serverErrorMessage(err, 'Import failed')
+        this.successMessage = 'Cluster imported successfully.'
+        this.$router?.push('/')
       } finally {
         this.importing = false
       }
@@ -169,7 +153,12 @@ export default {
         this.actionError = 'No cluster data in this share'
         return
       }
-      this.handOff(cluster, 'merge')
+      if (!stashPendingCluster(cluster, 'merge')) {
+        this.actionError = 'Could not open the cluster — session storage is unavailable.'
+        return
+      }
+      this.successMessage = 'Merging into your diagram…'
+      this.$router?.push('/')
     }
   }
 }
