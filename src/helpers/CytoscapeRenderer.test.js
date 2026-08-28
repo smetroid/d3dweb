@@ -9,6 +9,7 @@ import {
   themeStyle
 } from '@/helpers/CytoscapeRenderer.js'
 import GraphModel from '@/helpers/GraphModel.js'
+import { graphlibToModel } from '@/helpers/graphlibMigration.js'
 
 describe('CytoscapeRenderer', () => {
   let renderer
@@ -21,6 +22,54 @@ describe('CytoscapeRenderer', () => {
 
   afterAll(() => {
     renderer.teardown()
+  })
+
+  // The share preview feeds the renderer straight from GET
+  // /element-shares/exchange, so the graphlib payload has to survive the
+  // conversion intact — compound parents included.
+  it('renders a cluster in the shape the exchange endpoint returns', () => {
+    const cluster = {
+      options: { directed: true, compound: true },
+      nodes: [
+        { v: 'grp', value: { label: 'Group' } },
+        { v: 'n1', value: { label: 'One' }, parent: 'grp' },
+        { v: 'n2', value: { label: 'Two' }, parent: 'grp' }
+      ],
+      edges: [{ v: 'n1', w: 'n2', value: { label: 'calls' } }]
+    }
+
+    renderer.updateScene(graphlibToModel(cluster))
+
+    expect(renderer.cy.nodes().length).toBe(3)
+    expect(renderer.cy.edges().length).toBe(1)
+    expect(renderer.cy.getElementById('n1').data('parent')).toBe('grp')
+    expect(renderer.cy.getElementById('n1').data('label')).toBe('One')
+  })
+
+  // A share preview shows the author's saved layout, so it skips the layout
+  // pass — and with it _fitViewport(), which is what normally frames the graph.
+  it('fits the whole graph in view on demand', () => {
+    const model = graphlibToModel({
+      options: {},
+      nodes: [
+        { v: 'far', value: { _x: 4000, _y: 4000 } },
+        { v: 'near', value: { _x: 10, _y: 10 } }
+      ],
+      edges: []
+    })
+    renderer.updateScene(model, { layout: false })
+    renderer.cy.zoom(4)
+
+    renderer.fitToContent()
+
+    expect(renderer.cy.zoom()).toBeLessThan(4)
+  })
+
+  // Thumbnails snapshot the canvas. A headless instance has no image export
+  // (cytoscape swaps png() for a thrower), and callers get a placeholder rather
+  // than an exception.
+  it('returns no image when the instance cannot export one', () => {
+    expect(renderer.toPNG()).toBeNull()
   })
 
   it('adds nodes and edges from the graph model', () => {

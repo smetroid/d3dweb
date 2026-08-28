@@ -24,6 +24,11 @@
           <div v-else-if="!shares.length" class="inbox-state">No shares yet — inbox is empty.</div>
           <ul v-else class="inbox-list">
             <li v-for="share in shares" :key="share.id" class="inbox-row" data-testid="inbox-row">
+              <ShareThumbnail
+                class="inbox-thumb"
+                :share-id="share.id"
+                :loader="() => loadCluster(share)"
+              />
               <div class="inbox-row-info">
                 <span class="inbox-title">{{
                   share.title || share.type + ' · ' + (share.rootIds?.[0] ?? '—')
@@ -64,9 +69,11 @@
 
 <script>
 import api from '@/services/api'
+import ShareThumbnail from '@/components/ShareThumbnail.vue'
 
 export default {
   name: 'SharedInbox',
+  components: { ShareThumbnail },
   emits: ['close', 'merge', 'import'],
   data() {
     return {
@@ -90,6 +97,14 @@ export default {
     }
   },
   methods: {
+    // The inbox listing carries neither a token nor a cluster — only an id — so
+    // a thumbnail has to read the share itself. ShareThumbnail only calls this
+    // when the row is actually on screen.
+    async loadCluster(share) {
+      const full = await api.getElementShare(share.id)
+      return full?.cluster ?? null
+    },
+
     formatDate(iso) {
       if (!iso) return '—'
       try {
@@ -156,11 +171,18 @@ export default {
   background: rgba(var(--fx-glass-bottom), 0.4);
 }
 
+.inbox-thumb {
+  width: 56px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
 .inbox-row-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .inbox-title {

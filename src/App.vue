@@ -16,7 +16,10 @@ import Login from '@/components/Login.vue'
 import SharedInbox from '@/components/SharedInbox.vue'
 import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
+import { FULLSCREEN_ROUTES } from '@/router'
 import D3DApi from '@/services/api'
+import { takePendingCluster } from '@/helpers/pendingCluster'
+import { saveStatusLabel, nextSaveStatus, SAVE_EVENTS } from '@/helpers/saveStatus'
 
 const route = useRoute()
 
@@ -37,9 +40,7 @@ function toggleTheme() {
     <!--
     TODO: move this to use a sheet, in order to allow to close the alert.  Currently the diagram is preventing closing the alert
     -->
-    <RouterView
-      v-if="route.name === 'join' || route.name === 'element-share' || route.name === 'catalog'"
-    />
+    <RouterView v-if="FULLSCREEN_ROUTES.includes(route.name)" />
     <v-main app v-else>
       <Teleport to="body">
         <div class="fx-toast-stack">
@@ -170,6 +171,21 @@ function toggleTheme() {
             <span class="fx-nav-key">STORAGE</span>
             <span class="fx-nav-val">{{ storageLabel }}</span>
           </div>
+          <div class="fx-nav-readout">
+            <span class="fx-nav-key">SAVED</span>
+            <button
+              v-if="saveStatus.status === 'error'"
+              type="button"
+              class="fx-nav-val fx-save-val fx-save-error fx-save-retry"
+              :title="saveStatus.message || 'Retry saving to the server'"
+              @click="retrySave()"
+            >
+              {{ saveLabel.text }}
+            </button>
+            <span v-else class="fx-nav-val fx-save-val" :class="'fx-save-' + saveLabel.tone">
+              {{ saveLabel.text }}
+            </span>
+          </div>
           <div class="fx-nav-readout" v-if="loggedInUser">
             <span class="fx-nav-key">USER</span>
             <span class="fx-nav-val">{{ loggedInUser }}</span>
@@ -221,6 +237,7 @@ export default {
       commandGroup: null,
       showHelpPane: false,
       showDiagramForm: false,
+      saveStatus: { status: 'idle', at: null, message: '' },
       toasts: [],
       response: 'loading',
       loaded: false,
@@ -239,6 +256,7 @@ export default {
         { icon: 'mdi-login', title: 'Login' },
         { icon: 'mdi-logout', title: 'Logout' },
         { icon: 'mdi-cog-outline', title: 'D3D Settings' },
+        { icon: 'mdi-view-grid-outline', title: 'Public Catalog' },
         {
           icon: 'mdi-open-in-new',
           title: 'New Diagram',
@@ -317,6 +335,11 @@ export default {
       this.emitter.emit('newDiagram')
     }
 
+    // A fresh mount means we did not arrive through the share handoff, so
+    // anything left in session storage is a leftover from an abandoned import.
+    // Drop it rather than let it open itself on some later trip to /catalog.
+    takePendingCluster()
+
     /*!SECTION Emitter section, is a way for child components to
      * communicate with their parent
      */
@@ -393,6 +416,14 @@ export default {
       } else {
         this.active = menu
       }
+    })
+
+    // The graph reports where each change actually landed, so the footer can
+    // state it instead of leaving the user to guess from STORAGE.
+    Object.values(SAVE_EVENTS).forEach((event) => {
+      this.emitter.on(event, (detail) => {
+        this.saveStatus = nextSaveStatus(this.saveStatus, event, detail || {})
+      })
     })
 
     this.emitter.on('updateDiagramInfo', (payload) => {
@@ -749,6 +780,10 @@ export default {
         this.loadDiagram()
       }
     },
+    retrySave() {
+      this.modifier?.saveNow()
+    },
+
     async forkEmbedDiagram() {
       if (!D3Util.auth()) return
       try {
@@ -795,17 +830,35 @@ export default {
         this.inboxCount = 0
       }
     },
+    // The inbox merges by id — it lists shares without their clusters, so the
+    // cluster has to be fetched. Callers that already hold one (a share link,
+    // which exchanges the cluster up front) go straight to mergeCluster.
     async mergeElementShare(shareId) {
       try {
         const share = await D3DApi.getElementShare(shareId)
-        const clusterRaw = share?.cluster
-        if (!clusterRaw) {
+        if (!share?.cluster) {
           this.emitter.emit('appMessage', { message: 'No cluster data in share', status: 'error' })
           return
         }
+        await this.mergeCluster(share.cluster)
+      } catch {
+        this.emitter.emit('appMessage', {
+          message: 'Failed to merge shared cluster',
+          status: 'error'
+        })
+      }
+    },
+
+    async mergeCluster(clusterRaw) {
+      try {
         const cluster = typeof clusterRaw === 'string' ? JSON.parse(clusterRaw) : clusterRaw
+        if (!cluster) {
+          this.emitter.emit('appMessage', { message: 'No cluster data in share', status: 'error' })
+          return
+        }
+        // `modifier` starts life as {} — truthy, but with no cy to merge into.
         const mod = this.modifier?.value ?? this.modifier
-        if (!mod) {
+        if (!mod?.cy) {
           this.emitter.emit('appMessage', {
             message: 'No active diagram to merge into',
             status: 'info'
@@ -855,6 +908,42 @@ export default {
         this.emitter.emit('appMessage', { message: 'Failed to merge cluster', status: 'error' })
       }
     },
+    // The editor mounts over the renders that follow a route change, and only
+    // attaches its renderer once the cytoscape container exists. Wait for that
+    // rather than for a fixed number of ticks: applying a cluster earlier lands
+    // on a redraw() that no-ops, leaving the change invisible.
+    _waitForEditor(timeoutMs = 5000) {
+      const attached = () => !!(this.modifier?.value ?? this.modifier)?.renderer
+      if (attached()) return Promise.resolve(true)
+      return new Promise((resolve) => {
+        const startedAt = Date.now()
+        const poll = () => {
+          if (attached()) return resolve(true)
+          if (Date.now() - startedAt > timeoutMs) return resolve(false)
+          setTimeout(poll, 30)
+        }
+        poll()
+      })
+    },
+
+    // /catalog and /element-share/:token render instead of the editor, so their
+    // "New diagram" and "Merge here" buttons cannot act on a diagram — they park
+    // the cluster and route back here. Picking it up on the way in is what makes
+    // those buttons work.
+    async applyPendingCluster() {
+      const pending = takePendingCluster()
+      if (!pending) return
+      if (!(await this._waitForEditor())) {
+        this.emitter.emit('appMessage', {
+          message: 'Could not open the editor to apply the shared cluster',
+          status: 'error'
+        })
+        return
+      }
+      if (pending.mode === 'merge') await this.mergeCluster(pending.cluster)
+      else await this.importSharedCluster(pending.cluster)
+    },
+
     async importSharedCluster(clusterRaw) {
       try {
         const cluster = typeof clusterRaw === 'string' ? JSON.parse(clusterRaw) : clusterRaw
@@ -871,8 +960,9 @@ export default {
         this.emitter.emit('newDiagram')
         await this.$nextTick()
 
+        // `modifier` starts life as {} — truthy, but with no cy to draw into.
         const mod = this.modifier?.value ?? this.modifier
-        if (!mod) {
+        if (!mod?.cy) {
           this.emitter.emit('appMessage', {
             message: 'Failed to import cluster as new diagram',
             status: 'error'
@@ -920,6 +1010,9 @@ export default {
     }
   },
   computed: {
+    saveLabel() {
+      return saveStatusLabel(this.saveStatus)
+    },
     storageLabel() {
       return this.loggedInUser ? 'Server' : 'Local'
     },
@@ -958,12 +1051,45 @@ export default {
 
     '$vuetify.theme.global.name': function () {
       this.syncThemeAttr()
+    },
+
+    // Coming back from a full-screen route is the only way a pending cluster
+    // arrives (see applyPendingCluster).
+    '$route.name': function (name) {
+      if (FULLSCREEN_ROUTES.includes(name)) return
+      this.applyPendingCluster()
     }
   }
 }
 </script>
 
 <style scoped>
+.fx-save-val {
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-save-ok {
+  color: rgb(var(--v-theme-success, 76, 175, 80));
+}
+
+.fx-save-warn,
+.fx-save-busy {
+  opacity: 0.75;
+}
+
+.fx-save-error {
+  color: rgb(var(--v-theme-error, 244, 67, 54));
+}
+
+.fx-save-retry {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .fx-toast-stack {
   position: fixed;
   top: 24px;

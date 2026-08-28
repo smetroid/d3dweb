@@ -4,6 +4,8 @@ import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import api from '@/services/api'
 import { clientId as collabClientId } from '@/services/collab'
 import { pushSnapshot } from '@/services/localHistory'
+import { serverErrorMessage } from '@/helpers/apiErrors'
+import { SAVE_EVENTS } from '@/helpers/saveStatus'
 
 export default class DiagramGraph {
   constructor(d3dInfo, emitter) {
@@ -665,15 +667,46 @@ export default class DiagramGraph {
     this._scheduleServerSave(diagram)
   }
 
+  // Public entry point for a user-triggered save (the footer's retry).
+  saveNow() {
+    this._persist()
+  }
+
+  _emitStatus(event, detail) {
+    this.emitter?.emit(event, detail)
+  }
+
   _scheduleServerSave(diagram) {
-    if (!D3Util.auth()) return
-    if (!this.d3dInfo?.id) return
+    // Without a token the diagram lives in localStorage only. Say so rather
+    // than leaving the user to infer it from the STORAGE readout.
+    if (!D3Util.auth()) {
+      this._emitStatus(SAVE_EVENTS.local)
+      return
+    }
+    // Collab mode defers the first 5s of saves; that is pending, not done.
+    this._emitStatus(SAVE_EVENTS.saving)
     if (this._suppressSave) return
     clearTimeout(this._saveTimer)
     this._saveTimer = setTimeout(() => this._serverSave(diagram), 800)
   }
 
   async _serverSave(diagram) {
+    try {
+      if (this.d3dInfo?.id) {
+        await this._updateOnServer(diagram)
+      } else {
+        await this._createOnServer(diagram)
+      }
+      this._emitStatus(SAVE_EVENTS.saved, { at: new Date() })
+    } catch (err) {
+      console.error('auto-save failed', err)
+      this._emitStatus(SAVE_EVENTS.error, {
+        message: serverErrorMessage(err, 'Could not save to server')
+      })
+    }
+  }
+
+  async _updateOnServer(diagram) {
     const payload = {
       id: this.d3dInfo.id,
       name: this.d3dInfo.name || D3Util.tempInfo().name,
@@ -683,10 +716,39 @@ export default class DiagramGraph {
     if (import.meta.env.VITE_COLLAB_ENABLED === 'true') {
       payload.clientId = collabClientId()
     }
+    await api.updateDiagram(payload)
+  }
+
+  // A logged-in user editing an id-less diagram used to write nothing to the
+  // server, silently. Create it once, then fall through to normal updates.
+  async _createOnServer(diagram) {
+    if (this._createInFlight) {
+      // An earlier edit is already creating it — wait for the id, then send
+      // this newer content as an update instead of creating a duplicate.
+      await this._createInFlight
+      return this._updateOnServer(diagram)
+    }
+
+    this._createInFlight = (async () => {
+      const result = await api.postDiagram({
+        name: this.d3dInfo.name || D3Util.tempInfo().name,
+        description: this.d3dInfo.description || D3Util.tempInfo().description,
+        diagram
+      })
+      // POST /dag answers with the bare id as its body (see DiagramForm), but
+      // App.forkEmbedDiagram guards for an object too — match that.
+      const data = result?.data
+      const newId = typeof data === 'string' ? data : data?.id
+      if (!newId) throw new Error('no diagram id in create response')
+      this.d3dInfo.id = newId
+      this.emitter?.emit('updateDiagramInfo', { ...this.d3dInfo })
+      return newId
+    })()
+
     try {
-      await api.updateDiagram(payload)
-    } catch (err) {
-      console.error('auto-save failed', err)
+      await this._createInFlight
+    } finally {
+      this._createInFlight = null
     }
   }
 

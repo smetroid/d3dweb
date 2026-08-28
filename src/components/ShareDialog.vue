@@ -256,6 +256,7 @@
 <script>
 import { encode, embedUrl, EmbedSizeError } from '@d3dweb/embed'
 import api from '@/services/api'
+import { serverErrorMessage } from '@/helpers/apiErrors'
 
 export default {
   name: 'ShareDialog',
@@ -315,10 +316,11 @@ export default {
         if (data?.token) {
           this.generatedLink = window.location.origin + '/join/' + data.token
         } else {
-          this.shareErrorMsg = data?.error || 'Failed to generate link'
+          this.shareErrorMsg = serverErrorMessage(data, 'Failed to generate link')
         }
-      } catch {
-        this.shareErrorMsg = 'Failed to generate link'
+      } catch (err) {
+        console.error('[ShareDialog] createShare failed:', err)
+        this.shareErrorMsg = serverErrorMessage(err, 'Failed to generate link')
       } finally {
         this.generating = false
       }
@@ -382,8 +384,9 @@ export default {
       try {
         await api.setDiagramPublic(this.dagId, !this.isPublic)
         this.isPublic = !this.isPublic
-      } catch {
-        this.embedErrorMsg = 'Failed to update visibility'
+      } catch (err) {
+        console.error('[ShareDialog] setDiagramPublic failed:', err)
+        this.embedErrorMsg = serverErrorMessage(err, 'Failed to update visibility')
       } finally {
         this.publicToggling = false
       }

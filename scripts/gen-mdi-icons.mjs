@@ -18,5 +18,6 @@ while ((m = re.exec(css)) !== null) {
 }
 
 const outPath = resolve(__dirname, '../src/helpers/mdi-icons.json')
-writeFileSync(outPath, JSON.stringify(map))
+// Match Prettier's JSON output so `npm run build` never dirties the tree.
+writeFileSync(outPath, `${JSON.stringify(map, null, 2)}\n`)
 console.log(`[gen-mdi-icons] Wrote ${Object.keys(map).length} icons → src/helpers/mdi-icons.json`)

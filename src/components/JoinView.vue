@@ -1,9 +1,9 @@
 <template>
   <div class="join-screen">
+    <router-link to="/" class="join-back" data-testid="join-back">← Back to app</router-link>
     <div class="join-card">
       <div v-if="error" class="join-error">
         <p class="join-error-msg">{{ error }}</p>
-        <a href="/" class="join-home-link">Go to home</a>
       </div>
       <div v-else class="join-loading">Opening shared diagram…</div>
     </div>
@@ -12,6 +12,7 @@
 
 <script>
 import api from '@/services/api'
+import { serverErrorMessage } from '@/helpers/apiErrors'
 
 export default {
   name: 'JoinView',
@@ -30,12 +31,11 @@ export default {
       data = await api.exchangeShare(token)
     } catch (err) {
       console.error('share exchange failed', err)
-      this.error =
-        err.response?.data?.error || 'Could not reach the server. Please try again later.'
+      this.error = serverErrorMessage(err, 'Could not reach the server. Please try again later.')
       return
     }
     if (!data || data.status !== 'ok') {
-      this.error = data && data.error ? data.error : 'Invalid, expired, or revoked share link.'
+      this.error = serverErrorMessage(data, 'Invalid, expired, or revoked share link.')
       return
     }
 
@@ -78,10 +78,19 @@ export default {
   margin-bottom: 16px;
 }
 
-.join-home-link {
+.join-back {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   font-size: 12px;
   color: inherit;
   opacity: 0.6;
-  text-decoration: underline;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.join-back:hover {
+  opacity: 1;
 }
 </style>

@@ -7,7 +7,7 @@ import {
   NODE_OPTIONAL_FIELDS,
   EDGE_OPTIONAL_FIELDS
 } from '@/helpers/GraphModel.js'
-import { composeIconLabel } from '@/helpers/IconRegistry.js'
+import { composeIconLabel, ensureIconFont } from '@/helpers/IconRegistry.js'
 
 cytoscape.use(cola)
 cytoscape.use(dagre)
@@ -685,6 +685,9 @@ export default class CytoscapeRenderer {
     this.cy.add(elements)
     this.cy.endBatch()
 
+    // Set when any element draws with the on-demand Material Symbols face.
+    let usesWebIconFont = false
+
     // Surviving elements keep their identity, so push the model's latest data
     // onto them (label/shape/style edits, parent changes) — otherwise diffs
     // would leave stale labels on renamed nodes.
@@ -706,6 +709,7 @@ export default class CytoscapeRenderer {
 
       // Compute icon display fields from the element's icon data.
       const { displayLabel, displayFont } = composeIconLabel(d)
+      if (d.iconSet === 'material-symbols' && displayLabel) usesWebIconFont = true
       d._displayLabel = displayLabel
       d._displayFont = displayFont
       ele.data(d)
@@ -729,10 +733,13 @@ export default class CytoscapeRenderer {
       normalizeOptionalFields(d, EDGE_OPTIONAL_FIELDS)
       delete d.id
       const { displayLabel: edgeDisplayLabel, displayFont: edgeDisplayFont } = composeIconLabel(d)
+      if (d.iconSet === 'material-symbols' && edgeDisplayLabel) usesWebIconFont = true
       d._displayLabel = edgeDisplayLabel
       d._displayFont = edgeDisplayFont
       ele.data(d)
     })
+
+    if (usesWebIconFont) this._redrawWhenIconFontReady()
 
     // New nodes start at their stored position if available, else the centroid.
     this.cy.nodes().forEach((n) => {
@@ -778,6 +785,16 @@ export default class CytoscapeRenderer {
       edges: graphModel.edges().length
     })
     return animation
+  }
+
+  // Cytoscape paints labels straight onto the canvas, and a canvas draw does not
+  // wait for — or get invalidated by — a webfont download. Material Symbols is
+  // fetched from Google on demand, so its glyphs come out as the raw ligature
+  // name ("home") until the face lands. Force a single redraw once it does.
+  _redrawWhenIconFontReady() {
+    if (this._iconFontRedrawQueued) return
+    this._iconFontRedrawQueued = true
+    ensureIconFont('material-symbols').then(() => this.cy?.forceRender?.())
   }
 
   _centroid(eles) {
@@ -1061,6 +1078,45 @@ export default class CytoscapeRenderer {
       })
     } else {
       apply()
+    }
+  }
+
+  // Frames the entire graph, ignoring the user's zoom settings. _fitViewport()
+  // honours defaultZoomFit/defaultZoomLevel, which is right for the editor but
+  // not for a preview: a share has to show the whole cluster whatever the
+  // viewer's own preferences are. Also the only way to frame a scene built with
+  // {layout: false}, which returns before _fitViewport() runs.
+  fitToContent(padding = this._fitPadding()) {
+    const apply = () => {
+      if (!this.cy) return
+      if (this.container) this.cy.resize()
+      this.cy.fit(undefined, padding)
+    }
+
+    // Same deferral as _fitViewport: cytoscape caches the container size from
+    // init(), which is usually 0x0 while Vue is still mounting.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        const unsized =
+          this.container && this.cy && (this.cy.width() === 0 || this.cy.height() === 0)
+        if (unsized) requestAnimationFrame(apply)
+        else apply()
+      })
+    } else {
+      apply()
+    }
+  }
+
+  // Snapshots the current scene as a data URI, for the share thumbnails. Returns
+  // null rather than throwing when the instance has no image export — cytoscape
+  // swaps png() for a thrower on headless instances — so a caller can fall back
+  // to a placeholder.
+  toPNG(options = {}) {
+    if (!this.cy) return null
+    try {
+      return this.cy.png({ full: true, bg: 'transparent', ...options })
+    } catch {
+      return null
     }
   }
 
