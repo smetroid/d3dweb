@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
 
@@ -15,6 +16,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.VITE_DEV_API_TARGET || 'http://localhost:3001',
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
     }
   },
   test: {

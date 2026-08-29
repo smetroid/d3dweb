@@ -271,7 +271,7 @@ export default {
       defaultEdgeIconPosition: 'left',
       defaultEdgeIconSize: null,
       defaultEdgeIconColor: '',
-      serverUrl: import.meta.env.VITE_API_BASE_URL || 'https://d3d-api.vercel.app',
+      serverUrl: import.meta.env.VITE_API_BASE_URL || '/api',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}
@@ -280,13 +280,18 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    if (s && s.serverUrl) return s.serverUrl.replace(/\/+$/, '')
+    // A saved absolute URL pointing at the old API host would make every
+    // request cross-site, and the session cookie is first-party only. Drop it
+    // and fall through to the same-origin base.
+    if (s && s.serverUrl && !/^https?:\/\/d3d-api\.vercel\.app/.test(s.serverUrl)) {
+      return s.serverUrl.replace(/\/+$/, '')
+    }
     const envBase = import.meta.env.VITE_API_BASE_URL
     if (envBase) {
       if (/^https?:\/\//.test(envBase)) return envBase.replace(/\/+$/, '')
       return (window.location.origin + envBase).replace(/\/+$/, '')
     }
-    return 'https://d3d-api.vercel.app'
+    return '/api'
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
