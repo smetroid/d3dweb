@@ -32,35 +32,35 @@
 
 ### `d3d-api`
 
-| File | Responsibility |
-|---|---|
-| `app/db/postgres/migrations/006_social_auth.sql` | Create: four `users` columns + partial unique index |
-| `app/models/user.go` | Modify: add `Provider`, `ProviderID`, `Email`, `DisplayName` |
-| `app/config/config.go` | Modify: `SocialProvider` struct, `Google`/`GitHub`, `FrontendOrigin`, `CookieSecure` |
-| `app/auth/socialauth/socialauth.go` | Create: `SocialUserProfile`, `GenerateState`, `ValidateState` |
-| `app/auth/socialauth/google.go` | Create: Google config + profile fetch |
-| `app/auth/socialauth/github.go` | Create: GitHub config + profile fetch |
-| `app/db/postgres/postgres.go` | Modify: `GetUserByProvider`, `UpsertSocialUser`; widen `GetUser` |
-| `app/controllers/session_cookie.go` | Create: shared cookie set/clear helpers (used by both auth controllers) |
-| `app/controllers/socialauth.go` | Create: `SocialAuthController` — URL, callback, logout, me |
-| `app/controllers/auth.go` | Modify: set the cookie on local login |
-| `app/app.go` | Modify: register controller, `TokenLookup`, CORS |
+| File                                             | Responsibility                                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `app/db/postgres/migrations/006_social_auth.sql` | Create: four `users` columns + partial unique index                                  |
+| `app/models/user.go`                             | Modify: add `Provider`, `ProviderID`, `Email`, `DisplayName`                         |
+| `app/config/config.go`                           | Modify: `SocialProvider` struct, `Google`/`GitHub`, `FrontendOrigin`, `CookieSecure` |
+| `app/auth/socialauth/socialauth.go`              | Create: `SocialUserProfile`, `GenerateState`, `ValidateState`                        |
+| `app/auth/socialauth/google.go`                  | Create: Google config + profile fetch                                                |
+| `app/auth/socialauth/github.go`                  | Create: GitHub config + profile fetch                                                |
+| `app/db/postgres/postgres.go`                    | Modify: `GetUserByProvider`, `UpsertSocialUser`; widen `GetUser`                     |
+| `app/controllers/session_cookie.go`              | Create: shared cookie set/clear helpers (used by both auth controllers)              |
+| `app/controllers/socialauth.go`                  | Create: `SocialAuthController` — URL, callback, logout, me                           |
+| `app/controllers/auth.go`                        | Modify: set the cookie on local login                                                |
+| `app/app.go`                                     | Modify: register controller, `TokenLookup`, CORS                                     |
 
 `app/auth/oauth/` is a pre-existing **password-grant** provider, unrelated to this work. Do not modify or rename it.
 
 ### `d3dweb`
 
-| File | Responsibility |
-|---|---|
-| `vercel.json`, `vite.config.js`, `.env` | Modify: route the API under the frontend origin |
-| `src/services/session.js` | Create: reactive session store, the single source of identity |
-| `src/services/api.js` | Modify: credentials, drop 26 auth headers, add 3 methods |
-| `src/helpers/D3Util.js` | Modify: drop token decode + legacy `serverUrl` override |
-| `src/App.vue`, `src/components/DiagramList.vue`, `src/components/DiagramGraphView.vue`, `src/helpers/DiagramGraph.js` | Modify: read `session` instead of decoding a JWT |
-| `src/components/JoinView.vue` | Modify: share token moves to its own key |
-| `src/router/index.js` | Modify: add `/auth/callback` |
-| `src/components/AuthCallback.vue` | Create: completes the OAuth redirect loop |
-| `src/components/Login.vue` | Modify: two social buttons, drop `localStorage` write |
+| File                                                                                                                  | Responsibility                                                |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `vercel.json`, `vite.config.js`, `.env`                                                                               | Modify: route the API under the frontend origin               |
+| `src/services/session.js`                                                                                             | Create: reactive session store, the single source of identity |
+| `src/services/api.js`                                                                                                 | Modify: credentials, drop 26 auth headers, add 3 methods      |
+| `src/helpers/D3Util.js`                                                                                               | Modify: drop token decode + legacy `serverUrl` override       |
+| `src/App.vue`, `src/components/DiagramList.vue`, `src/components/DiagramGraphView.vue`, `src/helpers/DiagramGraph.js` | Modify: read `session` instead of decoding a JWT              |
+| `src/components/JoinView.vue`                                                                                         | Modify: share token moves to its own key                      |
+| `src/router/index.js`                                                                                                 | Modify: add `/auth/callback`                                  |
+| `src/components/AuthCallback.vue`                                                                                     | Create: completes the OAuth redirect loop                     |
+| `src/components/Login.vue`                                                                                            | Modify: two social buttons, drop `localStorage` write         |
 
 ---
 
@@ -73,6 +73,7 @@ This is a git operation, not a code change, so it has no test cycle. It is a sep
 **Files:** none created or modified.
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `feat/social-auth` branch in `d3d-api`, based on a `main` that contains migrations `001`–`005`.
 
@@ -122,12 +123,14 @@ git push -u origin feat/social-auth
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Create: `app/db/postgres/migrations/006_social_auth.sql`
 - Modify: `app/models/user.go`
 - Modify: `app/db/postgres/postgres.go:795-805` (`GetUser`)
 - Test: `app/db/postgres/postgres_test.go`
 
 **Interfaces:**
+
 - Consumes: Task 1's branch.
 - Produces: `models.User` with fields `Provider string`, `ProviderID string`, `Email string`, `DisplayName string`. `GetUser(username string) (models.User, error)` now populates all four.
 
@@ -266,11 +269,13 @@ git commit -m "feat(auth): add social auth columns to users"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Modify: `app/config/config.go`
 - Modify: `samus_dev.toml.example`
 - Test: `app/config/config_test.go` (create)
 
 **Interfaces:**
+
 - Consumes: nothing from earlier tasks.
 - Produces: `config.SocialProvider{ClientID, ClientSecret, RedirectURL string}`; `SamusConfig.Google` and `SamusConfig.GitHub` of that type; `SamusConfig.Samus.FrontendOrigin string`; `SamusConfig.Samus.CookieSecure bool`.
 
@@ -412,10 +417,12 @@ git commit -m "feat(config): add Google/GitHub provider and cookie settings"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Create: `app/auth/socialauth/socialauth.go`
 - Test: `app/auth/socialauth/socialauth_test.go`
 
 **Interfaces:**
+
 - Consumes: `token.CreateToken(signingKey string, claims jwt.MapClaims) (string, error)` from `app/auth/token`.
 - Produces:
   - `type SocialUserProfile struct { Provider, ProviderID, Email, DisplayName, Username string }`
@@ -620,10 +627,12 @@ git commit -m "feat(auth): add socialauth package with signed OAuth state"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Create: `app/auth/socialauth/google.go`, `app/auth/socialauth/github.go`
 - Test: `app/auth/socialauth/providers_test.go`
 
 **Interfaces:**
+
 - Consumes: `SocialUserProfile` from Task 4.
 - Produces:
   - `func NewGoogleConfig(clientID, secret, redirectURL string) *oauth2.Config`
@@ -1003,10 +1012,12 @@ git commit -m "feat(auth): add Google and GitHub profile fetchers"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Modify: `app/db/postgres/postgres.go` (append after `UpdateUserPassword`, around line 817)
 - Test: `app/db/postgres/postgres_test.go`
 
 **Interfaces:**
+
 - Consumes: `socialauth.SocialUserProfile` (Task 4), widened `models.User` (Task 2).
 - Produces:
   - `func (p *Postgres) GetUserByProvider(provider, providerID string) (models.User, error)` — zero `User` and nil error when absent, matching `GetUser`.
@@ -1191,11 +1202,13 @@ git commit -m "feat(db): add social user lookup and upsert"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Create: `app/controllers/session_cookie.go`
 - Create: `app/controllers/socialauth.go`
 - Test: `app/controllers/socialauth_test.go`
 
 **Interfaces:**
+
 - Consumes: `socialauth.GenerateState`/`ValidateState`/`NewGoogleConfig`/`NewGitHubConfig`/`FetchGoogleProfile`/`FetchGitHubProfile` (Tasks 4–5); `Postgres.UpsertSocialUser`, `Postgres.GetUser` (Tasks 2, 6); `config.SocialProvider` (Task 3).
 - Produces:
   - `const SessionCookieName = "jwt_token"`, `const SessionTTL = 48 * time.Hour`
@@ -1617,11 +1630,13 @@ git commit -m "feat(auth): add social auth controller and session cookie"
 **Working directory:** `~/projects/d3d-api`
 
 **Files:**
+
 - Modify: `app/controllers/auth.go:20-45` (`LoginHandler`)
 - Modify: `app/app.go:44-60` (CORS, `TokenLookup`, controller registration)
 - Test: `app/controllers/auth_test.go` (create)
 
 **Interfaces:**
+
 - Consumes: `SetSessionCookie` (Task 7), `SocialAuthController` (Task 7), `config.SamusConfig` additions (Task 3).
 - Produces: `AuthController` gains `SigningKey string` and `CookieSecure bool` fields. `/auth/login` sets the session cookie **and** keeps returning the token in the JSON body, so nothing that still reads the body breaks mid-migration.
 
@@ -1854,23 +1869,25 @@ TOML remains the default. An environment variable wins only when set and
 non-empty, so local dev via `samus_dev.toml` is unchanged.
 
 **Files:**
+
 - Modify: `app/config/config.go` (`BuildConfig`)
 - Test: `app/config/config_test.go` (**modify** — it exists with 4 tests)
 
 **Interfaces:**
+
 - Consumes: `SamusConfig` with `Google`, `GitHub`, `Samus.FrontendOrigin`, `Samus.CookieSecure` (Task 3).
 - Produces: `applyEnvOverrides(cfg *SamusConfig)`, called by `BuildConfig` after `toml.DecodeFile` and before `setDefaultConfigs`.
 
-| Variable | Overrides |
-|---|---|
-| `D3D_GOOGLE_CLIENT_ID` | `Google.ClientID` |
-| `D3D_GOOGLE_CLIENT_SECRET` | `Google.ClientSecret` |
-| `D3D_GOOGLE_REDIRECT_URL` | `Google.RedirectURL` |
-| `D3D_GITHUB_CLIENT_ID` | `GitHub.ClientID` |
-| `D3D_GITHUB_CLIENT_SECRET` | `GitHub.ClientSecret` |
-| `D3D_GITHUB_REDIRECT_URL` | `GitHub.RedirectURL` |
-| `D3D_FRONTEND_ORIGIN` | `Samus.FrontendOrigin` |
-| `D3D_COOKIE_SECURE` | `Samus.CookieSecure` (`"true"`/`"false"`) |
+| Variable                   | Overrides                                 |
+| -------------------------- | ----------------------------------------- |
+| `D3D_GOOGLE_CLIENT_ID`     | `Google.ClientID`                         |
+| `D3D_GOOGLE_CLIENT_SECRET` | `Google.ClientSecret`                     |
+| `D3D_GOOGLE_REDIRECT_URL`  | `Google.RedirectURL`                      |
+| `D3D_GITHUB_CLIENT_ID`     | `GitHub.ClientID`                         |
+| `D3D_GITHUB_CLIENT_SECRET` | `GitHub.ClientSecret`                     |
+| `D3D_GITHUB_REDIRECT_URL`  | `GitHub.RedirectURL`                      |
+| `D3D_FRONTEND_ORIGIN`      | `Samus.FrontendOrigin`                    |
+| `D3D_COOKIE_SECURE`        | `Samus.CookieSecure` (`"true"`/`"false"`) |
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2035,11 +2052,13 @@ git checkout main && git pull && git checkout -b feat/social-auth
 ```
 
 **Files:**
+
 - Modify: `vercel.json`, `vite.config.js`, `.env`
 - Modify: `src/helpers/D3Util.js:281-290` (`serverUrl`)
 - Test: `src/helpers/D3Util.serverUrl.test.js` (create)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `D3Util.serverUrl()` resolves to a same-origin `/api` base and ignores a stored setting that points at the legacy API origin.
 
@@ -2176,10 +2195,12 @@ git commit -m "feat(api): serve the API under the frontend origin"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Create: `src/services/session.js`
 - Test: `src/services/session.test.js`
 
 **Interfaces:**
+
 - Consumes: `api.me()` (added in Task 11 — this task mocks it, so the two can be built in either order).
 - Produces:
   - `session` — a `reactive({ user, loaded })`
@@ -2331,10 +2352,12 @@ git commit -m "feat(auth): add reactive session store"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Modify: `src/services/api.js` (all 26 `Authorization` headers)
 - Test: `src/services/api.test.js` (**modify, do not create** — it already exists with 294 lines and 31 tests)
 
 **Interfaces:**
+
 - Consumes: `D3Util.serverUrl()` (Task 9).
 - Produces: `api.me()` → axios promise of `{data: {user}}`; `api.getOAuthUrl(provider)` → `Promise<string>`; `api.logout()` → axios promise. Every existing method keeps its current name and signature.
 
@@ -2459,7 +2482,11 @@ JoinView write `shareToken`. See the execution-order note in Task 13.
 Remove all 26 occurrences of the pattern below from `src/services/api.js`:
 
 ```js
-{ headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
+{
+  headers: {
+    Authorization: 'Bearer ' + localStorage.getItem('token')
+  }
+}
 ```
 
 Where it was a `get`'s only options argument, drop the argument entirely
@@ -2550,6 +2577,7 @@ git commit -m "feat(api): migrate to cookie-based auth"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Modify: `src/helpers/D3Util.js:603-630`
 - Modify: `src/App.vue:440`
 - Modify: `src/components/DiagramList.vue:241,263,360`
@@ -2558,6 +2586,7 @@ git commit -m "feat(api): migrate to cookie-based auth"
 - Test: `src/helpers/DiagramGraph.test.js` (update — 11 token references)
 
 **Interfaces:**
+
 - Consumes: `session`, `loadSession`, `isAuthenticated` (Task 10).
 - Produces: no `localStorage.getItem('token')` remains outside `src/services/collab.js`.
 
@@ -2588,11 +2617,17 @@ describe('session migration', () => {
     expect(source).not.toMatch(/localStorage\.(get|set|remove)Item\(\s*['"]token['"]/)
   })
 
-  it('no file decodes a JWT by hand', () => {
-    for (const file of FILES) {
+  // Only these two must be free of hand-rolled JWT decoding. DiagramGraph.js and
+  // DiagramGraphView.vue legitimately decode the SHARE token (kept in localStorage
+  // under 'shareToken' by design, readable by design) to detect a view-only share
+  // recipient. The session token is what may never be decoded again — and it cannot
+  // be, since it is httpOnly and the assertion above proves nothing reads its key.
+  it.each(['src/services/api.js', 'src/helpers/D3Util.js'])(
+    '%s does not decode a JWT by hand',
+    (file) => {
       expect(readFileSync(file, 'utf-8')).not.toMatch(/atob\(/)
     }
-  })
+  )
 })
 ```
 
@@ -2602,7 +2637,9 @@ describe('session migration', () => {
 npx vitest run src/services/session.callsites.test.js
 ```
 
-Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`, and `DiagramGraphView.vue`.
+Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`, and `DiagramGraphView.vue` on the `localStorage` assertion, and for `D3Util.js` on the `atob` assertion.
+
+Note `DiagramGraph.js:636` and `DiagramGraphView.vue:166` still call `atob`/`_decodeJwt` after this task, and that is correct — they decode the **share** token, which Task 13 moved to `shareToken` and which stays readable by design. They are deliberately absent from the `atob` list.
 
 `Login.vue` is deliberately absent from `FILES`: its `localStorage` write is Task 15's to remove, and Task 15 adds it to this list once it has.
 
@@ -2612,7 +2649,7 @@ Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`,
 `validateToken`. **Each keeps its exact current contract.** They are called from
 more files than this task edits (`HistoryPanel.vue:93`, `DiagramForm.vue:527,915`,
 `ElementShareDialog.vue:227`, and `App.vue` in eight places), and those callers stay
-untouched *because* the contracts hold. Changing a return type here breaks them
+untouched _because_ the contracts hold. Changing a return type here breaks them
 silently.
 
 Import at the top of the file:
@@ -2789,14 +2826,16 @@ git commit -m "refactor(auth): read identity from the session store"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Modify: `src/components/JoinView.vue:42`
 - Test: `src/components/JoinView.test.js` (update)
 
 **Interfaces:**
+
 - Consumes: nothing from earlier tasks.
 - Produces: the share token is stored under `shareToken`; nothing writes the `token` key any more.
 
-`JoinView.vue:42` writes a *share* JWT into the same `'token'` key the session used.
+`JoinView.vue:42` writes a _share_ JWT into the same `'token'` key the session used.
 
 **This is load-bearing, not merely untidy.** The share JWT (issued with `iss`
 `"d3d-share"`, see `shares.go:68`) is what authenticates an anonymous share
@@ -2875,11 +2914,13 @@ git commit -m "fix(shares): stop storing the share token under the session key"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Modify: `src/router/index.js`
 - Create: `src/components/AuthCallback.vue`
 - Test: `src/components/AuthCallback.test.js`
 
 **Interfaces:**
+
 - Consumes: `api.getOAuthUrl` is not needed here; this component calls `api` directly for the callback POST, plus `setSession` (Task 10).
 - Produces: the named route `auth-callback` at path `/auth/callback`.
 
@@ -3093,10 +3134,12 @@ git commit -m "feat(auth): add OAuth callback route and component"
 **Working directory:** d3dweb worktree
 
 **Files:**
+
 - Modify: `src/components/Login.vue:121` and its template
 - Test: `src/components/Login.test.js` (create)
 
 **Interfaces:**
+
 - Consumes: `api.getOAuthUrl(provider)` (Task 11), `setSession` (Task 10).
 - Produces: the login view no longer writes `localStorage`.
 
@@ -3190,27 +3233,27 @@ Below the existing username/password form in `src/components/Login.vue`, reusing
 the file's existing `fx-btn` class:
 
 ```vue
-      <div class="login-divider"><span>or</span></div>
+<div class="login-divider"><span>or</span></div>
 
-      <button
-        type="button"
-        class="fx-btn login-social"
-        data-testid="login-github"
-        @click="signInWith('github')"
-      >
+<button
+  type="button"
+  class="fx-btn login-social"
+  data-testid="login-github"
+  @click="signInWith('github')"
+>
         Continue with GitHub
       </button>
 
-      <button
-        type="button"
-        class="fx-btn login-social"
-        data-testid="login-google"
-        @click="signInWith('google')"
-      >
+<button
+  type="button"
+  class="fx-btn login-social"
+  data-testid="login-google"
+  @click="signInWith('google')"
+>
         Continue with Google
       </button>
 
-      <p v-if="socialError" class="login-error">{{ socialError }}</p>
+<p v-if="socialError" class="login-error">{{ socialError }}</p>
 ```
 
 - [ ] **Step 4: Add the handler and drop the localStorage write**
@@ -3286,6 +3329,7 @@ git push -u origin feat/social-auth
 **Files:** none committed — credentials are injected as environment variables and never committed.
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: a working sign-in flow in dev and production.
 
@@ -3417,21 +3461,21 @@ Run after Task 1, so the issues match the plan while it is being executed.
 
 ## Task-to-Issue Map
 
-| Task | Issues |
-|---|---|
-| 1 | — (prerequisite) |
-| 2 | d3d-api #42, #43 |
-| 3 | d3d-api #49 |
-| 4 | d3d-api #41, #44 |
-| 5 | d3d-api #44 |
-| 6 | d3d-api #45 |
-| 7 | d3d-api #46 + new `/auth/me` |
-| 8 | d3d-api #47, #48 |
-| 9 | new proxy config |
-| 10 | new session store |
-| 11 | d3dweb #65 |
-| 12 | new identity + session-check migration |
-| 13 | new JoinView key rename |
-| 14 | d3dweb #62, #63 |
-| 15 | d3dweb #64 |
-| 16 | — (registration, verification, follow-up) |
+| Task | Issues                                    |
+| ---- | ----------------------------------------- |
+| 1    | — (prerequisite)                          |
+| 2    | d3d-api #42, #43                          |
+| 3    | d3d-api #49                               |
+| 4    | d3d-api #41, #44                          |
+| 5    | d3d-api #44                               |
+| 6    | d3d-api #45                               |
+| 7    | d3d-api #46 + new `/auth/me`              |
+| 8    | d3d-api #47, #48                          |
+| 9    | new proxy config                          |
+| 10   | new session store                         |
+| 11   | d3dweb #65                                |
+| 12   | new identity + session-check migration    |
+| 13   | new JoinView key rename                   |
+| 14   | d3dweb #62, #63                           |
+| 15   | d3dweb #64                                |
+| 16   | — (registration, verification, follow-up) |
