@@ -154,6 +154,7 @@ import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
 import * as collab from '@/services/collab'
 import { resolveGraphKey } from '@/helpers/GraphKeys.js'
+import { session } from '@/services/session'
 
 function _decodeJwt(token) {
   try {
@@ -760,10 +761,12 @@ export default {
     },
     focusedNodeId(id) {
       if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
-      const payload = _decodeJwt(localStorage.getItem('token') || '')
       collab.sendPresence({
         displayName:
-          localStorage.getItem('d3d_anon_name') || payload.username || payload.sub || 'Guest',
+          localStorage.getItem('d3d_anon_name') ||
+          session.user?.displayName ||
+          session.user?.username ||
+          'Guest',
         color: _sessionColor(),
         selection: id ? [id] : []
       })

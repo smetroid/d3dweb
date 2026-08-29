@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
+import { setSession, clearSession } from '@/services/session'
 
 vi.mock('vue-cookies', () => ({
   default: { get: () => null, set: () => {}, config: () => {} }
@@ -567,13 +568,14 @@ describe('autosave persistence', () => {
 
   beforeEach(async () => {
     localStorage.store.clear()
-    localStorage.removeItem('token')
+    clearSession()
     vi.useFakeTimers()
     api = (await import('@/services/api')).default
     api.updateDiagram.mockClear()
   })
 
   afterEach(() => {
+    clearSession()
     vi.useRealTimers()
     vi.unstubAllEnvs()
   })
@@ -638,7 +640,7 @@ describe('autosave persistence', () => {
   it('posts to the server (debounced) when logged in with a saved id', async () => {
     vi.stubEnv('VITE_COLLAB_ENABLED', 'false')
     const graph = savedGraph()
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
 
     graph.redraw()
     expect(api.updateDiagram).not.toHaveBeenCalled()
@@ -665,7 +667,7 @@ describe('save status reporting', () => {
 
   beforeEach(async () => {
     localStorage.store.clear()
-    localStorage.removeItem('token')
+    clearSession()
     vi.useFakeTimers()
     vi.stubEnv('VITE_COLLAB_ENABLED', 'false')
     api = (await import('@/services/api')).default
@@ -674,6 +676,7 @@ describe('save status reporting', () => {
   })
 
   afterEach(() => {
+    clearSession()
     vi.useRealTimers()
     vi.unstubAllEnvs()
   })
@@ -704,7 +707,7 @@ describe('save status reporting', () => {
 
   it('reports saving then saved when the server write succeeds', async () => {
     const { graph, emitter } = statusGraph({ id: 'dag-1' })
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
 
     graph.redraw()
     expect(statuses(emitter)).toEqual(['save:saving'])
@@ -718,7 +721,7 @@ describe('save status reporting', () => {
 
   it('reports an error when the server write fails', async () => {
     const { graph, emitter } = statusGraph({ id: 'dag-1' })
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
     api.updateDiagram.mockRejectedValue(new Error('boom'))
 
     graph.redraw()
@@ -729,7 +732,7 @@ describe('save status reporting', () => {
 
   it('creates the diagram on the server when logged in without an id', async () => {
     const { graph, emitter } = statusGraph()
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
 
     graph.redraw()
     await vi.advanceTimersByTimeAsync(800)
@@ -749,7 +752,7 @@ describe('save status reporting', () => {
 
   it('creates only once when edits arrive while the create is in flight', async () => {
     const { graph } = statusGraph()
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
 
     let release
     api.postDiagram.mockReturnValue(
@@ -774,7 +777,7 @@ describe('save status reporting', () => {
 
   it('updates rather than re-creates once the server id is known', async () => {
     const { graph } = statusGraph()
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
 
     graph.redraw()
     await vi.advanceTimersByTimeAsync(800)
@@ -789,7 +792,7 @@ describe('save status reporting', () => {
 
   it('retries the server write on demand after a failure', async () => {
     const { graph, emitter } = statusGraph({ id: 'dag-1' })
-    localStorage.setItem('token', 'a.b.c')
+    setSession({ username: 'test', displayName: 'Test', provider: 'local' })
     api.updateDiagram.mockRejectedValueOnce(new Error('boom'))
 
     graph.redraw()

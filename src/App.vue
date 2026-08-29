@@ -18,6 +18,7 @@ import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
 import { FULLSCREEN_ROUTES } from '@/router'
 import D3DApi from '@/services/api'
+import { loadSession, isAuthenticated } from '@/services/session'
 import { takePendingCluster } from '@/helpers/pendingCluster'
 import { saveStatusLabel, nextSaveStatus, SAVE_EVENTS } from '@/helpers/saveStatus'
 
@@ -292,6 +293,7 @@ export default {
     }
   },
   async mounted() {
+    await loadSession()
     try {
       console.log('App mounted')
 
@@ -313,13 +315,13 @@ export default {
           this.loggedInUser = valid ? D3Util.username() : null
         }
       } else if (D3Util.auth()) {
-        D3Util.validateToken().then((valid) => {
+        D3Util.validateToken().then(async (valid) => {
           if (valid) {
             this.loggedInUser = D3Util.username()
             this._refreshInboxCount()
             this.loadFromServer()
           } else {
-            D3Util.logout()
+            await D3Util.logout()
             this.loadDiagram()
             this.emitter.emit('appMessage', {
               message: 'Session expired, working locally',
@@ -437,7 +439,7 @@ export default {
       console.log('Message to open diagram received')
       console.log(id)
       // this.id = id
-      if (localStorage.getItem('token')) {
+      if (isAuthenticated()) {
         this.loadFromServer(id)
       } else {
         this.loadDiagram(id)
@@ -816,8 +818,8 @@ export default {
     d3Action: async function (event) {
       MenuLinks.Click(event, this)
     },
-    logout() {
-      D3Util.logout()
+    async logout() {
+      await D3Util.logout()
       this.loggedInUser = null
       this.inboxCount = 0
       this.emitter.emit('appMessage', { message: 'Logged out', status: 'info' })

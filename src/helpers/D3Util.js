@@ -1,7 +1,8 @@
 import VueCookies from 'vue-cookies'
-import axios from 'axios'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import Shortcuts from '@/helpers/Shortcuts.js'
+import api from '@/services/api'
+import { session, isAuthenticated, loadSession, clearSession } from '@/services/session'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -605,38 +606,33 @@ export default {
     let localItem = JSON.parse(localStorage.getItem(id))
     return localItem
   },
-  //Need to check if token is valid
+  // Returns a boolean, exactly as before.
   auth() {
-    if (localStorage.getItem('token')) {
-      return true
-    } else {
-      return false
+    return isAuthenticated()
+  },
+
+  // The cookie is httpOnly, so the browser cannot clear it — only the server
+  // can. An empty logout() would leave the session alive server-side while the
+  // UI showed the user as signed out.
+  async logout() {
+    try {
+      await api.logout()
+    } finally {
+      clearSession()
     }
   },
-  logout() {
-    localStorage.removeItem('token')
-  },
+
+  // Returns a string or null, exactly as before. NOT the user object:
+  // callers assign this straight into `loggedInUser` and into the
+  // element-share audience id.
   username() {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return null
-      const claims = JSON.parse(atob(token.split('.')[1]))
-      return claims.name || claims.username || null
-    } catch {
-      return null
-    }
+    return session.user?.username ?? null
   },
+
+  // Returns a boolean, exactly as before. loadSession() performs the same
+  // round trip, now against /auth/me.
   async validateToken() {
-    const token = localStorage.getItem('token')
-    if (!token) return false
-    try {
-      await axios.get(this.serverUrl() + '/dags', {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-      return true
-    } catch {
-      return false
-    }
+    return (await loadSession()) !== null
   },
   updateId(id) {
     var localData = this.getLocal()

@@ -1,21 +1,14 @@
 <template>
   <Teleport to="body">
     <transition name="fx-scrim">
-      <div
-        v-if="diagramListModal"
-        class="fx-scrim"
-        @click="close($event, $refs)"
-      ></div>
+      <div v-if="diagramListModal" class="fx-scrim" @click="close($event, $refs)"></div>
     </transition>
     <transition name="fx-dialog">
-      <div
-        v-if="diagramListModal"
-        class="fx-dialog-stage"
-      >
+      <div v-if="diagramListModal" class="fx-dialog-stage">
         <focus-trap
           v-model:active="listTrap"
           :delayInitialFocus="true"
-          :initial-focus="()=>$refs.wrapper"
+          :initial-focus="() => $refs.wrapper"
         >
           <div
             ref="wrapper"
@@ -36,7 +29,9 @@
                   class="fx-close"
                   aria-label="Close diagram list"
                   @click="close($event, $refs)"
-                >✕</button>
+                >
+                  ✕
+                </button>
               </header>
 
               <div class="fx-readout">
@@ -78,10 +73,7 @@
                     :page="page"
                   >
                     <template v-slot:item="{ item }">
-                      <tr
-                        :id="item.id"
-                        :class="{ 'fx-row-selected': selectedRowId == item.id }"
-                      >
+                      <tr :id="item.id" :class="{ 'fx-row-selected': selectedRowId == item.id }">
                         <td>{{ item.name }}</td>
                         <td class="fx-cell-description">{{ item.description }}</td>
                         <td>
@@ -118,16 +110,12 @@
               </div>
 
               <footer class="fx-panel-actions">
-                <button
-                  type="button"
-                  class="fx-btn fx-btn-primary"
-                  @click="openSelected()"
-                >Open <span class="fx-kbd">enter</span></button>
-                <button
-                  type="button"
-                  class="fx-btn fx-btn-ghost"
-                  @click="close($event, $refs)"
-                >Close <span class="fx-kbd">{{ shortcutLabels.close }}</span></button>
+                <button type="button" class="fx-btn fx-btn-primary" @click="openSelected()">
+                  Open <span class="fx-kbd">enter</span>
+                </button>
+                <button type="button" class="fx-btn fx-btn-ghost" @click="close($event, $refs)">
+                  Close <span class="fx-kbd">{{ shortcutLabels.close }}</span>
+                </button>
               </footer>
             </div>
           </div>
@@ -136,38 +124,21 @@
     </transition>
 
     <transition name="fx-scrim">
-      <div
-        v-if="smallDialog"
-        class="fx-scrim fx-scrim-front"
-        @click="close()"
-      ></div>
+      <div v-if="smallDialog" class="fx-scrim fx-scrim-front" @click="close()"></div>
     </transition>
     <transition name="fx-dialog">
-      <div
-        v-if="smallDialog"
-        class="fx-dialog-stage fx-dialog-stage-front"
-      >
-        <focus-trap
-          v-model:active="smallDialog"
-          class="trap is-active"
-        >
-          <div
-            tabindex="0"
-            class="fx-dialog"
-            @keydown.esc="close()"
-          >
+      <div v-if="smallDialog" class="fx-dialog-stage fx-dialog-stage-front">
+        <focus-trap v-model:active="smallDialog" class="trap is-active">
+          <div tabindex="0" class="fx-dialog" @keydown.esc="close()">
             <div class="fx-panel-inner">
               <header class="fx-panel-header">
                 <div class="fx-panel-title">
                   <span class="fx-title-chip fx-chip-edit">EDIT</span>
                   <h2 class="fx-title">{{ formTitle }}</h2>
                 </div>
-                <button
-                  type="button"
-                  class="fx-close"
-                  aria-label="Close editor"
-                  @click="close()"
-                >✕</button>
+                <button type="button" class="fx-close" aria-label="Close editor" @click="close()">
+                  ✕
+                </button>
               </header>
               <div class="fx-panel-body">
                 <label class="fx-field fx-field-full">
@@ -176,24 +147,24 @@
                 </label>
                 <label class="fx-field fx-field-full">
                   <span class="fx-label">Description</span>
-                  <textarea class="fx-input fx-textarea" v-model="editedItem.description" rows="3"></textarea>
+                  <textarea
+                    class="fx-input fx-textarea"
+                    v-model="editedItem.description"
+                    rows="3"
+                  ></textarea>
                 </label>
                 <label class="fx-field fx-field-full">
                   <span class="fx-label">Diagram <em class="fx-opt">JSON</em></span>
-                  <textarea class="fx-input fx-textarea" v-model="editedItem.diagram" rows="5"></textarea>
+                  <textarea
+                    class="fx-input fx-textarea"
+                    v-model="editedItem.diagram"
+                    rows="5"
+                  ></textarea>
                 </label>
               </div>
               <footer class="fx-panel-actions">
-                <button
-                  type="button"
-                  class="fx-btn fx-btn-primary"
-                  @click="save()"
-                >Save</button>
-                <button
-                  type="button"
-                  class="fx-btn fx-btn-ghost"
-                  @click="close()"
-                >Cancel</button>
+                <button type="button" class="fx-btn fx-btn-primary" @click="save()">Save</button>
+                <button type="button" class="fx-btn fx-btn-ghost" @click="close()">Cancel</button>
               </footer>
             </div>
           </div>
@@ -205,10 +176,11 @@
 <script>
 import D3Util from '@/helpers/D3Util.js'
 import D3DApi from '@/services/api'
+import { isAuthenticated } from '@/services/session'
 export default {
   name: 'DiagramList',
   props: ['active'],
-  data () {
+  data() {
     return {
       listTrap: null,
       diagramListModal: null,
@@ -221,14 +193,14 @@ export default {
       editedItem: {
         name: '',
         description: '',
-        diagram: '',
+        diagram: ''
       },
       headers: [
-        {title: 'Name', key: 'name', sortable: true},
-        {title: 'Description', key: 'description', sortable: true},
-        {title: 'Created', key: 'created', sortable: true},
-        {title: 'Updated', key: 'updated', sortable: true},
-        {title: 'Actions', key: 'actions', sortable: false},
+        { title: 'Name', key: 'name', sortable: true },
+        { title: 'Description', key: 'description', sortable: true },
+        { title: 'Created', key: 'created', sortable: true },
+        { title: 'Updated', key: 'updated', sortable: true },
+        { title: 'Actions', key: 'actions', sortable: false }
       ],
       diagrams: [],
       page: 1,
@@ -238,20 +210,20 @@ export default {
   },
   computed: {
     storageType() {
-      return localStorage.getItem('token') ? 'Server' : 'LocalStorage'
+      return isAuthenticated() ? 'Server' : 'LocalStorage'
     },
     shortcutLabels() {
       return D3Util.shortcutLabels()
     },
-    formTitle () {
+    formTitle() {
       return this.editedIndex === -1 ? 'New Item' : 'Edited Item'
     },
-    totalPages () {
+    totalPages() {
       let pages = Math.ceil(this.diagrams.length / this.itemsPerPage)
       return pages
-    },
+    }
   },
-  mounted () {
+  mounted() {
     this.emitter.on('showDiagramList', (data) => {
       this.diagramListModal = true
       this.listTrap = true
@@ -260,7 +232,7 @@ export default {
       this.description = data.description
       this.diagram = data.diagram
 
-      if (localStorage.getItem('token')) {
+      if (isAuthenticated()) {
         console.log('Getting diagrams from server')
         this.getDiagrams()
       } else {
@@ -271,13 +243,13 @@ export default {
   },
   methods: {
     updatedItems() {
-        if (this.search !== '') {
-          this.itemsPerPage = '-1'
-        } else {
-          this.itemsPerPage = '5'
-        }
+      if (this.search !== '') {
+        this.itemsPerPage = '-1'
+      } else {
+        this.itemsPerPage = '5'
+      }
     },
-    keyPress(event){
+    keyPress(event) {
       if (D3Util.debug) console.log(this)
       // Typing in the search field should not trigger table navigation
       const tag = event.target?.tagName
@@ -289,19 +261,19 @@ export default {
        * */
       this.displayedItems = []
 
-      let table = document.getElementById("trapDiv")
-      let rows = table.getElementsByTagName("tr")
+      let table = document.getElementById('trapDiv')
+      let rows = table.getElementsByTagName('tr')
 
       // Loop through the rows to find those with an id property
       for (let i = 0; i < rows.length; i++) {
-        let rowId = rows[i].getAttribute("id")
+        let rowId = rows[i].getAttribute('id')
         if (rowId !== null) {
           this.displayedItems.push(rowId)
         }
       }
-      switch(event.key){
+      switch (event.key) {
         case '/':
-          break;
+          break
         case 'Escape':
           break
         case 'Enter':
@@ -314,50 +286,56 @@ export default {
           if (D3Util.debug) console.log('App Event Key Default')
       }
 
-      if (event.key == "j" || event.key == "k"){
-        this.focusedIndex = D3Util.getIndex(this.focusedIndex, event.key, this.displayedItems.length)
+      if (event.key == 'j' || event.key == 'k') {
+        this.focusedIndex = D3Util.getIndex(
+          this.focusedIndex,
+          event.key,
+          this.displayedItems.length
+        )
         this.selectedRowId = this.displayedItems[this.focusedIndex]
       }
 
-      if (event.key == "l" || event.key == "h"){
+      if (event.key == 'l' || event.key == 'h') {
         if (D3Util.debug) console.log('l or h')
         this.page = D3Util.getPage(this.page, event.key, this.totalPages)
         if (D3Util.debug) console.log(this.page)
       }
 
-      if (event.key == "Enter"){
+      if (event.key == 'Enter') {
         this.openSelected()
       }
 
-      if (event.key == "x"){
+      if (event.key == 'x') {
         this.deleteItem(this.selectedRowId)
       }
     },
     openSelected() {
       if (this.selectedRowId == null) {
-        this.emitter.emit('appMessage', { message: 'Navigate the list with j/k to select a diagram', status: 'info' })
+        this.emitter.emit('appMessage', {
+          message: 'Navigate the list with j/k to select a diagram',
+          status: 'info'
+        })
         return
       }
       this.diagramListModal = false
       this.listTrap = false
-      this.emitter.emit("openDiagram", this.selectedRowId)
-      this.emitter.emit("changeActive")
+      this.emitter.emit('openDiagram', this.selectedRowId)
+      this.emitter.emit('changeActive')
     },
-    save (){
-    },
-    editItem (item) {
+    save() {},
+    editItem(item) {
       this.editedIndex = this.diagrams.indexOf(item)
       this.editedItem = Object.assign({}, item)
       this.smallDialog = true
       if (D3Util.debug) console.log(item)
     },
-    deleteItem (item) {
-      const id = (item && item.id) ? item.id : this.selectedRowId
+    deleteItem(item) {
+      const id = item && item.id ? item.id : this.selectedRowId
       if (D3Util.debug) console.log(id)
       const index = this.diagrams.indexOf(item)
       if (index > -1) this.diagrams.splice(index, 1)
 
-      if (localStorage.getItem('token')) {
+      if (isAuthenticated()) {
         D3DApi.deleteDiagram(id)
         console.log('Getting diagrams from server')
         this.getDiagrams()
@@ -367,46 +345,48 @@ export default {
         this.getLocalDiagrams()
       }
     },
-    filter (value, search) {
-      return value != null &&
+    filter(value, search) {
+      return (
+        value != null &&
         search != null &&
         typeof value === 'string' &&
         value.toString().indexOf(search) !== -1
+      )
     },
-    getLocalDiagrams: function() {
-      let items = [];
+    getLocalDiagrams: function () {
+      let items = []
       for (let i = 0; i < localStorage.length; i++) {
-        let key = localStorage.key(i);
+        let key = localStorage.key(i)
         /*NOTE - only get the localitems that start with D3D_*/
         if (key.startsWith('D3D_')) {
           let item = JSON.parse(localStorage.getItem(key))
           item.id = key
-          items.push(item);
+          items.push(item)
         }
       }
       if (D3Util.debug) console.log(items)
-      this.diagrams = items;
+      this.diagrams = items
     },
-    getDiagrams: async function() {
+    getDiagrams: async function () {
       try {
         var result = await D3DApi.getDiagrams()
         if (D3Util.debug) console.log(result)
         this.diagrams = result.dags || []
       } catch (err) {
         console.error('failed to load diagrams', err)
-        let data = {status: 'error', message: 'Failed to load diagrams — Login to refresh token'}
+        let data = { status: 'error', message: 'Failed to load diagrams — Login to refresh token' }
         this.emitter.emit('appMessage', data)
         this.close()
       }
     },
-    close () {
+    close() {
       if (D3Util.debug) console.log('Close method')
       this.diagramListModal = false
       this.smallDialog = false
       this.listTrap = false
       this.emitter.emit('changeActive')
     }
-  },
+  }
 }
 </script>
 
