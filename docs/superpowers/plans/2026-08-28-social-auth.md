@@ -715,14 +715,40 @@ func TestFetchGoogleProfile(t *testing.T) {
 		ProviderID:  "g-123",
 		Email:       "ada@example.com",
 		DisplayName: "Ada Lovelace",
-		Username:    "ada",
+		Username:    "g-123",
 	}
 	if got != want {
 		t.Errorf("profile = %+v, want %+v", got, want)
 	}
 }
 
-func TestFetchGoogleProfileFallsBackToIDWhenEmailMissing(t *testing.T) {
+// Two Google accounts sharing an email local part must not collide: the
+// username is derived from the id, so UNIQUE(username) holds by construction.
+func TestFetchGoogleProfileUsernamesAreUniquePerAccount(t *testing.T) {
+	srvA := oauthServer(t, map[string]string{
+		"/userinfo": `{"id":"g-111","email":"ada@gmail.com","name":"Ada One"}`,
+	})
+	googleUserInfoURL = srvA.URL + "/userinfo"
+	a, err := FetchGoogleProfile(context.Background(), testConfig(srvA), "code-1")
+	if err != nil {
+		t.Fatalf("fetch a: %v", err)
+	}
+
+	srvB := oauthServer(t, map[string]string{
+		"/userinfo": `{"id":"g-222","email":"ada@work.com","name":"Ada Two"}`,
+	})
+	googleUserInfoURL = srvB.URL + "/userinfo"
+	b, err := FetchGoogleProfile(context.Background(), testConfig(srvB), "code-1")
+	if err != nil {
+		t.Fatalf("fetch b: %v", err)
+	}
+
+	if a.Username == b.Username {
+		t.Fatalf("two accounts sharing an email local part collided on username %q", a.Username)
+	}
+}
+
+func TestFetchGoogleProfileToleratesMissingEmail(t *testing.T) {
 	srv := oauthServer(t, map[string]string{
 		"/userinfo": `{"id":"g-456","name":"No Mail"}`,
 	})
@@ -733,7 +759,10 @@ func TestFetchGoogleProfileFallsBackToIDWhenEmailMissing(t *testing.T) {
 		t.Fatalf("fetch: %v", err)
 	}
 	if got.Username != "g-456" {
-		t.Errorf("Username = %q, want the provider id as fallback", got.Username)
+		t.Errorf("Username = %q, want the provider id", got.Username)
+	}
+	if got.Email != "" {
+		t.Errorf("Email = %q, want empty", got.Email)
 	}
 }
 
@@ -837,19 +866,17 @@ func FetchGoogleProfile(ctx context.Context, cfg *oauth2.Config, code string) (S
 		return SocialUserProfile{}, fmt.Errorf("google userinfo: %w", err)
 	}
 
-	// Google has no handle, so derive one from the email local part and fall
-	// back to the opaque id when the account exposes no address.
-	username := body.ID
-	if at := strings.Index(body.Email, "@"); at > 0 {
-		username = body.Email[:at]
-	}
-
+	// Google has no handle, and an email local part is NOT unique across
+	// domains — ada@gmail.com and ada@work.com would collide on username while
+	// carrying different provider ids, breaking the UNIQUE(username) guarantee
+	// that namespacing exists to provide. The stable id is the only unique
+	// choice. The UI shows DisplayName, so opacity here costs nothing.
 	return SocialUserProfile{
 		Provider:    "google",
 		ProviderID:  body.ID,
 		Email:       body.Email,
 		DisplayName: body.Name,
-		Username:    username,
+		Username:    body.ID,
 	}, nil
 }
 

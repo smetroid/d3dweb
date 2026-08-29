@@ -172,6 +172,17 @@ Collision is structurally impossible, so no retry loop is needed. The raw
 provider handle remains available in `provider_id`. The UI renders
 `display_name`, falling back to `username`.
 
+The handle each provider contributes must itself be unique within that
+provider, or the guarantee above is empty:
+
+| Provider | Handle used | Why |
+|---|---|---|
+| GitHub | `login` | Globally unique across GitHub by construction |
+| Google | `id` (the stable `sub`) | Google has no handle; an email local part is **not** unique — `ada@gmail.com` and `ada@work.com` would both yield `google:ada` with different `provider_id`, so `ON CONFLICT (provider, provider_id)` would not match and the insert would violate `users_username_key` |
+
+Google usernames are therefore opaque (`google:117234...`). That is
+acceptable precisely because the UI shows `display_name`.
+
 ### Routes
 
 `SocialAuthController` in `app/controllers/socialauth.go`. All routes are
