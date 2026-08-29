@@ -312,10 +312,14 @@ describe('api', () => {
     )
   })
 
-  it('sends no Authorization header for a normal session', async () => {
+  // Authorization lives in the axios.create() config, not in a per-call argument,
+  // so this must assert on mockCreate. Asserting on http.get's arguments would pass
+  // vacuously — an unconditional header at api.js:18 would go undetected.
+  it('creates the client with no Authorization header when there is no share token', async () => {
     await api.getDiagrams()
-    const [, options] = http.get.mock.calls[0]
-    expect(options?.headers?.Authorization).toBeUndefined()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
   })
 
   // Anonymous share recipients have no session cookie — their share JWT is the
