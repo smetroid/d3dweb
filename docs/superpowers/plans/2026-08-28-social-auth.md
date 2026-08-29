@@ -426,11 +426,19 @@ git commit -m "feat(config): add Google/GitHub provider and cookie settings"
 - [ ] **Step 1: Add the dependency**
 
 ```bash
-go get golang.org/x/oauth2@latest
+# Pinned, not @latest: v0.36.0 requires go1.25.0 and would bump go.mod's
+# `go 1.23.3` directive. v0.30.0 is the newest release needing only go1.23.0.
+go get golang.org/x/oauth2@v0.30.0
 go mod tidy
 ```
 
 This is the only new dependency the feature needs (d3d-api#41).
+
+**Expect `go mod tidy` to strip it again in this task.** Nothing here imports
+`oauth2` yet, and the repo's pre-commit `go-mod-tidy` hook removes unimported
+modules. The dependency lands for real in Task 5, whose `google.go` and
+`github.go` import it. Do not fight the hook; a zero diff on `go.mod` at the end
+of this task is the correct outcome.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -626,7 +634,21 @@ git commit -m "feat(auth): add socialauth package with signed OAuth state"
 
 Both fetchers read their endpoint URLs from package variables so tests can point them at `httptest` servers. The token-exchange endpoint comes from `cfg.Endpoint`, which tests override the same way.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Add the pinned dependency**
+
+Task 4 could not make this stick, because nothing imported it yet and the
+pre-commit tidy hook stripped it. This task's files do import it, so it lands here:
+
+```bash
+go get golang.org/x/oauth2@v0.30.0
+go mod tidy
+grep oauth2 go.mod   # must now show golang.org/x/oauth2 v0.30.0
+```
+
+Pin the version. `@latest` (v0.36.0) requires go1.25.0 and would bump the
+`go 1.23.3` directive, violating a Global Constraint.
+
+- [ ] **Step 2: Write the failing test**
 
 Create `app/auth/socialauth/providers_test.go`:
 
@@ -761,7 +783,7 @@ func TestFetchGitHubProfileToleratesNoEmail(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Run test to verify it fails**
 
 ```bash
 go test ./app/auth/socialauth/ -run TestFetch -v
@@ -769,7 +791,7 @@ go test ./app/auth/socialauth/ -run TestFetch -v
 
 Expected: FAIL — `undefined: FetchGoogleProfile`.
 
-- [ ] **Step 3: Write `google.go`**
+- [ ] **Step 4: Write `google.go`**
 
 ```go
 package socialauth
@@ -853,7 +875,7 @@ func getJSON(ctx context.Context, client *http.Client, url string, out interface
 }
 ```
 
-- [ ] **Step 4: Write `github.go`**
+- [ ] **Step 5: Write `github.go`**
 
 ```go
 package socialauth
@@ -932,7 +954,7 @@ func FetchGitHubProfile(ctx context.Context, cfg *oauth2.Config, code string) (S
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [ ] **Step 6: Run the tests to verify they pass**
 
 ```bash
 go test ./app/auth/socialauth/ -v
@@ -940,7 +962,7 @@ go test ./app/auth/socialauth/ -v
 
 Expected: PASS, 9 tests.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add go.mod go.sum app/auth/socialauth/
