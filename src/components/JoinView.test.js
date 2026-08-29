@@ -45,7 +45,27 @@ afterEach(() => {
   document.body.innerHTML = ''
   vi.restoreAllMocks()
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
+
+// jsdom in this repo's vitest setup does not expose a working global
+// localStorage (Node's own experimental localStorage shadows it), so tests
+// that touch localStorage stub it explicitly — same pattern as collab.test.js.
+function makeStorage() {
+  const store = {}
+  return {
+    getItem: (k) => store[k] ?? null,
+    setItem: (k, v) => {
+      store[k] = String(v)
+    },
+    removeItem: (k) => {
+      delete store[k]
+    },
+    clear: () => {
+      Object.keys(store).forEach((k) => delete store[k])
+    }
+  }
+}
 
 describe('JoinView', () => {
   it('surfaces the server message when the exchange fails', async () => {
@@ -79,5 +99,20 @@ describe('JoinView', () => {
     await flush()
     expect(document.body.textContent).toMatch(/invalid share link/i)
     expect(mockExchangeShare).not.toHaveBeenCalled()
+  })
+
+  it('stores the share token under its own key, not the session key', async () => {
+    vi.stubGlobal('localStorage', makeStorage())
+    localStorage.clear()
+    // status: 'ok' is required to pass JoinView's `data.status !== 'ok'` gate
+    // (see the "surfaces the server message from a non-ok response body" test
+    // above) so execution reaches the localStorage.setItem call under test.
+    mockExchangeShare.mockResolvedValue({ status: 'ok', dagId: 'dag-1', title: 'Shared' })
+
+    await mountJoin('share-jwt-123')
+    await flush()
+
+    expect(localStorage.getItem('shareToken')).toBe('share-jwt-123')
+    expect(localStorage.getItem('token')).toBeNull()
   })
 })

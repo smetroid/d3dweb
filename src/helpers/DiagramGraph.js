@@ -634,7 +634,9 @@ export default class DiagramGraph {
 
   _isViewOnly() {
     try {
-      const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
+      // Share tokens live under 'shareToken', not 'token' (which now holds
+      // only the session token). See JoinView.vue.
+      const claims = JSON.parse(atob((localStorage.getItem('shareToken') || '').split('.')[1]))
       return claims.iss === 'd3d-share' && claims.role !== 'edit'
     } catch {
       /* not a JWT — editable */

@@ -164,7 +164,9 @@ function _decodeJwt(token) {
 }
 
 function _isViewOnly() {
-  const claims = _decodeJwt(localStorage.getItem('token') || '')
+  // Share tokens live under 'shareToken', not 'token' (which now holds only
+  // the session token). See JoinView.vue.
+  const claims = _decodeJwt(localStorage.getItem('shareToken') || '')
   return claims.iss === 'd3d-share' && claims.role !== 'edit'
 }
 

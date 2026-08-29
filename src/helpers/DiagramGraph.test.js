@@ -628,7 +628,7 @@ describe('autosave persistence', () => {
   it('skips persistence for view-only share tokens', () => {
     const graph = savedGraph()
     const payload = btoa(JSON.stringify({ iss: 'd3d-share', role: 'view' }))
-    localStorage.setItem('token', `header.${payload}.sig`)
+    localStorage.setItem('shareToken', `header.${payload}.sig`)
     graph.redraw()
 
     expect(localStorage.getItem('dag-1')).toBeNull()
@@ -806,7 +806,7 @@ describe('save status reporting', () => {
   it('does not create on the server for a view-only share token', async () => {
     const { graph } = statusGraph()
     const claims = btoa(JSON.stringify({ iss: 'd3d-share', role: 'view' }))
-    localStorage.setItem('token', `header.${claims}.sig`)
+    localStorage.setItem('shareToken', `header.${claims}.sig`)
 
     graph.redraw()
     await vi.advanceTimersByTimeAsync(800)
