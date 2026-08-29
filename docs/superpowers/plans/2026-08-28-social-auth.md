@@ -2197,10 +2197,24 @@ describe('api', () => {
     )
   })
 
-  it('sends no Authorization header', async () => {
+  it('sends no Authorization header for a normal session', async () => {
     await api.getDiagrams()
     const [, options] = mockGet.mock.calls[0]
     expect(options?.headers?.Authorization).toBeUndefined()
+  })
+
+  // Anonymous share recipients have no session cookie — their share JWT is the
+  // only thing authenticating them, and it travels in this header.
+  it('sends the share token as a Bearer header when one is stored', async () => {
+    localStorage.setItem('shareToken', 'share-jwt-1')
+    await api.getDiagrams()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        withCredentials: true,
+        headers: { Authorization: 'Bearer share-jwt-1' }
+      })
+    )
+    localStorage.removeItem('shareToken')
   })
 
   it('me() calls /auth/me', async () => {
@@ -2229,17 +2243,32 @@ npx vitest run src/services/api.test.js
 
 Expected: FAIL — `withCredentials` missing and `api.me is not a function`.
 
-- [ ] **Step 3: Add credentials to the client**
+- [ ] **Step 3: Add credentials to the client, and keep the share-token transport**
 
 Replace the factory at the top of `src/services/api.js`:
 
 ```js
 // withCredentials sends the httpOnly session cookie on every request. It works
 // because serverUrl() is same-origin — see D3Util.serverUrl and vercel.json.
+//
+// The Authorization header is NOT dead: anonymous share recipients authenticate
+// with a share JWT (iss "d3d-share"), which the backend accepts via
+// TokenLookup's `header:Authorization` — listed first, so a share token takes
+// precedence over a session cookie, exactly as it does today. JoinView stores
+// it under `shareToken` (see Task 13). Without this header, opening a share
+// link would authenticate nothing.
 function api() {
-  return axios.create({ baseURL: D3Util.serverUrl(), withCredentials: true })
+  const shareToken = localStorage.getItem('shareToken')
+  return axios.create({
+    baseURL: D3Util.serverUrl(),
+    withCredentials: true,
+    ...(shareToken ? { headers: { Authorization: 'Bearer ' + shareToken } } : {})
+  })
 }
 ```
+
+**Task 13 must already be done** when you run this task — it is what makes
+JoinView write `shareToken`. See the execution-order note in Task 13.
 
 - [ ] **Step 4: Strip every Authorization header**
 
@@ -2583,7 +2612,18 @@ git commit -m "refactor(auth): read identity from the session store"
 - Consumes: nothing from earlier tasks.
 - Produces: the share token is stored under `shareToken`; nothing writes the `token` key any more.
 
-`JoinView.vue:42` writes a *share* JWT into the same `'token'` key the session used. The two have always been conflated; now that the session has moved to a cookie, the share token must stop squatting on that name.
+`JoinView.vue:42` writes a *share* JWT into the same `'token'` key the session used.
+
+**This is load-bearing, not merely untidy.** The share JWT (issued with `iss`
+`"d3d-share"`, see `shares.go:68`) is what authenticates an anonymous share
+recipient: the backend accepts it through `TokenLookup`'s `header:Authorization`
+and `dag.go:213-231` derives the share's `jti` and `role` from it. It lives under
+`'token'` today purely so `api.js` sends it as the Bearer token. Renaming the key
+without teaching `api.js` the new name would silently break every share link.
+
+> **Execution order: run this task BEFORE Task 11.** Task 11 makes `api.js` read
+> `shareToken`; this task makes JoinView write it. Doing Task 11 first leaves a
+> window where shares are broken.
 
 - [ ] **Step 1: Write the failing test**
 
