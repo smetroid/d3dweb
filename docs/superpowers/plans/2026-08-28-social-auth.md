@@ -2395,27 +2395,57 @@ Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`,
 
 - [ ] **Step 3: Migrate `D3Util.js`**
 
-At `D3Util.js:603-630`, replace the token-presence check, the claims decoder,
-and the token-validation request. Import the store at the top of the file:
+`D3Util.js:603-630` holds four functions — `auth`, `logout`, `username`,
+`validateToken`. **Each keeps its exact current contract.** They are called from
+more files than this task edits (`HistoryPanel.vue:93`, `DiagramForm.vue:527,915`,
+`ElementShareDialog.vue:227`, and `App.vue` in eight places), and those callers stay
+untouched *because* the contracts hold. Changing a return type here breaks them
+silently.
+
+Import at the top of the file:
 
 ```js
-import { session, isAuthenticated } from '@/services/session'
+import api from '@/services/api'
+import { session, isAuthenticated, loadSession, clearSession } from '@/services/session'
 ```
 
-Replace the `if (localStorage.getItem('token'))` guard at line 605 with
-`if (isAuthenticated())`, and remove the `localStorage.removeItem('token')` at
-line 612 — signing out is `api.logout()` plus `clearSession()` now.
-
-Replace the claims decoder at lines 616-618:
+Replace all four functions:
 
 ```js
-    // The session cookie is httpOnly, so identity comes from the store rather
-    // than from decoding a token.
-    return session.user
+  // Returns a boolean, exactly as before.
+  auth() {
+    return isAuthenticated()
+  },
+
+  // The cookie is httpOnly, so the browser cannot clear it — only the server
+  // can. An empty logout() would leave the session alive server-side while the
+  // UI showed the user as signed out.
+  async logout() {
+    try {
+      await api.logout()
+    } finally {
+      clearSession()
+    }
+  },
+
+  // Returns a string or null, exactly as before. NOT the user object:
+  // callers assign this straight into `loggedInUser` and into the
+  // element-share audience id.
+  username() {
+    return session.user?.username ?? null
+  },
+
+  // Returns a boolean, exactly as before. loadSession() performs the same
+  // round trip, now against /auth/me.
+  async validateToken() {
+    return (await loadSession()) !== null
+  },
 ```
 
-Replace the token-validation request at lines 625-629 with a call to
-`loadSession()`, which performs the same round trip against `/auth/me`.
+Then update the two `D3Util.logout()` call sites in `App.vue` (lines 322 and 820)
+to `await D3Util.logout()`, making their enclosing functions `async` if they are
+not already. `App.vue:820`'s `logout()` method must await before clearing
+`loggedInUser`, so the cookie is gone before the UI claims it is.
 
 - [ ] **Step 4: Migrate `App.vue`**
 
@@ -2488,6 +2518,36 @@ npm test
 ```
 
 Expected: both PASS. `grep -rn "localStorage.*'token'" src/ --include=*.vue --include=*.js` should now match only `src/services/collab.js` and `src/services/collab.test.js`.
+
+- [ ] **Step 9b: Verify the unedited callers still hold**
+
+These files call `D3Util.auth()` or `D3Util.username()` and are deliberately NOT
+edited by this task. They must still work, which is the whole reason the four
+contracts were preserved:
+
+```bash
+grep -n "D3Util\.\(auth\|username\|logout\|validateToken\)" \
+  src/components/HistoryPanel.vue src/components/DiagramForm.vue \
+  src/components/ElementShareDialog.vue src/App.vue
+```
+
+Confirm by reading each hit that the value is used the way the contract promises —
+`auth()` as a boolean, `username()` as a string. If any call site would now receive
+an object or a promise where it expects a scalar, the contract was broken: fix
+`D3Util.js`, not the caller.
+
+Add one test to `src/services/session.callsites.test.js` proving logout reaches the
+server, since that is the failure that would otherwise be silent:
+
+```js
+it('D3Util.logout() calls the API so the httpOnly cookie is actually cleared', async () => {
+  const logout = vi.fn().mockResolvedValue({})
+  vi.doMock('@/services/api', () => ({ default: { logout } }))
+  const { default: D3Util } = await import('@/helpers/D3Util')
+  await D3Util.logout()
+  expect(logout).toHaveBeenCalled()
+})
+```
 
 - [ ] **Step 10: Confirm collab is still gated off**
 
