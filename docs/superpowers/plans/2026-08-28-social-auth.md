@@ -2277,8 +2277,7 @@ const FILES = [
   'src/helpers/DiagramGraph.js',
   'src/App.vue',
   'src/components/DiagramList.vue',
-  'src/components/DiagramGraphView.vue',
-  'src/components/Login.vue'
+  'src/components/DiagramGraphView.vue'
 ]
 
 describe('session migration', () => {
@@ -2301,7 +2300,9 @@ describe('session migration', () => {
 npx vitest run src/services/session.callsites.test.js
 ```
 
-Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`, `DiagramGraphView.vue`, `Login.vue`.
+Expected: FAIL for `D3Util.js`, `DiagramGraph.js`, `App.vue`, `DiagramList.vue`, and `DiagramGraphView.vue`.
+
+`Login.vue` is deliberately absent from `FILES`: its `localStorage` write is Task 15's to remove, and Task 15 adds it to this list once it has.
 
 - [ ] **Step 3: Migrate `D3Util.js`**
 
@@ -2873,7 +2874,20 @@ npm run format
 
 Expected: all PASS, lint clean.
 
-- [ ] **Step 6: Verify no session token remains outside collab**
+- [ ] **Step 6: Add Login.vue to the call-site guard**
+
+Now that the write is gone, add it to the `FILES` array in
+`src/services/session.callsites.test.js`:
+
+```js
+  'src/components/DiagramGraphView.vue',
+  'src/components/Login.vue'
+]
+```
+
+Run `npx vitest run src/services/session.callsites.test.js` — expected PASS.
+
+- [ ] **Step 7: Verify no session token remains outside collab**
 
 ```bash
 grep -rn "localStorage.*'token'" src/ --include=*.vue --include=*.js
@@ -2881,10 +2895,11 @@ grep -rn "localStorage.*'token'" src/ --include=*.vue --include=*.js
 
 Expected: matches only in `src/services/collab.js` and `src/services/collab.test.js`.
 
-- [ ] **Step 7: Commit and push**
+- [ ] **Step 8: Commit and push**
 
 ```bash
-git add src/components/Login.vue src/components/Login.test.js
+git add src/components/Login.vue src/components/Login.test.js \
+        src/services/session.callsites.test.js
 git commit -m "feat(auth): add Google and GitHub sign-in buttons"
 git push -u origin feat/social-auth
 ```
