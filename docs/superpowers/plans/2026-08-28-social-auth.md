@@ -1840,6 +1840,190 @@ git push
 
 ---
 
+## Task 8b: Environment-variable overrides for per-environment config
+
+**Working directory:** `~/projects/d3d-api`
+
+`BuildConfig` (`app/config/config.go:55`) only calls `toml.DecodeFile`. There is
+no `os.Getenv` anywhere in non-test code, so the six values that differ per
+environment — four OAuth credentials plus the frontend origin and cookie flag —
+have no way to reach production without committing secrets. This task closes
+that gap; without it Task 16's production half cannot run.
+
+TOML remains the default. An environment variable wins only when set and
+non-empty, so local dev via `samus_dev.toml` is unchanged.
+
+**Files:**
+- Modify: `app/config/config.go` (`BuildConfig`)
+- Test: `app/config/config_test.go` (**modify** — it exists with 4 tests)
+
+**Interfaces:**
+- Consumes: `SamusConfig` with `Google`, `GitHub`, `Samus.FrontendOrigin`, `Samus.CookieSecure` (Task 3).
+- Produces: `applyEnvOverrides(cfg *SamusConfig)`, called by `BuildConfig` after `toml.DecodeFile` and before `setDefaultConfigs`.
+
+| Variable | Overrides |
+|---|---|
+| `D3D_GOOGLE_CLIENT_ID` | `Google.ClientID` |
+| `D3D_GOOGLE_CLIENT_SECRET` | `Google.ClientSecret` |
+| `D3D_GOOGLE_REDIRECT_URL` | `Google.RedirectURL` |
+| `D3D_GITHUB_CLIENT_ID` | `GitHub.ClientID` |
+| `D3D_GITHUB_CLIENT_SECRET` | `GitHub.ClientSecret` |
+| `D3D_GITHUB_REDIRECT_URL` | `GitHub.RedirectURL` |
+| `D3D_FRONTEND_ORIGIN` | `Samus.FrontendOrigin` |
+| `D3D_COOKIE_SECURE` | `Samus.CookieSecure` (`"true"`/`"false"`) |
+
+- [ ] **Step 1: Write the failing test**
+
+Append to `app/config/config_test.go` (it already has 4 tests — do not overwrite):
+
+```go
+func TestEnvOverridesBeatTomlValues(t *testing.T) {
+	body := `
+[samus]
+frontend_origin = "http://localhost:5173"
+cookie_secure = false
+
+[google]
+client_id = "toml-google-id"
+client_secret = "toml-google-secret"
+
+[github]
+client_id = "toml-github-id"
+client_secret = "toml-github-secret"
+`
+	path := filepath.Join(t.TempDir(), "c.toml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	t.Setenv("D3D_GOOGLE_CLIENT_SECRET", "env-google-secret")
+	t.Setenv("D3D_GITHUB_CLIENT_ID", "env-github-id")
+	t.Setenv("D3D_FRONTEND_ORIGIN", "https://d3dweb.vercel.app")
+	t.Setenv("D3D_COOKIE_SECURE", "true")
+
+	cfg := BuildConfig(path)
+
+	if cfg.Google.ClientSecret != "env-google-secret" {
+		t.Errorf("Google.ClientSecret = %q, want the env value", cfg.Google.ClientSecret)
+	}
+	// Unset vars must leave the TOML value alone.
+	if cfg.Google.ClientID != "toml-google-id" {
+		t.Errorf("Google.ClientID = %q, want the toml value", cfg.Google.ClientID)
+	}
+	if cfg.GitHub.ClientID != "env-github-id" {
+		t.Errorf("GitHub.ClientID = %q, want the env value", cfg.GitHub.ClientID)
+	}
+	if cfg.Samus.FrontendOrigin != "https://d3dweb.vercel.app" {
+		t.Errorf("FrontendOrigin = %q", cfg.Samus.FrontendOrigin)
+	}
+	if !cfg.Samus.CookieSecure {
+		t.Error("CookieSecure = false, want true from D3D_COOKIE_SECURE")
+	}
+}
+
+func TestEmptyEnvVarDoesNotClobberToml(t *testing.T) {
+	body := "[google]\nclient_id = \"toml-google-id\"\n"
+	path := filepath.Join(t.TempDir(), "c.toml")
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	// An empty variable is not a value. Treating "" as an override would wipe
+	// working config on any host that exports the name blank.
+	t.Setenv("D3D_GOOGLE_CLIENT_ID", "")
+
+	if got := BuildConfig(path).Google.ClientID; got != "toml-google-id" {
+		t.Errorf("Google.ClientID = %q, want the toml value preserved", got)
+	}
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+go test ./app/config/ -run 'TestEnvOverrides|TestEmptyEnvVar' -v
+```
+
+Expected: FAIL — the env values are ignored and the TOML values come back.
+
+- [ ] **Step 3: Implement the overrides**
+
+Add to `app/config/config.go`:
+
+```go
+// applyEnvOverrides lets the deployment supply the values that differ per
+// environment without committing them. TOML stays the default; an environment
+// variable wins only when set AND non-empty, so a host that exports a name
+// blank cannot wipe working configuration.
+func applyEnvOverrides(cfg *SamusConfig) {
+	overrideString(&cfg.Google.ClientID, "D3D_GOOGLE_CLIENT_ID")
+	overrideString(&cfg.Google.ClientSecret, "D3D_GOOGLE_CLIENT_SECRET")
+	overrideString(&cfg.Google.RedirectURL, "D3D_GOOGLE_REDIRECT_URL")
+	overrideString(&cfg.GitHub.ClientID, "D3D_GITHUB_CLIENT_ID")
+	overrideString(&cfg.GitHub.ClientSecret, "D3D_GITHUB_CLIENT_SECRET")
+	overrideString(&cfg.GitHub.RedirectURL, "D3D_GITHUB_REDIRECT_URL")
+	overrideString(&cfg.Samus.FrontendOrigin, "D3D_FRONTEND_ORIGIN")
+
+	if v := os.Getenv("D3D_COOKIE_SECURE"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			cfg.Samus.CookieSecure = b
+		}
+	}
+}
+
+func overrideString(target *string, envName string) {
+	if v := os.Getenv(envName); v != "" {
+		*target = v
+	}
+}
+```
+
+Add `"os"` and `"strconv"` to the imports, and call it in `BuildConfig`
+immediately after the decode:
+
+```go
+	applyEnvOverrides(&config)
+	mergePostgresConfig(&config)
+	setDefaultConfigs(&config)
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+```bash
+go test ./app/config/ -v
+```
+
+Expected: PASS, 6 tests (4 pre-existing + 2 new). Below 4 means tests were destroyed.
+
+- [ ] **Step 5: Document the variables**
+
+Add a comment block above the `[google]` stub in `samus_dev.toml.example`:
+
+```toml
+# Production supplies these via environment variables, which override any value
+# here: D3D_GOOGLE_CLIENT_ID, D3D_GOOGLE_CLIENT_SECRET, D3D_GOOGLE_REDIRECT_URL,
+# D3D_GITHUB_CLIENT_ID, D3D_GITHUB_CLIENT_SECRET, D3D_GITHUB_REDIRECT_URL,
+# D3D_FRONTEND_ORIGIN, D3D_COOKIE_SECURE. Never commit real credentials.
+```
+
+- [ ] **Step 6: Verify the whole backend still passes**
+
+```bash
+go build ./...
+TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5432/samus?sslmode=disable" go test ./... -count=1
+```
+
+Expected: build OK, 101 tests pass (99 + 2 new), 0 skips.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add app/config/config.go app/config/config_test.go samus_dev.toml.example
+git commit -m "feat(config): allow env vars to override per-environment settings"
+```
+
+---
+
 ## Task 9: Route the API under the frontend origin
 
 **Working directory:** d3dweb worktree
@@ -3170,9 +3354,17 @@ account.
 
 - [ ] **Step 7: Deploy and verify production**
 
-Set the production credentials as environment variables on the API host, with
-`frontend_origin = https://d3dweb.vercel.app` and `cookie_secure = true`. Deploy
-both repos, then repeat Step 4 against `https://d3dweb.vercel.app`.
+Set these on the API host (Task 8b added the override path — `BuildConfig` reads
+TOML only, so without those variables the credentials cannot reach production):
+
+```
+D3D_GOOGLE_CLIENT_ID, D3D_GOOGLE_CLIENT_SECRET, D3D_GOOGLE_REDIRECT_URL
+D3D_GITHUB_CLIENT_ID, D3D_GITHUB_CLIENT_SECRET, D3D_GITHUB_REDIRECT_URL
+D3D_FRONTEND_ORIGIN=https://d3dweb.vercel.app
+D3D_COOKIE_SECURE=true
+```
+
+Deploy both repos, then repeat Step 4 against `https://d3dweb.vercel.app`.
 
 **Verify in Safari specifically.** Safari's ITP is what the same-origin rewrite
 exists to satisfy; if the cookie survives a reload there, the design holds.
