@@ -2148,7 +2148,7 @@ git commit -m "feat(auth): add reactive session store"
 
 **Files:**
 - Modify: `src/services/api.js` (all 26 `Authorization` headers)
-- Test: `src/services/api.test.js` (create)
+- Test: `src/services/api.test.js` (**modify, do not create** — it already exists with 294 lines and 31 tests)
 
 **Interfaces:**
 - Consumes: `D3Util.serverUrl()` (Task 9).
@@ -2156,7 +2156,15 @@ git commit -m "feat(auth): add reactive session store"
 
 - [ ] **Step 1: Write the failing test**
 
-Create `src/services/api.test.js`:
+`src/services/api.test.js` **already exists** — 294 lines, 31 tests. **Append** this
+block; do not overwrite the file. Confirm the starting state first:
+
+```bash
+grep -c "  it(" src/services/api.test.js        # expect 31
+grep -c "headers: AUTH" src/services/api.test.js # expect 15
+```
+
+Append to `src/services/api.test.js`:
 
 ```js
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -2274,16 +2282,48 @@ Add to the exported object in `src/services/api.js`:
   },
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [ ] **Step 6: Update the 15 assertions that expect an Authorization header**
+
+The existing tests assert the header this task just removed, so they now fail —
+correctly. `AUTH` is defined at `src/services/api.test.js:27` as
+`{ Authorization: 'Bearer test-token' }` and used in 15 assertions.
+
+For each, drop the options argument the header was the only member of:
+
+```js
+// before
+expect(http.get).toHaveBeenCalledWith('/element-shares/es-1', { headers: AUTH })
+// after
+expect(http.get).toHaveBeenCalledWith('/element-shares/es-1')
+
+// before
+expect(http.post).toHaveBeenCalledWith('/companies', { name: 'Acme' }, { headers: AUTH })
+// after
+expect(http.post).toHaveBeenCalledWith('/companies', { name: 'Acme' })
+```
+
+Then delete the now-unused `AUTH` constant (line 27) and the `vi.stubGlobal('localStorage', ...)`
+block (line 31) — nothing reads `localStorage` in `api.js` any more.
+
+Do NOT weaken these assertions to `expect.anything()`. The point is that no auth
+argument is passed at all; asserting the exact call is what proves it.
+
+```bash
+grep -c "headers: AUTH" src/services/api.test.js  # expect 0
+grep -c "AUTH" src/services/api.test.js           # expect 0
+```
+
+- [ ] **Step 7: Run the tests to verify they pass**
 
 ```bash
 npx vitest run src/services/api.test.js
 npm test
 ```
 
-Expected: the new file PASSES, 6 tests. Fix any other suite that asserted on the removed headers.
+Expected: PASS, **37 tests** in this file (31 pre-existing + 6 new). If the count is
+below 31, tests were destroyed rather than updated — recover them from git.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/services/api.js src/services/api.test.js
