@@ -5,34 +5,53 @@ vi.mock('vue-cookies', () => ({
 }))
 
 vi.mock('@/helpers/D3Util', () => ({
-  default: { serverUrl: () => 'http://localhost:3000', debug: false }
+  default: { serverUrl: () => '/api', debug: false }
 }))
 
-const { http } = vi.hoisted(() => ({
-  http: {
+// `create` is itself a vi.fn() (not a plain arrow) so tests can assert on the
+// options axios.create() was called with (baseURL / withCredentials / the
+// conditional share-token header), while every method under test still gets
+// the same `http` object back to drive its get/post/... expectations.
+const { http, mockCreate } = vi.hoisted(() => {
+  const http = {
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
     put: vi.fn(),
     delete: vi.fn()
   }
-}))
+  const mockCreate = vi.fn(() => http)
+  return { http, mockCreate }
+})
 
 vi.mock('axios', () => ({
-  default: { create: () => http }
+  default: { create: mockCreate }
 }))
 
 import api from '@/services/api'
 
-const AUTH = { Authorization: 'Bearer test-token' }
+// A minimal working localStorage: the cookie-auth api() factory still reads
+// `shareToken` on every call (share links have no session cookie), so this
+// can't be dropped even though the per-request `token` it used to read is
+// gone. localStorage isn't a real global under the `node` test environment
+// this file runs in, so it's stubbed per the file's existing pattern.
+function stubLocalStorage() {
+  const store = new Map()
+  vi.stubGlobal('localStorage', {
+    getItem: vi.fn((k) => (store.has(k) ? store.get(k) : null)),
+    setItem: vi.fn((k, v) => store.set(k, String(v))),
+    removeItem: vi.fn((k) => store.delete(k))
+  })
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.stubGlobal('localStorage', {
-    getItem: vi.fn((k) => (k === 'token' ? 'test-token' : null)),
-    setItem: vi.fn(),
-    removeItem: vi.fn()
-  })
+  http.get.mockResolvedValue({ data: {} })
+  http.post.mockResolvedValue({ data: {} })
+  http.patch.mockResolvedValue({ data: {} })
+  http.put.mockResolvedValue({ data: {} })
+  http.delete.mockResolvedValue({ data: {} })
+  stubLocalStorage()
 })
 
 afterEach(() => {
@@ -126,7 +145,7 @@ describe('createElementShare', () => {
     http.post.mockResolvedValue({ data: { status: 'ok', id: 'es-1' } })
     const req = { rootIds: ['n1'], depth: -1, audience: { kind: 'public', ids: [] } }
     const result = await api.createElementShare('dag-1', req)
-    expect(http.post).toHaveBeenCalledWith('/dag/dag-1/elements/shares', req, { headers: AUTH })
+    expect(http.post).toHaveBeenCalledWith('/dag/dag-1/elements/shares', req)
     expect(result).toEqual({ status: 'ok', id: 'es-1' })
   })
 })
@@ -146,7 +165,7 @@ describe('getElementShare', () => {
   it('GETs /element-shares/:id with auth', async () => {
     http.get.mockResolvedValue({ data: { id: 'es-1', cluster: {} } })
     const result = await api.getElementShare('es-1')
-    expect(http.get).toHaveBeenCalledWith('/element-shares/es-1', { headers: AUTH })
+    expect(http.get).toHaveBeenCalledWith('/element-shares/es-1')
     expect(result.id).toBe('es-1')
   })
 })
@@ -155,7 +174,7 @@ describe('revokeElementShare', () => {
   it('POSTs to /element-shares/:id/revoke with auth', async () => {
     http.post.mockResolvedValue({ data: { status: 'ok' } })
     await api.revokeElementShare('es-1')
-    expect(http.post).toHaveBeenCalledWith('/element-shares/es-1/revoke', {}, { headers: AUTH })
+    expect(http.post).toHaveBeenCalledWith('/element-shares/es-1/revoke', {})
   })
 })
 
@@ -164,7 +183,7 @@ describe('importElementShare', () => {
     const payload = { status: 'ok', cluster: { nodes: [], edges: [] } }
     http.post.mockResolvedValue({ data: payload })
     const result = await api.importElementShare('es-1')
-    expect(http.post).toHaveBeenCalledWith('/element-shares/es-1/import', {}, { headers: AUTH })
+    expect(http.post).toHaveBeenCalledWith('/element-shares/es-1/import', {})
     expect(result.cluster).toBeDefined()
   })
 })
@@ -173,7 +192,7 @@ describe('listInbox', () => {
   it('GETs /shares/inbox with auth and returns array', async () => {
     http.get.mockResolvedValue({ data: { status: 'ok', shares: [{ id: 'es-1' }] } })
     const result = await api.listInbox()
-    expect(http.get).toHaveBeenCalledWith('/shares/inbox', { headers: AUTH })
+    expect(http.get).toHaveBeenCalledWith('/shares/inbox')
     expect(result).toHaveLength(1)
   })
 })
@@ -199,7 +218,7 @@ describe('createCompany', () => {
   it('POSTs to /companies with name and auth', async () => {
     http.post.mockResolvedValue({ data: { id: 'co-1', name: 'Acme' } })
     const result = await api.createCompany('Acme')
-    expect(http.post).toHaveBeenCalledWith('/companies', { name: 'Acme' }, { headers: AUTH })
+    expect(http.post).toHaveBeenCalledWith('/companies', { name: 'Acme' })
     expect(result.name).toBe('Acme')
   })
 })
@@ -208,7 +227,7 @@ describe('listCompanies', () => {
   it('GETs /companies with auth', async () => {
     http.get.mockResolvedValue({ data: [{ id: 'co-1' }] })
     const result = await api.listCompanies()
-    expect(http.get).toHaveBeenCalledWith('/companies', { headers: AUTH })
+    expect(http.get).toHaveBeenCalledWith('/companies')
     expect(result).toHaveLength(1)
   })
 })
@@ -217,11 +236,7 @@ describe('addCompanyMember', () => {
   it('POSTs /companies/:id/members with userId and auth', async () => {
     http.post.mockResolvedValue({ data: { status: 'ok' } })
     await api.addCompanyMember('co-1', 'bob')
-    expect(http.post).toHaveBeenCalledWith(
-      '/companies/co-1/members',
-      { userId: 'bob' },
-      { headers: AUTH }
-    )
+    expect(http.post).toHaveBeenCalledWith('/companies/co-1/members', { userId: 'bob' })
   })
 })
 
@@ -229,7 +244,7 @@ describe('removeCompanyMember', () => {
   it('DELETEs /companies/:id/members/:userId with auth', async () => {
     http.delete.mockResolvedValue({ data: { status: 'ok' } })
     await api.removeCompanyMember('co-1', 'bob')
-    expect(http.delete).toHaveBeenCalledWith('/companies/co-1/members/bob', { headers: AUTH })
+    expect(http.delete).toHaveBeenCalledWith('/companies/co-1/members/bob')
   })
 })
 
@@ -237,7 +252,7 @@ describe('deleteCompany', () => {
   it('DELETEs /companies/:id with auth', async () => {
     http.delete.mockResolvedValue({ data: { status: 'ok' } })
     await api.deleteCompany('co-1')
-    expect(http.delete).toHaveBeenCalledWith('/companies/co-1', { headers: AUTH })
+    expect(http.delete).toHaveBeenCalledWith('/companies/co-1')
   })
 })
 
@@ -247,11 +262,7 @@ describe('createGroup', () => {
   it('POSTs to /companies/:id/groups with name and auth', async () => {
     http.post.mockResolvedValue({ data: { id: 'grp-1', name: 'Eng' } })
     const result = await api.createGroup('co-1', 'Eng')
-    expect(http.post).toHaveBeenCalledWith(
-      '/companies/co-1/groups',
-      { name: 'Eng' },
-      { headers: AUTH }
-    )
+    expect(http.post).toHaveBeenCalledWith('/companies/co-1/groups', { name: 'Eng' })
     expect(result.name).toBe('Eng')
   })
 })
@@ -260,7 +271,7 @@ describe('listGroups', () => {
   it('GETs /companies/:id/groups with auth', async () => {
     http.get.mockResolvedValue({ data: [{ id: 'grp-1' }] })
     const result = await api.listGroups('co-1')
-    expect(http.get).toHaveBeenCalledWith('/companies/co-1/groups', { headers: AUTH })
+    expect(http.get).toHaveBeenCalledWith('/companies/co-1/groups')
     expect(result).toHaveLength(1)
   })
 })
@@ -269,11 +280,7 @@ describe('addGroupMember', () => {
   it('POSTs /groups/:id/members with userId and auth', async () => {
     http.post.mockResolvedValue({ data: { status: 'ok' } })
     await api.addGroupMember('grp-1', 'alice')
-    expect(http.post).toHaveBeenCalledWith(
-      '/groups/grp-1/members',
-      { userId: 'alice' },
-      { headers: AUTH }
-    )
+    expect(http.post).toHaveBeenCalledWith('/groups/grp-1/members', { userId: 'alice' })
   })
 })
 
@@ -281,7 +288,7 @@ describe('removeGroupMember', () => {
   it('DELETEs /groups/:id/members/:userId with auth', async () => {
     http.delete.mockResolvedValue({ data: { status: 'ok' } })
     await api.removeGroupMember('grp-1', 'alice')
-    expect(http.delete).toHaveBeenCalledWith('/groups/grp-1/members/alice', { headers: AUTH })
+    expect(http.delete).toHaveBeenCalledWith('/groups/grp-1/members/alice')
   })
 })
 
@@ -289,6 +296,55 @@ describe('deleteGroup', () => {
   it('DELETEs /groups/:id with auth', async () => {
     http.delete.mockResolvedValue({ data: { status: 'ok' } })
     await api.deleteGroup('grp-1')
-    expect(http.delete).toHaveBeenCalledWith('/groups/grp-1', { headers: AUTH })
+    expect(http.delete).toHaveBeenCalledWith('/groups/grp-1')
+  })
+})
+
+// ── Cookie auth migration ───────────────────────────────────────────────────
+// Session auth now travels as an httpOnly cookie (withCredentials), not a
+// Bearer header built from a localStorage token. The Authorization header is
+// still used, but only to carry a share JWT for anonymous share recipients.
+describe('api', () => {
+  it('creates the client with credentials so the cookie is sent', async () => {
+    await api.getDiagrams()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ baseURL: '/api', withCredentials: true })
+    )
+  })
+
+  it('sends no Authorization header for a normal session', async () => {
+    await api.getDiagrams()
+    const [, options] = http.get.mock.calls[0]
+    expect(options?.headers?.Authorization).toBeUndefined()
+  })
+
+  // Anonymous share recipients have no session cookie — their share JWT is the
+  // only thing authenticating them, and it travels in this header.
+  it('sends the share token as a Bearer header when one is stored', async () => {
+    localStorage.setItem('shareToken', 'share-jwt-1')
+    await api.getDiagrams()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        withCredentials: true,
+        headers: { Authorization: 'Bearer share-jwt-1' }
+      })
+    )
+    localStorage.removeItem('shareToken')
+  })
+
+  it('me() calls /auth/me', async () => {
+    await api.me()
+    expect(http.get).toHaveBeenCalledWith('/auth/me')
+  })
+
+  it('getOAuthUrl returns the url string', async () => {
+    http.get.mockResolvedValue({ data: { url: 'https://github.com/login/oauth' } })
+    await expect(api.getOAuthUrl('github')).resolves.toBe('https://github.com/login/oauth')
+    expect(http.get).toHaveBeenCalledWith('/auth/github/url')
+  })
+
+  it('logout posts to /auth/logout', async () => {
+    await api.logout()
+    expect(http.post).toHaveBeenCalledWith('/auth/logout')
   })
 })

@@ -1,8 +1,22 @@
 import axios from 'axios'
 import D3Util from '@/helpers/D3Util'
 
+// withCredentials sends the httpOnly session cookie on every request. It works
+// because serverUrl() is same-origin — see D3Util.serverUrl and vercel.json.
+//
+// The Authorization header is NOT dead: anonymous share recipients authenticate
+// with a share JWT (iss "d3d-share"), which the backend accepts via
+// TokenLookup's `header:Authorization` — listed first, so a share token takes
+// precedence over a session cookie, exactly as it does today. JoinView stores
+// it under `shareToken`. Without this header, opening a share link would
+// authenticate nothing.
 function api() {
-  return axios.create({ baseURL: D3Util.serverUrl() })
+  const shareToken = localStorage.getItem('shareToken')
+  return axios.create({
+    baseURL: D3Util.serverUrl(),
+    withCredentials: true,
+    ...(shareToken ? { headers: { Authorization: 'Bearer ' + shareToken } } : {})
+  })
 }
 
 export default {
@@ -19,7 +33,7 @@ export default {
   getOptions() {
     // return axios.get('http://192.168.1.4:3000/menus_options',
     return api()
-      .get('/menus', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .get('/menus')
       .then((response) => {
         console.log(response)
         return response.data
@@ -27,7 +41,7 @@ export default {
   },
   async getDiagram(id) {
     return api()
-      .get('/dag/' + id, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .get('/dag/' + id)
       .then((response) => {
         return response.data
       })
@@ -42,47 +56,31 @@ export default {
   },
   async getDiagrams() {
     return api()
-      .get('/dags', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      .get('/dags')
       .then((response) => response.data)
   },
   async postDiagram(payload) {
-    return api().post('/dag', payload, {
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-    })
+    return api().post('/dag', payload)
   },
   async updateDiagram(data) {
-    return api().post('/dag/' + data.id + '/update', data, {
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-    })
+    return api().post('/dag/' + data.id + '/update', data)
   },
   async getHistory(dagId) {
     return api()
-      .get('/dag/' + dagId + '/history', {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .get('/dag/' + dagId + '/history')
       .then((response) => response.data)
   },
   async restoreHistory(dagId, historyId) {
-    return api().post(
-      '/dag/' + dagId + '/history/' + historyId + '/restore',
-      {},
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
+    return api().post('/dag/' + dagId + '/history/' + historyId + '/restore', {})
   },
   async createShare(dagId, req) {
     return api()
-      .post('/dag/' + dagId + '/shares', req, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .post('/dag/' + dagId + '/shares', req)
       .then((response) => response.data)
   },
   async revokeShare(dagId, jti) {
     return api()
-      .post(
-        '/dag/' + dagId + '/shares/' + jti + '/revoke',
-        {},
-        { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-      )
+      .post('/dag/' + dagId + '/shares/' + jti + '/revoke', {})
       .then((response) => response.data)
   },
   async exchangeShare(token) {
@@ -92,13 +90,7 @@ export default {
   },
   async setDiagramPublic(id, isPublic) {
     return api()
-      .patch(
-        '/dag/' + id,
-        { public: isPublic },
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .patch('/dag/' + id, { public: isPublic })
       .then((response) => response.data)
   },
   async deleteDiagram(id) {
@@ -106,9 +98,7 @@ export default {
       console.log(id)
     }
     return api()
-      .delete('/dag/' + id, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .delete('/dag/' + id)
       .then((response) => {
         return response.data
       })
@@ -117,9 +107,7 @@ export default {
   // Element shares
   async createElementShare(dagId, req) {
     return api()
-      .post('/dag/' + dagId + '/elements/shares', req, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .post('/dag/' + dagId + '/elements/shares', req)
       .then((r) => r.data)
   },
   async exchangeElementShare(token) {
@@ -129,38 +117,22 @@ export default {
   },
   async getElementShare(id) {
     return api()
-      .get('/element-shares/' + id, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .get('/element-shares/' + id)
       .then((r) => r.data)
   },
   async revokeElementShare(id) {
     return api()
-      .post(
-        '/element-shares/' + id + '/revoke',
-        {},
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/element-shares/' + id + '/revoke', {})
       .then((r) => r.data)
   },
   async importElementShare(id) {
     return api()
-      .post(
-        '/element-shares/' + id + '/import',
-        {},
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/element-shares/' + id + '/import', {})
       .then((r) => r.data)
   },
   async listInbox() {
     return api()
-      .get('/shares/inbox', {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .get('/shares/inbox')
       .then((r) => r.data.shares ?? [])
   },
   async getCatalog(limit) {
@@ -173,90 +145,68 @@ export default {
   // Companies
   async createCompany(name) {
     return api()
-      .post(
-        '/companies',
-        { name },
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/companies', { name })
       .then((r) => r.data)
   },
   async listCompanies() {
     return api()
-      .get('/companies', {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .get('/companies')
       .then((r) => r.data)
   },
   async addCompanyMember(companyId, userId) {
     return api()
-      .post(
-        '/companies/' + companyId + '/members',
-        { userId },
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/companies/' + companyId + '/members', { userId })
       .then((r) => r.data)
   },
   async removeCompanyMember(companyId, userId) {
     return api()
-      .delete('/companies/' + companyId + '/members/' + userId, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .delete('/companies/' + companyId + '/members/' + userId)
       .then((r) => r.data)
   },
   async deleteCompany(id) {
     return api()
-      .delete('/companies/' + id, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .delete('/companies/' + id)
       .then((r) => r.data)
   },
 
   // Groups
   async createGroup(companyId, name) {
     return api()
-      .post(
-        '/companies/' + companyId + '/groups',
-        { name },
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/companies/' + companyId + '/groups', { name })
       .then((r) => r.data)
   },
   async listGroups(companyId) {
     return api()
-      .get('/companies/' + companyId + '/groups', {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .get('/companies/' + companyId + '/groups')
       .then((r) => r.data)
   },
   async addGroupMember(groupId, userId) {
     return api()
-      .post(
-        '/groups/' + groupId + '/members',
-        { userId },
-        {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-        }
-      )
+      .post('/groups/' + groupId + '/members', { userId })
       .then((r) => r.data)
   },
   async removeGroupMember(groupId, userId) {
     return api()
-      .delete('/groups/' + groupId + '/members/' + userId, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .delete('/groups/' + groupId + '/members/' + userId)
       .then((r) => r.data)
   },
   async deleteGroup(id) {
     return api()
-      .delete('/groups/' + id, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-      })
+      .delete('/groups/' + id)
       .then((r) => r.data)
+  },
+
+  // Reports the account behind the session cookie. 401 here means signed out.
+  async me() {
+    return api().get('/auth/me')
+  },
+  // Returns the provider consent URL to redirect the browser to.
+  async getOAuthUrl(provider) {
+    return api()
+      .get('/auth/' + provider + '/url')
+      .then((response) => response.data.url)
+  },
+  async logout() {
+    return api().post('/auth/logout')
   }
 }
