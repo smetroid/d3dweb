@@ -3,13 +3,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import mitt from 'mitt'
 
-const { mockGetOAuthUrl, mockAuth } = vi.hoisted(() => ({
+const { mockGetOAuthUrl, mockAuth, mockMe } = vi.hoisted(() => ({
   mockGetOAuthUrl: vi.fn(),
-  mockAuth: vi.fn()
+  mockAuth: vi.fn(),
+  mockMe: vi.fn()
 }))
 
 vi.mock('@/services/api', () => ({
-  default: { getOAuthUrl: mockGetOAuthUrl, auth: mockAuth }
+  // login() calls loadSession() after a successful auth() call, which hits
+  // api.me() - without a mock here that test would fail for the wrong
+  // reason (api.me is not a function) rather than proving what it claims.
+  default: { getOAuthUrl: mockGetOAuthUrl, auth: mockAuth, me: mockMe }
 }))
 
 import Login from '@/components/Login.vue'
@@ -64,6 +68,8 @@ describe('Login social buttons', () => {
   beforeEach(() => {
     mockGetOAuthUrl.mockReset()
     mockAuth.mockReset()
+    mockMe.mockReset()
+    mockMe.mockRejectedValue({ response: { status: 401 } })
     vi.stubGlobal('localStorage', makeStorage())
     localStorage.clear()
   })
@@ -104,10 +110,11 @@ describe('Login social buttons', () => {
 
     const el = mountLogin()
     await flush()
-    const form = el.querySelector('form')
-    if (form) form.dispatchEvent(new Event('submit'))
+    // Login.vue has no <form> - login() is bound to @click on this button.
+    el.querySelector('.fx-btn-primary').click()
     await flush()
 
+    expect(mockAuth).toHaveBeenCalled() // proves login() actually ran
     expect(localStorage.getItem('token')).toBeNull()
   })
 })
