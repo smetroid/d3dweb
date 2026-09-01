@@ -23,6 +23,11 @@ const router = createRouter({
       path: '/catalog',
       name: 'catalog',
       component: () => import('@/components/CatalogView.vue')
+    },
+    {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/components/AuthCallback.vue')
     }
   ]
 })

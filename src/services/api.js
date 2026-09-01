@@ -208,5 +208,10 @@ export default {
   },
   async logout() {
     return api().post('/auth/logout')
+  },
+  // Completes the OAuth loop. The response sets the session cookie; the body
+  // carries the account so the app need not immediately call /auth/me.
+  async socialCallback({ code, state, provider }) {
+    return api().post('/auth/social/callback', { code, state, provider })
   }
 }
