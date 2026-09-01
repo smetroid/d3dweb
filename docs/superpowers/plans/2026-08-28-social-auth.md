@@ -3322,6 +3322,133 @@ git push -u origin feat/social-auth
 
 ---
 
+## Task 15b: Point the frontend directly at the API host
+
+**Working directory:** d3dweb worktree
+
+The `/api` proxy from Task 9 solved the Public Suffix List problem when the API
+lived on `d3d-api.vercel.app`. The API is moving to Fly under a shared domain
+(`app.incisiveera.com` / `api.incisiveera.com`), which solves it at the root — and
+the proxy now actively _breaks_ collab.
+
+**Why the proxy has to go.** With it, the browser only ever talks to
+`app.incisiveera.com`, so the host-only session cookie is scoped there. The collab
+WebSocket must connect straight to `api.incisiveera.com` (Vercel rewrites cannot
+proxy a WebSocket upgrade), and a cookie scoped to `app.` is not sent to `api.`.
+Collab would stay broken even with the shared domain. Pointing the frontend
+directly at the API scopes the cookie to `api.incisiveera.com`, which is the target
+of both the XHR calls and the WebSocket handshake.
+
+Dev moves to the same shape so the two environments cannot diverge.
+
+|      | Frontend              | `VITE_API_BASE_URL`           | `D3D_FRONTEND_ORIGIN`         | `cookie_secure` |
+| ---- | --------------------- | ----------------------------- | ----------------------------- | --------------- |
+| Dev  | `localhost:5173`      | `http://localhost:3001`       | `http://localhost:5173`       | `false`         |
+| Prod | `app.incisiveera.com` | `https://api.incisiveera.com` | `https://app.incisiveera.com` | `true`          |
+
+Dev works because `localhost:5173` → `localhost:3001` is cross-origin but
+**same-site** (a port is not part of a "site"), so the `SameSite=Lax` cookie is
+still sent. CORS already permits it — Task 8 set `AllowOrigins` to the configured
+frontend origin with `AllowCredentials: true`.
+
+**Files:**
+
+- Modify: `.env`
+- Modify: `vercel.json` (remove the now-dead `/api` rewrite)
+- Modify: `vite.config.js` (remove the now-dead `server.proxy`)
+- Test: `src/helpers/D3Util.serverUrl.test.js` (**modify** — 3 tests, 2 assert the old shape)
+
+**Interfaces:**
+
+- Consumes: `D3Util.serverUrl()`'s absolute-URL branch, already present from Task 9.
+- Produces: no new API. `serverUrl()` returns an absolute API origin; `collab.js`
+  derives `wss://api.incisiveera.com/...` from it with no edit.
+
+- [ ] **Step 1: Update the failing tests first**
+
+Two of the three tests in `src/helpers/D3Util.serverUrl.test.js` assert
+`window.location.origin + '/api'`. Change both to the absolute dev base:
+
+```js
+it('returns the configured absolute API base', () => {
+  expect(D3Util.serverUrl()).toBe('http://localhost:3001')
+})
+
+it('ignores a stored setting pointing at the legacy API origin', () => {
+  // Cookie auth is scoped to the API host, so a saved cross-site base must lose.
+  mockGet.mockReturnValue({ serverUrl: 'https://d3d-api.vercel.app' })
+  expect(D3Util.serverUrl()).toBe('http://localhost:3001')
+})
+```
+
+Leave the third test (`still honours a self-hosted override`) unchanged — that
+behaviour is unaffected.
+
+- [ ] **Step 2: Run them and confirm they fail**
+
+```bash
+npx vitest run src/helpers/D3Util.serverUrl.test.js
+```
+
+Expected: FAIL — `serverUrl()` still returns `<origin>/api` because `.env` has not
+changed yet.
+
+- [ ] **Step 3: Point `.env` at the API host**
+
+```
+# API base URL. Absolute and direct: the session cookie is scoped to the API host
+# so that the collab WebSocket, which must connect straight to it, receives it too.
+# Production overrides this in the Vercel project settings with
+# https://api.incisiveera.com
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+- [ ] **Step 4: Remove the dead proxy config**
+
+`vercel.json` — drop the `/api/(.*)` rewrite, leaving only the SPA catch-all:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+`vite.config.js` — remove the whole `server: { proxy: { '/api': ... } }` block.
+Nothing routes through `/api` any more. Leave the `/* eslint-env node */` comment
+only if `process` is still referenced after the removal; if not, remove that too.
+
+- [ ] **Step 5: Confirm the tests pass and nothing else regressed**
+
+```bash
+npx vitest run src/helpers/D3Util.serverUrl.test.js
+npm test
+```
+
+Expected: the file PASSES; the full suite stays at its prior count. Any other suite
+asserting the `/api` shape must be updated to the absolute base, never weakened.
+
+- [ ] **Step 6: Confirm collab now derives the right WebSocket URL**
+
+`src/services/collab.js` needs no edit — verify that by reading it:
+
+```bash
+grep -n "serverUrl" src/services/collab.js
+```
+
+`wsUrl()` does `D3Util.serverUrl().replace(/^http/, 'ws')`, which now yields
+`ws://localhost:3001/...` in dev and `wss://api.incisiveera.com/...` in production —
+the API host in both cases, which is where the cookie is scoped. Confirm and say so
+in your report; do not change the file.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add .env vercel.json vite.config.js src/helpers/D3Util.serverUrl.test.js
+git commit -m "feat(api): address the API host directly instead of proxying"
+```
+
+---
+
 ## Task 16: Register the OAuth apps and verify end to end
 
 **Working directory:** both repos
