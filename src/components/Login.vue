@@ -60,6 +60,28 @@
                   Close <span class="fx-kbd">{{ shortcutLabels.close }}</span>
                 </button>
               </footer>
+
+              <div class="login-divider"><span>or</span></div>
+
+              <button
+                type="button"
+                class="fx-btn login-social"
+                data-testid="login-github"
+                @click="signInWith('github')"
+              >
+                Continue with GitHub
+              </button>
+
+              <button
+                type="button"
+                class="fx-btn login-social"
+                data-testid="login-google"
+                @click="signInWith('google')"
+              >
+                Continue with Google
+              </button>
+
+              <p v-if="socialError" class="login-error">{{ socialError }}</p>
             </div>
           </div>
         </focus-trap>
@@ -71,6 +93,7 @@
 import D3DApi from '@/services/api'
 import D3Util from '@/helpers/D3Util'
 import Shortcuts from '@/helpers/Shortcuts.js'
+import { loadSession } from '@/services/session'
 export default {
   name: 'SiteLogin',
   props: ['active'],
@@ -83,7 +106,8 @@ export default {
       enableTrap: false,
       password: null,
       authError: null,
-      loginModal: false
+      loginModal: false,
+      socialError: ''
     }
   },
   computed: {
@@ -118,12 +142,28 @@ export default {
           console.log(result)
         }
         this.common()
-        localStorage.setItem('token', JSON.stringify(result.data.token).replace(/"/g, ''))
-        this.emitter.emit('appMessage', { message: 'Successfully Authenticated', status: 'success' })
+        // The backend now sets the session as an httpOnly cookie on local
+        // login too, so there is nothing to store here. Fetch who we are
+        // from the server instead of decoding the (no-longer-stored) token.
+        await loadSession()
+        this.emitter.emit('appMessage', {
+          message: 'Successfully Authenticated',
+          status: 'success'
+        })
         this.emitter.emit('authChanged')
       } catch (err) {
         console.error('login failed', err)
         this.emitter.emit('appMessage', { message: 'Failed to Authenticate', status: 'error' })
+      }
+    },
+    // Leaves the SPA entirely: the provider redirects back to /auth/callback,
+    // which AuthCallback.vue picks up.
+    async signInWith(provider) {
+      this.socialError = ''
+      try {
+        window.location.href = await D3DApi.getOAuthUrl(provider)
+      } catch {
+        this.socialError = 'That sign-in option is unavailable right now.'
       }
     },
     close() {

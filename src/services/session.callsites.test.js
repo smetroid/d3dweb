@@ -9,7 +9,8 @@ const FILES = [
   'src/helpers/DiagramGraph.js',
   'src/App.vue',
   'src/components/DiagramList.vue',
-  'src/components/DiagramGraphView.vue'
+  'src/components/DiagramGraphView.vue',
+  'src/components/Login.vue'
 ]
 
 describe('session migration', () => {
