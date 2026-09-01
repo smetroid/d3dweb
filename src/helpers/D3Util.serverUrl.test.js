@@ -12,14 +12,14 @@ describe('D3Util.serverUrl', () => {
     mockGet.mockReturnValue(null)
   })
 
-  it('resolves a relative base against the page origin', () => {
-    expect(D3Util.serverUrl()).toBe(window.location.origin + '/api')
+  it('returns the configured absolute API base', () => {
+    expect(D3Util.serverUrl()).toBe('http://localhost:3001')
   })
 
   it('ignores a stored setting pointing at the legacy API origin', () => {
-    // Cookie auth only works same-origin, so a saved cross-site base must lose.
+    // Cookie auth is scoped to the API host, so a saved cross-site base must lose.
     mockGet.mockReturnValue({ serverUrl: 'https://d3d-api.vercel.app' })
-    expect(D3Util.serverUrl()).toBe(window.location.origin + '/api')
+    expect(D3Util.serverUrl()).toBe('http://localhost:3001')
   })
 
   it('still honours a self-hosted override', () => {
