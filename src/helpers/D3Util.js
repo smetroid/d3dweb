@@ -2,7 +2,13 @@ import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import Shortcuts from '@/helpers/Shortcuts.js'
 import api from '@/services/api'
-import { session, isAuthenticated, loadSession, clearSession } from '@/services/session'
+import {
+  session,
+  hasServerAccess,
+  loadSession,
+  clearSession,
+  clearShareToken
+} from '@/services/session'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -272,7 +278,10 @@ export default {
       defaultEdgeIconPosition: 'left',
       defaultEdgeIconSize: null,
       defaultEdgeIconColor: '',
-      serverUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+      // No proxy exists any more (see serverUrl() below) — an unset env var
+      // must resolve to nothing, not a same-origin path that quietly 200s
+      // with index.html.
+      serverUrl: import.meta.env.VITE_API_BASE_URL || '',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}
@@ -292,7 +301,13 @@ export default {
       if (/^https?:\/\//.test(envBase)) return envBase.replace(/\/+$/, '')
       return (window.location.origin + envBase).replace(/\/+$/, '')
     }
-    return '/api'
+    // There is no proxy any more (see the deployment runbook): '/api' used to
+    // work because Vercel rewrote it to the API, but now it resolves against
+    // the SPA's own origin, where the catch-all route returns index.html
+    // with a 200 and axios chokes trying to parse HTML as JSON. An empty
+    // base at least fails on something recognizably wrong (a relative,
+    // unrooted URL) instead of masquerading as a working endpoint.
+    return ''
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
@@ -606,19 +621,28 @@ export default {
     let localItem = JSON.parse(localStorage.getItem(id))
     return localItem
   },
-  // Returns a boolean, exactly as before.
+  // Returns a boolean, exactly as before. Delegates to hasServerAccess()
+  // rather than isAuthenticated(): historically this meant "is there a stored
+  // token" (session OR share), and every remaining external caller of this
+  // helper is asking the server-access question, not the identity one. Call
+  // sites inside this app that ask "who am I" now import isAuthenticated()
+  // directly instead of going through here.
   auth() {
-    return isAuthenticated()
+    return hasServerAccess()
   },
 
   // The cookie is httpOnly, so the browser cannot clear it — only the server
   // can. An empty logout() would leave the session alive server-side while the
-  // UI showed the user as signed out.
+  // UI showed the user as signed out. Also drops any stray share token so a
+  // share visited earlier in this browser can't keep shadowing the session
+  // that just ended (see C3: a lingering shareToken wins over the cookie on
+  // every request).
   async logout() {
     try {
       await api.logout()
     } finally {
       clearSession()
+      clearShareToken()
     }
   },
 

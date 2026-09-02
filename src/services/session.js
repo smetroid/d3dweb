@@ -39,3 +39,20 @@ export function clearSession() {
 export function isAuthenticated() {
   return session.user !== null
 }
+
+// A share recipient has no session but does have server access — their share
+// JWT is sent as a Bearer header by api.js. Anything choosing between the
+// server and localStorage must ask this, not isAuthenticated().
+export function hasServerAccess() {
+  return isAuthenticated() || Boolean(localStorage.getItem('shareToken'))
+}
+
+// Removes the anonymous share token. Call this whenever a real session is
+// established or ended (local login, social callback, logout) so a stale
+// share token from an earlier visit can never take precedence over — or
+// outlive — the user's own session. See api.js: the Bearer header is sent
+// whenever this key exists, and the backend checks it before the session
+// cookie.
+export function clearShareToken() {
+  localStorage.removeItem('shareToken')
+}

@@ -34,8 +34,13 @@ describe('session migration', () => {
   it('D3Util.logout() calls the API so the httpOnly cookie is actually cleared', async () => {
     const logout = vi.fn().mockResolvedValue({})
     vi.doMock('@/services/api', () => ({ default: { logout } }))
+    // logout() also clears a stray shareToken (see C3); this environment's
+    // 'node' test runner has no bare localStorage global, so stub it —
+    // same pattern as the other localStorage-touching tests in this repo.
+    vi.stubGlobal('localStorage', { removeItem: vi.fn(), getItem: vi.fn(() => null) })
     const { default: D3Util } = await import('@/helpers/D3Util')
     await D3Util.logout()
     expect(logout).toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

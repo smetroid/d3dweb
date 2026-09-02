@@ -176,7 +176,7 @@
 <script>
 import D3Util from '@/helpers/D3Util.js'
 import D3DApi from '@/services/api'
-import { isAuthenticated } from '@/services/session'
+import { hasServerAccess } from '@/services/session'
 export default {
   name: 'DiagramList',
   props: ['active'],
@@ -210,7 +210,7 @@ export default {
   },
   computed: {
     storageType() {
-      return isAuthenticated() ? 'Server' : 'LocalStorage'
+      return hasServerAccess() ? 'Server' : 'LocalStorage'
     },
     shortcutLabels() {
       return D3Util.shortcutLabels()
@@ -232,7 +232,7 @@ export default {
       this.description = data.description
       this.diagram = data.diagram
 
-      if (isAuthenticated()) {
+      if (hasServerAccess()) {
         console.log('Getting diagrams from server')
         this.getDiagrams()
       } else {
@@ -335,7 +335,7 @@ export default {
       const index = this.diagrams.indexOf(item)
       if (index > -1) this.diagrams.splice(index, 1)
 
-      if (isAuthenticated()) {
+      if (hasServerAccess()) {
         D3DApi.deleteDiagram(id)
         console.log('Getting diagrams from server')
         this.getDiagrams()

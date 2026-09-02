@@ -93,7 +93,7 @@
 import D3DApi from '@/services/api'
 import D3Util from '@/helpers/D3Util'
 import Shortcuts from '@/helpers/Shortcuts.js'
-import { loadSession } from '@/services/session'
+import { loadSession, clearShareToken } from '@/services/session'
 export default {
   name: 'SiteLogin',
   props: ['active'],
@@ -142,6 +142,11 @@ export default {
           console.log(result)
         }
         this.common()
+        // A leftover shareToken from an earlier share visit would otherwise
+        // keep winning over this new session cookie on every request (see
+        // api.js's Authorization header) and even lock the account out of
+        // /auth/me — clear it now that a real session exists.
+        clearShareToken()
         // The backend now sets the session as an httpOnly cookie on local
         // login too, so there is nothing to store here. Fetch who we are
         // from the server instead of decoding the (no-longer-stored) token.
