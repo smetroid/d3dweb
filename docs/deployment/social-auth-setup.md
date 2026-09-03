@@ -201,6 +201,7 @@ Migrations run automatically at boot via goose.
 ```bash
 fly secrets set --app d3d-api \
   SIGNING_KEY="<long random string — NOT the dev one>" \
+  FRONTEND_ORIGIN="https://app.incisiveera.com" \
   D3D_FRONTEND_ORIGIN="https://app.incisiveera.com" \
   D3D_COOKIE_SECURE="true" \
   D3D_GOOGLE_CLIENT_ID="..." \
@@ -213,10 +214,15 @@ fly secrets set --app d3d-api \
 
 Two mechanisms feed config, and both work:
 
-- `SIGNING_KEY`, `DATABASE_URL`, `PORT`, `AUTH_PROVIDER`, `LOG_*`, `TLS_*` are rendered
+- `SIGNING_KEY`, `FRONTEND_ORIGIN`, `DATABASE_URL`, `PORT`, `AUTH_PROVIDER`, `LOG_*`, `TLS_*` are rendered
   into `samus.toml` at container start by `gomplate` (see `entrypoint.sh` / `samus.tmpl`)
 - the `D3D_*` variables are applied by the Go config layer _after_ the TOML is parsed,
   and override it
+
+`FRONTEND_ORIGIN` and `D3D_FRONTEND_ORIGIN` both appear above deliberately — set both.
+The template renders the first; the Go layer overrides with the second. **The app calls
+`log.Fatal` at boot if the frontend origin is empty**, which is intentional: an empty
+value silently blocks every CORS response, so this fails loudly instead.
 
 An empty variable is ignored rather than treated as a value — a host exporting a name
 blank cannot wipe working config.
@@ -257,7 +263,11 @@ Vercel project → Settings → Environment Variables:
 VITE_API_BASE_URL = https://api.incisiveera.com     (Production)
 ```
 
-The committed `.env` holds the dev value (`http://localhost:3001`); this overrides it
+The dev value lives in `.env.development` (and `.env.test`); the committed `.env`
+deliberately carries **no** `VITE_API_BASE_URL`, so a production build cannot inline
+localhost. **This Vercel variable is therefore required, not an override** — without it
+the deployed app has no API base at all. The old sentence said it merely overrode a
+committed default; that default no longer exists.
 for production builds. Redeploy after setting it — Vite inlines env vars at build time,
 so an existing deployment will not pick it up.
 
@@ -321,7 +331,8 @@ Same check as Phase 1.6, against the production database.
 
 The frontend and API deploy independently.
 
-- **Frontend:** redeploy the previous Vercel deployment, or unset `VITE_API_BASE_URL`
+- **Frontend:** redeploy the previous Vercel deployment. Do NOT simply unset
+  `VITE_API_BASE_URL` — there is no committed fallback any more
 - **API:** `fly releases --app d3d-api`, then `fly deploy --image <previous>`
 
 Migration `006_social_auth.sql` is additive — new columns with defaults plus one index —
