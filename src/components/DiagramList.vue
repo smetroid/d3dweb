@@ -176,7 +176,7 @@
 <script>
 import D3Util from '@/helpers/D3Util.js'
 import D3DApi from '@/services/api'
-import { hasServerAccess } from '@/services/session'
+import { hasServerAccess, isShareSession } from '@/services/session'
 export default {
   name: 'DiagramList',
   props: ['active'],
@@ -232,7 +232,10 @@ export default {
       this.description = data.description
       this.diagram = data.diagram
 
-      if (hasServerAccess()) {
+      // A share recipient has server access but no account, and GET /dags is
+      // not a share-accessible route — it would 401 and surface as an error
+      // rather than a list. Their local diagrams are the right answer.
+      if (hasServerAccess() && !isShareSession()) {
         console.log('Getting diagrams from server')
         this.getDiagrams()
       } else {

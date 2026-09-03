@@ -1,26 +1,37 @@
 import axios from 'axios'
 import D3Util from '@/helpers/D3Util'
+import { shareTokenForDag, shareTokenForUnboundRoute } from '@/services/shareToken'
 
-// withCredentials sends the httpOnly session cookie on every request. It works
-// because serverUrl() is same-origin — see D3Util.serverUrl and vercel.json.
+// withCredentials sends the httpOnly session cookie on every request.
 //
-// The Authorization header is NOT dead: anonymous share recipients authenticate
-// with a share JWT (iss "d3d-share"), which the backend accepts via
-// TokenLookup's `header:Authorization` — listed first, so a share token takes
-// precedence over a session cookie, exactly as it does today. JoinView stores
-// it under `shareToken`. Without this header, opening a share link would
-// authenticate nothing.
+// The Authorization header is NOT dead: anonymous share recipients have no
+// session cookie, and authenticate with a share JWT (iss "d3d-share") that the
+// backend reads via TokenLookup's `header:Authorization`. JoinView stores it
+// under `shareToken`.
 //
-// One caller must opt out: /auth/me exists purely to ask "who does my session
-// cookie belong to". A signed-in user who has also opened a share link (the
-// commoner "share-after-session" flow — see session.js's hasServerAccess doc)
-// still has `shareToken` in localStorage. If we attached it here, the backend
-// would resolve the share token's jti (a share UUID, not a user id) instead of
-// the session cookie, /auth/me would 401, and the app would wrongly conclude
-// the user is signed out — forever, since nothing else clears that stale
-// token. Pass `skipShareToken: true` to omit the header for exactly that call.
-function api({ skipShareToken = false } = {}) {
-  const shareToken = !skipShareToken && localStorage.getItem('shareToken')
+// But that header is checked BEFORE the session cookie, and the backend now
+// rejects d3d-share tokens everywhere except five share-accessible routes,
+// each bound to the diagram the share was minted for. So attaching the token
+// to every request — which this module used to do — breaks the signed-in user
+// who has also opened a share link (the "share-after-session" flow):
+//
+//   * ~35 routes 401, because a d3d-share token is not a session credential
+//     there and the cookie behind it never gets read;
+//   * their own other diagrams 403, because the token is bound to someone
+//     else's diagram.
+//
+// Both are permanent: nothing clears `shareToken` but login and logout.
+//
+// Hence the default below is NO share header. Callers opt in, and only where
+// the API will honor it:
+//
+//   shareDag: <id>  GET /dag/:dag, POST /dag/:dag/update, GET /dag/:dag/history
+//                   — attached only if the token is bound to that diagram
+//   shareUnbound    GET /menus — share-accessible but carries no diagram id
+//
+// (GET /dag/:dag/ws is the fifth; it is opened by collab.js, not this module.)
+function api({ shareDag = null, shareUnbound = false } = {}) {
+  const shareToken = shareUnbound ? shareTokenForUnboundRoute() : shareTokenForDag(shareDag)
   return axios.create({
     baseURL: D3Util.serverUrl(),
     withCredentials: true,
@@ -41,7 +52,7 @@ export default {
   },
   getOptions() {
     // return axios.get('http://192.168.1.4:3000/menus_options',
-    return api()
+    return api({ shareUnbound: true })
       .get('/menus')
       .then((response) => {
         console.log(response)
@@ -49,7 +60,7 @@ export default {
       })
   },
   async getDiagram(id) {
-    return api()
+    return api({ shareDag: id })
       .get('/dag/' + id)
       .then((response) => {
         return response.data
@@ -72,10 +83,10 @@ export default {
     return api().post('/dag', payload)
   },
   async updateDiagram(data) {
-    return api().post('/dag/' + data.id + '/update', data)
+    return api({ shareDag: data.id }).post('/dag/' + data.id + '/update', data)
   },
   async getHistory(dagId) {
-    return api()
+    return api({ shareDag: dagId })
       .get('/dag/' + dagId + '/history')
       .then((response) => response.data)
   },
@@ -206,11 +217,11 @@ export default {
   },
 
   // Reports the account behind the session cookie. 401 here means signed out.
-  // Must never send the share-token header — see api()'s doc above: this is a
-  // question about the session cookie, and a stale shareToken from an earlier
-  // share visit must not hijack the answer.
+  // Sends no share header — /auth/me is a question about the session cookie,
+  // and a share token in the header would be read instead of it. That is now
+  // the default for every route that has not opted in.
   async me() {
-    return api({ skipShareToken: true }).get('/auth/me')
+    return api().get('/auth/me')
   },
   // Returns the provider consent URL to redirect the browser to.
   async getOAuthUrl(provider) {

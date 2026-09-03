@@ -58,6 +58,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+// A share JWT shaped like the real thing: the middle segment is the base64
+// payload api.js decodes to learn which diagram the token is bound to.
+function shareJwt({ dagId, role = 'view', iss = 'd3d-share' }) {
+  const payload = btoa(JSON.stringify({ iss, dag_id: dagId, role, jti: 'jti-' + dagId }))
+  return `header.${payload}.signature`
+}
+
 describe('api error contract — methods reject on HTTP errors', () => {
   it('auth() resolves with the axios response on success', async () => {
     const response = { data: { token: 'jwt' }, status: 200 }
@@ -323,14 +330,16 @@ describe('api', () => {
   })
 
   // Anonymous share recipients have no session cookie — their share JWT is the
-  // only thing authenticating them, and it travels in this header.
-  it('sends the share token as a Bearer header when one is stored', async () => {
-    localStorage.setItem('shareToken', 'share-jwt-1')
-    await api.getDiagrams()
+  // only thing authenticating them, and it travels in this header. But it goes
+  // out only on the routes the API will actually accept it on, and only for
+  // the diagram it was minted for. See the "share token scoping" block below.
+  it('sends the share token as a Bearer header on the diagram it was minted for', async () => {
+    localStorage.setItem('shareToken', shareJwt({ dagId: 'dag-1' }))
+    await api.getDiagram('dag-1')
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         withCredentials: true,
-        headers: { Authorization: 'Bearer share-jwt-1' }
+        headers: { Authorization: 'Bearer ' + shareJwt({ dagId: 'dag-1' }) }
       })
     )
     localStorage.removeItem('shareToken')
@@ -359,18 +368,6 @@ describe('api', () => {
     localStorage.removeItem('shareToken')
   })
 
-  // The fix above must not blind anonymous share recipients: they have no
-  // session cookie at all, so their ordinary (non-me()) requests still need
-  // the share token attached or nothing authenticates them.
-  it('other requests still carry the share token for an anonymous share recipient', async () => {
-    localStorage.setItem('shareToken', 'share-jwt-1')
-    await api.getDiagram('dag-1')
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ headers: { Authorization: 'Bearer share-jwt-1' } })
-    )
-    localStorage.removeItem('shareToken')
-  })
-
   it('getOAuthUrl returns the url string', async () => {
     http.get.mockResolvedValue({ data: { url: 'https://github.com/login/oauth' } })
     await expect(api.getOAuthUrl('github')).resolves.toBe('https://github.com/login/oauth')
@@ -380,5 +377,117 @@ describe('api', () => {
   it('logout posts to /auth/logout', async () => {
     await api.logout()
     expect(http.post).toHaveBeenCalledWith('/auth/logout')
+  })
+})
+
+// ── Share token scoping ──────────────────────────────────────────────────────
+//
+// The API accepts a d3d-share token on exactly five routes — GET /dag/:dag,
+// POST /dag/:dag/update, GET /dag/:dag/history, GET /dag/:dag/ws and
+// GET /menus — and binds it to the diagram it was minted for. Everywhere else
+// it is rejected outright as a session credential.
+//
+// That matters here because TokenLookup checks the Authorization header
+// *before* the session cookie, so a share token in the header wins over a
+// perfectly good session. Attaching it indiscriminately (the old behaviour)
+// meant a signed-in user who opened any share link then 401'd on ~35 routes
+// and 403'd on their own other diagrams, permanently — nothing clears
+// shareToken but login and logout. So the default is now "no share header",
+// and it is attached only where the API will honor it.
+describe('share token scoping', () => {
+  const dagToken = () => shareJwt({ dagId: 'dag-1' })
+
+  it('does not attach the share token to /dags, which rejects it as a session credential', async () => {
+    localStorage.setItem('shareToken', dagToken())
+    await api.getDiagrams()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+  })
+
+  it('does not attach the share token to a diagram it was not minted for', async () => {
+    localStorage.setItem('shareToken', dagToken())
+    await api.getDiagram('dag-2')
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+  })
+
+  it('attaches the share token to the history of the diagram it was minted for', async () => {
+    localStorage.setItem('shareToken', dagToken())
+    await api.getHistory('dag-1')
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { Authorization: 'Bearer ' + dagToken() } })
+    )
+  })
+
+  it('does not attach the share token to the history of another diagram', async () => {
+    localStorage.setItem('shareToken', dagToken())
+    await api.getHistory('dag-2')
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+  })
+
+  it('attaches an edit share token to that diagram update', async () => {
+    localStorage.setItem('shareToken', shareJwt({ dagId: 'dag-1', role: 'edit' }))
+    await api.updateDiagram({ id: 'dag-1', diagram: '{}' })
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer ' + shareJwt({ dagId: 'dag-1', role: 'edit' }) }
+      })
+    )
+  })
+
+  it('does not attach an edit share token to a different diagram update', async () => {
+    localStorage.setItem('shareToken', shareJwt({ dagId: 'dag-1', role: 'edit' }))
+    await api.updateDiagram({ id: 'dag-2', diagram: '{}' })
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+  })
+
+  // /menus carries no diagram id but is share-accessible, so an anonymous
+  // recipient needs the token here or the menu request authenticates nothing.
+  it('attaches the share token to /menus, which is share-accessible but has no diagram id', async () => {
+    localStorage.setItem('shareToken', dagToken())
+    await api.getOptions()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { Authorization: 'Bearer ' + dagToken() } })
+    )
+  })
+
+  // The routes a signed-in user hits constantly. Each one 401s if a stale
+  // share token rides along, which is the outage this scoping prevents.
+  it.each([
+    ['postDiagram', () => api.postDiagram({ name: 'x' })],
+    ['deleteDiagram', () => api.deleteDiagram('dag-1')],
+    ['setDiagramPublic', () => api.setDiagramPublic('dag-1', true)],
+    ['restoreHistory', () => api.restoreHistory('dag-1', 'h-1')],
+    ['createShare', () => api.createShare('dag-1', {})],
+    ['listInbox', () => api.listInbox()],
+    ['listCompanies', () => api.listCompanies()],
+    ['me', () => api.me()]
+  ])('does not attach the share token to %s', async (_name, call) => {
+    localStorage.setItem('shareToken', dagToken())
+    await call()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+  })
+
+  // Defence in depth: a token that is not a d3d-share JWT at all (corrupt,
+  // truncated, or some other issuer) must never be broadcast as a Bearer
+  // credential just because it happens to sit under the shareToken key.
+  it.each([
+    ['a non-JWT string', 'not-a-jwt'],
+    ['a JWT with an unexpected issuer', shareJwt({ dagId: 'dag-1', iss: 'd3d-element-share' })],
+    ['an empty string', '']
+  ])('does not attach %s', async (_name, stored) => {
+    localStorage.setItem('shareToken', stored)
+    await api.getDiagram('dag-1')
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
   })
 })
