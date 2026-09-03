@@ -56,3 +56,10 @@ export function hasServerAccess() {
 export function clearShareToken() {
   localStorage.removeItem('shareToken')
 }
+
+// True when the current visitor is here via a share link rather than their own
+// session. Re-sharing is an owner-only right, so share recipients are not
+// offered the share action — the backend rejects it regardless of role.
+export function isShareSession() {
+  return Boolean(localStorage.getItem('shareToken'))
+}

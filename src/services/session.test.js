@@ -1,9 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const { mockMe } = vi.hoisted(() => ({ mockMe: vi.fn() }))
 vi.mock('@/services/api', () => ({ default: { me: mockMe } }))
 
-import { session, loadSession, setSession, clearSession, isAuthenticated } from '@/services/session'
+import {
+  session,
+  loadSession,
+  setSession,
+  clearSession,
+  isAuthenticated,
+  isShareSession
+} from '@/services/session'
 
 const alice = { username: 'alice', displayName: 'Alice', provider: 'local' }
 
@@ -52,5 +59,39 @@ describe('session', () => {
     setSession(alice)
     clearSession()
     expect(session.user).toBeNull()
+  })
+})
+
+// This environment's 'node' test runner has no bare localStorage global
+// (Node's own experimental localStorage shadows it), so stub it — same
+// pattern as session.callsites.test.js and JoinView.test.js.
+function makeStorage() {
+  const store = {}
+  return {
+    getItem: (k) => store[k] ?? null,
+    setItem: (k, v) => {
+      store[k] = String(v)
+    },
+    removeItem: (k) => {
+      delete store[k]
+    }
+  }
+}
+
+describe('isShareSession', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('is true when a shareToken is stored', () => {
+    const storage = makeStorage()
+    storage.setItem('shareToken', 'share-jwt-123')
+    vi.stubGlobal('localStorage', storage)
+    expect(isShareSession()).toBe(true)
+  })
+
+  it('is false without a shareToken', () => {
+    vi.stubGlobal('localStorage', makeStorage())
+    expect(isShareSession()).toBe(false)
   })
 })
