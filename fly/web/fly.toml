@@ -1,0 +1,34 @@
+# fly.toml — d3dweb (Vite SPA served by nginx)
+
+app = "d3dweb"
+
+[env]
+  # Optional build-time overrides for the SPA. Values can be supplied via
+  # `fly deploy --build-arg` in CI/CD (see .github/workflows/deploy-fly.yml).
+  VITE_API_BASE_URL = ""
+  VITE_COLLAB_ENABLED = "false"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+[[services]]
+  internal_port = 80
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "10s"
+    path = "/healthz"
