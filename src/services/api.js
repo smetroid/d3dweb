@@ -10,8 +10,17 @@ import D3Util from '@/helpers/D3Util'
 // precedence over a session cookie, exactly as it does today. JoinView stores
 // it under `shareToken`. Without this header, opening a share link would
 // authenticate nothing.
-function api() {
-  const shareToken = localStorage.getItem('shareToken')
+//
+// One caller must opt out: /auth/me exists purely to ask "who does my session
+// cookie belong to". A signed-in user who has also opened a share link (the
+// commoner "share-after-session" flow — see session.js's hasServerAccess doc)
+// still has `shareToken` in localStorage. If we attached it here, the backend
+// would resolve the share token's jti (a share UUID, not a user id) instead of
+// the session cookie, /auth/me would 401, and the app would wrongly conclude
+// the user is signed out — forever, since nothing else clears that stale
+// token. Pass `skipShareToken: true` to omit the header for exactly that call.
+function api({ skipShareToken = false } = {}) {
+  const shareToken = !skipShareToken && localStorage.getItem('shareToken')
   return axios.create({
     baseURL: D3Util.serverUrl(),
     withCredentials: true,
@@ -197,8 +206,11 @@ export default {
   },
 
   // Reports the account behind the session cookie. 401 here means signed out.
+  // Must never send the share-token header — see api()'s doc above: this is a
+  // question about the session cookie, and a stale shareToken from an earlier
+  // share visit must not hijack the answer.
   async me() {
-    return api().get('/auth/me')
+    return api({ skipShareToken: true }).get('/auth/me')
   },
   // Returns the provider consent URL to redirect the browser to.
   async getOAuthUrl(provider) {

@@ -341,6 +341,36 @@ describe('api', () => {
     expect(http.get).toHaveBeenCalledWith('/auth/me')
   })
 
+  // C3 residue: a signed-in user who also has a stale `shareToken` (e.g. they
+  // opened a colleague's share link after logging in) must not have that
+  // token attached to /auth/me — the backend's TokenLookup checks the
+  // Authorization header before the session cookie, so sending it here would
+  // resolve the share token's jti instead of the user's session, /auth/me
+  // would 401, and the app would wrongly conclude the user signed out.
+  // Authorization lives in the axios.create() config, not a per-call argument
+  // — see the vacuousness note above the sibling test — so this asserts on
+  // mockCreate, not on http.get's arguments.
+  it('me() sends no Authorization header even when a share token is stored alongside a session', async () => {
+    localStorage.setItem('shareToken', 'share-jwt-1')
+    await api.me()
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ headers: expect.anything() })
+    )
+    localStorage.removeItem('shareToken')
+  })
+
+  // The fix above must not blind anonymous share recipients: they have no
+  // session cookie at all, so their ordinary (non-me()) requests still need
+  // the share token attached or nothing authenticates them.
+  it('other requests still carry the share token for an anonymous share recipient', async () => {
+    localStorage.setItem('shareToken', 'share-jwt-1')
+    await api.getDiagram('dag-1')
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ headers: { Authorization: 'Bearer share-jwt-1' } })
+    )
+    localStorage.removeItem('shareToken')
+  })
+
   it('getOAuthUrl returns the url string', async () => {
     http.get.mockResolvedValue({ data: { url: 'https://github.com/login/oauth' } })
     await expect(api.getOAuthUrl('github')).resolves.toBe('https://github.com/login/oauth')
