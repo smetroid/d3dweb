@@ -140,6 +140,84 @@ otherwise be an account-takeover path.
 
 ---
 
+### 1.7 Verify share-token scoping
+
+Steps 1.1–1.6 cover sign-in. These cover the share-token work, which is
+separate machinery and has its own failure modes — a share JWT is sent in the
+`Authorization` header, and the API reads that header **before** the session
+cookie. Getting this wrong locks out real users rather than leaking anything,
+which makes it easy to ship unnoticed.
+
+You need one diagram you own and one share link. Create the link from the share
+dialog on that diagram, role **view**, and keep the URL.
+
+#### The share-after-session flow
+
+The important one. A signed-in user who opens a share link ends up holding a
+share token _and_ a session cookie at once, and `JoinView` stores the token
+whether or not they are signed in.
+
+1. Signed in, open the share URL **in the same browser profile**
+2. Navigate back to `/` and open the diagram list
+
+| Check                              | Expect                       |
+| ---------------------------------- | ---------------------------- |
+| Diagram list                       | your own diagrams            |
+| Storage-mode label                 | **Server**, not LocalStorage |
+| Network: `GET /dags`               | **200**                      |
+| Open a _different_ diagram you own | **200**                      |
+| Create a diagram, then delete it   | both succeed                 |
+
+A 401 on `/dags` means the share token is being attached to routes that reject
+it. `LocalStorage` in the mode label means the opposite mistake — a real
+session being treated as a share session.
+
+#### Revocation
+
+Nothing in the UI calls `revokeShare`; it is API-only, so this needs curl.
+Take `jwt_token` from DevTools → Application → Cookies.
+
+```bash
+psql "postgres://postgres:postgres@localhost:5432/samus" \
+  -c "SELECT jti, dag_id, role FROM shares ORDER BY created_at DESC LIMIT 1;"
+
+curl -i -X POST "http://localhost:3001/dag/<DAG_ID>/shares/<JTI>/revoke" \
+  -H "Cookie: jwt_token=<VALUE>"
+```
+
+Reload the recipient's tab → **403**. Revocation writes to `share_denylist`
+without deleting the `shares` row, so a revoked link that still works is the
+expected symptom when the denylist is not consulted.
+
+#### Route and diagram scoping
+
+The frontend will not send a token to a diagram it was not minted for, so
+exercising the **server** guards means bypassing the client. Take the share
+token from the recipient's `localStorage.shareToken`.
+
+```bash
+# bound to another diagram → 403
+curl -i "http://localhost:3001/dag/<OTHER_DAG_ID>" -H "Authorization: Bearer <SHARE_TOKEN>"
+
+# not a share-accessible route → 401
+curl -i "http://localhost:3001/dags" -H "Authorization: Bearer <SHARE_TOKEN>"
+
+# share-accessible, no diagram id → 200
+curl -i "http://localhost:3001/menus" -H "Authorization: Bearer <SHARE_TOKEN>"
+```
+
+After revoking, all three fail — a revoked link reaches nothing, `/menus`
+included.
+
+#### View-only enforcement
+
+As the recipient of a **view** link: edits must not persist across a reload,
+and the share and edit actions must not be offered. The server rejects them
+regardless of what the UI shows, so if an action is visible, that is a UI bug
+rather than an authorization hole — worth reporting either way.
+
+---
+
 ## Phase 2 — Deploy the API to Fly
 
 ### 2.1 Create the app
