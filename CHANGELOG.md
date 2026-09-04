@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.8.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.7.0...d3dweb-v1.8.0) (2026-09-04)
+
+
+### Features
+
+* **catalog:** add share thumbnails, card import, and a centred preview ([4a10a58](https://github.com/smetroid/d3dweb/commit/4a10a583d9ced1ca7b0fac66711f7c0f212f6efb))
+* **catalog:** preview shared clusters in a dialog instead of navigating ([2242a9b](https://github.com/smetroid/d3dweb/commit/2242a9b4124c3c84c9877f684143835c782ddcc5))
+* **deploy:** build d3dweb on Fly.io with nginx + CD workflow ([5318715](https://github.com/smetroid/d3dweb/commit/531871513dcb16e65f4f299f34d99cb061cda7ff))
+* element sharing — public catalog, shared inbox, and rendered previews ([6826567](https://github.com/smetroid/d3dweb/commit/68265679abba48a7b6a787cfcb726bc6b11a697c))
+* **icons:** make Material Symbols usable in the icon picker ([7bd5fe9](https://github.com/smetroid/d3dweb/commit/7bd5fe90164be7b548cb7622c49382e5826e36c6))
+* **nav:** add Public Catalog menu entry and back-to-app links ([bcd6e72](https://github.com/smetroid/d3dweb/commit/bcd6e72b61b10999140384913530abfc6109df42))
+* shareable nodes and edges ([849b2e2](https://github.com/smetroid/d3dweb/commit/849b2e276dc1e789cd70d2781e9864e455925d46))
+* **shares:** render shared clusters and report save state ([3f87596](https://github.com/smetroid/d3dweb/commit/3f875961fee5c655dd68c89f0e60c3862fe05e64))
+
+
+### Bug Fixes
+
+* add cluster elements directly to mod.cy in mergeElementShare ([07f3c72](https://github.com/smetroid/d3dweb/commit/07f3c72970878b522f6b7c340f444e06d2f90679))
+* add cluster elements directly to mod.cy in mergeElementShare ([27d3528](https://github.com/smetroid/d3dweb/commit/27d3528dd067e5c5896ca43da8bbd27eac1f0329))
+* defensive JSON.parse for cluster in merge and import paths ([5714d96](https://github.com/smetroid/d3dweb/commit/5714d96a975ce11c429ae16e812a835b6ff55a43))
+* **inbox:** add cluster elements directly to mod.cy after newDiagram ([f96c1e4](https://github.com/smetroid/d3dweb/commit/f96c1e44a97fa5c13416412309e236df0410fe24))
+* **inbox:** add cluster elements directly to mod.cy after newDiagram ([caae887](https://github.com/smetroid/d3dweb/commit/caae8873eed5d4170648944d102a3180e98fc324))
+* **inbox:** populate imported cluster into fresh diagram ([e75715a](https://github.com/smetroid/d3dweb/commit/e75715a0d172b375aafb749bdeda902c112d2b1e))
+* **inbox:** populate imported cluster into fresh diagram ([f040609](https://github.com/smetroid/d3dweb/commit/f040609566b15c360761e2343c14abf7f434a67d))
+* **inbox:** wire New Diagram button and fix field names ([ff1acac](https://github.com/smetroid/d3dweb/commit/ff1acac34366684fdafda3357d8c4d877a6770ab))
+* **inbox:** wire New Diagram button and fix template field names ([cd8b526](https://github.com/smetroid/d3dweb/commit/cd8b5266d9c37eaa673003a77b35d3ee8a78094f))
+* **shares:** debug logging for inbox load and share creation errors ([52a7f86](https://github.com/smetroid/d3dweb/commit/52a7f86b675185a624f8390004e95a3bbe28f9ae))
+* **shares:** log inbox API response and surface fetch errors in console ([c76f21c](https://github.com/smetroid/d3dweb/commit/c76f21c70125ca95b59433b1e01d05ad5501ed18))
+* **shares:** show the server's error message in the share dialog ([7c6a5f6](https://github.com/smetroid/d3dweb/commit/7c6a5f680b68629d9e0434de3a2904a9f5c208be))
+* **shares:** surface createElementShare errors in console instead of swallowing them ([a211e75](https://github.com/smetroid/d3dweb/commit/a211e75c2b0c5e5e2145e4326c6bda583b44c074))
+* **shares:** surface createElementShare errors in console instead of swallowing them ([21c4590](https://github.com/smetroid/d3dweb/commit/21c45907f9a157054f39879cdb5bc41582a04843))
+* **shares:** surface server error messages in the remaining share views ([39655c8](https://github.com/smetroid/d3dweb/commit/39655c82bec86725d8e0a12165aa6905fbacb5a4))
+* **shares:** surface the server message when toggling diagram visibility ([b4bb788](https://github.com/smetroid/d3dweb/commit/b4bb788915a8928e614f5789b7c390c510b87fb8))
+
 ## [1.7.0](https://github.com/smetroid/d3dweb/compare/d3dweb-v1.6.0...d3dweb-v1.7.0) (2026-08-25)
 
 
