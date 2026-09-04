@@ -176,7 +176,7 @@
 <script>
 import D3Util from '@/helpers/D3Util.js'
 import D3DApi from '@/services/api'
-import { hasServerAccess, isShareSession } from '@/services/session'
+import { isAuthenticated } from '@/services/session'
 export default {
   name: 'DiagramList',
   props: ['active'],
@@ -210,7 +210,7 @@ export default {
   },
   computed: {
     storageType() {
-      return hasServerAccess() ? 'Server' : 'LocalStorage'
+      return isAuthenticated() ? 'Server' : 'LocalStorage'
     },
     shortcutLabels() {
       return D3Util.shortcutLabels()
@@ -232,10 +232,12 @@ export default {
       this.description = data.description
       this.diagram = data.diagram
 
-      // A share recipient has server access but no account, and GET /dags is
-      // not a share-accessible route — it would 401 and surface as an error
-      // rather than a list. Their local diagrams are the right answer.
-      if (hasServerAccess() && !isShareSession()) {
+      // GET /dags is not a share-accessible route and returns the caller's
+      // own diagrams, so this asks whether there is a session — not whether
+      // there is any server access at all. A share recipient has the latter
+      // without the former, and would get a 401 surfaced as an error instead
+      // of a list.
+      if (isAuthenticated()) {
         console.log('Getting diagrams from server')
         this.getDiagrams()
       } else {
@@ -338,7 +340,8 @@ export default {
       const index = this.diagrams.indexOf(item)
       if (index > -1) this.diagrams.splice(index, 1)
 
-      if (hasServerAccess()) {
+      // DELETE /dag/:id is not share-accessible either.
+      if (isAuthenticated()) {
         D3DApi.deleteDiagram(id)
         console.log('Getting diagrams from server')
         this.getDiagrams()
