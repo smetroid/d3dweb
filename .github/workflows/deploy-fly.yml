@@ -1,0 +1,30 @@
+name: Deploy d3dweb to Fly.io
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-d3dweb
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        run: >-
+          flyctl deploy --remote-only
+          --app d3dweb
+          --config fly/web/fly.toml
+          --dockerfile fly/web/Dockerfile
+          --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          --build-arg VITE_COLLAB_ENABLED=${{ secrets.VITE_COLLAB_ENABLED }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
