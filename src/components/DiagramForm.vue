@@ -451,6 +451,7 @@ import GraphModel from '@/helpers/GraphModel.js'
 import DiagramGraph from '@/helpers/DiagramGraph.js'
 import { modelToGraphlib, graphlibToModel, isGraphlibFormat } from '@/helpers/graphlibMigration.js'
 import D3DApi from '@/services/api'
+import { hasServerAccess } from '@/services/session'
 import { clearHistory } from '@/services/localHistory.js'
 
 export default {
@@ -524,7 +525,7 @@ export default {
       this.setDiagramInfo()
       const mod = this._mod()
       if (mod?.d3dInfo?.id) {
-        if (D3Util.auth()) this.updateServerDiagram()
+        if (hasServerAccess()) this.updateServerDiagram()
         else this.updateLocalDiagram()
       } else {
         this.diagramModal = true
@@ -912,12 +913,15 @@ export default {
         updated: new Date().toISOString()
       }
 
-      if (D3Util.auth()) {
+      if (hasServerAccess()) {
         try {
           const result = await D3DApi.postDiagram(payload)
           this.id = result.data
           this.$cookies.set('LastLocallySavedItemId', this.id)
-          this.emitter.emit('appMessage', { message: 'New diagram successfully created', status: 'success' })
+          this.emitter.emit('appMessage', {
+            message: 'New diagram successfully created',
+            status: 'success'
+          })
           this.emitter.emit('updateDiagramInfo', this)
         } catch (err) {
           console.error('failed to create diagram', err)

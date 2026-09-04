@@ -39,7 +39,9 @@ export default {
       return
     }
 
-    localStorage.setItem('token', token)
+    // The share token is not a session token. The session lives in an httpOnly
+    // cookie; keeping this under 'token' made the two indistinguishable.
+    localStorage.setItem('shareToken', token)
     if (data.anonName) localStorage.setItem('d3d_anon_name', data.anonName)
     this.$cookies.set('LastLocallySavedItemId', data.dagId)
     window.location.href = '/'

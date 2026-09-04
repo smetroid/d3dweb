@@ -58,7 +58,7 @@
                           class="fx-input"
                           type="text"
                           v-model="settings.serverUrl"
-                          placeholder="https://d3d-api.vercel.app"
+                          placeholder="https://api.incisiveera.com"
                         />
                         <small class="fx-toggle-note"
                           >Backend API URL. Change if your server runs on a different host or

@@ -1,7 +1,14 @@
 import VueCookies from 'vue-cookies'
-import axios from 'axios'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import Shortcuts from '@/helpers/Shortcuts.js'
+import api from '@/services/api'
+import {
+  session,
+  hasServerAccess,
+  loadSession,
+  clearSession,
+  clearShareToken
+} from '@/services/session'
 
 /*need to doublecheck if the vars below are the best way to do the zooming*/
 
@@ -271,7 +278,10 @@ export default {
       defaultEdgeIconPosition: 'left',
       defaultEdgeIconSize: null,
       defaultEdgeIconColor: '',
-      serverUrl: import.meta.env.VITE_API_BASE_URL || 'https://d3d-api.vercel.app',
+      // No proxy exists any more (see serverUrl() below) — an unset env var
+      // must resolve to nothing, not a same-origin path that quietly 200s
+      // with index.html.
+      serverUrl: import.meta.env.VITE_API_BASE_URL || '',
       // User-rebindable shortcut overrides (id → combo). Defaults live in
       // Shortcuts.DEFAULT_SHORTCUTS; an empty object means all defaults.
       shortcuts: {}
@@ -280,13 +290,24 @@ export default {
   },
   serverUrl() {
     const s = VueCookies.get('settings')
-    if (s && s.serverUrl) return s.serverUrl.replace(/\/+$/, '')
+    // A saved absolute URL pointing at the old API host would make every
+    // request cross-site, and the session cookie is first-party only. Drop it
+    // and fall through to the same-origin base.
+    if (s && s.serverUrl && !/^https?:\/\/d3d-api\.vercel\.app/.test(s.serverUrl)) {
+      return s.serverUrl.replace(/\/+$/, '')
+    }
     const envBase = import.meta.env.VITE_API_BASE_URL
     if (envBase) {
       if (/^https?:\/\//.test(envBase)) return envBase.replace(/\/+$/, '')
       return (window.location.origin + envBase).replace(/\/+$/, '')
     }
-    return 'https://d3d-api.vercel.app'
+    // There is no proxy any more (see the deployment runbook): '/api' used to
+    // work because Vercel rewrote it to the API, but now it resolves against
+    // the SPA's own origin, where the catch-all route returns index.html
+    // with a 200 and axios chokes trying to parse HTML as JSON. An empty
+    // base at least fails on something recognizably wrong (a relative,
+    // unrooted URL) instead of masquerading as a working endpoint.
+    return ''
   },
   buildHints(elements, hyperLinks = false) {
     var hints = {}
@@ -600,38 +621,42 @@ export default {
     let localItem = JSON.parse(localStorage.getItem(id))
     return localItem
   },
-  //Need to check if token is valid
+  // Returns a boolean, exactly as before. Delegates to hasServerAccess()
+  // rather than isAuthenticated(): historically this meant "is there a stored
+  // token" (session OR share), and every remaining external caller of this
+  // helper is asking the server-access question, not the identity one. Call
+  // sites inside this app that ask "who am I" now import isAuthenticated()
+  // directly instead of going through here.
   auth() {
-    if (localStorage.getItem('token')) {
-      return true
-    } else {
-      return false
+    return hasServerAccess()
+  },
+
+  // The cookie is httpOnly, so the browser cannot clear it — only the server
+  // can. An empty logout() would leave the session alive server-side while the
+  // UI showed the user as signed out. Also drops any stray share token so a
+  // share visited earlier in this browser can't keep shadowing the session
+  // that just ended (see C3: a lingering shareToken wins over the cookie on
+  // every request).
+  async logout() {
+    try {
+      await api.logout()
+    } finally {
+      clearSession()
+      clearShareToken()
     }
   },
-  logout() {
-    localStorage.removeItem('token')
-  },
+
+  // Returns a string or null, exactly as before. NOT the user object:
+  // callers assign this straight into `loggedInUser` and into the
+  // element-share audience id.
   username() {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return null
-      const claims = JSON.parse(atob(token.split('.')[1]))
-      return claims.name || claims.username || null
-    } catch {
-      return null
-    }
+    return session.user?.username ?? null
   },
+
+  // Returns a boolean, exactly as before. loadSession() performs the same
+  // round trip, now against /auth/me.
   async validateToken() {
-    const token = localStorage.getItem('token')
-    if (!token) return false
-    try {
-      await axios.get(this.serverUrl() + '/dags', {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-      return true
-    } catch {
-      return false
-    }
+    return (await loadSession()) !== null
   },
   updateId(id) {
     var localData = this.getLocal()

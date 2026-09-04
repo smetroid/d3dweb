@@ -18,6 +18,7 @@ import { computed, markRaw } from 'vue'
 import { useRoute } from 'vue-router'
 import { FULLSCREEN_ROUTES } from '@/router'
 import D3DApi from '@/services/api'
+import { loadSession, isAuthenticated, hasServerAccess } from '@/services/session'
 import { takePendingCluster } from '@/helpers/pendingCluster'
 import { saveStatusLabel, nextSaveStatus, SAVE_EVENTS } from '@/helpers/saveStatus'
 
@@ -292,6 +293,7 @@ export default {
     }
   },
   async mounted() {
+    await loadSession()
     try {
       console.log('App mounted')
 
@@ -306,20 +308,20 @@ export default {
       const query = new URLSearchParams(window.location.search)
       if (query.has('src') || query.has('id')) {
         await this.loadEmbedLink(query)
-        if (D3Util.auth()) {
+        if (isAuthenticated()) {
           // Embed mode skips the normal auth bootstrap, so resolve the user
           // here — otherwise the fork bar never shows for logged-in visitors.
           const valid = await D3Util.validateToken()
           this.loggedInUser = valid ? D3Util.username() : null
         }
-      } else if (D3Util.auth()) {
-        D3Util.validateToken().then((valid) => {
+      } else if (isAuthenticated()) {
+        D3Util.validateToken().then(async (valid) => {
           if (valid) {
             this.loggedInUser = D3Util.username()
             this._refreshInboxCount()
             this.loadFromServer()
           } else {
-            D3Util.logout()
+            await D3Util.logout()
             this.loadDiagram()
             this.emitter.emit('appMessage', {
               message: 'Session expired, working locally',
@@ -327,6 +329,15 @@ export default {
             })
           }
         })
+      } else if (hasServerAccess()) {
+        // No session, but a share token exists (see JoinView.vue). There is
+        // no identity to validate here — /auth/me resolves a share token's
+        // jti against the users table and 401s, so routing this through
+        // D3Util.validateToken() would misreport the share as "expired" and
+        // fall back to loadDiagram(), rendering the shared diagram blank.
+        // Go straight to the server; the Bearer share token authorizes the
+        // read (see api.js).
+        this.loadFromServer()
       } else {
         this.loadDiagram()
       }
@@ -393,7 +404,8 @@ export default {
     })
 
     this.emitter.on('authChanged', () => {
-      if (D3Util.auth()) {
+      // Identity question — a share recipient never has a username to show.
+      if (isAuthenticated()) {
         this.loggedInUser = D3Util.username()
         this._refreshInboxCount()
       } else {
@@ -437,7 +449,9 @@ export default {
       console.log('Message to open diagram received')
       console.log(id)
       // this.id = id
-      if (localStorage.getItem('token')) {
+      // Server-vs-local: a share recipient has no session but can still fetch
+      // from the server via their share token.
+      if (hasServerAccess()) {
         this.loadFromServer(id)
       } else {
         this.loadDiagram(id)
@@ -785,7 +799,10 @@ export default {
     },
 
     async forkEmbedDiagram() {
-      if (!D3Util.auth()) return
+      // Identity question — forking saves a new diagram to "your account",
+      // which only means something for a real signed-in user, not a share
+      // token holder.
+      if (!isAuthenticated()) return
       try {
         const graphlibJson = modelToGraphlib(this.d3dInfo.diagram)
         const result = await D3DApi.postDiagram({
@@ -816,11 +833,19 @@ export default {
     d3Action: async function (event) {
       MenuLinks.Click(event, this)
     },
-    logout() {
-      D3Util.logout()
-      this.loggedInUser = null
-      this.inboxCount = 0
-      this.emitter.emit('appMessage', { message: 'Logged out', status: 'info' })
+    async logout() {
+      // D3Util.logout() clears the local session store in its own finally
+      // block, but still rethrows a rejected api.logout() call — without a
+      // try/finally here, that throw would skip the lines below, leaving a
+      // stale username in the top bar and no "Logged out" toast even though
+      // the store already forgot who was signed in.
+      try {
+        await D3Util.logout()
+      } finally {
+        this.loggedInUser = null
+        this.inboxCount = 0
+        this.emitter.emit('appMessage', { message: 'Logged out', status: 'info' })
+      }
     },
     async _refreshInboxCount() {
       try {

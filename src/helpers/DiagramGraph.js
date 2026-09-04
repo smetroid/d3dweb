@@ -2,6 +2,7 @@ import D3Util from '@/helpers/D3Util'
 import VueCookies from 'vue-cookies'
 import { modelToGraphlib } from '@/helpers/graphlibMigration'
 import api from '@/services/api'
+import { hasServerAccess } from '@/services/session'
 import { clientId as collabClientId } from '@/services/collab'
 import { pushSnapshot } from '@/services/localHistory'
 import { serverErrorMessage } from '@/helpers/apiErrors'
@@ -634,7 +635,9 @@ export default class DiagramGraph {
 
   _isViewOnly() {
     try {
-      const claims = JSON.parse(atob((localStorage.getItem('token') || '').split('.')[1]))
+      // Share tokens live under 'shareToken', not 'token' (which now holds
+      // only the session token). See JoinView.vue.
+      const claims = JSON.parse(atob((localStorage.getItem('shareToken') || '').split('.')[1]))
       return claims.iss === 'd3d-share' && claims.role !== 'edit'
     } catch {
       /* not a JWT — editable */
@@ -677,9 +680,12 @@ export default class DiagramGraph {
   }
 
   _scheduleServerSave(diagram) {
-    // Without a token the diagram lives in localStorage only. Say so rather
-    // than leaving the user to infer it from the STORAGE readout.
-    if (!D3Util.auth()) {
+    // Without server access the diagram lives in localStorage only. Say so
+    // rather than leaving the user to infer it from the STORAGE readout.
+    // hasServerAccess() (not D3Util.auth()/isAuthenticated()) so an edit-role
+    // share recipient's changes actually reach the server instead of being
+    // silently dropped.
+    if (!hasServerAccess()) {
       this._emitStatus(SAVE_EVENTS.local)
       return
     }

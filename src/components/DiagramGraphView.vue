@@ -154,6 +154,7 @@ import AltKeys from '@/helpers/AltKeys.js'
 import OtherKeys from '@/helpers/OtherKeys.js'
 import * as collab from '@/services/collab'
 import { resolveGraphKey } from '@/helpers/GraphKeys.js'
+import { session, isShareSession } from '@/services/session'
 
 function _decodeJwt(token) {
   try {
@@ -164,7 +165,9 @@ function _decodeJwt(token) {
 }
 
 function _isViewOnly() {
-  const claims = _decodeJwt(localStorage.getItem('token') || '')
+  // Share tokens live under 'shareToken', not 'token' (which now holds only
+  // the session token). See JoinView.vue.
+  const claims = _decodeJwt(localStorage.getItem('shareToken') || '')
   return claims.iss === 'd3d-share' && claims.role !== 'edit'
 }
 
@@ -525,7 +528,10 @@ export default {
             this.openSheet = true
             break
           case 'share':
-            if (mod?.d3dInfo?.id) this.showShare = true
+            // Re-sharing is an owner-only right (backend-enforced) — a share
+            // recipient triggering this would only hit a 401 they can't
+            // interpret, so the action is simply not offered to them.
+            if (!isShareSession() && mod?.d3dInfo?.id) this.showShare = true
             break
           case 'shareSelection':
             this._openElementShare()
@@ -643,6 +649,9 @@ export default {
     },
 
     _openElementShare() {
+      // Same owner-only rule as the diagram-level share dialog — element
+      // shares also hit a route the backend no longer grants share tokens.
+      if (isShareSession()) return
       const mod = this.modifier?.value ?? this.modifier
       if (!mod?.d3dInfo?.id) return
       const focused = this.edgeOrNode === 'edges' ? this.focusedEdgeId : this.focusedNodeId
@@ -758,10 +767,12 @@ export default {
     },
     focusedNodeId(id) {
       if (import.meta.env.VITE_COLLAB_ENABLED !== 'true') return
-      const payload = _decodeJwt(localStorage.getItem('token') || '')
       collab.sendPresence({
         displayName:
-          localStorage.getItem('d3d_anon_name') || payload.username || payload.sub || 'Guest',
+          localStorage.getItem('d3d_anon_name') ||
+          session.user?.displayName ||
+          session.user?.username ||
+          'Guest',
         color: _sessionColor(),
         selection: id ? [id] : []
       })

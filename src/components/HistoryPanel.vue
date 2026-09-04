@@ -26,9 +26,11 @@
                   formatTime(entry.savedAt)
                 }}</span>
                 <span class="hist-subline">
-                  <span class="hist-chip" :class="entry.source === 'server' ? 'hist-chip-server' : 'hist-chip-local'">{{
-                    entry.source === 'server' ? 'SERVER' : 'LOCAL'
-                  }}</span>
+                  <span
+                    class="hist-chip"
+                    :class="entry.source === 'server' ? 'hist-chip-server' : 'hist-chip-local'"
+                    >{{ entry.source === 'server' ? 'SERVER' : 'LOCAL' }}</span
+                  >
                   <span v-if="entry.savedBy" class="hist-user">{{ entry.savedBy }}</span>
                   <span v-else-if="entry.name" class="hist-name">{{ entry.name }}</span>
                 </span>
@@ -65,7 +67,7 @@
 
 <script>
 import api from '@/services/api'
-import D3Util from '@/helpers/D3Util'
+import { hasServerAccess } from '@/services/session'
 import { getHistory, getSnapshot } from '@/services/localHistory'
 
 export default {
@@ -90,7 +92,7 @@ export default {
   methods: {
     _serverAvailable() {
       // 'unsaved' is the browser-only history bucket — never a server dag id.
-      return D3Util.auth() && !!this.dagId && this.dagId !== 'unsaved'
+      return hasServerAccess() && !!this.dagId && this.dagId !== 'unsaved'
     },
 
     async fetchHistory() {
@@ -111,9 +113,7 @@ export default {
         }
       }
 
-      this.entries = [...local, ...server].sort(
-        (a, b) => new Date(b.savedAt) - new Date(a.savedAt)
-      )
+      this.entries = [...local, ...server].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))
       this.loading = false
     },
 
