@@ -1,18 +1,25 @@
 # Social Auth — OAuth Registration & Deployment Runbook
 
-Setting up Google and GitHub sign-in for d3d, and deploying the API to Fly.
+Setting up Google and GitHub sign-in for d3d, and deploying both the API and the
+frontend to Fly.
 
 **Topology this builds:**
 
-|          | Host                  | Platform        |
-| -------- | --------------------- | --------------- |
-| Frontend | `app.incisiveera.com` | Vercel (static) |
-| API      | `api.incisiveera.com` | Fly (container) |
+|          | Host                  | Platform            |
+| -------- | --------------------- | ------------------- |
+| Frontend | `app.incisiveera.com` | Fly (nginx, static) |
+| API      | `api.incisiveera.com` | Fly (container)     |
 
 Both sit under `incisiveera.com`, so `app → api` is cross-origin but **same-site**.
 That is what lets the `SameSite=Lax` session cookie travel on both API calls and the
 collab WebSocket handshake. There is no proxy: the frontend addresses the API host
 directly, so the cookie is scoped to `api.incisiveera.com`, where both go.
+
+> **The custom domains are not cosmetic.** `fly.dev` is on the Public Suffix List,
+> exactly as `vercel.app` is, so `d3dweb.fly.dev` and `d3d-api.fly.dev` are separate
+> _sites_ — a cookie set by one is third-party to the other, and Safari blocks it
+> outright. Deploying both apps to Fly does not by itself put them on the same site.
+> Only the `incisiveera.com` hostnames do.
 
 > **Do Phase 1 first.** It proves the whole flow works on your laptop before any
 > DNS or deployment is involved. If something is wrong, you want to find out there.
@@ -326,28 +333,78 @@ A **404** here means the credentials didn't reach the app — check `fly secrets
 
 ---
 
-## Phase 3 — Point the frontend at it
+## Phase 3 — Deploy the frontend to Fly
 
-### 3.1 Vercel custom domain
+The frontend is a static Vite build served by nginx — `fly/web/Dockerfile`,
+`fly/web/nginx.conf`, `fly/web/fly.toml`. nginx serves the SPA and nothing else: it
+does **not** proxy the API, which is why the two hosts must share a registrable
+domain rather than sitting behind one origin.
 
-In the d3dweb Vercel project → Settings → Domains → add `app.incisiveera.com`, and
-create the DNS record Vercel specifies.
+### 3.1 Create the app
 
-### 3.2 Production environment variable
-
-Vercel project → Settings → Environment Variables:
-
+```bash
+cd <d3dweb worktree>
+fly launch --no-deploy --name d3dweb --config fly/web/fly.toml
 ```
-VITE_API_BASE_URL = https://api.incisiveera.com     (Production)
+
+### 3.2 Set the API base URL — at build time, not runtime
+
+`VITE_API_BASE_URL` is inlined into the bundle by Vite **when the image is built**.
+It is not a runtime setting, and this trips people up in two specific ways:
+
+- `fly secrets set VITE_API_BASE_URL=…` does nothing. Secrets are runtime
+  environment for the nginx container; the bundle was fixed at build time.
+- The `[env]` block in `fly/web/fly.toml` also does nothing, despite listing
+  `VITE_API_BASE_URL`. Those entries exist to document the knobs; the values must
+  reach `docker build` as `--build-arg`.
+
+The committed `.env` deliberately carries **no** `VITE_API_BASE_URL`, so a
+production build cannot silently inline localhost. That makes the build arg
+**required, not an override** — omit it and the deployed app has no API base at all.
+
+Manual deploy:
+
+```bash
+fly deploy --remote-only \
+  --app d3dweb \
+  --config fly/web/fly.toml \
+  --dockerfile fly/web/Dockerfile \
+  --build-arg VITE_API_BASE_URL=https://api.incisiveera.com \
+  --build-arg VITE_COLLAB_ENABLED=false
 ```
 
-The dev value lives in `.env.development` (and `.env.test`); the committed `.env`
-deliberately carries **no** `VITE_API_BASE_URL`, so a production build cannot inline
-localhost. **This Vercel variable is therefore required, not an override** — without it
-the deployed app has no API base at all. The old sentence said it merely overrode a
-committed default; that default no longer exists.
-for production builds. Redeploy after setting it — Vite inlines env vars at build time,
-so an existing deployment will not pick it up.
+CI does the same on every push to `main` via `.github/workflows/deploy-fly.yml`.
+Set these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret                | Value                         |
+| --------------------- | ----------------------------- |
+| `FLY_API_TOKEN`       | `fly tokens create deploy`    |
+| `VITE_API_BASE_URL`   | `https://api.incisiveera.com` |
+| `VITE_COLLAB_ENABLED` | `false`                       |
+
+A missing `VITE_API_BASE_URL` secret expands to an empty build arg, which builds
+and deploys perfectly happily and then fails every API call in the browser. If
+sign-in breaks right after a deploy, check this first.
+
+### 3.3 Custom domain
+
+```bash
+fly ips allocate-v4 --shared --app d3dweb
+fly ips allocate-v6 --app d3dweb
+fly certs add app.incisiveera.com --app d3dweb
+fly certs show app.incisiveera.com --app d3dweb   # prints the records to create
+```
+
+For a subdomain, a `CNAME` from `app` to `d3dweb.fly.dev` is the simplest record.
+Trust `fly certs show` over this page — it states exactly what the app needs and
+reports validation status. Wait for it to read **Ready** before testing.
+
+### 3.4 Confirm the origins agree
+
+`D3D_FRONTEND_ORIGIN` on the API (Phase 2.3) must be exactly
+`https://app.incisiveera.com` — scheme included, no trailing slash. A mismatch
+surfaces as a CORS error in the console, not as a sign-in failure, so it is easy
+to misdiagnose.
 
 ---
 
@@ -379,8 +436,11 @@ showing **Secure ✓** and scoped to `api.incisiveera.com`.
 
 This is not optional, and not a formality. Safari's Intelligent Tracking Prevention is
 the reason this whole topology exists: it blocks third-party cookies outright, which is
-why the API had to move under the same registrable domain as the frontend rather than
-staying on `*.vercel.app`.
+why both apps had to move under one registrable domain rather than staying on their
+platform hostnames. `fly.dev` is on the Public Suffix List just as `vercel.app` is, so
+`d3dweb.fly.dev` → `d3d-api.fly.dev` is cross-**site** and the session cookie is
+third-party. Testing on the `*.fly.dev` URLs will therefore fail in Safari even when
+the deployment is otherwise correct — use the `incisiveera.com` hostnames.
 
 **If sign-in survives a page reload in Safari, the design holds.** If it does not, the
 cookie is being treated as third-party and something in the domain setup is wrong —
@@ -403,14 +463,19 @@ Same check as Phase 1.6, against the production database.
 | Works in Chrome, fails in Safari              | Cookie is being seen as third-party — a domain problem, not a code one                       |
 | Browser console shows a CORS error            | `D3D_FRONTEND_ORIGIN` doesn't exactly match the frontend origin (scheme included)            |
 | `401` on every API call after login           | `TokenLookup` isn't seeing the cookie, or `withCredentials` is missing                       |
-| Collab shows no other users                   | More than one Fly machine. `fly scale count 1`                                               |
+| Collab shows no other users                   | More than one API machine. `fly scale count 1 --app d3d-api` (the Hub is in-process)         |
+| API calls go to the wrong host, or nowhere    | `VITE_API_BASE_URL` was missing or wrong at **build** time. Rebuild; secrets cannot fix it   |
+| Sign-in works on `*.fly.dev`, fails in Safari | `fly.dev` is a public suffix, so those hosts are cross-site. Use the `incisiveera.com` names |
 
 ## Rollback
 
 The frontend and API deploy independently.
 
-- **Frontend:** redeploy the previous Vercel deployment. Do NOT simply unset
-  `VITE_API_BASE_URL` — there is no committed fallback any more
+- **Frontend:** `fly releases --app d3dweb`, then `fly deploy --image <previous>`.
+  The API base URL is baked into each image, so rolling back also rolls back which
+  API that build talks to — check the target image was built with the base URL you
+  still want. Do NOT try to fix a bad base URL by unsetting the build arg; there is
+  no committed fallback, and an empty value deploys cleanly and fails in the browser
 - **API:** `fly releases --app d3d-api`, then `fly deploy --image <previous>`
 
 Migration `006_social_auth.sql` is additive — new columns with defaults plus one index —
